@@ -49,6 +49,56 @@ def _seasonality_summary(season: dict) -> str:
     return f"거래 활발한 달: {busy_txt} · 거래 적은 달: {slow_txt} — {tail}"
 
 
+def _price_trend_chart_html(trend: dict) -> str:
+    series = trend.get("series") or []
+    if len(series) < 3:
+        return '<p class="muted">가격 추이를 그리기엔 데이터가 부족합니다.</p>'
+
+    width, height = 760, 180
+    pad_l, pad_r, pad_t, pad_b = 44, 10, 12, 24
+    values = [v for _, v in series]
+    min_v, max_v = min(values), max(values)
+    span = (max_v - min_v) or 1
+    n = len(series)
+
+    def x(i):
+        return pad_l + (width - pad_l - pad_r) * (i / (n - 1))
+
+    def y(v):
+        return pad_t + (height - pad_t - pad_b) * (1 - (v - min_v) / span)
+
+    points = " ".join(f"{x(i):.1f},{y(v):.1f}" for i, (_, v) in enumerate(series))
+    dots = "".join(f'<circle cx="{x(i):.1f}" cy="{y(v):.1f}" r="2.5" fill="#4f46e5" />' for i, (_, v) in enumerate(series))
+
+    step = max(1, n // 8)
+    labels = "".join(
+        f'<text x="{x(i):.1f}" y="{height - 4}" font-size="10" fill="#6b6b7b" text-anchor="middle">{label}</text>'
+        for i, (label, _) in enumerate(series) if i % step == 0 or i == n - 1
+    )
+    y_labels = (
+        f'<text x="4" y="{y(max_v):.1f}" font-size="10" fill="#6b6b7b">{max_v:.0f}</text>'
+        f'<text x="4" y="{y(min_v):.1f}" font-size="10" fill="#6b6b7b">{min_v:.0f}</text>'
+    )
+
+    return (
+        f'<svg viewBox="0 0 {width} {height}" class="trend-svg" preserveAspectRatio="xMidYMid meet">'
+        f'<polyline points="{points}" fill="none" stroke="#4f46e5" stroke-width="2" />'
+        f"{dots}{labels}{y_labels}"
+        "</svg>"
+    )
+
+
+def _price_trend_summary(trend: dict) -> str:
+    series = trend.get("series") or []
+    if len(series) < 3:
+        return "표본 부족으로 가격 추이 분석을 생략했습니다."
+    first_label, first_val = series[0]
+    last_label, last_val = series[-1]
+    change_pct = (last_val - first_val) / first_val * 100 if first_val else 0
+    sign = "+" if change_pct >= 0 else ""
+    return f"{first_label} 평당 {first_val:.0f}만원 → {last_label} 평당 {last_val:.0f}만원 ({sign}{change_pct:.1f}%)"
+
+
 def _comparables_table_html(comparables: list[dict]) -> str:
     if not comparables:
         return '<p class="muted">비교거래가 없습니다.</p>'
@@ -104,6 +154,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
   .bar-slow {{ background: var(--slow); }}
   .bar-value {{ font-size: 11px; color: var(--muted); margin-bottom: 4px; }}
   .bar-label {{ font-size: 11px; color: var(--muted); margin-top: 6px; }}
+  .trend-svg {{ width: 100%; height: auto; }}
   .muted {{ color: var(--muted); font-size: 13px; }}
   .note {{ font-size: 12px; color: var(--muted); margin-top: 12px; }}
   footer {{ text-align: center; color: var(--muted); font-size: 12px; margin-top: 32px; }}
@@ -132,6 +183,12 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
   </div>
 
   <div class="card">
+    <h2>가격 추이 — 월별 평균 평당가 ({trend_scope} 기준)</h2>
+    {trend_chart}
+    <p class="note">{trend_summary}</p>
+  </div>
+
+  <div class="card">
     <h2>계절성 — 월별 거래량 지수 ({season_scope} 기준, 전체 평균=100)</h2>
     {season_chart}
     <p class="note">{season_summary}</p>
@@ -146,7 +203,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 
 def render_report(*, building, dong, area, period, generated, confidence,
                    conservative, realistic, upper, ai_base, listing,
-                   n_total, n_same_building, comparables, season) -> str:
+                   n_total, n_same_building, comparables, season, trend) -> str:
     return PAGE_TEMPLATE.format(
         title=f"{building} 매도가 분석",
         building=building, dong=dong, area=area, period=period, generated=generated,
@@ -158,4 +215,7 @@ def render_report(*, building, dong, area, period, generated, confidence,
         season_scope=season.get("scope_label", "-"),
         season_chart=_seasonality_chart_html(season),
         season_summary=_seasonality_summary(season),
+        trend_scope=trend.get("scope_label", "-"),
+        trend_chart=_price_trend_chart_html(trend),
+        trend_summary=_price_trend_summary(trend),
     )

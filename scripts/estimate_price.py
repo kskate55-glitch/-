@@ -1,8 +1,8 @@
 """
 저장된 국토부 연립다세대 실거래가 XML(들)을 읽어서
 매도가 범위(보수적 급매가 / 현실적 체결가 / 상단 매도가 / AI 기준매도가 / 권장 호가)를
-CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절성(거래 활발한 달) 분석도
-함께 출력한다.
+CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절성(거래 활발한 달)과
+15절 규칙에 따른 월별 가격 추이 분석도 함께 출력한다.
 
 사용법:
     python estimate_price.py --dir data/raw --building 태영아뜨리움 \
@@ -25,6 +25,7 @@ import os
 import re
 import statistics
 import xml.etree.ElementTree as ET
+from collections import defaultdict
 from datetime import datetime
 
 
@@ -181,6 +182,35 @@ def print_seasonality(season: dict):
         print("→ 뚜렷한 계절성이 보이지 않아 매도 시점보다 가격 자체에 집중하는 것을 추천합니다.")
 
 
+def compute_price_trend(all_rows: list[dict], dong: str) -> dict:
+    """CLAUDE.md 15절 규칙: 월별 평균 평당가(만원/㎡) 흐름을 시간순으로 뽑는다."""
+    non_cancelled = [r for r in all_rows if r.get("cdealType", "").strip() != "해제"]
+    dong_rows = [r for r in non_cancelled if r.get("umdNm", "").strip() == dong.strip()]
+
+    if len(dong_rows) >= 12:
+        scope_rows, scope_label = dong_rows, dong
+    else:
+        scope_rows, scope_label = non_cancelled, "동 데이터 부족 — 조회 지역 전체"
+
+    buckets: dict[tuple[int, int], list[float]] = defaultdict(list)
+    for r in scope_rows:
+        try:
+            y, m = int(r.get("dealYear", "0")), int(r.get("dealMonth", "0"))
+            area = float(r.get("excluUseAr", "nan"))
+            amount = to_amount_man(r.get("dealAmount", ""))
+        except (ValueError, TypeError):
+            continue
+        if not y or not 1 <= m <= 12 or amount != amount or not area:
+            continue
+        buckets[(y, m)].append(amount / area)
+
+    if len(buckets) < 3:
+        return {"scope_label": scope_label, "series": []}
+
+    series = [(f"{y}.{m:02d}", statistics.mean(vals)) for (y, m), vals in sorted(buckets.items())]
+    return {"scope_label": scope_label, "series": series}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default="data/raw")
@@ -281,6 +311,18 @@ def main():
     season = compute_seasonality(rows, args.dong)
     print_seasonality(season)
 
+    trend = compute_price_trend(rows, args.dong)
+    print()
+    if trend["series"]:
+        first_label, first_val = trend["series"][0]
+        last_label, last_val = trend["series"][-1]
+        change_pct = (last_val - first_val) / first_val * 100 if first_val else 0
+        sign = "+" if change_pct >= 0 else ""
+        print(f"[가격 추이] ({trend['scope_label']} 기준, {first_label} → {last_label})")
+        print(f"평당가(만원/㎡) {first_val:.0f} → {last_val:.0f} ({sign}{change_pct:.1f}%)")
+    else:
+        print("[가격 추이] 그래프를 그리기엔 데이터가 부족합니다 (최소 3개월 이상 분포 필요).")
+
     if args.html:
         from report import render_report
 
@@ -300,7 +342,7 @@ def main():
             confidence=confidence, conservative=conservative, realistic=realistic,
             upper=upper, ai_base=ai_base, listing=listing,
             n_total=n_total, n_same_building=n_same_building,
-            comparables=comparables, season=season,
+            comparables=comparables, season=season, trend=trend,
         )
         reports_dir = "reports"
         os.makedirs(reports_dir, exist_ok=True)

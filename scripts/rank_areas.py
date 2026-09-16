@@ -9,6 +9,7 @@ CLAUDE.md 13절 규칙과 동일한 로직이다.
 
 사용법:
     python scripts/rank_areas.py --dir data/raw --top 10
+    python scripts/rank_areas.py --dir data/raw --dong 역촌동   # 면적 구간별 비교도 함께(17절)
 """
 
 import argparse
@@ -91,10 +92,102 @@ def rank_by_volume(dong_data: dict) -> list[tuple]:
     return ranked
 
 
+AREA_BANDS = [
+    (0, 40, "소형(40㎡ 미만)"),
+    (40, 60, "중소형(40~60㎡)"),
+    (60, 85, "중형(60~85㎡)"),
+    (85, float("inf"), "대형(85㎡ 이상)"),
+]
+
+
+def band_for_area(area: float) -> str:
+    for lo, hi, label in AREA_BANDS:
+        if lo <= area < hi:
+            return label
+    return AREA_BANDS[-1][2]
+
+
+def build_band_stats(rows: list[dict], dong: str):
+    """CLAUDE.md 17절 규칙: 한 동 안에서 면적 구간별 최근/이전 3개월 평당가를 비교한다."""
+    dong_rows = [
+        r for r in rows
+        if r.get("umdNm", "").strip() == dong.strip() and r.get("cdealType", "").strip() != "해제"
+    ]
+    ym_indices = set()
+    for r in dong_rows:
+        try:
+            y, m = int(r.get("dealYear", "0")), int(r.get("dealMonth", "0"))
+        except ValueError:
+            continue
+        if y and 1 <= m <= 12:
+            ym_indices.add(month_index(y, m))
+    if not ym_indices:
+        return None
+
+    latest = max(ym_indices)
+    recent_window = {latest, latest - 1, latest - 2}
+    prev_window = {latest - 3, latest - 4, latest - 5}
+
+    band_data = defaultdict(lambda: {"recent": [], "prev": []})
+    for r in dong_rows:
+        try:
+            y, m = int(r.get("dealYear", "0")), int(r.get("dealMonth", "0"))
+            area = float(r.get("excluUseAr", "nan"))
+            amount = to_amount_man(r.get("dealAmount", ""))
+        except (ValueError, TypeError):
+            continue
+        if not y or not (1 <= m <= 12) or amount != amount or not area:
+            continue
+        idx = month_index(y, m)
+        band = band_for_area(area)
+        ppa = amount / area
+        if idx in recent_window:
+            band_data[band]["recent"].append(ppa)
+        elif idx in prev_window:
+            band_data[band]["prev"].append(ppa)
+
+    return latest, band_data
+
+
+def rank_bands_by_price_change(band_data: dict) -> list[tuple]:
+    ranked = []
+    for band, d in band_data.items():
+        if len(d["recent"]) < MIN_SAMPLE or len(d["prev"]) < MIN_SAMPLE:
+            continue
+        recent_avg = statistics.mean(d["recent"])
+        prev_avg = statistics.mean(d["prev"])
+        if not prev_avg:
+            continue
+        change_pct = (recent_avg - prev_avg) / prev_avg * 100
+        ranked.append((band, change_pct, recent_avg, len(d["recent"])))
+    ranked.sort(key=lambda x: x[1], reverse=True)
+    return ranked
+
+
+def print_area_bands(rows: list[dict], dong: str):
+    result = build_band_stats(rows, dong)
+    print()
+    if result is None:
+        print(f"[면적대별 비교] {dong}에 유효한 계약월 데이터가 없습니다.")
+        return
+    latest, band_data = result
+    latest_y, latest_m = divmod(latest, 12)
+    ranked = rank_bands_by_price_change(band_data)
+
+    print(f"[면적대별 비교] {dong} 기준, 최근 거래월: {latest_y}.{latest_m + 1:02d}")
+    if not ranked:
+        print("  구간별로 비교할 만한 데이터가 부족합니다 (구간마다 최근·이전 3개월에 각 3건 이상 필요).")
+        return
+    for band, change_pct, recent_avg, cnt in ranked:
+        sign = "+" if change_pct >= 0 else ""
+        print(f"- {band}: {sign}{change_pct:.1f}%  (최근 평균 {recent_avg:.0f}만원/㎡, 거래 {cnt}건)")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default="data/raw")
     ap.add_argument("--top", type=int, default=10)
+    ap.add_argument("--dong", default=None, help="지정하면 그 동 안에서 면적 구간별(소형/중형/대형) 비교도 함께 보여준다")
     args = ap.parse_args()
 
     rows = dedupe(load_transactions(args.dir))
@@ -133,6 +226,9 @@ def main():
 
     print()
     print("※ 아직 조회하지 않은 동네는 여기 나타나지 않습니다. 더 많은 지역을 조회할수록 랭킹이 넓어집니다.")
+
+    if args.dong:
+        print_area_bands(rows, args.dong)
 
 
 if __name__ == "__main__":

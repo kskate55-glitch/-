@@ -1,6 +1,8 @@
 .env
 data/raw/*.xml
 data/raw/*.txt
+data/raw_rent/*.xml
+data/raw_rent/*.txt
 reports/*.html
 __pycache__/
 *.pyc

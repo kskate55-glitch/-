@@ -1,0 +1,139 @@
+"""
+data/raw/에 저장된 모든 실거래가 XML을 동(umdNm) 단위로 모아서,
+"가격이 오르고 있는 동네" / "거래가 활발한 동네" 랭킹을 보여준다.
+CLAUDE.md 13절 규칙과 동일한 로직이다.
+
+지금까지 조회해서 data/raw에 저장해둔 동네만 랭킹에 나온다 — 조회한 지역이
+늘어날수록 랭킹도 넓어진다. (실거래가 API는 하루 호출 한도가 있어 한 번에
+전국을 다 조회할 수는 없다)
+
+사용법:
+    python scripts/rank_areas.py --dir data/raw --top 10
+"""
+
+import argparse
+import os
+import statistics
+from collections import defaultdict
+
+from estimate_price import load_transactions, dedupe, to_amount_man
+
+MIN_SAMPLE = 3  # 이보다 적게 거래된 동은 통계적으로 신뢰하기 어려워 랭킹에서 제외
+
+
+def month_index(year: int, month: int) -> int:
+    return year * 12 + (month - 1)
+
+
+def build_dong_stats(rows: list[dict]):
+    """반환: (최신 계약월 인덱스, {동: {recent_prices, prev_prices, recent_count, prev_count}})"""
+    ym_indices = set()
+    for r in rows:
+        try:
+            y, m = int(r.get("dealYear", "0")), int(r.get("dealMonth", "0"))
+        except ValueError:
+            continue
+        if y and 1 <= m <= 12:
+            ym_indices.add(month_index(y, m))
+    if not ym_indices:
+        return None
+
+    latest = max(ym_indices)
+    recent_window = {latest, latest - 1, latest - 2}
+    prev_window = {latest - 3, latest - 4, latest - 5}
+
+    dong_data = defaultdict(lambda: {"recent_prices": [], "prev_prices": [], "recent_count": 0, "prev_count": 0})
+    for r in rows:
+        if r.get("cdealType", "").strip() == "해제":
+            continue
+        try:
+            y, m = int(r.get("dealYear", "0")), int(r.get("dealMonth", "0"))
+            area = float(r.get("excluUseAr", "nan"))
+            amount = to_amount_man(r.get("dealAmount", ""))
+        except (ValueError, TypeError):
+            continue
+        if not y or not (1 <= m <= 12) or amount != amount or not area:
+            continue
+        dong = r.get("umdNm", "").strip()
+        if not dong:
+            continue
+        idx = month_index(y, m)
+        price_per_area = amount / area
+        d = dong_data[dong]
+        if idx in recent_window:
+            d["recent_prices"].append(price_per_area)
+            d["recent_count"] += 1
+        elif idx in prev_window:
+            d["prev_prices"].append(price_per_area)
+            d["prev_count"] += 1
+
+    return latest, dong_data
+
+
+def rank_by_price_change(dong_data: dict) -> list[tuple]:
+    ranked = []
+    for dong, d in dong_data.items():
+        if len(d["recent_prices"]) < MIN_SAMPLE or len(d["prev_prices"]) < MIN_SAMPLE:
+            continue
+        recent_avg = statistics.mean(d["recent_prices"])
+        prev_avg = statistics.mean(d["prev_prices"])
+        if not prev_avg:
+            continue
+        change_pct = (recent_avg - prev_avg) / prev_avg * 100
+        ranked.append((dong, change_pct, recent_avg, d["recent_count"]))
+    ranked.sort(key=lambda x: x[1], reverse=True)
+    return ranked
+
+
+def rank_by_volume(dong_data: dict) -> list[tuple]:
+    ranked = [(dong, d["recent_count"]) for dong, d in dong_data.items() if d["recent_count"] >= MIN_SAMPLE]
+    ranked.sort(key=lambda x: x[1], reverse=True)
+    return ranked
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dir", default="data/raw")
+    ap.add_argument("--top", type=int, default=10)
+    args = ap.parse_args()
+
+    rows = dedupe(load_transactions(args.dir))
+    if not rows:
+        print(f"[안내] {args.dir} 폴더에서 유효한 XML 거래 데이터를 찾지 못했습니다.")
+        return
+
+    result = build_dong_stats(rows)
+    if result is None:
+        print("[안내] 유효한 계약월 데이터가 없습니다.")
+        return
+    latest, dong_data = result
+    latest_y, latest_m = divmod(latest, 12)
+
+    price_ranked = rank_by_price_change(dong_data)
+    volume_ranked = rank_by_volume(dong_data)
+
+    print(f"[동네 랭킹] 최근 거래월 기준: {latest_y}.{latest_m + 1:02d} (data/raw에 있는 동네만 대상)")
+    print()
+
+    print("가격 상승률 TOP (최근 3개월 평균 평당가 vs 이전 3개월)")
+    if price_ranked:
+        for i, (dong, change_pct, recent_avg, cnt) in enumerate(price_ranked[: args.top], start=1):
+            sign = "+" if change_pct >= 0 else ""
+            print(f"{i}. {dong}  {sign}{change_pct:.1f}%  (최근 평균 {recent_avg:.0f}만원/㎡, 거래 {cnt}건)")
+    else:
+        print("  비교 가능한 동이 없습니다 (동마다 최근·이전 3개월에 각 3건 이상 거래 필요).")
+
+    print()
+    print("거래 활발도 TOP (최근 3개월 거래건수)")
+    if volume_ranked:
+        for i, (dong, cnt) in enumerate(volume_ranked[: args.top], start=1):
+            print(f"{i}. {dong}  {cnt}건")
+    else:
+        print("  거래량 랭킹을 매길 만한 동이 없습니다 (최근 3개월간 3건 이상 필요).")
+
+    print()
+    print("※ 아직 조회하지 않은 동네는 여기 나타나지 않습니다. 더 많은 지역을 조회할수록 랭킹이 넓어집니다.")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,5 +1,6 @@
 .env
 data/raw/*.xml
 data/raw/*.txt
+reports/*.html
 __pycache__/
 *.pyc

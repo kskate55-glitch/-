@@ -142,7 +142,7 @@ def seasonality_index(rows: list[dict]) -> dict[int, int] | None:
     return {m: round(v / overall_avg * 100) for m, v in avg_by_month.items()}
 
 
-def print_seasonality(all_rows: list[dict], dong: str):
+def compute_seasonality(all_rows: list[dict], dong: str) -> dict:
     """CLAUDE.md 12절 규칙: 연도 필터 없이 전체 기간으로 월별 거래 패턴을 본다."""
     non_cancelled = [r for r in all_rows if r.get("cdealType", "").strip() != "해제"]
     dong_rows = [r for r in non_cancelled if r.get("umdNm", "").strip() == dong.strip()]
@@ -154,15 +154,23 @@ def print_seasonality(all_rows: list[dict], dong: str):
         scope_rows, scope_label = non_cancelled, "동 데이터 부족 — 조회 지역 전체"
 
     index = seasonality_index(scope_rows)
+    if index is None:
+        return {"scope_label": scope_label, "index": None, "busy": [], "slow": []}
+
+    busy = sorted((m for m in index if index[m] >= 110), key=lambda m: index[m], reverse=True)[:3]
+    slow = sorted((m for m in index if index[m] <= 90), key=lambda m: index[m])[:3]
+    return {"scope_label": scope_label, "index": index, "busy": busy, "slow": slow}
+
+
+def print_seasonality(season: dict):
     print()
+    index = season["index"]
     if index is None:
         print("[계절성 분석] 표본이 부족해 계절성 분석을 생략합니다 (최소 6개월 이상 분포 필요).")
         return
 
-    busy = sorted((m for m in index if index[m] >= 110), key=lambda m: index[m], reverse=True)[:3]
-    slow = sorted((m for m in index if index[m] <= 90), key=lambda m: index[m])[:3]
-
-    print(f"[계절성 분석] ({scope_label} 기준, 거래량 지수 — 전체 평균=100)")
+    busy, slow = season["busy"], season["slow"]
+    print(f"[계절성 분석] ({season['scope_label']} 기준, 거래량 지수 — 전체 평균=100)")
     print(" ".join(f"{m}월:{index[m]}" for m in range(1, 13)))
     print(f"거래 활발한 달: {', '.join(f'{m}월' for m in busy) if busy else '뚜렷한 성수기 없음'}")
     print(f"거래 적은 달: {', '.join(f'{m}월' for m in slow) if slow else '뚜렷한 비수기 없음'}")
@@ -181,6 +189,7 @@ def main():
     ap.add_argument("--area", type=float, required=True)
     ap.add_argument("--build-year", default=None)
     ap.add_argument("--year-min", type=int, default=None)
+    ap.add_argument("--html", action="store_true", help="reports/ 폴더에 예쁜 HTML 리포트도 저장하고 브라우저로 연다")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -262,14 +271,48 @@ def main():
     print(f"AI 기준매도가: {fmt(ai_base)}")
     print(f"권장 최초 호가: {fmt(listing)}")
     print()
+    pr_labels = {1: "1순위(동일건물·유사면적)", 2: "2순위(동일건물)", 3: "3순위(유사연식·면적)",
+                 4: "4순위(참고용)", 5: "5순위(동일법정동)"}
     print("핵심 비교거래 (우선순위 순):")
     for r in filtered[:8]:
-        pr_label = {1: "1순위(동일건물·유사면적)", 2: "2순위(동일건물)", 3: "3순위(유사연식·면적)",
-                    4: "4순위(참고용)", 5: "5순위(동일법정동)"}[r["_priority"]]
         print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, "
-              f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {pr_label}")
+              f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {pr_labels[r['_priority']]}")
 
-    print_seasonality(rows, args.dong)
+    season = compute_seasonality(rows, args.dong)
+    print_seasonality(season)
+
+    if args.html:
+        from report import render_report
+
+        comparables = [
+            {
+                "name": r.get("mhouseNm", "(단지명없음)"),
+                "area": r.get("excluUseAr", "?"),
+                "date": f"{r.get('dealYear')}.{r.get('dealMonth')}",
+                "amount": r["_amount_man"],
+                "label": pr_labels[r["_priority"]],
+            }
+            for r in filtered[:8]
+        ]
+        html_str = render_report(
+            building=args.building or args.dong, dong=args.dong, area=args.area,
+            period=f"{year_min}.01 ~ {this_year}.12", generated=datetime.now().strftime("%Y.%m.%d %H:%M"),
+            confidence=confidence, conservative=conservative, realistic=realistic,
+            upper=upper, ai_base=ai_base, listing=listing,
+            n_total=n_total, n_same_building=n_same_building,
+            comparables=comparables, season=season,
+        )
+        reports_dir = "reports"
+        os.makedirs(reports_dir, exist_ok=True)
+        out_name = f"{(args.building or args.dong).replace(' ', '_')}_{datetime.now():%Y%m%d_%H%M%S}.html"
+        out_path = os.path.join(reports_dir, out_name)
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(html_str)
+        print(f"\n[HTML 리포트 저장됨] {out_path}")
+        try:
+            os.startfile(out_path)  # Windows 전용: 기본 브라우저로 바로 열기
+        except AttributeError:
+            pass  # Windows가 아니면 자동으로 열지 않고 저장만 한다
 
 
 if __name__ == "__main__":

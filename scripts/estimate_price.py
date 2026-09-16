@@ -1,7 +1,8 @@
 """
 저장된 국토부 연립다세대 실거래가 XML(들)을 읽어서
 매도가 범위(보수적 급매가 / 현실적 체결가 / 상단 매도가 / AI 기준매도가 / 권장 호가)를
-CLAUDE.md 8절 포맷으로 계산한다.
+CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절성(거래 활발한 달) 분석도
+함께 출력한다.
 
 사용법:
     python estimate_price.py --dir data/raw --building 태영아뜨리움 \
@@ -116,6 +117,62 @@ def weight_for_year(deal_year: str, this_year: int) -> float:
     return 0.3  # 기준연도 이전은 원래 필터링되지만, 방어적으로 낮은 가중치만 부여
 
 
+def seasonality_index(rows: list[dict]) -> dict[int, int] | None:
+    """월별 거래량 지수(전체 평균=100)를 계산. 표본이 6개월 미만이면 None."""
+    counts_by_month_year: dict[int, dict[str, int]] = {m: {} for m in range(1, 13)}
+    for r in rows:
+        try:
+            month = int(r.get("dealMonth", "0"))
+        except ValueError:
+            continue
+        if not 1 <= month <= 12:
+            continue
+        year = r.get("dealYear", "")
+        counts_by_month_year[month][year] = counts_by_month_year[month].get(year, 0) + 1
+
+    months_with_data = [m for m, years in counts_by_month_year.items() if years]
+    if len(months_with_data) < 6:
+        return None
+
+    avg_by_month = {
+        m: (sum(years.values()) / len(years) if years else 0)
+        for m, years in counts_by_month_year.items()
+    }
+    overall_avg = statistics.mean(v for v in avg_by_month.values() if v > 0)
+    return {m: round(v / overall_avg * 100) for m, v in avg_by_month.items()}
+
+
+def print_seasonality(all_rows: list[dict], dong: str):
+    """CLAUDE.md 12절 규칙: 연도 필터 없이 전체 기간으로 월별 거래 패턴을 본다."""
+    non_cancelled = [r for r in all_rows if r.get("cdealType", "").strip() != "해제"]
+    dong_rows = [r for r in non_cancelled if r.get("umdNm", "").strip() == dong.strip()]
+    years_in_dong = {r.get("dealYear") for r in dong_rows if r.get("dealYear")}
+
+    if len(dong_rows) >= 24 and len(years_in_dong) >= 2:
+        scope_rows, scope_label = dong_rows, f"{dong}"
+    else:
+        scope_rows, scope_label = non_cancelled, "동 데이터 부족 — 조회 지역 전체"
+
+    index = seasonality_index(scope_rows)
+    print()
+    if index is None:
+        print("[계절성 분석] 표본이 부족해 계절성 분석을 생략합니다 (최소 6개월 이상 분포 필요).")
+        return
+
+    busy = sorted((m for m in index if index[m] >= 110), key=lambda m: index[m], reverse=True)[:3]
+    slow = sorted((m for m in index if index[m] <= 90), key=lambda m: index[m])[:3]
+
+    print(f"[계절성 분석] ({scope_label} 기준, 거래량 지수 — 전체 평균=100)")
+    print(" ".join(f"{m}월:{index[m]}" for m in range(1, 13)))
+    print(f"거래 활발한 달: {', '.join(f'{m}월' for m in busy) if busy else '뚜렷한 성수기 없음'}")
+    print(f"거래 적은 달: {', '.join(f'{m}월' for m in slow) if slow else '뚜렷한 비수기 없음'}")
+    if busy:
+        print("→ 매도 시점을 조정할 수 있다면 위 활발한 달 사이에 내놓는 것이 매수 수요가")
+        print("  가장 많은 시기입니다. (참고용 통계이며 표본이 적을수록 신뢰도가 낮습니다)")
+    else:
+        print("→ 뚜렷한 계절성이 보이지 않아 매도 시점보다 가격 자체에 집중하는 것을 추천합니다.")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default="data/raw")
@@ -211,6 +268,8 @@ def main():
                     4: "4순위(참고용)", 5: "5순위(동일법정동)"}[r["_priority"]]
         print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, "
               f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {pr_label}")
+
+    print_seasonality(rows, args.dong)
 
 
 if __name__ == "__main__":

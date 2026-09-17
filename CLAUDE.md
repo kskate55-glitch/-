@@ -66,9 +66,10 @@
   (`scripts/geocode.py`). 변환에 실패하면(주소 오류, 키 미설정 등) 계산을 중단하고
   사용자에게 원인을 안내한다.
 - 각 실거래 행도 같은 방식으로 좌표를 구한다 — `umdNm`+`jibun`에
-  `data/lawd_codes.md`로 역조회한 구 이름을 붙여 지번 주소를 복원한다
-  (`scripts/lawd_lookup.py`). 현재는 서울특별시만 지원한다 (다른 시/도를 쓰려면
-  `data/lawd_codes.md`에 시/도 구분을 추가하고 `lawd_lookup.py`도 함께 고쳐야 한다).
+  `data/lawd_codes.md`로 역조회한 **시도+시/군/구**를 붙여 지번 주소를 복원한다
+  (`scripts/lawd_lookup.py`). `data/lawd_codes.md`는 시도 열이 있는 3열 표라
+  서울특별시와 경기도 둘 다 지원한다 — 국토부 API 자체는 전국이 대상이니, 표에
+  없는 시/도가 나오면 2절/10절 규칙대로 코드를 확인해서 표에 새로 추가하면 된다.
 - API 호출을 아끼기 위해, 대상 주소에 포함된 구와 다른 구의 거래는 지오코딩하지
   않고 건너뛴다 (400m 반경이 구 경계를 넘는 경우는 사실상 없다고 보는 근사다).
 - 전용면적이 대상 물건과 ±15% 이내인 거래만 남긴다 (반경 안이라도 면적 차이가
@@ -150,7 +151,7 @@ AI 기준매도가: X.XX억
 
 - `scripts/molit_rhtrade_api.py`: API 직접 호출 (로컬/서버 전용 — 샌드박스에서 실행 불가)
 - `scripts/geocode.py`: 카카오 로컬 API로 지번 주소 → 좌표 변환, `data/geocode_cache.json`에 캐시
-- `scripts/lawd_lookup.py`: `data/lawd_codes.md` 표를 읽어 법정동코드 → 구 이름 역조회
+- `scripts/lawd_lookup.py`: `data/lawd_codes.md` 표를 읽어 법정동코드 → (시도, 시/군/구) 역조회
 - `scripts/estimate_price.py`: `data/raw/`에 저장된 XML로 1~8절 로직을 그대로 일괄 계산
   ```
   python scripts/estimate_price.py --dir data/raw \

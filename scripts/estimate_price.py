@@ -2,8 +2,8 @@
 저장된 국토부 연립다세대 실거래가 XML(들)을 읽어서
 매도가 범위(보수적 급매가 / 현실적 체결가 / 상단 매도가 / AI 기준매도가 / 권장 호가)를
 CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절성(거래 활발한 달)과
-15절 규칙에 따른 월별 가격 추이, 19절 규칙에 따른 입지 체크·수익성 계산도 함께
-출력한다.
+15절 규칙에 따른 월별 가격 추이, 19절 규칙에 따른 입지 체크·수익성 계산,
+20절 규칙에 따른 건축물대장 조회(승강기·세대수·위반건축물)도 함께 출력한다.
 
 사용법:
     python estimate_price.py --dir data/raw \
@@ -332,6 +332,37 @@ def print_location_check(subject_coord: tuple[float, float]):
             print(f"{label}: 1km 이내 없음")
 
 
+def print_building_info(subject_detail: dict):
+    """CLAUDE.md 20절 규칙: 건축물대장에서 승강기/세대수/위반건축물 여부를 확인한다."""
+    from building_register import get_building_info
+
+    print()
+    print("[건물 정보] (건축물대장 기준)")
+    try:
+        info = get_building_info(
+            subject_detail.get("b_code"), subject_detail.get("main_no"),
+            subject_detail.get("sub_no"), subject_detail.get("is_mountain", False),
+        )
+    except RuntimeError as e:
+        print(f"조회 실패: {e}")
+        return
+
+    if info is None:
+        print("건축물대장 조회 결과가 없습니다 (API 미승인, 필드명 불일치, 주소 문제 등 확인 필요).")
+        return
+
+    elevator_txt = f"있음 ({info['elevator_count']}대)" if info["has_elevator"] else "없음"
+    print(f"승강기: {elevator_txt}")
+    if info.get("household_count"):
+        print(f"세대수: {info['household_count']}세대")
+    if info.get("approval_date"):
+        print(f"사용승인일: {info['approval_date']}")
+    if info.get("ground_floors"):
+        print(f"지상층수: {info['ground_floors']}층")
+    if info["is_violation_building"]:
+        print(f"⚠️ 위반건축물 (대장종류: {info['registry_kind']})")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default="data/raw")
@@ -348,6 +379,7 @@ def main():
     ap.add_argument("--sale-rate", type=float, default=0.005, help="매도 중개수수료율 (기본 0.5%%)")
     ap.add_argument("--extra-cost", type=float, default=0, help="명도비·수리비 등 추가비용 (만원 단위, 기본 0)")
     ap.add_argument("--no-location", action="store_true", help="입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다")
+    ap.add_argument("--no-building-info", action="store_true", help="건축물대장 조회(승강기/세대수/위반건축물)를 건너뛴다")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -359,18 +391,22 @@ def main():
         print("       molit_rhtrade_api.py로 조회한 결과를 이 폴더에 .xml 또는 .txt로 저장해 주세요.")
         return
 
-    from geocode import geocode
+    from geocode import geocode_full
     from lawd_lookup import find_gu_in_address
 
-    subject_coord = geocode(args.address)
-    if subject_coord is None:
+    subject_detail = geocode_full(args.address)
+    if subject_detail is None:
         print(f"[안내] 대상 물건 주소({args.address})를 좌표로 변환하지 못했습니다.")
         print("       카카오 개발자 콘솔에서 발급받은 KAKAO_REST_API_KEY가 .env에 있는지,")
         print("       주소 표기가 정확한지(지번 주소 권장) 확인해 주세요.")
         return
+    subject_coord = (subject_detail["lat"], subject_detail["lon"])
 
     if not args.no_location:
         print_location_check(subject_coord)
+
+    if not args.no_building_info:
+        print_building_info(subject_detail)
 
     gu_filter = find_gu_in_address(args.address)
 

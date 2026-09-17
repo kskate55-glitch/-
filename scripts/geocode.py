@@ -77,6 +77,66 @@ def geocode(address: str) -> tuple[float, float] | None:
     return lat, lon
 
 
+DETAIL_CACHE_PATH = os.path.join("data", "geocode_detail_cache.json")
+
+
+def geocode_full(address: str) -> dict | None:
+    """지번 주소 -> {lat, lon, b_code(법정동코드 10자리), main_no, sub_no, is_mountain}.
+    건축물대장 조회(scripts/building_register.py, CLAUDE.md 20절)에 필요한
+    구조화된 값을 카카오 주소 검색 응답에서 그대로 뽑아 쓴다 — 별도 주소
+    표준화 API 없이 지오코딩 한 번으로 해결한다.
+
+    ⚠️ 카카오 응답의 address.b_code/main_address_no/sub_address_no/mountain_yn
+    필드명에 기반한 것으로, 실제 응답과 다르면 여기를 고쳐야 한다."""
+    cache = _load_cache_file(DETAIL_CACHE_PATH)
+    if address in cache:
+        return cache[address] if cache[address] else None
+
+    api_key = _get_api_key()
+    url = f"{KAKAO_URL}?query={urllib.parse.quote(address)}"
+    req = Request(url, headers={"Authorization": f"KakaoAK {api_key}"})
+
+    try:
+        with urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except (HTTPError, URLError, json.JSONDecodeError):
+        cache[address] = None
+        _save_cache_file(DETAIL_CACHE_PATH, cache)
+        return None
+
+    docs = data.get("documents", [])
+    if not docs:
+        cache[address] = None
+        _save_cache_file(DETAIL_CACHE_PATH, cache)
+        return None
+
+    addr = docs[0].get("address") or {}
+    result = {
+        "lat": float(docs[0]["y"]),
+        "lon": float(docs[0]["x"]),
+        "b_code": addr.get("b_code"),
+        "main_no": addr.get("main_address_no"),
+        "sub_no": addr.get("sub_address_no"),
+        "is_mountain": addr.get("mountain_yn") == "Y",
+    }
+    cache[address] = result
+    _save_cache_file(DETAIL_CACHE_PATH, cache)
+    return result
+
+
+def _load_cache_file(path: str) -> dict:
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+
+def _save_cache_file(path: str, cache: dict) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(cache, f, ensure_ascii=False, indent=2)
+
+
 def nearby_place(lat: float, lon: float, keyword: str, radius_m: int = 1000) -> dict | None:
     """좌표 기준 반경 안에서 키워드로 가장 가까운 장소를 찾는다 (CLAUDE.md 19절).
     결과 없거나 호출 실패 시 None. 캐시하지 않는다 — 지오코딩과 달리 매번

@@ -123,6 +123,11 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
         if abs(row_area - area) / area > 0.15:
             continue  # 반경 안이라도 면적이 많이 다르면 비교 대상에서 제외
 
+        row_build_year = r.get("buildYear", "").strip()
+        if build_year is not None and row_build_year.isdigit():
+            if abs(int(row_build_year) - int(build_year)) > 4:
+                continue  # 준공년도 ±4년을 벗어나면 비교 대상에서 아예 제외
+
         if gu_filter and gu_name(r.get("sggCd", "")) != gu_filter:
             continue  # 다른 구는 400m 반경에 들 일이 사실상 없어 지오코딩을 아낀다
 
@@ -150,19 +155,12 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
         similar_floor = floor is not None and row_floor is not None and abs(row_floor - floor) <= 1
         floor_weight = 1.0 if (floor is None or similar_floor) else 0.6
 
-        row_build_year = r.get("buildYear", "").strip()
-        similar_vintage = (
-            build_year is not None and row_build_year
-            and abs(int(row_build_year) - int(build_year)) <= 3
-        ) if (build_year is not None and row_build_year.isdigit()) else None
-        vintage_weight = 0.7 if similar_vintage is False else 1.0
-
         distance_weight = max(0.2, 1 - distance / radius_m)
 
         r["_distance_m"] = distance
         r["_amount_man"] = amount
         r["_weight"] = (
-            weight_for_year(r.get("dealYear"), this_year) * distance_weight * floor_weight * vintage_weight
+            weight_for_year(r.get("dealYear"), this_year) * distance_weight * floor_weight
         )
         out.append(r)
 

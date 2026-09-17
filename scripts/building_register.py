@@ -1,28 +1,39 @@
 """
-국토교통부 건축물대장 정보 서비스(건축HUB)로 승강기 유무·세대수·위반건축물
-여부·사용승인일 등을 조회한다. CLAUDE.md 20절 규칙에서 사용한다.
+국토교통부 건축물대장 정보 서비스(건축HUB)로 승강기 유무·세대수·
+사용승인일 등을 조회한다. CLAUDE.md 20절 규칙에서 사용한다.
 
-⚠️ molit_rhtrade_api.py(매매 API)는 업로드된 기술문서로 확인된 스펙이지만,
-   이 모듈은 공개된 예제 코드 패턴을 바탕으로 추정한 스펙이다. 실제 호출
-   결과가 이 스펙과 다르면(필드명, 에러코드 등) 실제 응답을 보여달라고 해서
-   고친다.
+✅ 사용자가 업로드한 공식 기술문서(건축HUB 건축물대장정보 서비스 기술문서,
+   getBrTitleInfo 오퍼레이션)로 아래 스펙을 검증 완료했다 — 엔드포인트,
+   요청 파라미터, 응답 필드명 모두 문서 기준으로 확인된 값이다.
 
-추정 API 기본 정보
+API 기본 정보
 - Endpoint : https://apis.data.go.kr/1613000/BldRgstHubService/getBrTitleInfo
   (건축물대장 표제부 — 세대수, 사용승인일, 승강기 수, 대장 종류 등)
 - 공공데이터포털에서 "건축물대장정보 서비스"로 검색 → 활용신청 필요
-  (매매 API와 provider(1613000)는 같지만 서비스별로 별도 활용신청이 필요할
-  수 있다. MOLIT_SERVICE_KEY를 그대로 재사용해본다.)
-- 파라미터: serviceKey, sigunguCd(5자리), bjdongCd(5자리), platGbCd(0=일반,
-  1=산), bun(지번 본번, 4자리, 0-padding), ji(지번 부번, 4자리, 0-padding),
+  (매매 API와 provider(1613000)는 같지만 서비스별로 별도 활용신청이 필요하다.
+  MOLIT_SERVICE_KEY를 그대로 재사용한다.)
+- 파라미터: serviceKey, sigunguCd(5자리), bjdongCd(5자리), platGbCd(0=대지,
+  1=산, 2=블록 — 카카오 지오코딩 응답으로는 0/1만 구분 가능해 2는 지원하지
+  않는다), bun(지번 본번, 4자리, 0-padding), ji(지번 부번, 4자리, 0-padding),
   numOfRows, pageNo
   → 이 값들은 지번 주소를 직접 쪼개지 않고, geocode.py의 geocode_full()이
     반환하는 법정동코드(b_code)/본번/부번에서 그대로 가져와 쓴다.
 
-추정 응답 필드 (getBrTitleInfo, 일부만 사용)
+응답 필드 (getBrTitleInfo, 일부만 사용 — 문서로 확인됨)
 - hhldCnt(세대수), useAprDay(사용승인일 YYYYMMDD), rideUseElvtCnt(승용승강기수),
-  emgenUseElvtCnt(비상용승강기수), regstrKindCdNm(대장종류명 — "위반건축물"
-  이면 위반건축물대장), mainPurpsCdNm(주용도명), grndFlrCnt(지상층수)
+  emgenUseElvtCnt(비상용승강기수), regstrKindCdNm(대장종류코드명 — "표제부"/
+  "총괄표제부"/"전유부"/"일반건축물" 등 대장이 어떤 하위 문서인지 구분하는
+  값이다), mainPurpsCdNm(주용도명), grndFlrCnt(지상층수)
+
+⚠️ 위반건축물 여부는 이 오퍼레이션(및 문서에 포함된 나머지 9개 오퍼레이션:
+   getBrBasisOulnInfo/getBrRecapTitleInfo/getBrFlrOulnInfo/getBrAtchJibunInfo/
+   getBrExposPubuseAreaInfo/getBrWclfInfo/getBrHsprcInfo/getBrExposInfo/
+   getBrJijiguInfo) 어디에도 필드로 존재하지 않는다. 과거 버전 코드는
+   regstrKindCdNm에 "위반"이 포함되면 위반건축물로 간주했으나, 이는 잘못된
+   가정이었다(문서 확인 결과 regstrKindCdNm은 표제부/총괄표제부/전유부 등
+   대장 구분값일 뿐 위반 여부와 무관) — 그래서 위반건축물 판정 기능은
+   제거했다. 필요하면 정부24 건축물대장 열람(위반건축물 표시 포함)을
+   사용자가 직접 확인하도록 안내한다.
 """
 
 import json
@@ -90,15 +101,13 @@ def get_building_info(b_code: str, main_no: str, sub_no: str, is_mountain: bool 
 
     ride_elv = int(item.get("rideUseElvtCnt") or 0)
     emgen_elv = int(item.get("emgenUseElvtCnt") or 0)
-    registry_kind = (item.get("regstrKindCdNm") or "").strip()
 
     return {
         "household_count": item.get("hhldCnt"),
         "approval_date": item.get("useAprDay"),
         "elevator_count": ride_elv + emgen_elv,
         "has_elevator": (ride_elv + emgen_elv) > 0,
-        "is_violation_building": "위반" in registry_kind,
-        "registry_kind": registry_kind,
+        "registry_kind": (item.get("regstrKindCdNm") or "").strip(),
         "main_purpose": item.get("mainPurpsCdNm"),
         "ground_floors": item.get("grndFlrCnt"),
     }

@@ -3,7 +3,7 @@
 매도가 범위(보수적 급매가 / 현실적 체결가 / 상단 매도가 / AI 기준매도가 / 권장 호가)를
 CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절성(거래 활발한 달)과
 15절 규칙에 따른 월별 가격 추이, 19절 규칙에 따른 입지 체크·수익성 계산,
-20절 규칙에 따른 건축물대장 조회(승강기·세대수·위반건축물)도 함께 출력한다.
+20절 규칙에 따른 건축물대장 조회(승강기·세대수·사용승인일)도 함께 출력한다.
 
 사용법:
     python estimate_price.py --dir data/raw \
@@ -333,7 +333,7 @@ def print_location_check(subject_coord: tuple[float, float]):
 
 
 def print_building_info(subject_detail: dict):
-    """CLAUDE.md 20절 규칙: 건축물대장에서 승강기/세대수/위반건축물 여부를 확인한다."""
+    """CLAUDE.md 20절 규칙: 건축물대장에서 승강기/세대수/사용승인일 등을 확인한다."""
     from building_register import get_building_info
 
     print()
@@ -359,8 +359,6 @@ def print_building_info(subject_detail: dict):
         print(f"사용승인일: {info['approval_date']}")
     if info.get("ground_floors"):
         print(f"지상층수: {info['ground_floors']}층")
-    if info["is_violation_building"]:
-        print(f"⚠️ 위반건축물 (대장종류: {info['registry_kind']})")
 
 
 def main():
@@ -379,7 +377,7 @@ def main():
     ap.add_argument("--sale-rate", type=float, default=0.005, help="매도 중개수수료율 (기본 0.5%%)")
     ap.add_argument("--extra-cost", type=float, default=0, help="명도비·수리비 등 추가비용 (만원 단위, 기본 0)")
     ap.add_argument("--no-location", action="store_true", help="입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다")
-    ap.add_argument("--no-building-info", action="store_true", help="건축물대장 조회(승강기/세대수/위반건축물)를 건너뛴다")
+    ap.add_argument("--no-building-info", action="store_true", help="건축물대장 조회(승강기/세대수/사용승인일)를 건너뛴다")
     args = ap.parse_args()
 
     this_year = datetime.now().year

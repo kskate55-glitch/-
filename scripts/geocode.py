@@ -21,6 +21,7 @@ from urllib.request import Request, urlopen
 
 CACHE_PATH = os.path.join("data", "geocode_cache.json")
 KAKAO_URL = "https://dapi.kakao.com/v2/local/search/address.json"
+KAKAO_KEYWORD_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
 
 
 def _load_cache() -> dict:
@@ -74,6 +75,32 @@ def geocode(address: str) -> tuple[float, float] | None:
     cache[address] = [lat, lon]
     _save_cache(cache)
     return lat, lon
+
+
+def nearby_place(lat: float, lon: float, keyword: str, radius_m: int = 1000) -> dict | None:
+    """좌표 기준 반경 안에서 키워드로 가장 가까운 장소를 찾는다 (CLAUDE.md 19절).
+    결과 없거나 호출 실패 시 None. 캐시하지 않는다 — 지오코딩과 달리 매번
+    물건마다 다른 키워드/좌표 조합이라 캐시 이득이 적다."""
+    api_key = _get_api_key()
+    params = (
+        f"query={urllib.parse.quote(keyword)}&x={lon}&y={lat}"
+        f"&radius={radius_m}&sort=distance"
+    )
+    url = f"{KAKAO_KEYWORD_URL}?{params}"
+    req = Request(url, headers={"Authorization": f"KakaoAK {api_key}"})
+
+    try:
+        with urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except (HTTPError, URLError, json.JSONDecodeError):
+        return None
+
+    docs = data.get("documents", [])
+    if not docs:
+        return None
+
+    nearest = docs[0]
+    return {"name": nearest["place_name"], "distance_m": int(nearest["distance"])}
 
 
 def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

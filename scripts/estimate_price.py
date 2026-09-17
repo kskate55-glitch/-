@@ -2,21 +2,28 @@
 저장된 국토부 연립다세대 실거래가 XML(들)을 읽어서
 매도가 범위(보수적 급매가 / 현실적 체결가 / 상단 매도가 / AI 기준매도가 / 권장 호가)를
 CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절성(거래 활발한 달)과
-15절 규칙에 따른 월별 가격 추이 분석도 함께 출력한다.
+15절 규칙에 따른 월별 가격 추이, 19절 규칙에 따른 입지 체크·수익성 계산도 함께
+출력한다.
 
 사용법:
     python estimate_price.py --dir data/raw \
         --address "서울특별시 강북구 수유동 468-202" --dong 수유동 \
-        --area 69.27 --floor 5 --radius 400 --year-min 2025
+        --area 69.27 --floor 5 --radius 400 --year-min 2025 \
+        --bid-price 10200 --extra-cost 300
 
---dir       : XML 파일들이 들어있는 폴더 (여러 달치를 다 넣어두면 자동으로 합쳐서 계산)
---address   : 대상 물건의 지번 주소 — 카카오 로컬 API로 좌표를 구하는 데 쓴다
---dong      : 법정동명 (umdNm) — 계절성/가격추이 등 동네 단위 분석 범위로 쓰인다
---area      : 대상 물건의 전용면적(㎡) — ±15% 이내를 "비슷한 면적"으로 취급
---floor     : 대상 물건의 층 (선택 — 유사층 가중치 판단에 사용)
---build-year: 대상 물건의 준공년도 (선택 — 유사연식 가중치 판단에 사용)
---radius    : 비교 반경(미터), 기본 400m
---year-min  : 매도가 계산에 사용할 최소 계약년도 (기본값: 실행 시점 기준 작년)
+--dir              : XML 파일들이 들어있는 폴더 (여러 달치를 다 넣어두면 자동으로 합쳐서 계산)
+--address          : 대상 물건의 지번 주소 — 카카오 로컬 API로 좌표를 구하는 데 쓴다
+--dong             : 법정동명 (umdNm) — 계절성/가격추이 등 동네 단위 분석 범위로 쓰인다
+--area             : 대상 물건의 전용면적(㎡) — ±15% 이내를 "비슷한 면적"으로 취급
+--floor            : 대상 물건의 층 (선택 — 유사층 가중치 판단에 사용)
+--build-year       : 대상 물건의 준공년도 (선택 — 유사연식 가중치 판단에 사용)
+--radius           : 비교 반경(미터), 기본 400m
+--year-min         : 매도가 계산에 사용할 최소 계약년도 (기본값: 실행 시점 기준 작년)
+--bid-price        : 낙찰가/입찰예정가 (만원 단위, 선택 — 주면 수익성 계산도 같이 보여준다)
+--acquisition-rate : 취득 부대비용률 (기본 3.5%, 다주택/규제지역 여부에 따라 조정 필요)
+--sale-rate        : 매도 중개수수료율 (기본 0.5%)
+--extra-cost       : 명도비·수리비 등 추가비용 (만원 단위, 기본 0)
+--no-location      : 입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다
 
 이 스크립트는 실거래가 XML 파일 텍스트만 읽는다 — 국토부 API를 직접 호출하지
 않는다 (그건 molit_rhtrade_api.py의 몫). 다만 --address를 좌표로 바꾸기 위해
@@ -268,6 +275,65 @@ def compute_price_trend(all_rows: list[dict], dong: str) -> dict:
     return {"scope_label": scope_label, "series": series}
 
 
+def compute_profit(bid_price_man: float, sale_price_man: float, acquisition_rate: float,
+                    sale_rate: float, extra_cost_man: float) -> dict:
+    """CLAUDE.md 19절 규칙: 낙찰가 대비 매도 시나리오별 순수익을 계산한다.
+    모든 금액은 만원 단위. 세율/비용은 참고용 기본값이며 실제 상황(다주택 여부,
+    규제지역, 명도비 등)에 따라 사용자가 직접 조정해야 한다.
+    """
+    total_cost = bid_price_man * (1 + acquisition_rate) + extra_cost_man
+    sale_cost = sale_price_man * sale_rate
+    net_profit = sale_price_man - total_cost - sale_cost
+    roi_pct = (net_profit / total_cost * 100) if total_cost else 0
+    return {"total_cost": total_cost, "net_profit": net_profit, "roi_pct": roi_pct}
+
+
+def print_profit(bid_price_man: float, scenarios: dict, acquisition_rate: float,
+                  sale_rate: float, extra_cost_man: float):
+    def fmt(man):
+        return f"{man / 10000:.2f}억"
+
+    total_cost = bid_price_man * (1 + acquisition_rate) + extra_cost_man
+    print()
+    print(f"[수익성 계산] (낙찰가/입찰예정가 {fmt(bid_price_man)} 기준)")
+    print(f"총 매수비용: {fmt(total_cost)} (낙찰가 + 취득 부대비용 {acquisition_rate*100:.1f}% + 추가비용 {fmt(extra_cost_man)})")
+    print()
+    print("매도 시나리오별 순수익:")
+    labels = {
+        "conservative": "보수적 급매가",
+        "realistic": "현실적 체결가",
+        "upper": "상단 매도가",
+        "ai_base": "AI 기준매도가",
+        "listing": "권장 최초 호가",
+    }
+    for key, label in labels.items():
+        result = compute_profit(bid_price_man, scenarios[key], acquisition_rate, sale_rate, extra_cost_man)
+        sign = "+" if result["net_profit"] >= 0 else ""
+        print(f"- {label} 기준: 순수익 {sign}{fmt(result['net_profit'])} (수익률 {sign}{result['roi_pct']:.1f}%)")
+    print()
+    print("⚠️ 취득세율은 다주택 여부·규제지역 여부에 따라 1.1%~최대 13%까지 크게 달라집니다.")
+    print("   본인 상황에 맞는 정확한 세율로 --acquisition-rate를 조정하세요.")
+    print("⚠️ 명도비·수리비·대출이자 등은 --extra-cost로 직접 반영해야 합니다 (기본값 0).")
+
+
+def print_location_check(subject_coord: tuple[float, float]):
+    """CLAUDE.md 19절 규칙: 카카오 로컬 API로 가까운 지하철역/초등학교/마트를 찾는다."""
+    from geocode import nearby_place
+
+    print()
+    print("[입지 체크] (카카오 로컬 기준, 반경 1km)")
+    for keyword, label in [("지하철역", "가장 가까운 지하철역"), ("초등학교", "가장 가까운 초등학교"), ("마트", "가장 가까운 마트")]:
+        try:
+            place = nearby_place(subject_coord[0], subject_coord[1], keyword)
+        except RuntimeError as e:
+            print(f"{label}: 조회 실패 ({e})")
+            continue
+        if place:
+            print(f"{label}: {place['name']} ({place['distance_m']}m)")
+        else:
+            print(f"{label}: 1km 이내 없음")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default="data/raw")
@@ -279,6 +345,11 @@ def main():
     ap.add_argument("--radius", type=float, default=400, help="비교 반경(미터), 기본 400m")
     ap.add_argument("--year-min", type=int, default=None)
     ap.add_argument("--html", action="store_true", help="reports/ 폴더에 예쁜 HTML 리포트도 저장하고 브라우저로 연다")
+    ap.add_argument("--bid-price", type=float, default=None, help="낙찰가/입찰예정가 (만원 단위) — 주면 수익성 계산도 같이 보여준다")
+    ap.add_argument("--acquisition-rate", type=float, default=0.035, help="취득 부대비용률 (취득세+법무비 등 합산, 기본 3.5%%) — 다주택 여부에 따라 조정 필요")
+    ap.add_argument("--sale-rate", type=float, default=0.005, help="매도 중개수수료율 (기본 0.5%%)")
+    ap.add_argument("--extra-cost", type=float, default=0, help="명도비·수리비 등 추가비용 (만원 단위, 기본 0)")
+    ap.add_argument("--no-location", action="store_true", help="입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -299,6 +370,9 @@ def main():
         print("       카카오 개발자 콘솔에서 발급받은 KAKAO_REST_API_KEY가 .env에 있는지,")
         print("       주소 표기가 정확한지(지번 주소 권장) 확인해 주세요.")
         return
+
+    if not args.no_location:
+        print_location_check(subject_coord)
 
     gu_filter = find_gu_in_address(args.address)
 
@@ -357,6 +431,13 @@ def main():
         floor_txt = f"{r.get('floor')}층" if r.get("floor") else "층정보없음"
         print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, {floor_txt}, "
               f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m")
+
+    if args.bid_price is not None:
+        scenarios = {
+            "conservative": conservative, "realistic": realistic, "upper": upper,
+            "ai_base": ai_base, "listing": listing,
+        }
+        print_profit(args.bid_price, scenarios, args.acquisition_rate, args.sale_rate, args.extra_cost)
 
     season = compute_seasonality(rows, args.dong)
     print_seasonality(season)

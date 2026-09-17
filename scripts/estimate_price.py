@@ -134,6 +134,12 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             row_floor = int(r.get("floor", "").strip())
         except (ValueError, AttributeError):
             pass
+
+        subject_is_basement = floor is not None and floor <= 0
+        row_is_basement = row_floor is not None and row_floor <= 0
+        if row_is_basement and not subject_is_basement:
+            continue  # 반지하/지하는 지상층 매물과 가격대가 크게 달라 표본에서 아예 제외
+
         similar_floor = floor is not None and row_floor is not None and abs(row_floor - floor) <= 1
         floor_weight = 1.0 if (floor is None or similar_floor) else 0.6
 

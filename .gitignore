@@ -4,5 +4,6 @@ data/raw/*.txt
 data/raw_rent/*.xml
 data/raw_rent/*.txt
 reports/*.html
+data/geocode_cache.json
 __pycache__/
 *.pyc

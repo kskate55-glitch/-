@@ -5,18 +5,21 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
 15절 규칙에 따른 월별 가격 추이 분석도 함께 출력한다.
 
 사용법:
-    python estimate_price.py --dir data/raw --building 태영아뜨리움 \
-        --dong 역촌동 --area 41.81 --year-min 2025
+    python estimate_price.py --dir data/raw \
+        --address "서울특별시 강북구 수유동 468-202" --dong 수유동 \
+        --area 69.27 --floor 5 --radius 400 --year-min 2025
 
 --dir       : XML 파일들이 들어있는 폴더 (여러 달치를 다 넣어두면 자동으로 합쳐서 계산)
---building  : 비교 1순위로 우선할 건물명 (mhouseNm에 부분일치)
---dong      : 법정동명 (umdNm) — 5순위 비교의 기준
+--address   : 대상 물건의 지번 주소 — 카카오 로컬 API로 좌표를 구하는 데 쓴다
+--dong      : 법정동명 (umdNm) — 계절성/가격추이 등 동네 단위 분석 범위로 쓰인다
 --area      : 대상 물건의 전용면적(㎡) — ±15% 이내를 "비슷한 면적"으로 취급
+--floor     : 대상 물건의 층 (선택 — 유사층 가중치 판단에 사용)
+--radius    : 비교 반경(미터), 기본 400m
 --year-min  : 매도가 계산에 사용할 최소 계약년도 (기본값: 실행 시점 기준 작년)
---build-year: 대상 물건의 준공년도 (선택 — 3/4순위 판단 시 사용, 없으면 생략)
 
-이 스크립트는 XML 파일 텍스트만 읽는다 — 네트워크 호출은 하지 않는다.
-(API 호출은 molit_rhtrade_api.py 또는 사용자가 직접 만든 XML 파일로 한다)
+이 스크립트는 실거래가 XML 파일 텍스트만 읽는다 — 국토부 API를 직접 호출하지
+않는다 (그건 molit_rhtrade_api.py의 몫). 다만 --address를 좌표로 바꾸기 위해
+카카오 로컬 API는 직접 호출한다 (geocode.py, 환경변수 KAKAO_REST_API_KEY 필요).
 """
 
 import argparse
@@ -76,34 +79,71 @@ def to_amount_man(s: str) -> float:
         return float("nan")
 
 
-def classify_priority(row: dict, building: str, dong: str, area: float, build_year: str | None) -> int:
-    """1(최우선)~5(최하위). 조건에 맞지 않으면 0(제외)."""
-    same_dong = dong and row.get("umdNm", "").strip() == dong.strip()
-    if not same_dong:
-        return 0  # 법정동조차 다르면 이번 라운드에서는 비교군에서 제외
+def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area: float,
+                      floor: int | None, radius_m: float, year_min: int, this_year: int,
+                      gu_filter: str | None) -> list[dict]:
+    """CLAUDE.md 5절 규칙: 실제 반경(기본 400m) 안의 유사면적 매물만 비교 대상으로
+    삼고, 거리·층 유사도로 가중치를 준다.
 
-    same_building = building and building.strip() and building.strip() in row.get("mhouseNm", "")
-    row_area = None
-    try:
-        row_area = float(row.get("excluUseAr", "nan"))
-    except ValueError:
-        pass
-    similar_area = row_area is not None and area and abs(row_area - area) / area <= 0.15
+    빌라/다세대는 한 건물에 보통 3~4세대뿐이라 "동일건물" 비교는 표본이 거의
+    항상 부족하다. 그래서 실제 중개업소·투자자들처럼 "실제 반경 안 + 비슷한
+    면적 + 비슷한 층"을 기준으로 삼는다. 건물명이 같은지는 더 이상 필터링에
+    쓰지 않는다.
+    """
+    from geocode import geocode, haversine_m
+    from lawd_lookup import full_address, gu_name
 
-    same_vintage = (
-        build_year is not None
-        and row.get("buildYear", "").strip() == str(build_year).strip()
-    )
+    subject_lat, subject_lon = subject_coord
+    out = []
+    for r in rows:
+        try:
+            deal_year = int(r.get("dealYear", "0"))
+        except ValueError:
+            continue
+        if deal_year < year_min:
+            continue  # 연도 제한 규칙 — 기준연도 이전 거래는 매도가 계산에서 제외
+        if r.get("cdealType", "").strip() == "해제":
+            continue  # 해제된 거래 제외
 
-    if same_building and similar_area:
-        return 1
-    if same_building:
-        return 2
-    if same_vintage and similar_area:
-        return 3
-    if similar_area:
-        return 5
-    return 4  # 같은 동이지만 면적/연식이 꽤 다름 — 참고용 최하위
+        try:
+            row_area = float(r.get("excluUseAr", "nan"))
+            amount = to_amount_man(r.get("dealAmount", ""))
+        except (ValueError, TypeError):
+            continue
+        if amount != amount or not row_area:
+            continue
+        if abs(row_area - area) / area > 0.15:
+            continue  # 반경 안이라도 면적이 많이 다르면 비교 대상에서 제외
+
+        if gu_filter and gu_name(r.get("sggCd", "")) != gu_filter:
+            continue  # 다른 구는 400m 반경에 들 일이 사실상 없어 지오코딩을 아낀다
+
+        addr = full_address(r)
+        if not addr:
+            continue
+        coord = geocode(addr)
+        if coord is None:
+            continue
+        distance = haversine_m(subject_lat, subject_lon, coord[0], coord[1])
+        if distance > radius_m:
+            continue
+
+        row_floor = None
+        try:
+            row_floor = int(r.get("floor", "").strip())
+        except (ValueError, AttributeError):
+            pass
+        similar_floor = floor is not None and row_floor is not None and abs(row_floor - floor) <= 1
+        floor_weight = 1.0 if (floor is None or similar_floor) else 0.6
+        distance_weight = max(0.2, 1 - distance / radius_m)
+
+        r["_distance_m"] = distance
+        r["_amount_man"] = amount
+        r["_weight"] = weight_for_year(r.get("dealYear"), this_year) * distance_weight * floor_weight
+        out.append(r)
+
+    out.sort(key=lambda r: r["_distance_m"])
+    return out
 
 
 def weight_for_year(deal_year: str, this_year: int) -> float:
@@ -214,10 +254,11 @@ def compute_price_trend(all_rows: list[dict], dong: str) -> dict:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default="data/raw")
-    ap.add_argument("--building", default="")
-    ap.add_argument("--dong", required=True)
+    ap.add_argument("--address", required=True, help="대상 물건의 지번 주소 (지오코딩용, 예: '서울특별시 강북구 수유동 468-202')")
+    ap.add_argument("--dong", required=True, help="법정동명 — 계절성/가격추이 등 동네 단위 분석 범위로 쓰인다")
     ap.add_argument("--area", type=float, required=True)
-    ap.add_argument("--build-year", default=None)
+    ap.add_argument("--floor", type=int, default=None, help="대상 물건의 층 (선택 — 유사층 가중치 판단에 사용)")
+    ap.add_argument("--radius", type=float, default=400, help="비교 반경(미터), 기본 400m")
     ap.add_argument("--year-min", type=int, default=None)
     ap.add_argument("--html", action="store_true", help="reports/ 폴더에 예쁜 HTML 리포트도 저장하고 브라우저로 연다")
     args = ap.parse_args()
@@ -231,33 +272,25 @@ def main():
         print("       molit_rhtrade_api.py로 조회한 결과를 이 폴더에 .xml 또는 .txt로 저장해 주세요.")
         return
 
-    filtered = []
-    for r in rows:
-        try:
-            deal_year = int(r.get("dealYear", "0"))
-        except ValueError:
-            continue
-        if deal_year < year_min:
-            continue  # 연도 제한 규칙 — 기준연도 이전 거래는 매도가 계산에서 제외
-        if r.get("cdealType", "").strip() == "해제":
-            continue  # 해제된 거래 제외
-        priority = classify_priority(r, args.building, args.dong, args.area, args.build_year)
-        if priority == 0:
-            continue
-        amount = to_amount_man(r.get("dealAmount", ""))
-        if amount != amount:  # NaN
-            continue
-        r["_priority"] = priority
-        r["_amount_man"] = amount
-        r["_weight"] = weight_for_year(r.get("dealYear"), this_year) * (6 - priority)
-        filtered.append(r)
+    from geocode import geocode
+    from lawd_lookup import find_gu_in_address
 
-    if not filtered:
-        print("[안내] 조건(법정동/연도)에 맞는 비교거래를 찾지 못했습니다.")
-        print("       --dong 이 실거래 응답의 umdNm(예: '역촌동')과 정확히 일치하는지 확인해 주세요.")
+    subject_coord = geocode(args.address)
+    if subject_coord is None:
+        print(f"[안내] 대상 물건 주소({args.address})를 좌표로 변환하지 못했습니다.")
+        print("       카카오 개발자 콘솔에서 발급받은 KAKAO_REST_API_KEY가 .env에 있는지,")
+        print("       주소 표기가 정확한지(지번 주소 권장) 확인해 주세요.")
         return
 
-    filtered.sort(key=lambda r: r["_priority"])
+    gu_filter = find_gu_in_address(args.address)
+
+    filtered = find_comparables(rows, subject_coord, args.area, args.floor, args.radius,
+                                 year_min, this_year, gu_filter)
+
+    if not filtered:
+        print(f"[안내] 반경 {args.radius:.0f}m, 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")
+        print("       반경을 넓히거나(--radius), data/raw에 더 많은 지역/기간 데이터를 추가해 보세요.")
+        return
 
     amounts_weighted = []
     for r in filtered:
@@ -270,13 +303,13 @@ def main():
     n_total = len(filtered)
     n_2026 = sum(1 for r in filtered if r.get("dealYear") == str(this_year))
     n_2025 = sum(1 for r in filtered if r.get("dealYear") == str(this_year - 1))
-    n_same_building = sum(1 for r in filtered if r["_priority"] <= 2)
+    n_close = sum(1 for r in filtered if r["_distance_m"] <= args.radius / 2)
 
-    # 신뢰도: 건수, 동일건물 비중, 최신성, 분산 반영 (0~100)
+    # 신뢰도: 건수, 근접 매물 비중, 최신성, 분산 반영 (0~100)
     spread = (p75 - p25) / median_man if median_man else 1
     confidence = 100
     confidence -= max(0, (5 - n_total)) * 10
-    confidence -= max(0, (2 - n_same_building)) * 10
+    confidence -= max(0, (2 - n_close)) * 10
     confidence -= min(30, spread * 100)
     confidence -= max(0, (1 - (n_2026 / n_total))) * 15
     confidence = max(10, min(100, round(confidence)))
@@ -292,7 +325,7 @@ def main():
         return f"{eok:.2f}억"
 
     print(f"분석기간: {year_min}.01 ~ {this_year}.12")
-    print(f"유효 비교거래: {n_total}건 ({this_year}년 {n_2026}건 / {this_year-1}년 {n_2025}건 / 동일건물 {n_same_building}건)")
+    print(f"유효 비교거래: {n_total}건 (반경 {args.radius:.0f}m 이내, {args.radius/2:.0f}m 이내 {n_close}건 / {this_year}년 {n_2026}건)")
     print(f"시세 신뢰도: {confidence}/100")
     print()
     print(f"보수적 급매가: {fmt(conservative)}")
@@ -301,12 +334,11 @@ def main():
     print(f"AI 기준매도가: {fmt(ai_base)}")
     print(f"권장 최초 호가: {fmt(listing)}")
     print()
-    pr_labels = {1: "1순위(동일건물·유사면적)", 2: "2순위(동일건물)", 3: "3순위(유사연식·면적)",
-                 4: "4순위(참고용)", 5: "5순위(동일법정동)"}
-    print("핵심 비교거래 (우선순위 순):")
+    print("핵심 비교거래 (가까운 순):")
     for r in filtered[:8]:
-        print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, "
-              f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {pr_labels[r['_priority']]}")
+        floor_txt = f"{r.get('floor')}층" if r.get("floor") else "층정보없음"
+        print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, {floor_txt}, "
+              f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m")
 
     season = compute_seasonality(rows, args.dong)
     print_seasonality(season)
@@ -332,21 +364,21 @@ def main():
                 "area": r.get("excluUseAr", "?"),
                 "date": f"{r.get('dealYear')}.{r.get('dealMonth')}",
                 "amount": r["_amount_man"],
-                "label": pr_labels[r["_priority"]],
+                "label": f"{r['_distance_m']:.0f}m",
             }
             for r in filtered[:8]
         ]
         html_str = render_report(
-            building=args.building or args.dong, dong=args.dong, area=args.area,
+            building=args.dong, dong=args.dong, area=args.area,
             period=f"{year_min}.01 ~ {this_year}.12", generated=datetime.now().strftime("%Y.%m.%d %H:%M"),
             confidence=confidence, conservative=conservative, realistic=realistic,
             upper=upper, ai_base=ai_base, listing=listing,
-            n_total=n_total, n_same_building=n_same_building,
+            n_total=n_total, n_close=n_close,
             comparables=comparables, season=season, trend=trend,
         )
         reports_dir = "reports"
         os.makedirs(reports_dir, exist_ok=True)
-        out_name = f"{(args.building or args.dong).replace(' ', '_')}_{datetime.now():%Y%m%d_%H%M%S}.html"
+        out_name = f"{args.dong.replace(' ', '_')}_{datetime.now():%Y%m%d_%H%M%S}.html"
         out_path = os.path.join(reports_dir, out_name)
         with open(out_path, "w", encoding="utf-8") as f:
             f.write(html_str)

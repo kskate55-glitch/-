@@ -6,7 +6,10 @@
 2. `.env.example`을 복사해서 `.env`로 이름 바꾸고, 인증키 채워넣기:
    ```
    MOLIT_SERVICE_KEY=발급받은_인증키
+   KAKAO_REST_API_KEY=발급받은_카카오_REST_API_키
    ```
+   - `MOLIT_SERVICE_KEY`: [공공데이터포털](https://www.data.go.kr)에서 "연립다세대 매매 실거래가" 활용신청
+   - `KAKAO_REST_API_KEY`: [카카오 개발자](https://developers.kakao.com)에서 애플리케이션 생성 후 REST API 키 발급 (가입 즉시 발급, 승인 대기 없음) — 물건 주소를 좌표로 바꿔 반경 기준 비교를 하는 데 쓰입니다.
 3. 이 폴더에서 터미널 열고 `claude` 실행해서 Claude Code 켜기
 
 ### 더 편하게 켜기 (선택)
@@ -18,12 +21,13 @@
 ## 그 다음부터는 그냥 이렇게 쓰면 됩니다
 
 - **새 물건 분석하고 싶을 때**: "OO빌라 매도가 알아봐줘, 사건번호 OOOO, 주소 OOOO,
-  전용면적 OO㎡" 라고 말하면, Claude Code가 어떤 지역코드/기간으로 API를 조회해야
-  하는지 알려줍니다. 그 명령어를 터미널에 붙여넣고 실행하면 됩니다.
-- **API 조회 결과가 나오면**: 화면에 나온 XML/텍스트를 그대로 복사해서 Claude Code
-  채팅창에 붙여넣기만 하세요. `CLAUDE.md`에 적힌 규칙에 따라 자동으로 파싱하고,
-  8절 포맷으로 매도가 범위(보수적 급매가/현실적 체결가/상단 매도가 등)를 계산해서
-  보여줍니다. 설명을 다시 할 필요 없습니다.
+  전용면적 OO㎡, N층" 이라고 말하면, Claude Code가 어떤 지역코드/기간으로 API를
+  조회해야 하는지 알려줍니다. 그 명령어를 터미널에 붙여넣고 실행하면 됩니다.
+- **API 조회 결과가 나오면**: `data/raw/` 폴더에 저장해두면, `estimate_price.py`가
+  물건 주소를 좌표로 바꿔서 **실제 반경(기본 400m) 안의 유사면적·유사층 매물만**
+  골라 비교합니다 (빌라는 같은 건물 매매사례가 거의 없어서, "동일건물"이 아니라
+  "가까운 거리"를 기준으로 비교해요). `CLAUDE.md`에 적힌 규칙에 따라 8절 포맷으로
+  매도가 범위(보수적 급매가/현실적 체결가/상단 매도가 등)를 계산해서 보여줍니다.
 - **여러 달치를 조회했다면**: 매번 붙여넣어도 되고, `data/raw/` 폴더에 `.xml`
   파일로 저장해두고 "data/raw 폴더에 있는 걸로 계산해줘"라고 하면 한 번에 계산됩니다.
 
@@ -46,12 +50,20 @@
 
 ```
 molit-project/
-├── CLAUDE.md              ← 분석 규칙 (자동으로 매 세션 로드됨)
-├── README.md              ← 이 파일
-├── .env.example           ← 인증키 설정 예시
+├── CLAUDE.md                  ← 분석 규칙 (자동으로 매 세션 로드됨)
+├── README.md                  ← 이 파일
+├── .env.example                ← 인증키 설정 예시
+├── start_claude.bat            ← 더블클릭으로 바로 Claude Code 켜기
 ├── scripts/
-│   ├── molit_rhtrade_api.py   ← API 직접 호출 스크립트
-│   └── estimate_price.py      ← 저장된 XML로 매도가 계산하는 스크립트
+│   ├── molit_rhtrade_api.py    ← 매매 실거래가 API 호출 스크립트
+│   ├── molit_rhrent_api.py     ← 전월세 실거래가 API 호출 스크립트
+│   ├── geocode.py               ← 주소 → 좌표 변환 (카카오 로컬 API)
+│   ├── lawd_lookup.py          ← 법정동코드 ↔ 구 이름 조회
+│   ├── estimate_price.py       ← 반경 기반 매도가 계산 스크립트
+│   ├── rank_areas.py           ← 동네 랭킹 / 면적 구간별 비교
+│   └── jeonse_ratio.py         ← 전세가율 계산
 └── data/
-    └── raw/                ← 조회 결과(XML) 저장하는 곳
+    ├── raw/                    ← 매매 실거래가 조회 결과(XML) 저장하는 곳
+    ├── raw_rent/                ← 전월세 실거래가 조회 결과(XML) 저장하는 곳
+    └── lawd_codes.md            ← 법정동코드 참고표
 ```

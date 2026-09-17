@@ -4,7 +4,7 @@
 CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절성(거래 활발한 달)과
 15절 규칙에 따른 월별 가격 추이, 16절 규칙에 따른 예상 전세가·매매 대비 비교,
 19절 규칙에 따른 입지 체크·수익성 계산, 20절 규칙에 따른 건축물대장 조회
-(승강기·세대수·사용승인일)도 함께 출력한다.
+(승강기·세대수·사용승인일), 21절 규칙에 따른 인근 중개업소 조회도 함께 출력한다.
 
 사용법:
     python estimate_price.py --dir data/raw --rent-dir data/raw_rent \
@@ -27,11 +27,16 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
 --sale-rate        : 매도 중개수수료율 (기본 0.5%)
 --extra-cost       : 명도비·수리비 등 추가비용 (만원 단위, 기본 0)
 --no-location      : 입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다
+--brokers-csv      : 서울 인근 중개업소 조회용 CSV (기본 data/brokers_seoul.csv,
+                     서울 열린데이터광장에서 받은 공인중개사사무소 정보)
+--broker-radius    : 인근 중개업소 조회 반경(미터), 기본 1000m
+--no-brokers       : 인근 중개업소 조회를 건너뛴다
 
 이 스크립트는 실거래가 XML 파일 텍스트만 읽는다 — 국토부 API를 직접 호출하지
 않는다 (그건 molit_rhtrade_api.py/molit_rhrent_api.py의 몫). 다만 --address를
-좌표로 바꾸기 위해 카카오 로컬 API는 직접 호출한다 (geocode.py, 환경변수
-KAKAO_REST_API_KEY 필요).
+좌표로 바꾸기 위해 카카오 로컬 API는 직접 호출하고(geocode.py, 환경변수
+KAKAO_REST_API_KEY 필요), 경기도 물건이면 인근 중개업소 조회를 위해 경기데이터드림
+API도 직접 호출한다(broker_lookup.py, 환경변수 GG_DATA_KEY 필요).
 """
 
 import argparse
@@ -399,6 +404,52 @@ def print_location_check(subject_coord: tuple[float, float]):
             print(f"{label}: 1km 이내 없음")
 
 
+def print_broker_check(address: str, subject_coord: tuple[float, float], dong: str,
+                        brokers_csv: str, radius_m: float):
+    """CLAUDE.md 21절 규칙: 임장 시 바로 전화해볼 수 있는 인근 중개업소를 찾는다.
+    서울은 사용자가 받아둔 CSV를 지오코딩해서 반경순, 경기도는 경기데이터드림
+    API를 법정동 일치로만 필터한다 (개별 주소가 없어 거리순 정렬 불가). 다른
+    시/도는 아직 데이터 소스가 없어 조용히 생략한다."""
+    from broker_lookup import MAX_CANDIDATES, find_brokers_gyeonggi, find_nearby_brokers_seoul, load_seoul_brokers
+    from lawd_lookup import find_gu_in_address
+
+    print()
+    if "서울특별시" in address:
+        rows = load_seoul_brokers(brokers_csv)
+        if not rows:
+            print(f"[인근 중개업소] {brokers_csv}가 없어 생략합니다.")
+            print(f"       서울 열린데이터광장에서 공인중개사사무소 정보 CSV를 받아 {brokers_csv}에 저장해 주세요.")
+            return
+        brokers, truncated = find_nearby_brokers_seoul(rows, subject_coord, dong, radius_m)
+        print(f"[인근 중개업소] ({dong} 기준, 반경 {radius_m:.0f}m, 영업중만 — 서울 열린데이터광장 CSV)")
+        if truncated:
+            print(f"       (참고: {dong}에 영업중 사무소가 많아 상위 {MAX_CANDIDATES}건만 지오코딩했습니다)")
+        if not brokers:
+            print("반경 안에서 찾지 못했습니다.")
+            return
+        for b in brokers[:8]:
+            print(f"- {b['name']} ({b['broker_name']}) {b['tel']} — {b['distance_m']:.0f}m")
+    elif "경기도" in address:
+        sigun_nm = find_gu_in_address(address)
+        if not sigun_nm:
+            print("[인근 중개업소] 주소에서 시/군 이름을 찾지 못해 생략합니다.")
+            return
+        sigun_nm = sigun_nm.split(" ")[0]  # 경기데이터드림은 구 단위가 아닌 시/군 단위로 추정됨
+        try:
+            brokers = find_brokers_gyeonggi(sigun_nm, dong)
+        except RuntimeError as e:
+            print(f"[인근 중개업소] 조회 실패: {e}")
+            return
+        print(f"[인근 중개업소] ({dong} 기준, 영업중만 — 경기데이터드림, ⚠️ 개별 주소 정보가 없어 거리순 정렬 불가)")
+        if not brokers:
+            print("같은 동에서 찾지 못했습니다.")
+            return
+        for b in brokers[:8]:
+            print(f"- {b['name']} ({b['broker_name']}) {b['tel']}")
+    else:
+        return  # 서울/경기 외 지역은 아직 데이터 소스가 없다
+
+
 def print_building_info(subject_detail: dict):
     """CLAUDE.md 20절 규칙: 건축물대장에서 승강기/세대수/사용승인일 등을 확인한다."""
     from building_register import get_building_info
@@ -499,6 +550,9 @@ def main():
     ap.add_argument("--extra-cost", type=float, default=0, help="명도비·수리비 등 추가비용 (만원 단위, 기본 0)")
     ap.add_argument("--no-location", action="store_true", help="입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다")
     ap.add_argument("--no-building-info", action="store_true", help="건축물대장 조회(승강기/세대수/사용승인일)를 건너뛴다")
+    ap.add_argument("--brokers-csv", default="data/brokers_seoul.csv", help="서울 인근 중개업소 조회용 CSV 경로 (서울 열린데이터광장에서 받은 공인중개사사무소 정보)")
+    ap.add_argument("--broker-radius", type=float, default=1000, help="인근 중개업소 조회 반경(미터), 기본 1000m")
+    ap.add_argument("--no-brokers", action="store_true", help="인근 중개업소 조회를 건너뛴다")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -523,6 +577,9 @@ def main():
 
     if not args.no_location:
         print_location_check(subject_coord)
+
+    if not args.no_brokers:
+        print_broker_check(args.address, subject_coord, args.dong, args.brokers_csv, args.broker_radius)
 
     if not args.no_building_info:
         print_building_info(subject_detail)

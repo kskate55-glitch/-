@@ -1,26 +1,25 @@
 """
 국토교통부 연립다세대(빌라/다세대) 전월세 실거래가 API 클라이언트
 ========================================================
-⚠️ molit_rhtrade_api.py(매매)는 업로드된 기술문서로 확인된 스펙이지만,
-   이 전월세(RHRent) 버전은 같은 API 계열의 명명 규칙(RTMSDataSvcXxxTrade ↔
-   RTMSDataSvcXxxRent)을 따른 "추정" 스펙이다. 실제로 호출했을 때 응답 필드명이
-   다르면(예: deposit/monthlyRent가 아닌 다른 이름) 알려주면 바로 고친다.
+✅ 사용자가 업로드한 공식 기술문서(국토교통부 실거래가 정보 오픈API 활용가이드
+   — 연립다세대 전월세 실거래가 자료)로 스펙을 검증했다.
 
-추정 API 기본 정보
-- Endpoint : https://apis.data.go.kr/1613000/RTMSDataSvcRHRent
-- Operation: getRTMSDataSvcRHRent
+API 기본 정보
+- Endpoint : https://apis.data.go.kr/1613000/RTMSDataSvcRHRent/getRTMSDataSvcRHRent
 - 공공데이터포털에서 "연립다세대 전월세 실거래가"로 검색 → 별도로 활용신청 필요
-  (매매 API 승인과는 별개의 서비스이다)
+  (매매 API 승인과는 별개의 서비스이다). 인증키는 MOLIT_SERVICE_KEY를 재사용한다.
 - 인터페이스: REST (GET), 응답 포맷: XML
 
 필수 요청 파라미터
-- serviceKey  : 인증키 (매매 API와 동일한 키 사용 가능)
+- serviceKey  : 인증키
 - LAWD_CD     : 법정동코드 앞 5자리
 - DEAL_YMD    : 계약년월 6자리
 
-추정 응답 필드 (매매 API와 겹치는 필드 + 전월세 전용 필드)
-umdNm, mhouseNm, jibun, excluUseAr, dealYear, dealMonth, dealDay, floor,
-deposit(보증금, 만원), monthlyRent(월세, 만원), contractType(신규/갱신 등)
+응답 필드 (문서로 확인됨)
+sggCd, umdNm, houseType(연립/다세대), mhouseNm, jibun, buildYear, excluUseAr,
+dealYear, dealMonth, dealDay, deposit(보증금액, 만원), monthlyRent(월세금액, 만원),
+floor, contractTerm, contractType, useRRRight, preDeposit, preMonthlyRent.
+매매 API와 달리 cdealType(계약해제) 필드는 없다.
 
 ⚠️ 이 스크립트도 샌드박스 환경에서는 실행할 수 없다. 본인 로컬 환경에서 실행한다.
 """

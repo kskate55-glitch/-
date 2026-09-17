@@ -64,9 +64,8 @@ molit-project/
 │   ├── molit_rhrent_api.py     ← 전월세 실거래가 API 호출 스크립트
 │   ├── geocode.py               ← 주소 → 좌표 변환 (카카오 로컬 API)
 │   ├── lawd_lookup.py          ← 법정동코드 ↔ 구 이름 조회
-│   ├── estimate_price.py       ← 반경 기반 매도가 계산 스크립트
-│   ├── rank_areas.py           ← 동네 랭킹 / 면적 구간별 비교
-│   └── jeonse_ratio.py         ← 전세가율 계산
+│   ├── estimate_price.py       ← 반경 기반 매도가·예상 전세가 계산 스크립트
+│   └── rank_areas.py           ← 동네 랭킹 / 면적 구간별 비교
 └── data/
     ├── raw/                    ← 매매 실거래가 조회 결과(XML) 저장하는 곳
     ├── raw_rent/                ← 전월세 실거래가 조회 결과(XML) 저장하는 곳

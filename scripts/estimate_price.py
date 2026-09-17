@@ -2,16 +2,19 @@
 저장된 국토부 연립다세대 실거래가 XML(들)을 읽어서
 매도가 범위(보수적 급매가 / 현실적 체결가 / 상단 매도가 / AI 기준매도가 / 권장 호가)를
 CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절성(거래 활발한 달)과
-15절 규칙에 따른 월별 가격 추이, 19절 규칙에 따른 입지 체크·수익성 계산,
-20절 규칙에 따른 건축물대장 조회(승강기·세대수·사용승인일)도 함께 출력한다.
+15절 규칙에 따른 월별 가격 추이, 16절 규칙에 따른 예상 전세가·매매 대비 비교,
+19절 규칙에 따른 입지 체크·수익성 계산, 20절 규칙에 따른 건축물대장 조회
+(승강기·세대수·사용승인일)도 함께 출력한다.
 
 사용법:
-    python estimate_price.py --dir data/raw \
+    python estimate_price.py --dir data/raw --rent-dir data/raw_rent \
         --address "서울특별시 강북구 수유동 468-202" --dong 수유동 \
         --area 69.27 --floor 5 --radius 400 --year-min 2025 \
         --bid-price 10200 --extra-cost 300
 
 --dir              : XML 파일들이 들어있는 폴더 (여러 달치를 다 넣어두면 자동으로 합쳐서 계산)
+--rent-dir         : 전월세 실거래가 XML 폴더 (기본 data/raw_rent) — 데이터가 있으면
+                     16절 예상 전세가·매매 대비 비교도 함께 계산한다
 --address          : 대상 물건의 지번 주소 — 카카오 로컬 API로 좌표를 구하는 데 쓴다
 --dong             : 법정동명 (umdNm) — 계절성/가격추이 등 동네 단위 분석 범위로 쓰인다
 --area             : 대상 물건의 전용면적(㎡) — ±15% 이내를 "비슷한 면적"으로 취급
@@ -26,8 +29,9 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
 --no-location      : 입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다
 
 이 스크립트는 실거래가 XML 파일 텍스트만 읽는다 — 국토부 API를 직접 호출하지
-않는다 (그건 molit_rhtrade_api.py의 몫). 다만 --address를 좌표로 바꾸기 위해
-카카오 로컬 API는 직접 호출한다 (geocode.py, 환경변수 KAKAO_REST_API_KEY 필요).
+않는다 (그건 molit_rhtrade_api.py/molit_rhrent_api.py의 몫). 다만 --address를
+좌표로 바꾸기 위해 카카오 로컬 API는 직접 호출한다 (geocode.py, 환경변수
+KAKAO_REST_API_KEY 필요).
 """
 
 import argparse
@@ -79,6 +83,34 @@ def dedupe(rows: list[dict]) -> list[dict]:
     return out
 
 
+def dedupe_rent(rows: list[dict]) -> list[dict]:
+    """전월세 행은 dealAmount가 없고 deposit/monthlyRent가 금액 필드라 dedupe()와
+    키가 다르다 (CLAUDE.md 16절)."""
+    seen = set()
+    out = []
+    for r in rows:
+        key = (
+            r.get("umdNm"), r.get("mhouseNm"), r.get("jibun"),
+            r.get("dealYear"), r.get("dealMonth"), r.get("dealDay"),
+            r.get("deposit"), r.get("monthlyRent"), r.get("excluUseAr"), r.get("floor"),
+        )
+        if key not in seen:
+            seen.add(key)
+            out.append(r)
+    return out
+
+
+def filter_pure_jeonse(rows: list[dict]) -> list[dict]:
+    """월세가 섞이지 않은(monthlyRent == 0) 순수 전세 거래만 남긴다 (CLAUDE.md 16절 —
+    환산보증금 계산은 하지 않으므로 월세가 섞인 거래는 전세가 추정에서 제외한다)."""
+    out = []
+    for r in rows:
+        if to_amount_man(r.get("monthlyRent", "0")) != 0:
+            continue
+        out.append(r)
+    return out
+
+
 def to_amount_man(s: str) -> float:
     """'36,900' (만원 단위 문자열) -> 36900.0 (만원, float)"""
     try:
@@ -89,7 +121,8 @@ def to_amount_man(s: str) -> float:
 
 def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area: float,
                       floor: int | None, build_year: str | None, radius_m: float,
-                      year_min: int, this_year: int, gu_filter: str | None) -> list[dict]:
+                      year_min: int, this_year: int, gu_filter: str | None,
+                      amount_field: str = "dealAmount") -> list[dict]:
     """CLAUDE.md 5절 규칙: 실제 반경(기본 400m) 안의 유사면적 매물만 비교 대상으로
     삼고, 거리·층·연식 유사도로 가중치를 준다.
 
@@ -97,6 +130,9 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
     항상 부족하다. 그래서 실제 중개업소·투자자들처럼 "실제 반경 안 + 비슷한
     면적 + 비슷한 층 + 비슷한 연식"을 기준으로 삼는다. 건물명이 같은지는 더
     이상 필터링에 쓰지 않는다.
+
+    amount_field: 금액 필드명. 매매 행은 "dealAmount", 전세 행은 "deposit"
+    (CLAUDE.md 16절 — 예상 전세가도 같은 로직으로 계산한다).
     """
     from geocode import geocode, haversine_m
     from lawd_lookup import full_address, gu_name
@@ -115,7 +151,7 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
 
         try:
             row_area = float(r.get("excluUseAr", "nan"))
-            amount = to_amount_man(r.get("dealAmount", ""))
+            amount = to_amount_man(r.get(amount_field, ""))
         except (ValueError, TypeError):
             continue
         if amount != amount or not row_area:
@@ -178,6 +214,37 @@ def weight_for_year(deal_year: str, this_year: int) -> float:
     if y == this_year - 1:
         return 1.0
     return 0.3  # 기준연도 이전은 원래 필터링되지만, 방어적으로 낮은 가중치만 부여
+
+
+def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int) -> dict:
+    """CLAUDE.md 7~8절 규칙: 가중 복제 후 p25/중앙값/p75와 시세 신뢰도를 계산한다.
+    매매·전세(16절) 양쪽에서 공통으로 쓴다 — find_comparables()가 이미 채워둔
+    _amount_man/_weight/_distance_m을 그대로 사용한다."""
+    amounts_weighted = []
+    for r in filtered:
+        amounts_weighted.extend([r["_amount_man"]] * max(1, round(r["_weight"])))
+
+    median_man = statistics.median(amounts_weighted)
+    p25 = statistics.median(sorted(amounts_weighted)[: max(1, len(amounts_weighted) // 2)])
+    p75 = statistics.median(sorted(amounts_weighted)[len(amounts_weighted) // 2 :])
+
+    n_total = len(filtered)
+    n_this_year = sum(1 for r in filtered if r.get("dealYear") == str(this_year))
+    n_close = sum(1 for r in filtered if r["_distance_m"] <= radius_m / 2)
+
+    spread = (p75 - p25) / median_man if median_man else 1
+    confidence = 100
+    confidence -= max(0, (5 - n_total)) * 10
+    confidence -= max(0, (2 - n_close)) * 10
+    confidence -= min(30, spread * 100)
+    confidence -= max(0, (1 - (n_this_year / n_total))) * 15
+    confidence = max(10, min(100, round(confidence)))
+
+    return {
+        "p25": p25, "median": median_man, "p75": p75,
+        "n_total": n_total, "n_close": n_close, "n_this_year": n_this_year,
+        "confidence": confidence,
+    }
 
 
 def seasonality_index(rows: list[dict]) -> dict[int, int] | None:
@@ -361,9 +428,63 @@ def print_building_info(subject_detail: dict):
         print(f"지상층수: {info['ground_floors']}층")
 
 
+def print_jeonse_comparison(rent_dir: str, subject_coord: tuple[float, float], area: float,
+                             floor: int | None, build_year: str | None, radius_m: float,
+                             year_min: int, this_year: int, gu_filter: str | None,
+                             realistic_sale: float, fmt) -> None:
+    """CLAUDE.md 16절 규칙: 매매가와 같은 반경/면적/연식/층 조건으로 예상 전세가를
+    계산하고, 방금 계산한 매매 현실적 체결가와 나란히 비교한다."""
+    rent_rows = dedupe_rent(load_transactions(rent_dir))
+    if not rent_rows:
+        return  # 전세 데이터가 없으면 조용히 생략한다 — 선택 기능이라 매매가 계산을 막지 않는다
+
+    jeonse_rows = filter_pure_jeonse(rent_rows)
+    jeonse_filtered = find_comparables(jeonse_rows, subject_coord, area, floor, build_year,
+                                        radius_m, year_min, this_year, gu_filter,
+                                        amount_field="deposit")
+    if not jeonse_filtered:
+        print()
+        print(f"[예상 전세가] 반경 {radius_m:.0f}m, 유사면적 조건에 맞는 전세 비교거래를 찾지 못해 생략합니다.")
+        return
+
+    jscen = compute_scenarios(jeonse_filtered, radius_m, this_year)
+    print()
+    print(f"[예상 전세가] (매매가와 동일 조건 — 반경 {radius_m:.0f}m, 유사면적·유사층·유사연식)")
+    print(f"유효 비교거래: {jscen['n_total']}건 (반경 {radius_m:.0f}m 이내, {radius_m/2:.0f}m 이내 {jscen['n_close']}건 / {this_year}년 {jscen['n_this_year']}건)")
+    print(f"시세 신뢰도: {jscen['confidence']}/100")
+    print()
+    print(f"보수적 급매 전세가: {fmt(jscen['p25'])}")
+    print(f"현실적 전세가: {fmt(jscen['median'])}")
+    print(f"상단 전세가: {fmt(jscen['p75'])}")
+    print()
+    print("핵심 전세 비교거래 (가까운 순):")
+    for r in jeonse_filtered[:8]:
+        floor_txt = f"{r.get('floor')}층" if r.get("floor") else "층정보없음"
+        print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, {floor_txt}, "
+              f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m")
+
+    jeonse_realistic = jscen["median"]
+    ratio = jeonse_realistic / realistic_sale * 100 if realistic_sale else 0
+    gap = realistic_sale - jeonse_realistic
+    print()
+    print("[매매 vs 전세 비교]")
+    print(f"예상 매매가(현실적 체결가): {fmt(realistic_sale)}")
+    print(f"예상 전세가(현실적 전세가): {fmt(jeonse_realistic)}")
+    print(f"전세가율: {ratio:.1f}%")
+    print(f"갭(매매가 - 전세가, 갭투자 시 필요자금 근사): {fmt(gap)}")
+    if ratio >= 80:
+        print("→ 전세가율이 높은 편입니다. 매매가 대비 갭투자 부담이 적은 지역일 수 있습니다.")
+    elif ratio >= 65:
+        print("→ 평균적인 수준의 전세가율입니다.")
+    else:
+        print("→ 전세가율이 낮은 편입니다. 매매가에 거품이 있거나 전세 수요가 약할 수 있습니다.")
+    print("⚠️ 참고용 통계이며 확정 판단이 아닙니다. 전세 매물 수가 매매보다 적어 표본이 부족할 수 있습니다.")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default="data/raw")
+    ap.add_argument("--rent-dir", default="data/raw_rent", help="전월세 실거래가 XML 폴더 — 데이터가 있으면 예상 전세가와 매매 대비 비교도 함께 보여준다 (CLAUDE.md 16절)")
     ap.add_argument("--address", required=True, help="대상 물건의 지번 주소 (지오코딩용, 예: '서울특별시 강북구 수유동 468-202')")
     ap.add_argument("--dong", required=True, help="법정동명 — 계절성/가격추이 등 동네 단위 분석 범위로 쓰인다")
     ap.add_argument("--area", type=float, required=True)
@@ -416,32 +537,12 @@ def main():
         print("       반경을 넓히거나(--radius), data/raw에 더 많은 지역/기간 데이터를 추가해 보세요.")
         return
 
-    amounts_weighted = []
-    for r in filtered:
-        amounts_weighted.extend([r["_amount_man"]] * max(1, round(r["_weight"])))
-
-    median_man = statistics.median(amounts_weighted)
-    p25 = statistics.median(sorted(amounts_weighted)[: max(1, len(amounts_weighted) // 2)])
-    p75 = statistics.median(sorted(amounts_weighted)[len(amounts_weighted) // 2 :])
-
-    n_total = len(filtered)
-    n_2026 = sum(1 for r in filtered if r.get("dealYear") == str(this_year))
-    n_2025 = sum(1 for r in filtered if r.get("dealYear") == str(this_year - 1))
-    n_close = sum(1 for r in filtered if r["_distance_m"] <= args.radius / 2)
-
-    # 신뢰도: 건수, 근접 매물 비중, 최신성, 분산 반영 (0~100)
-    spread = (p75 - p25) / median_man if median_man else 1
-    confidence = 100
-    confidence -= max(0, (5 - n_total)) * 10
-    confidence -= max(0, (2 - n_close)) * 10
-    confidence -= min(30, spread * 100)
-    confidence -= max(0, (1 - (n_2026 / n_total))) * 15
-    confidence = max(10, min(100, round(confidence)))
-
-    conservative = p25
-    realistic = median_man
-    upper = p75
-    ai_base = round((p25 * 0.3 + median_man * 0.5 + p75 * 0.2), -1)
+    scen = compute_scenarios(filtered, args.radius, this_year)
+    n_total, n_close, n_2026, confidence = scen["n_total"], scen["n_close"], scen["n_this_year"], scen["confidence"]
+    conservative = scen["p25"]
+    realistic = scen["median"]
+    upper = scen["p75"]
+    ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
     listing = round(upper * 1.03, -1)
 
     def fmt(man):
@@ -463,6 +564,9 @@ def main():
         floor_txt = f"{r.get('floor')}층" if r.get("floor") else "층정보없음"
         print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, {floor_txt}, "
               f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m")
+
+    print_jeonse_comparison(args.rent_dir, subject_coord, args.area, args.floor, args.build_year,
+                             args.radius, year_min, this_year, gu_filter, realistic, fmt)
 
     if args.bid_price is not None:
         scenarios = {

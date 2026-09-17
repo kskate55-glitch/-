@@ -25,15 +25,8 @@ API 기본 정보
   "총괄표제부"/"전유부"/"일반건축물" 등 대장이 어떤 하위 문서인지 구분하는
   값이다), mainPurpsCdNm(주용도명), grndFlrCnt(지상층수)
 
-⚠️ 위반건축물 여부는 이 오퍼레이션(및 문서에 포함된 나머지 9개 오퍼레이션:
-   getBrBasisOulnInfo/getBrRecapTitleInfo/getBrFlrOulnInfo/getBrAtchJibunInfo/
-   getBrExposPubuseAreaInfo/getBrWclfInfo/getBrHsprcInfo/getBrExposInfo/
-   getBrJijiguInfo) 어디에도 필드로 존재하지 않는다. 과거 버전 코드는
-   regstrKindCdNm에 "위반"이 포함되면 위반건축물로 간주했으나, 이는 잘못된
-   가정이었다(문서 확인 결과 regstrKindCdNm은 표제부/총괄표제부/전유부 등
-   대장 구분값일 뿐 위반 여부와 무관) — 그래서 위반건축물 판정 기능은
-   제거했다. 필요하면 정부24 건축물대장 열람(위반건축물 표시 포함)을
-   사용자가 직접 확인하도록 안내한다.
+위반건축물 여부는 이 API에 필드가 없어 확인하지 않는다 (승강기·세대수·
+사용승인일·지상층수만 다룬다).
 """
 
 import json

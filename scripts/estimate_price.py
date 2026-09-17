@@ -14,6 +14,7 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
 --dong      : 법정동명 (umdNm) — 계절성/가격추이 등 동네 단위 분석 범위로 쓰인다
 --area      : 대상 물건의 전용면적(㎡) — ±15% 이내를 "비슷한 면적"으로 취급
 --floor     : 대상 물건의 층 (선택 — 유사층 가중치 판단에 사용)
+--build-year: 대상 물건의 준공년도 (선택 — 유사연식 가중치 판단에 사용)
 --radius    : 비교 반경(미터), 기본 400m
 --year-min  : 매도가 계산에 사용할 최소 계약년도 (기본값: 실행 시점 기준 작년)
 
@@ -80,15 +81,15 @@ def to_amount_man(s: str) -> float:
 
 
 def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area: float,
-                      floor: int | None, radius_m: float, year_min: int, this_year: int,
-                      gu_filter: str | None) -> list[dict]:
+                      floor: int | None, build_year: str | None, radius_m: float,
+                      year_min: int, this_year: int, gu_filter: str | None) -> list[dict]:
     """CLAUDE.md 5절 규칙: 실제 반경(기본 400m) 안의 유사면적 매물만 비교 대상으로
-    삼고, 거리·층 유사도로 가중치를 준다.
+    삼고, 거리·층·연식 유사도로 가중치를 준다.
 
     빌라/다세대는 한 건물에 보통 3~4세대뿐이라 "동일건물" 비교는 표본이 거의
     항상 부족하다. 그래서 실제 중개업소·투자자들처럼 "실제 반경 안 + 비슷한
-    면적 + 비슷한 층"을 기준으로 삼는다. 건물명이 같은지는 더 이상 필터링에
-    쓰지 않는다.
+    면적 + 비슷한 층 + 비슷한 연식"을 기준으로 삼는다. 건물명이 같은지는 더
+    이상 필터링에 쓰지 않는다.
     """
     from geocode import geocode, haversine_m
     from lawd_lookup import full_address, gu_name
@@ -135,11 +136,21 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             pass
         similar_floor = floor is not None and row_floor is not None and abs(row_floor - floor) <= 1
         floor_weight = 1.0 if (floor is None or similar_floor) else 0.6
+
+        row_build_year = r.get("buildYear", "").strip()
+        similar_vintage = (
+            build_year is not None and row_build_year
+            and abs(int(row_build_year) - int(build_year)) <= 3
+        ) if (build_year is not None and row_build_year.isdigit()) else None
+        vintage_weight = 0.7 if similar_vintage is False else 1.0
+
         distance_weight = max(0.2, 1 - distance / radius_m)
 
         r["_distance_m"] = distance
         r["_amount_man"] = amount
-        r["_weight"] = weight_for_year(r.get("dealYear"), this_year) * distance_weight * floor_weight
+        r["_weight"] = (
+            weight_for_year(r.get("dealYear"), this_year) * distance_weight * floor_weight * vintage_weight
+        )
         out.append(r)
 
     out.sort(key=lambda r: r["_distance_m"])
@@ -258,6 +269,7 @@ def main():
     ap.add_argument("--dong", required=True, help="법정동명 — 계절성/가격추이 등 동네 단위 분석 범위로 쓰인다")
     ap.add_argument("--area", type=float, required=True)
     ap.add_argument("--floor", type=int, default=None, help="대상 물건의 층 (선택 — 유사층 가중치 판단에 사용)")
+    ap.add_argument("--build-year", default=None, help="대상 물건의 준공년도 (선택 — 유사연식 가중치 판단에 사용)")
     ap.add_argument("--radius", type=float, default=400, help="비교 반경(미터), 기본 400m")
     ap.add_argument("--year-min", type=int, default=None)
     ap.add_argument("--html", action="store_true", help="reports/ 폴더에 예쁜 HTML 리포트도 저장하고 브라우저로 연다")
@@ -284,8 +296,8 @@ def main():
 
     gu_filter = find_gu_in_address(args.address)
 
-    filtered = find_comparables(rows, subject_coord, args.area, args.floor, args.radius,
-                                 year_min, this_year, gu_filter)
+    filtered = find_comparables(rows, subject_coord, args.area, args.floor, args.build_year,
+                                 args.radius, year_min, this_year, gu_filter)
 
     if not filtered:
         print(f"[안내] 반경 {args.radius:.0f}m, 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")

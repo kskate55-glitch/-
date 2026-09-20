@@ -26,6 +26,15 @@
   <p style="margin-top:12px">권장 최초 호가: <strong>{{ result.listing }}</strong></p>
 </div>
 
+{% if result.monthly_rent %}
+<div class="card">
+  <h3 style="margin-top:0">예상 월세 추정 (전월세전환율 역산)</h3>
+  <p class="muted">가정: 월세보증금 {{ result.monthly_rent.deposit }}만원, 연 전환율 {{ result.monthly_rent.rate }}%</p>
+  <div class="price-item" style="max-width:200px"><div class="label">예상 월세</div><div class="value">{{ result.monthly_rent.amount }}만원/월</div></div>
+  <p class="muted" style="margin-top:10px">⚠️ 실거래 데이터가 아니라 위 매도가(현실적 체결가)에 전환율을 적용한 추정치입니다 — 인근 실제 월세 매물과 비교해서 조정하세요.</p>
+</div>
+{% endif %}
+
 <div class="card">
   <h3 style="margin-top:0">핵심 비교거래 (가까운 순)</h3>
   <table>

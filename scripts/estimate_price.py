@@ -4,7 +4,8 @@
 CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절성(거래 활발한 달)과
 15절 규칙에 따른 월별 가격 추이, 16절 규칙에 따른 예상 전세가·매매 대비 비교,
 19절 규칙에 따른 입지 체크·수익성 계산, 20절 규칙에 따른 건축물대장 조회
-(승강기·세대수·사용승인일), 21절 규칙에 따른 인근 중개업소 조회도 함께 출력한다.
+(승강기·세대수·사용승인일), 21절 규칙에 따른 인근 중개업소 조회, 23절 규칙에
+따른 예상 월세 추정(전월세전환율 역산)도 함께 출력한다.
 
 사용법:
     python estimate_price.py --dir data/raw --rent-dir data/raw_rent \
@@ -31,6 +32,9 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
                      서울 열린데이터광장에서 받은 공인중개사사무소 정보)
 --broker-radius    : 인근 중개업소 조회 반경(미터), 기본 1000m
 --no-brokers       : 인근 중개업소 조회를 건너뛴다
+--monthly-deposit  : 예상 월세 추정용 월세보증금 (만원, 선택 — 주면 23절 예상 월세
+                     추정을 같이 보여준다. 순수월세면 0)
+--conversion-rate  : 전월세전환율 (연 %, 기본 6.0) — 지역/물건마다 달라 참고값일 뿐
 
 이 스크립트는 실거래가 XML 파일 텍스트만 읽는다 — 국토부 API를 직접 호출하지
 않는다 (그건 molit_rhtrade_api.py/molit_rhrent_api.py의 몫). 다만 --address를
@@ -279,6 +283,25 @@ def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int) -> 
         "n_total": n_total, "n_close": n_close, "n_this_year": n_this_year,
         "confidence": confidence,
     }
+
+
+def compute_monthly_rent(realistic_sale_man: float, deposit_man: float, annual_rate_pct: float) -> float:
+    """CLAUDE.md 23절 규칙: 전세가 아니라 8절에서 산출한 매도가(현실적 체결가)에
+    전월세전환율을 적용해 예상 월세를 역산한다 (현업 공인중개사 확인 관행 —
+    전세보증보험 가입한도 제한으로 순수 전세가 줄면서 매도가 기준 환산이
+    일반화됐다). 실거래 데이터가 아닌 추정치이므로 항상 참고용임을 밝힌다."""
+    return (realistic_sale_man - deposit_man) * annual_rate_pct / 100 / 12
+
+
+def print_monthly_rent(realistic_sale_man: float, deposit_man: float, annual_rate_pct: float, fmt) -> None:
+    monthly_rent = compute_monthly_rent(realistic_sale_man, deposit_man, annual_rate_pct)
+    print()
+    print("[예상 월세 추정] (전월세전환율 역산, 예상 매도가 기준)")
+    print(f"기준 매도가(현실적 체결가): {fmt(realistic_sale_man)}")
+    print(f"가정: 월세보증금 {deposit_man:.0f}만원, 연 전환율 {annual_rate_pct:.1f}%")
+    print(f"예상 월세: {monthly_rent:.0f}만원/월")
+    print("⚠️ 실거래 데이터가 아닌 추정치입니다 — 인근 실제 월세 매물과 비교해서 조정하세요.")
+    print("   전환율은 법정 상한(기준금리+2%p)과 실제 시장 관행이 다를 수 있어 참고값일 뿐입니다.")
 
 
 def seasonality_index(rows: list[dict]) -> dict[int, int] | None:
@@ -582,6 +605,8 @@ def main():
     ap.add_argument("--brokers-csv", default="data/brokers_seoul.csv", help="서울 인근 중개업소 조회용 CSV 경로 (서울 열린데이터광장에서 받은 공인중개사사무소 정보)")
     ap.add_argument("--broker-radius", type=float, default=1000, help="인근 중개업소 조회 반경(미터), 기본 1000m")
     ap.add_argument("--no-brokers", action="store_true", help="인근 중개업소 조회를 건너뛴다")
+    ap.add_argument("--monthly-deposit", type=float, default=None, help="예상 월세 추정용 월세보증금(만원) — 주면 23절 예상 월세 추정을 같이 보여준다")
+    ap.add_argument("--conversion-rate", type=float, default=6.0, help="전월세전환율(연 %%), 기본 6.0 — 지역/물건마다 달라 참고값일 뿐")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -650,6 +675,9 @@ def main():
         floor_txt = f"{r.get('floor')}층" if r.get("floor") else "층정보없음"
         print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, {floor_txt}, "
               f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m")
+
+    if args.monthly_deposit is not None:
+        print_monthly_rent(realistic, args.monthly_deposit, args.conversion_rate, fmt)
 
     print_jeonse_comparison(args.rent_dir, subject_coord, args.area, args.floor, args.build_year,
                              args.radius, year_min, this_year, gu_filter, realistic, fmt)

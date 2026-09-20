@@ -225,6 +225,17 @@ def estimate():
         result["profit"] = profit_rows
         result["bid_price"] = _fmt_eok(bid_price)
 
+    monthly_deposit = _optional_float("monthly_deposit")
+    if monthly_deposit is not None:
+        from estimate_price import compute_monthly_rent
+
+        conversion_rate = _optional_float("conversion_rate", 6.0)
+        monthly_rent = compute_monthly_rent(realistic, monthly_deposit, conversion_rate)
+        result["monthly_rent"] = {
+            "deposit": f"{monthly_deposit:.0f}", "rate": f"{conversion_rate:.1f}",
+            "amount": f"{monthly_rent:.0f}",
+        }
+
     return render_template("result.html", result=result)
 
 

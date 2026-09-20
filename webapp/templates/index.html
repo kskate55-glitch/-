@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>🏠 경매 매도가 추정기</h1>
+<p class="hint">빌라·연립다세대 물건의 예상 매도가를 국토교통부 실거래가 기반으로 반경 400m 안 유사매물과 비교해 추정합니다.</p>
+
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+<form method="post" action="/estimate">
+  <div>
+    <label>지번 주소</label>
+    <input type="text" name="address" placeholder="서울특별시 강북구 수유동 468-202"
+           value="{{ form.address if form else '' }}" required>
+  </div>
+  <div class="row">
+    <div>
+      <label>전용면적(㎡)</label>
+      <input type="number" step="0.01" name="area" placeholder="69.27"
+             value="{{ form.area if form else '' }}" required>
+    </div>
+    <div>
+      <label>층 (선택)</label>
+      <input type="number" name="floor" placeholder="5" value="{{ form.floor if form else '' }}">
+    </div>
+  </div>
+  <div class="row">
+    <div>
+      <label>준공년도 (선택)</label>
+      <input type="number" name="build_year" placeholder="2012" value="{{ form.build_year if form else '' }}">
+    </div>
+    <div>
+      <label>비교 반경(m)</label>
+      <input type="number" name="radius" placeholder="400" value="{{ form.radius if form else '400' }}">
+    </div>
+  </div>
+  <div class="row">
+    <div>
+      <label>기준연도 이후 (선택)</label>
+      <input type="number" name="year_min" placeholder="{{ last_year }}" value="{{ form.year_min if form else '' }}">
+    </div>
+    <div>
+      <label>낙찰가/입찰예정가(만원, 선택)</label>
+      <input type="number" name="bid_price" placeholder="10200" value="{{ form.bid_price if form else '' }}">
+    </div>
+  </div>
+  <button type="submit">매도가 계산하기</button>
+</form>
+<p class="hint">⚠️ 국토교통부 실거래가를 그때그때 조회해서, 처음 보는 지역이면 계산에 시간이 좀 걸릴 수 있어요(최대 30초 안팎). 같은 지역을 다시 조회하면 더 빨라집니다.</p>
+{% endblock %}

@@ -514,3 +514,42 @@ AI 기준매도가: X.XX억 → X.XX억
   - 상호명 (중개업자명) 전화번호
   ```
   목록은 최대 8건까지만 보여준다.
+
+## 22. 웹 버전(다른 사람도 쓸 수 있는 매도가 추정기)
+
+CLI(`estimate_price.py`)는 사용자 본인이 로컬에서 국토부 API를 직접 실행하고
+`data/raw/`에 저장한 뒤 계산하는 방식이지만, 다른 사람들도 주소만 입력하면
+바로 쓸 수 있도록 `webapp/`에 Flask 웹 서버를 따로 만들었다. **계산 로직
+자체는 Claude/AI를 전혀 호출하지 않는 순수 파이썬**이라, 웹으로 서비스해도
+AI 토큰 비용이 들지 않는다 — 국토부·카카오 API 키 관리와 서버 호스팅 비용만
+고려하면 된다.
+
+- `webapp/data_source.py`: 사용자가 입력한 주소를 지오코딩해서 얻은
+  법정동코드 앞 5자리(LAWD_CD)로 국토부 매매 실거래가를 그때그때 조회한다.
+  완료된 달(이번 달 제외)은 `webapp/cache/trade/<LAWD_CD>/<YYYYMM>.json`에
+  캐시해서, 같은 구를 다시 조회하는 방문자가 매번 국토부 API를 다시 호출하지
+  않게 한다. 이번 달은 계약 신고가 계속 들어오므로(신고기한 30일) 캐시하지
+  않고 매번 새로 받는다.
+- `webapp/app.py`: Flask 서버. `/`에서 주소·전용면적·층·준공년도·반경·낙찰가
+  등을 입력받아 `scripts/estimate_price.py`의 `find_comparables()`/
+  `compute_scenarios()`/`compute_profit()`를 그대로 재사용해서 8절/19절
+  포맷으로 결과를 보여준다. LAWD_CD는 카카오 지오코딩 응답의 법정동코드
+  (`geocode_full()`의 `b_code`) 앞 5자리를 그대로 쓴다 — `data/lawd_codes.md`
+  역조회 없이 바로 구해진다.
+- **MVP 범위**: 8절(매도가)·19절(수익성 계산)까지만 지원한다. 16절(예상
+  전세가)·20절(건물정보)·21절(중개업소) 등은 아직 웹 버전에 없다 — 필요하면
+  CLI처럼 하나씩 추가한다.
+- ⚠️ 이 서버는 apis.data.go.kr/dapi.kakao.com에 접속 가능한 환경(본인 PC,
+  또는 실제 배포한 서버)에서 실행해야 한다 — Claude Code 샌드박스에서는
+  실행 불가. 인증키는 서버 환경변수(`MOLIT_SERVICE_KEY`/`KAKAO_REST_API_KEY`)로
+  주입하고, 절대 프론트엔드(HTML/JS)에 노출하지 않는다 — 방문자는 API 키
+  없이 주소만 입력하면 된다.
+- 여러 사람이 쓰게 되면 카카오 지오코딩 무료 할당량, 국토부 API 일일 트래픽
+  한도에 걸릴 수 있다는 점을 사용자에게 항상 안내한다.
+- 사용법:
+  ```
+  pip install -r requirements.txt
+  MOLIT_SERVICE_KEY="발급받은_인증키" KAKAO_REST_API_KEY="발급받은_키" python webapp/app.py
+  ```
+  브라우저에서 `http://localhost:5000` 접속 (실제 배포는 Railway, Render 같은
+  서비스에 올리고 환경변수만 설정해주면 된다).

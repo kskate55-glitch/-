@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>경매 매도가 추정기</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Malgun Gothic", sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; color: #1a1a1a; background: #fafafa; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  form { display: flex; flex-direction: column; gap: 12px; background: #fff; padding: 20px; border-radius: 10px; border: 1px solid #e2e2e2; }
+  label { font-size: 13px; font-weight: 600; color: #333; }
+  input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 100%; margin-top: 4px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  button { padding: 11px; border: none; border-radius: 6px; background: #2563eb; color: #fff; font-size: 15px; cursor: pointer; }
+  button:hover { background: #1d4ed8; }
+  .error { background: #fee2e2; color: #991b1b; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; }
+  .hint { color: #777; font-size: 12px; }
+  .card { background: #fff; padding: 20px; border-radius: 10px; border: 1px solid #e2e2e2; margin-bottom: 16px; }
+  .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .price-item { padding: 12px; background: #f5f7fb; border-radius: 8px; }
+  .price-item .label { font-size: 12px; color: #666; }
+  .price-item .value { font-size: 20px; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee; }
+  .muted { color: #888; font-size: 13px; }
+  a.back { display: inline-block; margin-top: 8px; color: #2563eb; text-decoration: none; font-size: 14px; }
+  footer { margin-top: 24px; color: #999; font-size: 12px; line-height: 1.6; }
+</style>
+</head>
+<body>
+{% block content %}{% endblock %}
+<footer>
+  ⚠️ 이 결과는 국토교통부 실거래가 데이터를 통계적으로 가공한 참고용 추정치이며,
+  실제 매도가를 보장하지 않습니다. 최종 판단은 공인중개사·감정평가사 등
+  전문가 확인을 거치세요.
+</footer>
+</body>
+</html>

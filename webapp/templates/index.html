@@ -5,7 +5,9 @@
 
 {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-{% set adv_filled = form and (form.monthly_deposit or form.conversion_rate or form.station_premium or form.year_min or (form.radius and form.radius != '400')) %}
+{% set adv_filled = form and (form.monthly_deposit or form.conversion_rate or form.station_premium or form.year_min
+   or (form.radius and form.radius != '400') or (form.area_tolerance and form.area_tolerance != '15')
+   or (form.build_year_tolerance and form.build_year_tolerance != '4')) %}
 <form method="post" action="/estimate">
   <div>
     <label>지번 주소</label>
@@ -30,7 +32,7 @@
   <p class="hint" style="margin-top:-6px">※ 층·전용면적·준공년도는 유사층·유사연식 비교에 꼭 필요해서 필수 입력입니다 — 빠지면 엉뚱한 매물과 비교돼 매도가가 부정확해질 수 있어요.</p>
 
   <details class="adv" {{ "open" if adv_filled else "" }}>
-    <summary>상세 옵션 펼치기 <span class="muted">(비교 반경·월세 등)</span></summary>
+    <summary>상세 옵션 펼치기 <span class="muted">(비교 반경·면적/연식 허용범위·월세 등)</span></summary>
     <div class="adv-body">
       <div class="row">
         <div>
@@ -42,6 +44,17 @@
           <input type="number" name="year_min" placeholder="{{ last_year }}" value="{{ form.year_min if form else '' }}">
         </div>
       </div>
+      <div class="row">
+        <div>
+          <label>면적 허용범위(%)</label>
+          <input type="number" step="1" name="area_tolerance" placeholder="15" value="{{ form.area_tolerance if form else '15' }}">
+        </div>
+        <div>
+          <label>준공년도 허용범위(년)</label>
+          <input type="number" step="1" name="build_year_tolerance" placeholder="4" value="{{ form.build_year_tolerance if form else '4' }}">
+        </div>
+      </div>
+      <p class="hint" style="margin-top:-8px">※ 비교거래를 더 넓게(느슨하게) 또는 더 좁게(엄격하게) 잡고 싶을 때 조정하세요 — 기본값은 국토부 실거래 비교 관행(면적 ±15%, 연식 ±4년)입니다.</p>
       <div class="row">
         <div>
           <label>월세보증금(만원, 선택 — 예상 월세도 보려면)</label>

@@ -148,7 +148,8 @@ def filter_wolse(rows: list[dict]) -> list[dict]:
 
 def estimate_conversion_rate(rent_dir: str, subject_coord: tuple[float, float], area: float,
                               floor: int | None, build_year: str | None, radius_m: float,
-                              year_min: int, this_year: int, gu_filter: str | None) -> dict | None:
+                              year_min: int, this_year: int, gu_filter: str | None,
+                              area_tolerance_pct: float = 0.15, build_year_tolerance: int = 4) -> dict | None:
     """CLAUDE.md 23-1절 규칙: 8절 매도가 계산에는 안 쓰이고 버려지던 월세 낀
     전월세 실거래(filter_wolse)를 반경/면적/연식/층 조건(find_comparables)으로
     같은 물건 기준까지 좁힌 뒤, 각 건의 (월세보증금, 월세)를 16절과 동일한
@@ -167,7 +168,9 @@ def estimate_conversion_rate(rent_dir: str, subject_coord: tuple[float, float], 
     jeonse_rows = filter_pure_jeonse(rent_rows)
     jeonse_filtered = find_comparables(jeonse_rows, subject_coord, area, floor, build_year,
                                         radius_m, year_min, this_year, gu_filter,
-                                        amount_field="deposit")
+                                        amount_field="deposit",
+                                        area_tolerance_pct=area_tolerance_pct,
+                                        build_year_tolerance=build_year_tolerance)
     if not jeonse_filtered:
         return None
     reference_deposit = compute_scenarios(jeonse_filtered, radius_m, this_year)["median"]
@@ -175,7 +178,9 @@ def estimate_conversion_rate(rent_dir: str, subject_coord: tuple[float, float], 
     wolse_rows = filter_wolse(rent_rows)
     wolse_filtered = find_comparables(wolse_rows, subject_coord, area, floor, build_year,
                                        radius_m, year_min, this_year, gu_filter,
-                                       amount_field="monthlyRent")
+                                       amount_field="monthlyRent",
+                                       area_tolerance_pct=area_tolerance_pct,
+                                       build_year_tolerance=build_year_tolerance)
     if not wolse_filtered:
         return None
 
@@ -212,7 +217,8 @@ def to_amount_man(s: str) -> float:
 def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area: float,
                       floor: int | None, build_year: str | None, radius_m: float,
                       year_min: int, this_year: int, gu_filter: str | None,
-                      amount_field: str = "dealAmount") -> list[dict]:
+                      amount_field: str = "dealAmount",
+                      area_tolerance_pct: float = 0.15, build_year_tolerance: int = 4) -> list[dict]:
     """CLAUDE.md 5절 규칙: 실제 반경(기본 400m) 안의 유사면적 매물만 비교 대상으로
     삼고, 거리·층·연식 유사도로 가중치를 준다.
 
@@ -223,6 +229,10 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
 
     amount_field: 금액 필드명. 매매 행은 "dealAmount", 전세 행은 "deposit"
     (CLAUDE.md 16절 — 예상 전세가도 같은 로직으로 계산한다).
+
+    area_tolerance_pct/build_year_tolerance: 면적/준공년도 허용범위(기본
+    ±15%/±4년) — CLI `--area-tolerance`/`--build-year-tolerance`, 웹 폼
+    "상세 옵션"으로 사용자가 직접 조정할 수 있다(5절).
 
     지오코딩(카카오 API 호출)이 후보 하나마다 순차 네트워크 왕복이라 후보가
     많은 구(garbage 400건대도 흔함)는 그것만으로 몇 분씩 걸려 웹 서버
@@ -251,13 +261,13 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             continue
         if amount != amount or not row_area:
             continue
-        if abs(row_area - area) / area > 0.15:
+        if abs(row_area - area) / area > area_tolerance_pct:
             continue  # 반경 안이라도 면적이 많이 다르면 비교 대상에서 제외
 
         row_build_year = r.get("buildYear", "").strip()
         if build_year is not None and row_build_year.isdigit():
-            if abs(int(row_build_year) - int(build_year)) > 4:
-                continue  # 준공년도 ±4년을 벗어나면 비교 대상에서 아예 제외
+            if abs(int(row_build_year) - int(build_year)) > build_year_tolerance:
+                continue  # 준공년도 허용범위를 벗어나면 비교 대상에서 아예 제외
 
         if gu_filter and gu_name(r.get("sggCd", "")) != gu_filter:
             continue  # 다른 구는 400m 반경에 들 일이 사실상 없어 지오코딩을 아낀다
@@ -324,6 +334,46 @@ def weight_for_year(deal_year: str, this_year: int) -> float:
     if y == this_year - 1:
         return 1.0
     return 0.3  # 기준연도 이전은 원래 필터링되지만, 방어적으로 낮은 가중치만 부여
+
+
+def describe_comparable_similarity(subject_area: float, subject_floor: int | None,
+                                    subject_build_year: str | None, row: dict) -> str:
+    """비교거래 하나가 대상 물건과 정확히 어떤 부분이 비슷하고 어떤 부분이
+    다른지 짧게 요약한다(면적/층/준공년도) — "핵심 비교거래" 목록에 물건마다
+    괄호로 달아서, 왜 이 물건이 골라졌는지/어디를 감안하고 봐야 하는지
+    사용자가 바로 알 수 있게 한다. 거리는 목록에 이미 따로 표시되므로 여기
+    넣지 않는다."""
+    parts = []
+
+    row_area = row.get("excluUseAr")
+    try:
+        row_area = float(row_area)
+        diff_pct = (row_area - subject_area) / subject_area * 100
+        if abs(diff_pct) <= 3:
+            parts.append("면적 비슷")
+        else:
+            parts.append(f"면적 {diff_pct:+.0f}%")
+    except (TypeError, ValueError):
+        parts.append("면적 정보없음")
+
+    if subject_floor is not None:
+        row_floor_raw = (row.get("floor") or "").strip()
+        try:
+            row_floor = int(row_floor_raw)
+            diff = row_floor - subject_floor
+            parts.append("층 동일" if diff == 0 else f"층 {diff:+d}")
+        except ValueError:
+            parts.append("층 정보없음")
+
+    if subject_build_year is not None:
+        row_build_year = (row.get("buildYear") or "").strip()
+        if row_build_year.isdigit():
+            diff = int(row_build_year) - int(subject_build_year)
+            parts.append("준공 동일" if diff == 0 else f"준공 {abs(diff)}년 차이")
+        else:
+            parts.append("준공년도 정보없음")
+
+    return " · ".join(parts)
 
 
 def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int) -> dict:
@@ -757,7 +807,8 @@ def print_distance_premium(filtered: list[dict], keyword: str = "지하철역") 
 def print_jeonse_comparison(rent_dir: str, subject_coord: tuple[float, float], area: float,
                              floor: int | None, build_year: str | None, radius_m: float,
                              year_min: int, this_year: int, gu_filter: str | None,
-                             realistic_sale: float, fmt) -> None:
+                             realistic_sale: float, fmt,
+                             area_tolerance_pct: float = 0.15, build_year_tolerance: int = 4) -> None:
     """CLAUDE.md 16절 규칙: 매매가와 같은 반경/면적/연식/층 조건으로 예상 전세가를
     계산하고, 방금 계산한 매매 현실적 체결가와 나란히 비교한다."""
     rent_rows = dedupe_rent(load_transactions(rent_dir))
@@ -767,7 +818,9 @@ def print_jeonse_comparison(rent_dir: str, subject_coord: tuple[float, float], a
     jeonse_rows = filter_pure_jeonse(rent_rows)
     jeonse_filtered = find_comparables(jeonse_rows, subject_coord, area, floor, build_year,
                                         radius_m, year_min, this_year, gu_filter,
-                                        amount_field="deposit")
+                                        amount_field="deposit",
+                                        area_tolerance_pct=area_tolerance_pct,
+                                        build_year_tolerance=build_year_tolerance)
     if not jeonse_filtered:
         print()
         print(f"[예상 전세가] 반경 {radius_m:.0f}m, 유사면적 조건에 맞는 전세 비교거래를 찾지 못해 생략합니다.")
@@ -817,6 +870,8 @@ def main():
     ap.add_argument("--floor", type=int, default=None, help="대상 물건의 층 (선택 — 유사층 가중치 판단에 사용)")
     ap.add_argument("--build-year", default=None, help="대상 물건의 준공년도 (선택 — 유사연식 가중치 판단에 사용)")
     ap.add_argument("--radius", type=float, default=400, help="비교 반경(미터), 기본 400m")
+    ap.add_argument("--area-tolerance", type=float, default=15.0, help="면적 허용범위(%%, 기본 15) — 대상 물건 전용면적과 이 범위 안 오차인 실거래만 비교 대상으로 삼는다")
+    ap.add_argument("--build-year-tolerance", type=int, default=4, help="준공년도 허용범위(년, 기본 4) — --build-year를 줬을 때만 적용")
     ap.add_argument("--year-min", type=int, default=None)
     ap.add_argument("--html", action="store_true", help="reports/ 폴더에 예쁜 HTML 리포트도 저장하고 브라우저로 연다")
     ap.add_argument("--bid-price", type=float, default=None, help="낙찰가/입찰예정가 (만원 단위) — 주면 수익성 계산도 같이 보여준다")
@@ -869,8 +924,11 @@ def main():
 
     gu_filter = find_gu_in_address(args.address)
 
+    area_tolerance_pct = args.area_tolerance / 100
     filtered = find_comparables(rows, subject_coord, args.area, args.floor, args.build_year,
-                                 args.radius, year_min, this_year, gu_filter)
+                                 args.radius, year_min, this_year, gu_filter,
+                                 area_tolerance_pct=area_tolerance_pct,
+                                 build_year_tolerance=args.build_year_tolerance)
 
     if not filtered:
         print(f"[안내] 반경 {args.radius:.0f}m, 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")
@@ -901,18 +959,23 @@ def main():
     print(f"AI 기준매도가: {fmt(ai_base)}")
     print(f"권장 최초 호가: {fmt(listing)}")
     print()
-    print("핵심 비교거래 (가까운 순):")
+    build_year_note = f", 준공년도 ±{args.build_year_tolerance}년 이내" if args.build_year is not None else ""
+    print(f"핵심 비교거래 (가까운 순 — 반경 {args.radius:.0f}m 안, 전용면적 ±{args.area_tolerance:.0f}%{build_year_note}인 "
+          f"실거래 중 거리·계약시기·층이 비슷할수록 가중치를 높게 준 것입니다):")
     for r in filtered[:8]:
         floor_txt = f"{r.get('floor')}층" if r.get("floor") else "층정보없음"
+        note = describe_comparable_similarity(args.area, args.floor, args.build_year, r)
         print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, {floor_txt}, "
-              f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m")
+              f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m ({note})")
 
     if args.station_premium:
         print_distance_premium(filtered)
 
     if args.monthly_deposit is not None:
         measured_rate = estimate_conversion_rate(args.rent_dir, subject_coord, args.area, args.floor,
-                                                   args.build_year, args.radius, year_min, this_year, gu_filter)
+                                                   args.build_year, args.radius, year_min, this_year, gu_filter,
+                                                   area_tolerance_pct=area_tolerance_pct,
+                                                   build_year_tolerance=args.build_year_tolerance)
         if args.conversion_rate is not None:
             effective_rate, rate_source = args.conversion_rate, "사용자 지정"
         elif measured_rate is not None:
@@ -924,7 +987,9 @@ def main():
                             rate_source=rate_source, measured=measured_rate)
 
     print_jeonse_comparison(args.rent_dir, subject_coord, args.area, args.floor, args.build_year,
-                             args.radius, year_min, this_year, gu_filter, realistic, fmt)
+                             args.radius, year_min, this_year, gu_filter, realistic, fmt,
+                             area_tolerance_pct=area_tolerance_pct,
+                             build_year_tolerance=args.build_year_tolerance)
 
     if args.bid_price is not None:
         scenarios = {

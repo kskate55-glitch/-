@@ -131,6 +131,9 @@ def estimate():
         return float(raw) if raw else default
 
     radius = _optional_float("radius", 400)
+    area_tolerance_pct_input = _optional_float("area_tolerance", 15.0)
+    area_tolerance_pct = area_tolerance_pct_input / 100
+    build_year_tolerance = _optional_int("build_year_tolerance") or 4
     this_year = datetime.now().year
     year_min = _optional_int("year_min") or (this_year - 1)
 
@@ -249,7 +252,9 @@ def estimate():
         )
 
     filtered = find_comparables(rows, subject_coord, area, floor, build_year,
-                                 radius, year_min, this_year, gu_filter=None)
+                                 radius, year_min, this_year, gu_filter=None,
+                                 area_tolerance_pct=area_tolerance_pct,
+                                 build_year_tolerance=build_year_tolerance)
     if not filtered:
         return render_template(
             "index.html",
@@ -325,6 +330,14 @@ def estimate():
                 "low_confidence": premium["r_squared"] < 0.2,
             }
 
+    from estimate_price import describe_comparable_similarity
+
+    build_year_note = f", 준공년도 ±{build_year_tolerance}년 이내" if build_year is not None else ""
+    comparable_criteria = (
+        f"반경 {radius:.0f}m 안, 전용면적 ±{area_tolerance_pct_input:.0f}%{build_year_note}인 실거래 중 "
+        f"거리·계약시기·층이 비슷할수록 가중치를 높게 줘서 고른 것입니다."
+    )
+
     result = {
         "address": address,
         "period": f"{year_min}.01 ~ {this_year}.12",
@@ -338,6 +351,7 @@ def estimate():
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),
         "auction_price": _fmt_eok(auction_price),
         "upper": _fmt_eok(upper), "ai_base": _fmt_eok(ai_base), "listing": _fmt_eok(listing),
+        "comparable_criteria": comparable_criteria,
         "comparables": [
             {
                 "name": r.get("mhouseNm", "(단지명없음)"),
@@ -346,6 +360,7 @@ def estimate():
                 "date": f"{r.get('dealYear')}.{r.get('dealMonth')}",
                 "amount": _fmt_eok(r["_amount_man"]),
                 "distance": f"{r['_distance_m']:.0f}m",
+                "note": describe_comparable_similarity(area, floor, build_year, r),
             }
             for r in filtered[:8]
         ],

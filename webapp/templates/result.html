@@ -3,9 +3,70 @@
 <h1>🏠 빌라 매매가 계산기 — 결과</h1>
 <p class="muted">{{ result.address }} · 분석기간 {{ result.period }}</p>
 
+<div class="hero">
+  <div class="hero-label">현실적 체결가</div>
+  <div class="hero-price">{{ result.realistic }}</div>
+  <div class="hero-range">보수적 급매가 {{ result.conservative }} ~ 상단 매도가 {{ result.upper }}</div>
+  <div class="hero-badges">
+    <span class="badge">시세 신뢰도 {{ result.confidence }}/100</span>
+    <span class="badge muted">비교거래 {{ result.n_total }}건</span>
+    <span class="badge muted">반경 안 절반 {{ result.n_close }}건</span>
+    <span class="badge muted">올해 계약 {{ result.n_this_year }}건</span>
+  </div>
+  <div class="price-grid">
+    <div class="price-item"><div class="label">보수적 급매가</div><div class="value">{{ result.conservative }}</div></div>
+    <div class="price-item"><div class="label">상단 매도가</div><div class="value">{{ result.upper }}</div></div>
+    <div class="price-item"><div class="label">AI 기준매도가</div><div class="value">{{ result.ai_base }}</div></div>
+    <div class="price-item"><div class="label">현실적 체결가</div><div class="value">{{ result.realistic }}</div></div>
+  </div>
+  <div class="listing-row">
+    <span class="label">권장 최초 호가</span>
+    <span class="value">{{ result.listing }}</span>
+  </div>
+</div>
+
+<div class="card">
+  <h3>핵심 비교거래 (가까운 순)</h3>
+  <table>
+    <tr><th>단지명</th><th>면적</th><th>층</th><th>계약</th><th>금액</th><th>거리</th></tr>
+    {% for c in result.comparables %}
+    <tr>
+      <td>{{ c.name }}</td><td>{{ c.area }}㎡</td><td>{{ c.floor }}층</td>
+      <td>{{ c.date }}</td><td>{{ c.amount }}</td><td>{{ c.distance }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+{% if result.profit %}
+<div class="card">
+  <h3>수익성 계산 (낙찰가 {{ result.bid_price }} 기준)</h3>
+  <table>
+    <tr><th>시나리오</th><th>순수익</th><th>수익률</th></tr>
+    {% for p in result.profit %}
+    <tr><td>{{ p.label }}</td><td>{{ p.net_profit }}</td><td>{{ p.roi }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="muted" style="margin-top:10px">⚠️ 취득 부대비용률 3.5% 가정 — 실제 취득세율은 다주택/규제지역 여부에 따라 1.1~13%까지 다르니 참고용으로만 보세요. 명도비·수리비·대출이자는 반영되지 않았습니다.</p>
+</div>
+{% endif %}
+
+{% if result.monthly_rent %}
+<div class="card">
+  <h3>예상 월세 추정 (전월세전환율 역산)</h3>
+  <p class="muted">가정: 월세보증금 {{ result.monthly_rent.deposit }}만원, 연 전환율 {{ result.monthly_rent.rate }}%</p>
+  <div class="price-item" style="max-width:220px; margin-top:8px"><div class="label">예상 월세</div><div class="value">{{ result.monthly_rent.amount }}만원/월</div></div>
+  <p class="muted" style="margin-top:10px">⚠️ 실거래 데이터가 아니라 위 매도가(현실적 체결가)에 전환율을 적용한 추정치입니다 — 인근 실제 월세 매물과 비교해서 조정하세요.</p>
+</div>
+{% endif %}
+
+{% if result.building or result.villa_market_trend or result.dong_compare or result.station_premium %}
+<div class="section-divider">참고 정보</div>
+{% endif %}
+
 {% if result.building %}
 <div class="card">
-  <h3 style="margin-top:0">건물 정보 (건축물대장 기준)</h3>
+  <h3>건물 정보 (건축물대장 기준)</h3>
   <p class="muted">
     승강기: {{ result.building.elevator }}
     {% if result.building.household_count %} · 세대수: {{ result.building.household_count }}세대{% endif %}
@@ -17,13 +78,13 @@
 
 {% if result.villa_market_trend %}
 <div class="card">
-  <h3 style="margin-top:0">시장 동향 참고 - 연립다세대 ({{ result.villa_market_trend.region }}, {{ result.villa_market_trend.date }} 기준 스냅샷)</h3>
+  <h3>시장 동향 참고 - 연립다세대 ({{ result.villa_market_trend.region }}, {{ result.villa_market_trend.date }} 기준 스냅샷)</h3>
   <p class="muted">매매수급동향지수: {{ result.villa_market_trend.index }} (기준선 100 대비 {{ result.villa_market_trend.diff }})</p>
-  <p><strong>→ {{ result.villa_market_trend.plain_desc }}</strong></p>
+  <p style="margin:6px 0"><strong>→ {{ result.villa_market_trend.plain_desc }}</strong></p>
   <p class="muted">최근 3개월 추세: {{ result.villa_market_trend.trend }} ({{ result.villa_market_trend.start_date }} 최초 집계 {{ result.villa_market_trend.start_value }} → 지금, {{ result.villa_market_trend.since_start }}p)</p>
   {% if result.villa_market_trend.peers %}
-  <p class="muted" style="margin-top:8px">서울 5개 생활권 비교:</p>
-  <ul class="muted" style="margin:4px 0 0 18px; padding:0">
+  <p class="muted" style="margin-top:10px; font-weight:700">서울 5개 생활권 비교</p>
+  <ul class="ref-list">
     {% for line in result.villa_market_trend.peers %}<li>{{ line }}</li>{% endfor %}
   </ul>
   {% endif %}
@@ -41,90 +102,44 @@
 
 {% if result.dong_compare %}
 <div class="card">
-  <h3 style="margin-top:0">인근 동 비교 ({{ result.dong_compare.dong }} 기준, 최근 거래월 {{ result.dong_compare.latest_month }})</h3>
-  <p class="muted">거래 활발도 (최근 3개월 거래건수):</p>
+  <h3>인근 동 비교 ({{ result.dong_compare.dong }} 기준, 최근 거래월 {{ result.dong_compare.latest_month }})</h3>
+  <p class="muted" style="font-weight:700; color:#4a4f54">거래 활발도 (최근 3개월 거래건수)</p>
   {% if result.dong_compare.volume_top %}
-  <ul style="margin:4px 0 0 18px; padding:0">
+  <ul class="ref-list">
     {% for v in result.dong_compare.volume_top %}
-    <li{% if v.is_target %} style="font-weight:bold"{% endif %}>{{ v.dong }} {{ v.count }}건{% if v.is_target %} ← 검색하신 동{% endif %}</li>
+    <li{% if v.is_target %} style="font-weight:800; color:var(--primary-dark)"{% endif %}>{{ v.dong }} {{ v.count }}건{% if v.is_target %} ← 검색하신 동{% endif %}</li>
     {% endfor %}
   </ul>
-  {% if result.dong_compare.volume_rank_note %}<p class="muted" style="margin-top:4px">{{ result.dong_compare.volume_rank_note }} ← 검색하신 동</p>{% endif %}
+  {% if result.dong_compare.volume_rank_note %}<p class="muted" style="margin-top:6px">{{ result.dong_compare.volume_rank_note }} ← 검색하신 동</p>{% endif %}
   {% elif result.dong_compare.volume_missing %}
   <p class="muted">비교할 만한 동이 부족합니다.</p>
   {% endif %}
 
-  <p class="muted" style="margin-top:12px">가격 상승률 (최근 3개월 평균 평당가, 이전 3개월 대비):</p>
+  <p class="muted" style="margin-top:14px; font-weight:700; color:#4a4f54">가격 상승률 (최근 3개월 평균 평당가, 이전 3개월 대비)</p>
   {% if result.dong_compare.price_top %}
-  <ul style="margin:4px 0 0 18px; padding:0">
+  <ul class="ref-list">
     {% for p in result.dong_compare.price_top %}
-    <li{% if p.is_target %} style="font-weight:bold"{% endif %}>{{ p.dong }} {{ p.change_pct }}{% if p.is_target %} ← 검색하신 동{% endif %}</li>
+    <li{% if p.is_target %} style="font-weight:800; color:var(--primary-dark)"{% endif %}>{{ p.dong }} {{ p.change_pct }}{% if p.is_target %} ← 검색하신 동{% endif %}</li>
     {% endfor %}
   </ul>
-  {% if result.dong_compare.price_rank_note %}<p class="muted" style="margin-top:4px">{{ result.dong_compare.price_rank_note }} ← 검색하신 동</p>{% endif %}
+  {% if result.dong_compare.price_rank_note %}<p class="muted" style="margin-top:6px">{{ result.dong_compare.price_rank_note }} ← 검색하신 동</p>{% endif %}
   {% elif result.dong_compare.price_missing %}
   <p class="muted">비교할 만한 동이 부족합니다.</p>
   {% endif %}
-  <p class="muted" style="margin-top:8px">※ 같은 구 안에서 지금까지 조회된 데이터 기준입니다.</p>
+  <p class="muted" style="margin-top:10px">※ 같은 구 안에서 지금까지 조회된 데이터 기준입니다.</p>
 </div>
 {% endif %}
-
-<div class="card">
-  <p class="muted">유효 비교거래 {{ result.n_total }}건 (가까운 절반 안 {{ result.n_close }}건 · 올해 계약 {{ result.n_this_year }}건) · 시세 신뢰도 {{ result.confidence }}/100</p>
-  <div class="price-grid">
-    <div class="price-item"><div class="label">보수적 급매가</div><div class="value">{{ result.conservative }}</div></div>
-    <div class="price-item"><div class="label">현실적 체결가</div><div class="value">{{ result.realistic }}</div></div>
-    <div class="price-item"><div class="label">상단 매도가</div><div class="value">{{ result.upper }}</div></div>
-    <div class="price-item"><div class="label">AI 기준매도가</div><div class="value">{{ result.ai_base }}</div></div>
-  </div>
-  <p style="margin-top:12px">권장 최초 호가: <strong>{{ result.listing }}</strong></p>
-</div>
-
-{% if result.monthly_rent %}
-<div class="card">
-  <h3 style="margin-top:0">예상 월세 추정 (전월세전환율 역산)</h3>
-  <p class="muted">가정: 월세보증금 {{ result.monthly_rent.deposit }}만원, 연 전환율 {{ result.monthly_rent.rate }}%</p>
-  <div class="price-item" style="max-width:200px"><div class="label">예상 월세</div><div class="value">{{ result.monthly_rent.amount }}만원/월</div></div>
-  <p class="muted" style="margin-top:10px">⚠️ 실거래 데이터가 아니라 위 매도가(현실적 체결가)에 전환율을 적용한 추정치입니다 — 인근 실제 월세 매물과 비교해서 조정하세요.</p>
-</div>
-{% endif %}
-
-<div class="card">
-  <h3 style="margin-top:0">핵심 비교거래 (가까운 순)</h3>
-  <table>
-    <tr><th>단지명</th><th>면적</th><th>층</th><th>계약</th><th>금액</th><th>거리</th></tr>
-    {% for c in result.comparables %}
-    <tr>
-      <td>{{ c.name }}</td><td>{{ c.area }}㎡</td><td>{{ c.floor }}층</td>
-      <td>{{ c.date }}</td><td>{{ c.amount }}</td><td>{{ c.distance }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-</div>
 
 {% if result.station_premium %}
 <div class="card">
-  <h3 style="margin-top:0">역세권 프리미엄 참고 (반경 안 비교거래 {{ result.station_premium.n }}건, {{ result.station_premium.keyword }}까지 거리 기준)</h3>
+  <h3>역세권 프리미엄 참고 (반경 안 비교거래 {{ result.station_premium.n }}건, {{ result.station_premium.keyword }}까지 거리 기준)</h3>
   <p class="muted">{{ result.station_premium.keyword }}까지 {{ result.station_premium.min_distance }}~{{ result.station_premium.max_distance }}m 분포</p>
-  <p>{{ result.station_premium.keyword }}에서 100m 멀어질 때마다 평당가 <strong>{{ result.station_premium.change_per_100m }}만원/㎡ ({{ result.station_premium.pct_per_100m }}%) {{ result.station_premium.direction }}</strong> 경향</p>
+  <p style="margin:6px 0">{{ result.station_premium.keyword }}에서 100m 멀어질 때마다 평당가 <strong>{{ result.station_premium.change_per_100m }}만원/㎡ ({{ result.station_premium.pct_per_100m }}%) {{ result.station_premium.direction }}</strong> 경향</p>
   <p class="muted">→ 이 지역 비교거래는 {{ result.station_premium.keyword }}에 {{ result.station_premium.tendency }} 경향을 보입니다 (설명력 R²={{ result.station_premium.r_squared }}, 1에 가까울수록 거리만으로 가격 차이가 잘 설명됨).</p>
   {% if result.station_premium.low_confidence %}
   <p class="muted">⚠️ 설명력(R²)이 낮아 거리 외에 다른 요인(층·연식·개별 단지 차이 등)의 영향이 더 클 수 있습니다.</p>
   {% endif %}
   <p class="muted">⚠️ 표본이 최대 15건인 단순 참고 통계입니다 — 매도가 계산에 자동 반영되지 않습니다.</p>
-</div>
-{% endif %}
-
-{% if result.profit %}
-<div class="card">
-  <h3 style="margin-top:0">수익성 계산 (낙찰가 {{ result.bid_price }} 기준)</h3>
-  <table>
-    <tr><th>시나리오</th><th>순수익</th><th>수익률</th></tr>
-    {% for p in result.profit %}
-    <tr><td>{{ p.label }}</td><td>{{ p.net_profit }}</td><td>{{ p.roi }}</td></tr>
-    {% endfor %}
-  </table>
-  <p class="muted">⚠️ 취득 부대비용률 3.5% 가정 — 실제 취득세율은 다주택/규제지역 여부에 따라 1.1~13%까지 다르니 참고용으로만 보세요. 명도비·수리비·대출이자는 반영되지 않았습니다.</p>
 </div>
 {% endif %}
 

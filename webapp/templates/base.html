@@ -5,40 +5,144 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>빌라 매매가 계산기</title>
 <style>
-  :root { color-scheme: light; }
+  :root {
+    color-scheme: light;
+    --primary: #03c75a;
+    --primary-dark: #02a94d;
+    --primary-tint: #e6f9ee;
+    --ink: #1c1e21;
+    --muted: #7c8288;
+    --muted-2: #a4a9ae;
+    --bg: #f2f4f6;
+    --card: #ffffff;
+    --border: #e7e9ec;
+    --danger-bg: #fdecec;
+    --danger: #d33232;
+    --radius-lg: 16px;
+    --radius-md: 10px;
+    --shadow: 0 1px 2px rgba(20, 24, 28, 0.04), 0 4px 14px rgba(20, 24, 28, 0.05);
+  }
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Malgun Gothic", sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; color: #1a1a1a; background: #fafafa; }
-  h1 { font-size: 22px; margin-bottom: 4px; }
-  form { display: flex; flex-direction: column; gap: 12px; background: #fff; padding: 20px; border-radius: 10px; border: 1px solid #e2e2e2; }
-  label { font-size: 13px; font-weight: 600; color: #333; }
-  input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 100%; margin-top: 4px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Malgun Gothic", sans-serif;
+    max-width: 720px; margin: 0 auto; padding: 24px 16px 48px;
+    color: var(--ink); background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 21px; font-weight: 800; margin: 4px 0 2px; letter-spacing: -0.3px; }
+  h3 { font-size: 15px; font-weight: 700; margin: 0 0 12px; color: var(--ink); }
+  a { color: var(--primary-dark); }
+
+  form {
+    display: flex; flex-direction: column; gap: 14px;
+    background: var(--card); padding: 22px; border-radius: var(--radius-lg);
+    border: 1px solid var(--border); box-shadow: var(--shadow);
+  }
+  label { font-size: 13px; font-weight: 600; color: #4a4f54; display: block; }
+  input[type="text"], input[type="number"], input[type="password"] {
+    padding: 11px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-md);
+    font-size: 15px; width: 100%; margin-top: 6px; background: #fafbfc;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus {
+    outline: none; border-color: var(--primary); background: #fff;
+  }
   .row { display: flex; gap: 12px; }
   .row > div { flex: 1; }
-  button { padding: 11px; border: none; border-radius: 6px; background: #2563eb; color: #fff; font-size: 15px; cursor: pointer; }
-  button:hover { background: #1d4ed8; }
-  .error { background: #fee2e2; color: #991b1b; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; }
-  .hint { color: #777; font-size: 12px; }
-  .card { background: #fff; padding: 20px; border-radius: 10px; border: 1px solid #e2e2e2; margin-bottom: 16px; }
+  button {
+    padding: 14px; border: none; border-radius: var(--radius-md);
+    background: var(--primary); color: #fff; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: background .15s ease;
+  }
+  button:hover { background: var(--primary-dark); }
+  button:disabled { background: var(--muted-2); cursor: default; }
+
+  .error {
+    background: var(--danger-bg); color: var(--danger); padding: 12px 14px;
+    border-radius: var(--radius-md); margin-bottom: 12px; font-size: 14px; font-weight: 600;
+  }
+  .hint { color: var(--muted); font-size: 12.5px; line-height: 1.6; margin: 6px 2px 0; }
+
+  .card {
+    background: var(--card); padding: 20px 22px; border-radius: var(--radius-lg);
+    border: 1px solid var(--border); margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+
+  /* 가격 히어로 카드 */
+  .hero {
+    background: linear-gradient(165deg, #ffffff 0%, var(--primary-tint) 130%);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 24px 22px 20px; margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+  .hero-label { font-size: 13px; font-weight: 700; color: var(--primary-dark); }
+  .hero-price { font-size: 40px; font-weight: 800; letter-spacing: -1px; margin: 4px 0 2px; color: var(--ink); }
+  .hero-range { font-size: 13.5px; color: var(--muted); margin-bottom: 14px; }
+  .hero-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700;
+    background: var(--primary-tint); color: var(--primary-dark);
+  }
+  .badge.muted { background: #f1f2f4; color: var(--muted); }
+  .badge.warn { background: #fff4e0; color: #b9740a; }
+
   .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .price-item { padding: 12px; background: #f5f7fb; border-radius: 8px; }
-  .price-item .label { font-size: 12px; color: #666; }
-  .price-item .value { font-size: 20px; font-weight: 700; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee; }
-  .muted { color: #888; font-size: 13px; }
-  a.back { display: inline-block; margin-top: 8px; color: #2563eb; text-decoration: none; font-size: 14px; }
-  footer { margin-top: 24px; color: #999; font-size: 12px; line-height: 1.6; }
+  .price-item {
+    padding: 13px 14px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md);
+  }
+  .price-item .label { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .price-item .value { font-size: 19px; font-weight: 800; margin-top: 2px; }
+  .listing-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; padding: 14px 16px; background: var(--ink); border-radius: var(--radius-md);
+  }
+  .listing-row .label { color: #d6d9dc; font-size: 13px; font-weight: 600; }
+  .listing-row .value { color: #fff; font-size: 20px; font-weight: 800; }
+
+  .section-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 26px 4px 12px; color: var(--muted-2); font-size: 12.5px; font-weight: 700;
+  }
+  .section-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 700; font-size: 12px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafbfc; }
+
+  .muted { color: var(--muted); font-size: 13px; line-height: 1.6; }
+  ul.ref-list { margin: 4px 0 0 0; padding: 0; list-style: none; }
+  ul.ref-list li {
+    padding: 6px 0; font-size: 13.5px; color: #4a4f54;
+    border-bottom: 1px dashed var(--border);
+  }
+  ul.ref-list li:last-child { border-bottom: none; }
+
+  a.back {
+    display: inline-block; margin-top: 6px; color: var(--primary-dark);
+    text-decoration: none; font-size: 14px; font-weight: 700;
+  }
+  a.back:hover { text-decoration: underline; }
+
+  footer { margin-top: 28px; color: var(--muted-2); font-size: 11.5px; line-height: 1.7; padding: 0 4px; }
+
   #loading-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(250,250,250,0.92);
+    display: none; position: fixed; inset: 0; background: rgba(242, 244, 246, 0.94);
     z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
   }
   #loading-overlay.active { display: flex; }
   .spinner {
-    width: 40px; height: 40px; border: 4px solid #dbe4ff; border-top-color: #2563eb;
+    width: 40px; height: 40px; border: 4px solid var(--primary-tint); border-top-color: var(--primary);
     border-radius: 50%; animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   #loading-overlay p { color: #444; font-size: 14px; margin: 0; }
+
+  @media (max-width: 420px) {
+    .hero-price { font-size: 32px; }
+    .price-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  }
 </style>
 </head>
 <body>

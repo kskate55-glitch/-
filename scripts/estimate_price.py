@@ -970,7 +970,7 @@ def main():
             confidence=confidence, conservative=conservative, realistic=realistic,
             upper=upper, ai_base=ai_base, listing=listing,
             n_total=n_total, n_close=n_close,
-            comparables=comparables, season=season, trend=trend,
+            comparables=comparables, season=season, trend=trend, filtered=filtered,
         )
         reports_dir = "reports"
         os.makedirs(reports_dir, exist_ok=True)

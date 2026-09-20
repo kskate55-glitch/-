@@ -242,6 +242,13 @@ def estimate():
     ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
     listing = round(upper * 1.03, -1)
 
+    from price_chart import render_price_distribution_html
+
+    price_chart_html = render_price_distribution_html(filtered, {
+        "보수적 급매가": conservative, "현실적 체결가": realistic, "상단 매도가": upper,
+        "AI 기준매도가": ai_base, "권장 최초 호가": listing,
+    })
+
     dong_compare = None
     from lawd_lookup import find_dong_in_address
     from rank_areas import MIN_SAMPLE, build_dong_stats, find_dong_rank, rank_by_price_change, rank_by_volume
@@ -302,6 +309,7 @@ def estimate():
         "villa_market_trend": villa_market_trend,
         "dong_compare": dong_compare,
         "station_premium": station_premium,
+        "price_chart_html": price_chart_html,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),

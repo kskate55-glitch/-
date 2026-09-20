@@ -19,6 +19,11 @@
     <div class="price-item"><div class="label">AI 기준매도가</div><div class="value">{{ result.ai_base }}</div></div>
     <div class="price-item"><div class="label">현실적 체결가</div><div class="value">{{ result.realistic }}</div></div>
   </div>
+  {% if result.price_chart_html %}
+  <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border)">
+    {{ result.price_chart_html | safe }}
+  </div>
+  {% endif %}
   <div class="listing-row">
     <span class="label">권장 최초 호가</span>
     <span class="value">{{ result.listing }}</span>

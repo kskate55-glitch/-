@@ -5,6 +5,8 @@
 estimate_price.py가 --html 옵션을 줬을 때 이 모듈을 사용한다.
 """
 
+from price_chart import render_price_distribution_html
+
 
 def fmt_eok(man: float) -> str:
     return f"{man / 10000:.2f}억"
@@ -175,6 +177,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
       <div class="stat"><div class="label">권장 최초 호가</div><div class="value">{listing}</div></div>
     </div>
     <p class="note">유효 비교거래 {n_total}건 (반경 절반 이내 근접 매물 {n_close}건)</p>
+    {price_chart}
   </div>
 
   <div class="card">
@@ -203,7 +206,14 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 
 def render_report(*, building, dong, area, period, generated, confidence,
                    conservative, realistic, upper, ai_base, listing,
-                   n_total, n_close, comparables, season, trend) -> str:
+                   n_total, n_close, comparables, season, trend, filtered=None) -> str:
+    price_chart = ""
+    if filtered:
+        price_chart = render_price_distribution_html(filtered, {
+            "보수적 급매가": conservative, "현실적 체결가": realistic, "상단 매도가": upper,
+            "AI 기준매도가": ai_base, "권장 최초 호가": listing,
+        }, primary="#4f46e5")  # 이 리포트 자체의 accent 색(인디고)에 맞춘다
+
     return PAGE_TEMPLATE.format(
         title=f"{building} 매도가 분석",
         building=building, dong=dong, area=area, period=period, generated=generated,
@@ -212,6 +222,7 @@ def render_report(*, building, dong, area, period, generated, confidence,
         upper=fmt_eok(upper), ai_base=fmt_eok(ai_base), listing=fmt_eok(listing),
         n_total=n_total, n_close=n_close,
         comp_table=_comparables_table_html(comparables),
+        price_chart=price_chart,
         season_scope=season.get("scope_label", "-"),
         season_chart=_seasonality_chart_html(season),
         season_summary=_seasonality_summary(season),

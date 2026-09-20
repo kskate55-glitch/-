@@ -546,10 +546,33 @@ AI 토큰 비용이 들지 않는다 — 국토부·카카오 API 키 관리와 
   없이 주소만 입력하면 된다.
 - 여러 사람이 쓰게 되면 카카오 지오코딩 무료 할당량, 국토부 API 일일 트래픽
   한도에 걸릴 수 있다는 점을 사용자에게 항상 안내한다.
-- 사용법:
-  ```
-  pip install -r requirements.txt
-  MOLIT_SERVICE_KEY="발급받은_인증키" KAKAO_REST_API_KEY="발급받은_키" python webapp/app.py
-  ```
-  브라우저에서 `http://localhost:5000` 접속 (실제 배포는 Railway, Render 같은
-  서비스에 올리고 환경변수만 설정해주면 된다).
+- **비밀번호 보호**: `SITE_PASSWORD` 환경변수를 설정하면 그 비밀번호를 아는
+  사람만 쓸 수 있다(`/login`에서 확인, 세션 쿠키로 유지). 공개 URL을 낯선
+  사람이 발견해서 API 할당량을 소진시키는 것을 막기 위함이다 — 설정 안 하면
+  누구나 바로 쓸 수 있다. `SECRET_KEY` 환경변수는 세션 쿠키 서명용(설정 안
+  하면 서버 재시작마다 로그인이 풀린다).
+
+**로컬 실행**
+```
+pip install -r requirements.txt
+MOLIT_SERVICE_KEY="발급받은_인증키" KAKAO_REST_API_KEY="발급받은_키" python webapp/app.py
+```
+브라우저에서 `http://localhost:5000` 접속.
+
+**Render.com 무료 배포로 진짜 인터넷 주소(URL) 만들기**
+1. [render.com](https://render.com) 가입 (GitHub 계정으로 로그인 가능)
+2. 대시보드에서 **New +** → **Web Service** → 이 프로젝트의 GitHub 저장소
+   연결, 브랜치 선택
+3. 저장소 루트에 있는 `render.yaml`을 Render가 자동으로 읽어서 빌드/실행
+   커맨드(`pip install -r requirements.txt` / `gunicorn --chdir webapp
+   --bind 0.0.0.0:$PORT app:app`)를 채워준다 — 못 읽으면 이 두 값을 직접
+   입력한다.
+4. **Environment** 탭에서 환경변수 입력: `MOLIT_SERVICE_KEY`,
+   `KAKAO_REST_API_KEY`, (선택) `SITE_PASSWORD` — 절대 코드나 render.yaml에
+   값을 직접 적지 않는다, Render 대시보드에만 입력한다.
+5. 배포되면 `https://molit-price-estimator.onrender.com` 같은 주소가
+   생긴다 — 이걸로 어디서나(다른 사람 휴대폰에서도) 접속 가능하다.
+6. ⚠️ 무료 티어는 일정 시간 방문자가 없으면 서버가 잠들고, 다음 접속 때
+   다시 깨어나느라 첫 요청이 몇 초~수십 초 느릴 수 있다(콜드 스타트). 또한
+   캐시 파일(`webapp/cache/`)도 재배포·재시작 시 초기화될 수 있다 — 계산
+   결과 자체는 그대로 정확하고, 속도만 영향받는다.

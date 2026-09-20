@@ -7,7 +7,7 @@ CLI 버전과 다른 점은, 사용자가 국토부 API를 직접 실행해 data
 대신, 이 서버가 주소를 받으면 그때그때 국토부/카카오 API를 대신 호출해준다는
 것뿐이다 (data_source.py).
 
-실행:
+실행 (로컬):
     pip install -r requirements.txt
     MOLIT_SERVICE_KEY="발급받은_인증키" KAKAO_REST_API_KEY="발급받은_키" python webapp/app.py
     브라우저에서 http://localhost:5000 접속
@@ -17,30 +17,62 @@ CLI 버전과 다른 점은, 사용자가 국토부 API를 직접 실행해 data
 ⚠️ 여러 방문자가 쓸 걸 가정한 최소 기능(MVP) 버전이다. 8절 매도가 계산까지만
    지원하고, 예상 전세가(16절)·건물정보(20절)·인근 중개업소(21절) 등은
    아직 웹 버전에 없다 — CLI(estimate_price.py)에는 이미 있다.
+
+SITE_PASSWORD 환경변수를 설정하면 비밀번호를 아는 사람만 쓸 수 있다 (공개
+URL로 배포했을 때 낯선 방문자가 국토부/카카오 API 일일 할당량을 소진시키는
+것을 막기 위함). 설정하지 않으면 누구나 바로 쓸 수 있다.
 """
 
 import os
 import sys
 from datetime import datetime
+from functools import wraps
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 sys.path.insert(0, os.path.dirname(__file__))
 
-from flask import Flask, render_template, request  # noqa: E402
+from flask import Flask, redirect, render_template, request, session, url_for  # noqa: E402
+
+SITE_PASSWORD = os.environ.get("SITE_PASSWORD")
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 
 
 def _fmt_eok(man: float) -> str:
     return f"{man / 10000:.2f}억"
 
 
+def _password_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if SITE_PASSWORD and not session.get("authed"):
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not SITE_PASSWORD:
+        return redirect(url_for("index"))
+    error = None
+    if request.method == "POST":
+        if request.form.get("password") == SITE_PASSWORD:
+            session["authed"] = True
+            return redirect(url_for("index"))
+        error = "비밀번호가 틀렸습니다."
+    return render_template("login.html", error=error)
+
+
 @app.route("/", methods=["GET"])
+@_password_required
 def index():
     return render_template("index.html", last_year=datetime.now().year - 1)
 
 
 @app.route("/estimate", methods=["POST"])
+@_password_required
 def estimate():
     form = request.form
     address = form.get("address", "").strip()

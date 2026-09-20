@@ -378,6 +378,38 @@ def estimate():
         ],
     }
 
+    listings_text = form.get("listings_text", "").strip()
+    similar_listings = None
+    if listings_text:
+        from listing_parser import parse_listings, rank_similar_listings
+
+        parsed, skipped = parse_listings(listings_text)
+        if parsed:
+            ranked = rank_similar_listings(parsed, area, floor, int(build_year), top_n=20)
+            similar_listings = {
+                "rows": [
+                    {
+                        "name": it["name"],
+                        "price": _fmt_eok(it["price_man"]),
+                        "area": it["area"],
+                        "floor": it["floor"] if it["floor"] is not None else "?",
+                        "note": describe_comparable_similarity(area, floor, build_year, {
+                            "excluUseAr": it["area"],
+                            "floor": str(it["floor"]) if it["floor"] is not None else None,
+                            "buildYear": str(it["build_year"]) if it["build_year"] is not None else None,
+                        }),
+                    }
+                    for it in ranked
+                ],
+                "n_parsed": len(parsed),
+                "n_skipped": skipped,
+                "n_shown": len(ranked),
+            }
+        else:
+            similar_listings = {"rows": [], "n_parsed": 0, "n_skipped": skipped, "n_shown": 0}
+
+    result["similar_listings"] = similar_listings
+
     monthly_deposit = _optional_float("monthly_deposit")
     if monthly_deposit is not None:
         from estimate_price import compute_monthly_rent

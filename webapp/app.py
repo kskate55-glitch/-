@@ -159,17 +159,20 @@ def estimate():
     villa_market_trend = None
     market_trend = None
     from market_index import (
-        VILLA_SIDO_ALIAS, compute_market_trend, compute_villa_market_trend,
+        SIDO_ALIAS, VILLA_SIDO_ALIAS, _plain_market_desc, compute_market_trend,
+        compute_villa_market_trend, format_ranking_peers, latest_value_for,
         load_market_index, load_villa_market_index, load_villa_seoul_zone_index,
-        region_from_address, seoul_zone_from_address,
+        rank_region, region_from_address, seoul_zone_from_address, yoy_change,
     )
 
     villa_zone = seoul_zone_from_address(address)
     villa_trend = None
     villa_label = None
     villa_is_zone = False
+    villa_rows = None
     if villa_zone is not None:
-        villa_trend = compute_villa_market_trend(load_villa_seoul_zone_index(), villa_zone)
+        villa_rows = load_villa_seoul_zone_index()
+        villa_trend = compute_villa_market_trend(villa_rows, villa_zone)
         if villa_trend is not None:
             villa_label = f"서울 {villa_zone}"
             villa_is_zone = True
@@ -177,34 +180,61 @@ def estimate():
     if villa_trend is None:
         villa_region = region_from_address(address, VILLA_SIDO_ALIAS)
         if villa_region is not None:
-            villa_trend = compute_villa_market_trend(load_villa_market_index(), villa_region)
+            villa_rows = load_villa_market_index()
+            villa_trend = compute_villa_market_trend(villa_rows, villa_region)
             if villa_trend is not None:
                 villa_label = villa_trend["region"]
 
     if villa_trend is not None:
         idx = villa_trend["index_latest"]
+        peers = []
+        if villa_is_zone:
+            zone_rank = rank_region(villa_rows, villa_zone, "index")
+            if zone_rank is not None:
+                peers = format_ranking_peers(zone_rank["ranking"], villa_zone, max_show=5)
+        national = latest_value_for(load_villa_market_index(), "전국", "index")
+        national_line = None
+        if national is not None:
+            _nat_date, nat_val = national
+            national_line = (f"전국 평균({nat_val:.1f}) 대비 {idx - nat_val:+.1f}p "
+                              f"({'전국보다 강세' if idx > nat_val else '전국보다 약세' if idx < nat_val else '전국과 비슷'})")
         villa_market_trend = {
             "region": villa_label, "date": villa_trend["snapshot_date"],
-            "index": f"{idx:.1f}",
-            "desc": "매도자 우위 — 상승 압력" if idx > 100 else "매수자 우위 — 하락 압력",
+            "index": f"{idx:.1f}", "diff": f"{idx - 100:+.1f}",
+            "plain_desc": _plain_market_desc(idx),
             "trend": _direction(villa_trend["index_trend"]),
+            "start_date": villa_trend["start_date"], "start_value": f"{villa_trend['start_value']:.1f}",
+            "since_start": f"{villa_trend['since_start']:+.1f}",
+            "peers": peers, "national_line": national_line,
             "is_zone": villa_is_zone,
         }
 
     region = region_from_address(address)
     if region is not None:
-        trend = compute_market_trend(load_market_index(), region)
+        rows_kb = load_market_index()
+        trend = compute_market_trend(rows_kb, region)
         if trend is not None:
             buy_idx = trend["buy_index_latest"]
             jeonse_idx = trend["jeonse_index_latest"]
+            kb_sido_names = set(SIDO_ALIAS.values())
+            buy_rank = rank_region(rows_kb, region, "매수우위", allowed_regions=kb_sido_names)
+            buy_peers = format_ranking_peers(buy_rank["ranking"], region, max_show=5) if buy_rank else []
+            buy_yoy = yoy_change(rows_kb, region, "매수우위")
+            jeonse_yoy = yoy_change(rows_kb, region, "전세수급") if jeonse_idx is not None else None
             market_trend = {
                 "region": trend["region"], "date": trend["snapshot_date"],
-                "buy_index": f"{buy_idx:.1f}",
-                "buy_desc": "매도자 우위 — 상승 압력" if buy_idx > 100 else "매수자 우위 — 하락 압력",
+                "buy_index": f"{buy_idx:.1f}", "buy_diff": f"{buy_idx - 100:+.1f}",
+                "buy_plain_desc": _plain_market_desc(buy_idx, kind="buy"),
                 "buy_trend": _direction(trend["buy_index_trend"]),
+                "buy_yoy": (f"작년 이맘때({buy_yoy['year_ago_date']}, {buy_yoy['year_ago_value']:.1f}) 대비 {buy_yoy['delta']:+.1f}p"
+                            if buy_yoy is not None else None),
+                "buy_peers": buy_peers,
                 "jeonse_index": f"{jeonse_idx:.1f}" if jeonse_idx is not None else None,
-                "jeonse_desc": ("전세 수요 > 공급" if jeonse_idx and jeonse_idx > 100 else "전세 수요 < 공급") if jeonse_idx is not None else None,
+                "jeonse_diff": f"{jeonse_idx - 100:+.1f}" if jeonse_idx is not None else None,
+                "jeonse_plain_desc": _plain_market_desc(jeonse_idx, kind="jeonse") if jeonse_idx is not None else None,
                 "jeonse_trend": _direction(trend["jeonse_index_trend"]) if jeonse_idx is not None else None,
+                "jeonse_yoy": (f"작년 이맘때({jeonse_yoy['year_ago_date']}, {jeonse_yoy['year_ago_value']:.1f}) 대비 {jeonse_yoy['delta']:+.1f}p"
+                               if jeonse_yoy is not None else None),
             }
 
     from data_source import get_trade_rows
@@ -239,12 +269,49 @@ def estimate():
     ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
     listing = round(upper * 1.03, -1)
 
+    dong_compare = None
+    from lawd_lookup import find_dong_in_address
+    from rank_areas import MIN_SAMPLE, build_dong_stats, find_dong_rank, rank_by_price_change, rank_by_volume
+
+    target_dong = find_dong_in_address(address)
+    dong_result = build_dong_stats(rows) if target_dong else None
+    if dong_result is not None:
+        latest_ym, dong_data = dong_result
+        latest_y, latest_m = divmod(latest_ym, 12)
+        volume_ranked = rank_by_volume(dong_data)
+        price_ranked = rank_by_price_change(dong_data)
+        vol_rank = find_dong_rank(volume_ranked, target_dong)
+        price_rank = find_dong_rank(price_ranked, target_dong)
+        dong_compare = {
+            "dong": target_dong, "latest_month": f"{latest_y}.{latest_m + 1:02d}",
+            "volume_top": [
+                {"dong": d, "count": c, "is_target": d == target_dong}
+                for d, c in volume_ranked[:5]
+            ],
+            "volume_rank_note": (f"{vol_rank}위 {target_dong} {dict(volume_ranked)[target_dong]}건 "
+                                  f"({len(volume_ranked)}개 동 중)") if vol_rank and vol_rank > 5 else None,
+            "volume_missing": vol_rank is None,
+            "price_top": [
+                {"dong": d, "change_pct": f"{'+' if chg >= 0 else ''}{chg:.1f}%", "is_target": d == target_dong}
+                for d, chg, _avg, _cnt in price_ranked[:5]
+            ],
+            "price_rank_note": None,
+            "price_missing": price_rank is None,
+        }
+        if price_rank and price_rank > 5:
+            chg = {d: chg for d, chg, _a, _c in price_ranked}[target_dong]
+            sign = "+" if chg >= 0 else ""
+            dong_compare["price_rank_note"] = f"{price_rank}위 {target_dong} {sign}{chg:.1f}% ({len(price_ranked)}개 동 중)"
+        if not volume_ranked and not price_ranked:
+            dong_compare = None
+
     result = {
         "address": address,
         "period": f"{year_min}.01 ~ {this_year}.12",
         "building": building,
         "villa_market_trend": villa_market_trend,
         "market_trend": market_trend,
+        "dong_compare": dong_compare,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),

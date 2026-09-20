@@ -18,23 +18,75 @@
 {% if result.villa_market_trend %}
 <div class="card">
   <h3 style="margin-top:0">시장 동향 참고 - 연립다세대 ({{ result.villa_market_trend.region }}, {{ result.villa_market_trend.date }} 기준 스냅샷)</h3>
-  <p class="muted">매매수급동향지수: {{ result.villa_market_trend.index }} ({{ result.villa_market_trend.desc }}) — 최근 3개월 추세: {{ result.villa_market_trend.trend }}</p>
-  {% if result.villa_market_trend.is_zone %}
-  <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 서울 내 5대 생활권(도심/동북/서북/서남/동남) 단위 참고용입니다 (개별 구/동 신호 아님). {{ result.villa_market_trend.date }} 기준 스냅샷이라 이후 갱신되지 않습니다.</p>
-  {% else %}
-  <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 시/도 단위(구/동 단위 신호 아님) 참고용입니다. {{ result.villa_market_trend.date }} 기준 스냅샷이라 이후 갱신되지 않습니다.</p>
+  <p class="muted">매매수급동향지수: {{ result.villa_market_trend.index }} (기준선 100 대비 {{ result.villa_market_trend.diff }})</p>
+  <p><strong>→ {{ result.villa_market_trend.plain_desc }}</strong></p>
+  <p class="muted">최근 3개월 추세: {{ result.villa_market_trend.trend }} ({{ result.villa_market_trend.start_date }} 최초 집계 {{ result.villa_market_trend.start_value }} → 지금, {{ result.villa_market_trend.since_start }}p)</p>
+  {% if result.villa_market_trend.peers %}
+  <p class="muted" style="margin-top:8px">서울 5개 생활권 비교:</p>
+  <ul class="muted" style="margin:4px 0 0 18px; padding:0">
+    {% for line in result.villa_market_trend.peers %}<li>{{ line }}</li>{% endfor %}
+  </ul>
   {% endif %}
+  {% if result.villa_market_trend.national_line %}
+  <p class="muted" style="margin-top:8px">{{ result.villa_market_trend.national_line }}</p>
+  {% endif %}
+  {% if result.villa_market_trend.is_zone %}
+  <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 서울 내 5대 생활권(도심/동북/서북/서남/동남) 단위 참고용입니다 (개별 구/동 신호 아님). 매도가 계산에 자동 반영되지 않습니다.</p>
+  {% else %}
+  <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 시/도 단위(구/동 단위 신호 아님) 참고용입니다. 매도가 계산에 자동 반영되지 않습니다.</p>
+  {% endif %}
+  <p class="muted">2025년 11월부터 모은 스냅샷이라 '작년 대비' 계산은 아직 안 됩니다 — 최신 수치는 한국부동산원 R-ONE에서 확인하세요.</p>
 </div>
 {% endif %}
 
 {% if result.market_trend %}
 <div class="card">
   <h3 style="margin-top:0">시장 동향 참고 - 아파트 ({{ result.market_trend.region }}, {{ result.market_trend.date }} 기준 스냅샷)</h3>
-  <p class="muted">매수우위지수: {{ result.market_trend.buy_index }} ({{ result.market_trend.buy_desc }}) — 최근 4주 추세: {{ result.market_trend.buy_trend }}</p>
+  <p class="muted">매수우위지수: {{ result.market_trend.buy_index }} (기준선 100 대비 {{ result.market_trend.buy_diff }})</p>
+  <p><strong>→ {{ result.market_trend.buy_plain_desc }}</strong></p>
+  <p class="muted">최근 4주 추세: {{ result.market_trend.buy_trend }}{% if result.market_trend.buy_yoy %} · {{ result.market_trend.buy_yoy }}{% endif %}</p>
+  {% if result.market_trend.buy_peers %}
+  <p class="muted" style="margin-top:8px">전국 17개 시/도 비교:</p>
+  <ul class="muted" style="margin:4px 0 0 18px; padding:0">
+    {% for line in result.market_trend.buy_peers %}<li>{{ line }}</li>{% endfor %}
+  </ul>
+  {% endif %}
   {% if result.market_trend.jeonse_index %}
-  <p class="muted">전세수급지수: {{ result.market_trend.jeonse_index }} ({{ result.market_trend.jeonse_desc }}) — 최근 4주 추세: {{ result.market_trend.jeonse_trend }}</p>
+  <p class="muted" style="margin-top:10px">전세수급지수: {{ result.market_trend.jeonse_index }} (기준선 100 대비 {{ result.market_trend.jeonse_diff }})</p>
+  <p><strong>→ {{ result.market_trend.jeonse_plain_desc }}</strong></p>
+  <p class="muted">최근 4주 추세: {{ result.market_trend.jeonse_trend }}{% if result.market_trend.jeonse_yoy %} · {{ result.market_trend.jeonse_yoy }}{% endif %}</p>
   {% endif %}
   <p class="muted" style="margin-top:8px">⚠️ 아파트 시장 지표이며 시/도 단위(빌라 자체 시세 아님) 참고용입니다. {{ result.market_trend.date }} 기준 스냅샷이라 이후 갱신되지 않습니다.</p>
+</div>
+{% endif %}
+
+{% if result.dong_compare %}
+<div class="card">
+  <h3 style="margin-top:0">인근 동 비교 ({{ result.dong_compare.dong }} 기준, 최근 거래월 {{ result.dong_compare.latest_month }})</h3>
+  <p class="muted">거래 활발도 (최근 3개월 거래건수):</p>
+  {% if result.dong_compare.volume_top %}
+  <ul style="margin:4px 0 0 18px; padding:0">
+    {% for v in result.dong_compare.volume_top %}
+    <li{% if v.is_target %} style="font-weight:bold"{% endif %}>{{ v.dong }} {{ v.count }}건{% if v.is_target %} ← 검색하신 동{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% if result.dong_compare.volume_rank_note %}<p class="muted" style="margin-top:4px">{{ result.dong_compare.volume_rank_note }} ← 검색하신 동</p>{% endif %}
+  {% elif result.dong_compare.volume_missing %}
+  <p class="muted">비교할 만한 동이 부족합니다.</p>
+  {% endif %}
+
+  <p class="muted" style="margin-top:12px">가격 상승률 (최근 3개월 평균 평당가, 이전 3개월 대비):</p>
+  {% if result.dong_compare.price_top %}
+  <ul style="margin:4px 0 0 18px; padding:0">
+    {% for p in result.dong_compare.price_top %}
+    <li{% if p.is_target %} style="font-weight:bold"{% endif %}>{{ p.dong }} {{ p.change_pct }}{% if p.is_target %} ← 검색하신 동{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% if result.dong_compare.price_rank_note %}<p class="muted" style="margin-top:4px">{{ result.dong_compare.price_rank_note }} ← 검색하신 동</p>{% endif %}
+  {% elif result.dong_compare.price_missing %}
+  <p class="muted">비교할 만한 동이 부족합니다.</p>
+  {% endif %}
+  <p class="muted" style="margin-top:8px">※ 같은 구 안에서 지금까지 조회된 데이터 기준입니다.</p>
 </div>
 {% endif %}
 

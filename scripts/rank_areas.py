@@ -164,6 +164,69 @@ def rank_bands_by_price_change(band_data: dict) -> list[tuple]:
     return ranked
 
 
+def find_dong_rank(ranked_list: list[tuple], dong: str) -> int | None:
+    """rank_by_price_change/rank_by_volume이 돌려준 정렬된 리스트에서 dong의
+    순위(1부터)를 찾는다. 표본 부족 등으로 랭킹에 아예 없으면 None."""
+    for i, item in enumerate(ranked_list, start=1):
+        if item[0] == dong:
+            return i
+    return None
+
+
+def print_dong_comparison(rows: list[dict], target_dong: str, gu_label: str | None, top: int = 5):
+    """CLAUDE.md 25절 규칙: 대상 물건이 속한 구 안에서 다른 동네와 비교해
+    "여기가 거래가 활발한 편인지", "가격이 더 오르고 있는 동네인지"를 보여준다.
+    13절 동네 랭킹과 같은 build_dong_stats/rank_by_* 로직을 재사용하되, 전국이
+    아니라 대상 물건이 속한 구(이미 gu_filter로 좁혀 넘어온 rows) 안에서만
+    비교한다는 점이 다르다."""
+    result = build_dong_stats(rows)
+    if result is None or not target_dong:
+        return
+    latest, dong_data = result
+    latest_y, latest_m = divmod(latest, 12)
+
+    price_ranked = rank_by_price_change(dong_data)
+    volume_ranked = rank_by_volume(dong_data)
+
+    label = f"{gu_label} 내 다른 동네와 비교" if gu_label else "인근 동네와 비교"
+    print()
+    print(f"[인근 동 비교] ({label}, 최근 거래월 {latest_y}.{latest_m + 1:02d} 기준)")
+
+    print("거래 활발도 (최근 3개월 거래건수):")
+    if not volume_ranked:
+        print("  비교할 만한 동이 부족합니다 (동마다 최근 3개월에 3건 이상 거래 필요).")
+    else:
+        vol_rank = find_dong_rank(volume_ranked, target_dong)
+        for i, (dong, cnt) in enumerate(volume_ranked[:top], start=1):
+            marker = " ← 검색하신 동" if dong == target_dong else ""
+            print(f"  {i}위 {dong} {cnt}건{marker}")
+        if vol_rank is not None and vol_rank > top:
+            cnt = dict(volume_ranked)[target_dong]
+            print(f"  {vol_rank}위 {target_dong} {cnt}건 ← 검색하신 동 ({len(volume_ranked)}개 동 중)")
+        elif vol_rank is None:
+            print(f"  ※ 검색하신 {target_dong}은 최근 3개월 거래가 {MIN_SAMPLE}건 미만이라 순위에서 빠졌습니다.")
+
+    print("가격 상승률 (최근 3개월 평균 평당가, 이전 3개월 대비):")
+    if not price_ranked:
+        print("  비교할 만한 동이 부족합니다 (동마다 최근·이전 3개월에 각 3건 이상 거래 필요).")
+    else:
+        price_map = {d: (chg, avg, cnt) for d, chg, avg, cnt in price_ranked}
+        price_rank = find_dong_rank(price_ranked, target_dong)
+        for i, (dong, change_pct, recent_avg, cnt) in enumerate(price_ranked[:top], start=1):
+            sign = "+" if change_pct >= 0 else ""
+            marker = " ← 검색하신 동" if dong == target_dong else ""
+            print(f"  {i}위 {dong} {sign}{change_pct:.1f}%{marker}")
+        if price_rank is not None and price_rank > top:
+            chg, _avg, _cnt = price_map[target_dong]
+            sign = "+" if chg >= 0 else ""
+            print(f"  {price_rank}위 {target_dong} {sign}{chg:.1f}% ← 검색하신 동 ({len(price_ranked)}개 동 중)")
+        elif price_rank is None:
+            print(f"  ※ 검색하신 {target_dong}은 최근·이전 3개월 거래가 부족해 순위에서 빠졌습니다.")
+
+    print("※ 지금까지 조회해서 가지고 있는 데이터 기준입니다 — 실제로 거래가 없다는 뜻이 아니라 "
+          "아직 조회하지 않은 기간/지역일 수 있습니다.")
+
+
 def print_area_bands(rows: list[dict], dong: str):
     result = build_band_stats(rows, dong)
     print()

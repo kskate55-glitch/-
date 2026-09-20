@@ -73,6 +73,11 @@ SIDO_ALIAS = {
 # 한국부동산원 CSV는 "경기도" 대신 "경기"로 표기하는 것만 다르고 나머지는 동일.
 VILLA_SIDO_ALIAS = {**SIDO_ALIAS, "경기도": "경기"}
 
+# rank_region()에서 "17개 시/도끼리만" 랭킹을 매길 때 쓰는 필터 — 원본 CSV에는
+# 전남광주 같은 중간집계, 경기 하위 권역 등 시/도가 아닌 행도 섞여있어 그대로
+# 랭킹에 넣으면 왜곡된다.
+VILLA_SIDO_NAMES = set(VILLA_SIDO_ALIAS.values())
+
 
 def region_from_address(address: str, alias_map: dict[str, str] = SIDO_ALIAS) -> str | None:
     """주소 문자열에서 해당 CSV가 쓰는 지역명을 찾는다. 매칭 안 되면 None."""
@@ -132,7 +137,11 @@ def load_villa_market_index() -> list[dict]:
 def compute_villa_market_trend(rows: list[dict], region: str, recent_months: int = 3) -> dict | None:
     """최근 N개월 평균 vs 그 이전 N개월 평균으로 매매수급동향지수 추세를 본다
     (13절 동네 랭킹과 같은 "최근 3개월 vs 이전 3개월" 원칙 — 월별 데이터라
-    주 단위가 아니라 월 단위로 비교한다). 2*recent_months개월 미만이면 None."""
+    주 단위가 아니라 월 단위로 비교한다). 2*recent_months개월 미만이면 None.
+    같은 범위 안에서 자료가 시작된 첫 달과 최신 달도 함께 비교해서
+    돌려준다(since_start) — 이 데이터는 2025-11부터라 1년 전 대비(YoY)
+    계산이 안 되므로, 대신 "가지고 있는 전체 기간 동안 얼마나 변했는지"를
+    보여주는 용도다."""
     region_rows = sorted(
         (r for r in rows if r["region"] == region and r["index"]),
         key=lambda r: r["date"],
@@ -148,6 +157,7 @@ def compute_villa_market_trend(rows: list[dict], region: str, recent_months: int
     prior = region_rows[-recent_months * 2:-recent_months]
 
     latest = region_rows[-1]
+    first = region_rows[0]
     idx_recent, idx_prior = _avg([r["index"] for r in recent]), _avg([r["index"] for r in prior])
 
     return {
@@ -155,4 +165,125 @@ def compute_villa_market_trend(rows: list[dict], region: str, recent_months: int
         "snapshot_date": latest["date"],
         "index_latest": float(latest["index"]),
         "index_trend": (idx_recent - idx_prior) if (idx_recent is not None and idx_prior is not None) else None,
+        "start_date": first["date"],
+        "start_value": float(first["index"]),
+        "since_start": float(latest["index"]) - float(first["index"]),
+    }
+
+
+def _plain_market_desc(value: float, kind: str = "buy") -> str:
+    """지수 값(0~200, 기준선 100)을 부동산 초보도 알 수 있는 문장으로 풀어준다.
+    kind='buy'는 매수우위지수/매매수급동향지수(같은 관례), kind='jeonse'는
+    KB 전세수급지수용 — 해석 방향(누가 유리한지)이 서로 다르다."""
+    diff = value - 100
+    if kind == "jeonse":
+        if abs(diff) < 3:
+            return "전세를 구하는 사람과 내놓는 사람이 균형 잡힌 상태예요."
+        if diff > 0:
+            return "전세 매물보다 구하는 사람이 더 많아요 → 전세가가 오르기 쉬운 분위기예요."
+        return "전세를 구하는 사람보다 매물이 더 많아요 → 전세가가 내리기 쉬운 분위기예요."
+    if abs(diff) < 3:
+        return "사려는 사람과 팔려는 사람이 균형 잡힌 상태예요."
+    if diff > 0:
+        return "사려는 사람이 팔려는 사람보다 많아요 → 집주인(파는 사람)에게 유리하고, 가격이 오르기 쉬운 분위기예요."
+    return "팔려는 사람이 사려는 사람보다 많아요 → 사는 사람에게 유리하고, 가격이 내리기 쉬운 분위기예요."
+
+
+def _latest_by_region(rows: list[dict], value_field: str, allowed_regions: set | None = None) -> dict:
+    """region별 가장 최근 날짜의 (date, value)를 돌려준다. 여러 region이 섞인
+    rows(예: 모든 시/도, 또는 서울 5개 권역)에서 지역간 비교/랭킹을 만들 때 쓴다."""
+    latest: dict[str, tuple[str, float]] = {}
+    for r in rows:
+        region = r.get("region")
+        if not region or (allowed_regions is not None and region not in allowed_regions):
+            continue
+        val = r.get(value_field)
+        if not val:
+            continue
+        date = r["date"]
+        if region not in latest or date > latest[region][0]:
+            latest[region] = (date, float(val))
+    return latest
+
+
+def latest_value_for(rows: list[dict], region: str, value_field: str = "index") -> tuple | None:
+    """특정 region의 가장 최근 (date, value) 하나만 필요할 때 쓰는 간단한 조회
+    (전국 평균과 비교할 때처럼 랭킹까지는 필요 없는 경우)."""
+    latest = _latest_by_region(rows, value_field, allowed_regions={region})
+    return latest.get(region)
+
+
+def rank_region(rows: list[dict], region: str, value_field: str = "index",
+                 allowed_regions: set | None = None) -> dict | None:
+    """같은 시점 기준으로 region이 동료 지역들(allowed_regions) 중 몇 위인지 계산.
+    반환: rank, total, value, date, ranking(전체 정렬 리스트). region 데이터가
+    없으면 None."""
+    latest = _latest_by_region(rows, value_field, allowed_regions)
+    if region not in latest:
+        return None
+    ranking = sorted(latest.items(), key=lambda kv: kv[1][1], reverse=True)
+    rank = next(i for i, (k, _v) in enumerate(ranking, start=1) if k == region)
+    return {
+        "rank": rank, "total": len(ranking),
+        "value": latest[region][1], "date": latest[region][0],
+        "ranking": ranking,
+    }
+
+
+def format_ranking_peers(ranking: list[tuple], highlight_region: str, max_show: int = 5) -> list[str]:
+    """rank_region()이 돌려준 ranking을 사람이 읽을 수 있는 줄 목록으로 만든다.
+    상위 max_show개는 항상 보여주고, 검색한 지역이 그 밖에 있으면 순위만
+    따로 덧붙인다 — 17개 시/도를 다 나열하면 너무 길어지는 것을 막는 용도."""
+    n = len(ranking)
+    lines = []
+    for i, (region, (_date, val)) in enumerate(ranking[:max_show], start=1):
+        marker = " ← 검색하신 지역" if region == highlight_region else ""
+        lines.append(f"{i}위 {region} {val:.1f}{marker}")
+    hl_idx = next((i for i, (k, _v) in enumerate(ranking, start=1) if k == highlight_region), None)
+    if hl_idx is not None and hl_idx > max_show:
+        val = dict(ranking)[highlight_region][1]
+        lines.append(f"{hl_idx}위 {highlight_region} {val:.1f} ← 검색하신 지역 ({n}개 지역 중)")
+    return lines
+
+
+def yoy_change(rows: list[dict], region: str, value_field: str, days: int = 365,
+               tolerance_days: int = 10) -> dict | None:
+    """KB처럼 주 단위로 오래 쌓인 데이터에서 "작년 이맘때 대비"를 계산한다.
+    최신 날짜에서 정확히 365일 전 날짜의 데이터가 없을 수 있으니(주간
+    발표일 차이), 그 날짜 ±tolerance_days 안에서 가장 가까운 값을 쓴다.
+    맞는 데이터가 없으면(신규 지표라 1년치가 안 쌓였거나) None."""
+    from datetime import date as _date, timedelta as _timedelta
+
+    region_rows = sorted(
+        (r for r in rows if r.get("region") == region and r.get(value_field)),
+        key=lambda r: r["date"],
+    )
+    if not region_rows:
+        return None
+
+    latest = region_rows[-1]
+    try:
+        latest_date = _date.fromisoformat(latest["date"])
+    except ValueError:
+        return None
+    target_date = latest_date - _timedelta(days=days)
+
+    best, best_diff = None, None
+    for r in region_rows:
+        try:
+            d = _date.fromisoformat(r["date"])
+        except ValueError:
+            continue
+        diff = abs((d - target_date).days)
+        if diff <= tolerance_days and (best_diff is None or diff < best_diff):
+            best, best_diff = r, diff
+    if best is None:
+        return None
+
+    old_val = float(best[value_field])
+    new_val = float(latest[value_field])
+    return {
+        "latest_date": latest["date"], "latest_value": new_val,
+        "year_ago_date": best["date"], "year_ago_value": old_val,
+        "delta": new_val - old_val,
     }

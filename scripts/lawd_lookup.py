@@ -58,6 +58,16 @@ def find_gu_in_address(address: str) -> str | None:
     return None
 
 
+def find_dong_in_address(address: str) -> str | None:
+    """주소 문자열에서 법정동명(OO동)을 정규식으로 추출한다 — 25절 인근 동
+    비교용. 웹 버전은 CLI(--dong)처럼 동을 따로 입력받지 않아서, 사용자가
+    입력한 지번 주소 텍스트에서 직접 뽑아 쓴다. 뒤에 공백+숫자(지번)가
+    오는 "OO동" 패턴만 인정해서 "화곡동6"처럼 숫자가 동 이름에 붙은 케이스나
+    구 이름 오탐을 피한다."""
+    m = re.search(r"([가-힣0-9]+동)\s+\d", address)
+    return m.group(1) if m else None
+
+
 def full_address(row: dict) -> str | None:
     """실거래 행(item)에서 지오코딩용 지번 주소 문자열을 복원한다."""
     entry = _get_cache().get((row.get("sggCd", "") or "")[:5])

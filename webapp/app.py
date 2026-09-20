@@ -160,20 +160,36 @@ def estimate():
     market_trend = None
     from market_index import (
         VILLA_SIDO_ALIAS, compute_market_trend, compute_villa_market_trend,
-        load_market_index, load_villa_market_index, region_from_address,
+        load_market_index, load_villa_market_index, load_villa_seoul_zone_index,
+        region_from_address, seoul_zone_from_address,
     )
 
-    villa_region = region_from_address(address, VILLA_SIDO_ALIAS)
-    if villa_region is not None:
-        villa_trend = compute_villa_market_trend(load_villa_market_index(), villa_region)
+    villa_zone = seoul_zone_from_address(address)
+    villa_trend = None
+    villa_label = None
+    villa_is_zone = False
+    if villa_zone is not None:
+        villa_trend = compute_villa_market_trend(load_villa_seoul_zone_index(), villa_zone)
         if villa_trend is not None:
-            idx = villa_trend["index_latest"]
-            villa_market_trend = {
-                "region": villa_trend["region"], "date": villa_trend["snapshot_date"],
-                "index": f"{idx:.1f}",
-                "desc": "매도자 우위 — 상승 압력" if idx > 100 else "매수자 우위 — 하락 압력",
-                "trend": _direction(villa_trend["index_trend"]),
-            }
+            villa_label = f"서울 {villa_zone}"
+            villa_is_zone = True
+
+    if villa_trend is None:
+        villa_region = region_from_address(address, VILLA_SIDO_ALIAS)
+        if villa_region is not None:
+            villa_trend = compute_villa_market_trend(load_villa_market_index(), villa_region)
+            if villa_trend is not None:
+                villa_label = villa_trend["region"]
+
+    if villa_trend is not None:
+        idx = villa_trend["index_latest"]
+        villa_market_trend = {
+            "region": villa_label, "date": villa_trend["snapshot_date"],
+            "index": f"{idx:.1f}",
+            "desc": "매도자 우위 — 상승 압력" if idx > 100 else "매수자 우위 — 하락 압력",
+            "trend": _direction(villa_trend["index_trend"]),
+            "is_zone": villa_is_zone,
+        }
 
     region = region_from_address(address)
     if region is not None:

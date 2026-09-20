@@ -19,7 +19,11 @@
 <div class="card">
   <h3 style="margin-top:0">시장 동향 참고 - 연립다세대 ({{ result.villa_market_trend.region }}, {{ result.villa_market_trend.date }} 기준 스냅샷)</h3>
   <p class="muted">매매수급동향지수: {{ result.villa_market_trend.index }} ({{ result.villa_market_trend.desc }}) — 최근 3개월 추세: {{ result.villa_market_trend.trend }}</p>
+  {% if result.villa_market_trend.is_zone %}
+  <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 서울 내 5대 생활권(도심/동북/서북/서남/동남) 단위 참고용입니다 (개별 구/동 신호 아님). {{ result.villa_market_trend.date }} 기준 스냅샷이라 이후 갱신되지 않습니다.</p>
+  {% else %}
   <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 시/도 단위(구/동 단위 신호 아님) 참고용입니다. {{ result.villa_market_trend.date }} 기준 스냅샷이라 이후 갱신되지 않습니다.</p>
+  {% endif %}
 </div>
 {% endif %}
 

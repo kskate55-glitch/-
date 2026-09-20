@@ -27,6 +27,37 @@ import os
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
 CSV_PATH = os.path.join(_DATA_DIR, "kb_market_index.csv")
 VILLA_CSV_PATH = os.path.join(_DATA_DIR, "reb_villa_market_index.csv")
+VILLA_SEOUL_ZONE_CSV_PATH = os.path.join(_DATA_DIR, "reb_villa_market_index_seoul_zone.csv")
+
+# 서울 5개 생활권 구분(2030 서울생활권계획 기준, 25개 구 전체 매핑) — 한국부동산원
+# 원본 CSV에 이미 이 권역 단위로 더 세분화된 데이터가 있어서, 시/도 전체(서울 하나)
+# 보다 구 단위에 가까운 참고치를 보여줄 수 있다. 경기/부산도 원본에 권역 데이터가
+# 있지만(경기 7권역, 부산 3권역) 구성 시/군/구를 신뢰할 수 있게 확인하지 못해
+# 아직 추가하지 않았다 — 시/도 단위로만 표시한다.
+SEOUL_GU_TO_ZONE = {
+    "종로구": "도심권", "중구": "도심권", "용산구": "도심권",
+    "성동구": "동북권", "광진구": "동북권", "동대문구": "동북권", "중랑구": "동북권",
+    "성북구": "동북권", "강북구": "동북권", "도봉구": "동북권", "노원구": "동북권",
+    "은평구": "서북권", "서대문구": "서북권", "마포구": "서북권",
+    "양천구": "서남권", "강서구": "서남권", "구로구": "서남권", "금천구": "서남권",
+    "영등포구": "서남권", "동작구": "서남권", "관악구": "서남권",
+    "서초구": "동남권", "강남구": "동남권", "송파구": "동남권", "강동구": "동남권",
+}
+
+
+def seoul_zone_from_address(address: str) -> str | None:
+    """주소에 서울 구 이름이 있으면 해당 생활권(도심권 등)을 반환. 없으면 None."""
+    for gu, zone in SEOUL_GU_TO_ZONE.items():
+        if gu in address:
+            return zone
+    return None
+
+
+def load_villa_seoul_zone_index() -> list[dict]:
+    if not os.path.exists(VILLA_SEOUL_ZONE_CSV_PATH):
+        return []
+    with open(VILLA_SEOUL_ZONE_CSV_PATH, encoding="utf-8") as f:
+        return list(csv.DictReader(f))
 
 # 우리 프로젝트의 시/도 표기(data/lawd_codes.md 기준, "서울특별시"/"경기도" 등)를
 # KB CSV의 축약 표기("서울"/"경기도" 등)로 맞춰주는 표 — 필요한 지역만 우선 등록.

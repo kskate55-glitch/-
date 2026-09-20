@@ -546,20 +546,36 @@ def print_market_trend(address: str):
     반영하지 않고 참고용으로만 표시한다."""
     from market_index import (
         VILLA_SIDO_ALIAS, compute_market_trend, compute_villa_market_trend,
-        load_market_index, load_villa_market_index, region_from_address,
+        load_market_index, load_villa_market_index, load_villa_seoul_zone_index,
+        region_from_address, seoul_zone_from_address,
     )
 
-    villa_region = region_from_address(address, VILLA_SIDO_ALIAS)
-    if villa_region is not None:
-        villa_trend = compute_villa_market_trend(load_villa_market_index(), villa_region)
+    villa_zone = seoul_zone_from_address(address)
+    villa_trend = None
+    villa_label = None
+    villa_is_zone = False
+    if villa_zone is not None:
+        villa_trend = compute_villa_market_trend(load_villa_seoul_zone_index(), villa_zone)
         if villa_trend is not None:
-            idx = villa_trend["index_latest"]
-            desc = "매도자 우위 — 상승 압력" if idx > 100 else "매수자 우위 — 하락 압력"
-            print()
-            print(f"[시장 동향 참고 - 연립다세대] ({villa_trend['region']}, 한국부동산원 매매수급동향지수, {villa_trend['snapshot_date']} 기준 스냅샷)")
-            print(f"매매수급동향지수: {idx:.1f} ({desc}) — 최근 3개월 추세: {_trend_direction(villa_trend['index_trend'])}")
-            print("⚠️ 시/도 단위 참고용입니다 (구/동 단위 신호 아님). 매도가 계산에 자동 반영되지 않습니다.")
-            print(f"   {villa_trend['snapshot_date']} 기준 스냅샷이라 이후 갱신되지 않습니다 — 최신 수치는 한국부동산원 R-ONE에서 직접 확인하세요.")
+            villa_label = f"서울 {villa_zone}"
+            villa_is_zone = True
+
+    if villa_trend is None:
+        villa_region = region_from_address(address, VILLA_SIDO_ALIAS)
+        if villa_region is not None:
+            villa_trend = compute_villa_market_trend(load_villa_market_index(), villa_region)
+            if villa_trend is not None:
+                villa_label = villa_trend["region"]
+
+    if villa_trend is not None:
+        idx = villa_trend["index_latest"]
+        desc = "매도자 우위 — 상승 압력" if idx > 100 else "매수자 우위 — 하락 압력"
+        unit_note = "서울 내 5대 생활권(도심/동북/서북/서남/동남) 단위 참고용입니다 (개별 구/동 신호 아님)" if villa_is_zone else "시/도 단위 참고용입니다 (구/동 단위 신호 아님)"
+        print()
+        print(f"[시장 동향 참고 - 연립다세대] ({villa_label}, 한국부동산원 매매수급동향지수, {villa_trend['snapshot_date']} 기준 스냅샷)")
+        print(f"매매수급동향지수: {idx:.1f} ({desc}) — 최근 3개월 추세: {_trend_direction(villa_trend['index_trend'])}")
+        print(f"⚠️ {unit_note}. 매도가 계산에 자동 반영되지 않습니다.")
+        print(f"   {villa_trend['snapshot_date']} 기준 스냅샷이라 이후 갱신되지 않습니다 — 최신 수치는 한국부동산원 R-ONE에서 직접 확인하세요.")
 
     region = region_from_address(address)
     if region is None:

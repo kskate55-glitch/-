@@ -4,20 +4,21 @@
 <p class="muted">{{ result.address }} · 분석기간 {{ result.period }}</p>
 
 <div class="hero">
-  <div class="hero-label">현실적 체결가</div>
-  <div class="hero-price">{{ result.realistic }}</div>
-  <div class="hero-range">보수적 급매가 {{ result.conservative }} ~ 상단 매도가 {{ result.upper }}</div>
+  <div class="hero-label">경매용 매도가</div>
+  <div class="hero-price">{{ result.auction_price }}</div>
+  <div class="hero-range">보수적 급매가 {{ result.conservative }} ~ 현실적 체결가(일반 매매) {{ result.realistic }}의 중간값</div>
   <div class="hero-badges">
     <span class="badge">시세 신뢰도 {{ result.confidence }}/100</span>
     <span class="badge muted">비교거래 {{ result.n_total }}건</span>
     <span class="badge muted">반경 안 절반 {{ result.n_close }}건</span>
     <span class="badge muted">올해 계약 {{ result.n_this_year }}건</span>
   </div>
+  <p class="muted" style="margin-bottom:14px">→ 경매로 낙찰받아 되파는 경우 일반 매매 시세(현실적 체결가)보다 다소 낮게 형성되는 경향을 반영한 참고값입니다.</p>
   <div class="price-grid">
     <div class="price-item"><div class="label">보수적 급매가</div><div class="value">{{ result.conservative }}</div></div>
+    <div class="price-item"><div class="label">현실적 체결가 (일반 매매)</div><div class="value">{{ result.realistic }}</div></div>
     <div class="price-item"><div class="label">상단 매도가</div><div class="value">{{ result.upper }}</div></div>
     <div class="price-item"><div class="label">AI 기준매도가</div><div class="value">{{ result.ai_base }}</div></div>
-    <div class="price-item"><div class="label">현실적 체결가</div><div class="value">{{ result.realistic }}</div></div>
   </div>
   {% if result.price_chart_html %}
   <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border)">
@@ -42,19 +43,6 @@
     {% endfor %}
   </table>
 </div>
-
-{% if result.profit %}
-<div class="card">
-  <h3>수익성 계산 (낙찰가 {{ result.bid_price }} 기준)</h3>
-  <table>
-    <tr><th>시나리오</th><th>순수익</th><th>수익률</th></tr>
-    {% for p in result.profit %}
-    <tr><td>{{ p.label }}</td><td>{{ p.net_profit }}</td><td>{{ p.roi }}</td></tr>
-    {% endfor %}
-  </table>
-  <p class="muted" style="margin-top:10px">⚠️ 취득 부대비용률 3.5% 가정 — 실제 취득세율은 다주택/규제지역 여부에 따라 1.1~13%까지 다르니 참고용으로만 보세요. 명도비·수리비·대출이자는 반영되지 않았습니다.</p>
-</div>
-{% endif %}
 
 {% if result.monthly_rent %}
 <div class="card">

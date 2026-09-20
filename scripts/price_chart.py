@@ -27,14 +27,16 @@ def _fmt_eok(man: float) -> str:
 
 def render_price_distribution_html(filtered: list[dict], markers: dict[str, float],
                                      highlight: tuple[str, str] = ("보수적 급매가", "현실적 체결가"),
+                                     hero_name: str = "경매용 매도가",
                                      max_dots: int = 40, width: int = 660, height: int = 172,
                                      primary: str = PRIMARY) -> str:
     """filtered: find_comparables()가 돌려준 비교거래 목록(거리순 정렬됨,
     _amount_man 필요). markers: {"보수적 급매가": p25, ...} 순서대로 표시된다.
     highlight: 배경으로 강조할 두 마커 이름(순서 무관, 둘 다 markers에 있어야
-    함) — 기본값은 사용자가 실측으로 확인한 구간. primary: 강조색 — 웹
-    버전은 기본값(네이버 그린)을 쓰고, CLI HTML 리포트(report.py)는 그
-    페이지의 인디고 accent 색을 넘겨서 톤을 맞춘다."""
+    함) — 기본값은 사용자가 실측으로 확인한 구간. hero_name: markers 중 accent
+    색으로 강조해서 표시할 이름(보통 화면의 대표 히어로 숫자와 맞춘다).
+    primary: 강조색 — 웹 버전은 기본값(네이버 그린)을 쓰고, CLI HTML
+    리포트(report.py)는 그 페이지의 인디고 accent 색을 넘겨서 톤을 맞춘다."""
     rows = [r for r in filtered if r.get("_amount_man") is not None][:max_dots]
     all_values = [r["_amount_man"] for r in rows] + list(markers.values())
     if not all_values:
@@ -103,7 +105,7 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     marker_items = sorted(markers.items(), key=lambda kv: kv[1])
     for i, (name, value) in enumerate(marker_items):
         x = x_of(value)
-        is_hero = name == "현실적 체결가"
+        is_hero = name == hero_name
         tick_color = primary if is_hero else MUTED_2
         tick_len = 10 if is_hero else 7
         svg.append(

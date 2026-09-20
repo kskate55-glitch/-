@@ -5,7 +5,7 @@
 
 {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-{% set adv_filled = form and (form.bid_price or form.monthly_deposit or form.conversion_rate or form.station_premium or form.year_min or (form.radius and form.radius != '400')) %}
+{% set adv_filled = form and (form.monthly_deposit or form.conversion_rate or form.station_premium or form.year_min or (form.radius and form.radius != '400')) %}
 <form method="post" action="/estimate">
   <div>
     <label>지번 주소</label>
@@ -29,7 +29,7 @@
   </div>
 
   <details class="adv" {{ "open" if adv_filled else "" }}>
-    <summary>상세 옵션 펼치기 <span class="muted">(비교 반경·낙찰가·월세 등)</span></summary>
+    <summary>상세 옵션 펼치기 <span class="muted">(비교 반경·월세 등)</span></summary>
     <div class="adv-body">
       <div class="row">
         <div>
@@ -40,10 +40,6 @@
           <label>기준연도 이후 (선택)</label>
           <input type="number" name="year_min" placeholder="{{ last_year }}" value="{{ form.year_min if form else '' }}">
         </div>
-      </div>
-      <div>
-        <label>낙찰가/입찰예정가(만원, 선택)</label>
-        <input type="number" name="bid_price" placeholder="10200" value="{{ form.bid_price if form else '' }}">
       </div>
       <div class="row">
         <div>

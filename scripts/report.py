@@ -170,12 +170,14 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
   <div class="card">
     <h2>매도가 산출 <span class="confidence">신뢰도 {confidence}/100</span></h2>
     <div class="stat-grid">
+      <div class="stat" style="background:#fff7d6"><div class="label">경매용 매도가</div><div class="value">{auction_price}</div></div>
       <div class="stat"><div class="label">보수적 급매가</div><div class="value">{conservative}</div></div>
-      <div class="stat"><div class="label">현실적 체결가</div><div class="value">{realistic}</div></div>
+      <div class="stat"><div class="label">현실적 체결가 (일반 매매)</div><div class="value">{realistic}</div></div>
       <div class="stat"><div class="label">상단 매도가</div><div class="value">{upper}</div></div>
       <div class="stat"><div class="label">AI 기준매도가</div><div class="value">{ai_base}</div></div>
       <div class="stat"><div class="label">권장 최초 호가</div><div class="value">{listing}</div></div>
     </div>
+    <p class="note">경매용 매도가 = 보수적 급매가~현실적 체결가 중간값 — 경매로 낙찰받아 되파는 경우 참고용</p>
     <p class="note">유효 비교거래 {n_total}건 (반경 절반 이내 근접 매물 {n_close}건)</p>
     {price_chart}
   </div>
@@ -205,14 +207,14 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 
 
 def render_report(*, building, dong, area, period, generated, confidence,
-                   conservative, realistic, upper, ai_base, listing,
+                   conservative, realistic, upper, ai_base, listing, auction_price,
                    n_total, n_close, comparables, season, trend, filtered=None) -> str:
     price_chart = ""
     if filtered:
         price_chart = render_price_distribution_html(filtered, {
-            "보수적 급매가": conservative, "현실적 체결가": realistic, "상단 매도가": upper,
-            "AI 기준매도가": ai_base, "권장 최초 호가": listing,
-        }, primary="#4f46e5")  # 이 리포트 자체의 accent 색(인디고)에 맞춘다
+            "보수적 급매가": conservative, "현실적 체결가": realistic, "경매용 매도가": auction_price,
+            "상단 매도가": upper, "AI 기준매도가": ai_base, "권장 최초 호가": listing,
+        }, hero_name="경매용 매도가", primary="#4f46e5")  # 이 리포트 자체의 accent 색(인디고)에 맞춘다
 
     return PAGE_TEMPLATE.format(
         title=f"{building} 매도가 분석",
@@ -220,6 +222,7 @@ def render_report(*, building, dong, area, period, generated, confidence,
         confidence=confidence,
         conservative=fmt_eok(conservative), realistic=fmt_eok(realistic),
         upper=fmt_eok(upper), ai_base=fmt_eok(ai_base), listing=fmt_eok(listing),
+        auction_price=fmt_eok(auction_price),
         n_total=n_total, n_close=n_close,
         comp_table=_comparables_table_html(comparables),
         price_chart=price_chart,

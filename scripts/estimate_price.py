@@ -26,7 +26,8 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
 --radius           : 비교 반경(미터), 기본 400m
 --year-min         : 매도가 계산에 사용할 최소 계약년도 (기본값: 실행 시점 기준 작년)
 --bid-price        : 낙찰가/입찰예정가 (만원 단위, 선택 — 주면 수익성 계산도 같이 보여준다)
---acquisition-rate : 취득 부대비용률 (기본 3.5%, 다주택/규제지역 여부에 따라 조정 필요)
+--acquisition-rate : 취득 부대비용률 (기본 1.1%, 1주택/무주택 실수요 기준 — 다주택/
+                     규제지역이면 최대 13%까지 올라가니 본인 상황에 맞게 조정 필요)
 --sale-rate        : 매도 중개수수료율 (기본 0.5%)
 --extra-cost       : 명도비·수리비 등 추가비용 (만원 단위, 기본 0)
 --no-location      : 입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다
@@ -499,6 +500,7 @@ def print_profit(bid_price_man: float, scenarios: dict, acquisition_rate: float,
     labels = {
         "conservative": "보수적 급매가",
         "realistic": "현실적 체결가",
+        "auction_price": "경매용 매도가",
         "upper": "상단 매도가",
         "ai_base": "AI 기준매도가",
         "listing": "권장 최초 호가",
@@ -818,7 +820,7 @@ def main():
     ap.add_argument("--year-min", type=int, default=None)
     ap.add_argument("--html", action="store_true", help="reports/ 폴더에 예쁜 HTML 리포트도 저장하고 브라우저로 연다")
     ap.add_argument("--bid-price", type=float, default=None, help="낙찰가/입찰예정가 (만원 단위) — 주면 수익성 계산도 같이 보여준다")
-    ap.add_argument("--acquisition-rate", type=float, default=0.035, help="취득 부대비용률 (취득세+법무비 등 합산, 기본 3.5%%) — 다주택 여부에 따라 조정 필요")
+    ap.add_argument("--acquisition-rate", type=float, default=0.011, help="취득 부대비용률 (취득세+법무비 등 합산, 기본 1.1%% — 1주택/무주택 실수요 기준) — 다주택/규제지역이면 최대 13%%까지 올라가니 조정 필요")
     ap.add_argument("--sale-rate", type=float, default=0.005, help="매도 중개수수료율 (기본 0.5%%)")
     ap.add_argument("--extra-cost", type=float, default=0, help="명도비·수리비 등 추가비용 (만원 단위, 기본 0)")
     ap.add_argument("--no-location", action="store_true", help="입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다")
@@ -882,6 +884,7 @@ def main():
     upper = scen["p75"]
     ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
     listing = round(upper * 1.03, -1)
+    auction_price = round((conservative + realistic) / 2, -1)
 
     def fmt(man):
         eok = man / 10000
@@ -892,7 +895,8 @@ def main():
     print(f"시세 신뢰도: {confidence}/100")
     print()
     print(f"보수적 급매가: {fmt(conservative)}")
-    print(f"현실적 체결가: {fmt(realistic)}")
+    print(f"현실적 체결가: {fmt(realistic)} (일반 매매 기준)")
+    print(f"경매용 매도가: {fmt(auction_price)} (보수적 급매가~현실적 체결가 중간값 — 경매 낙찰 후 되파는 경우 참고)")
     print(f"상단 매도가: {fmt(upper)}")
     print(f"AI 기준매도가: {fmt(ai_base)}")
     print(f"권장 최초 호가: {fmt(listing)}")
@@ -924,8 +928,8 @@ def main():
 
     if args.bid_price is not None:
         scenarios = {
-            "conservative": conservative, "realistic": realistic, "upper": upper,
-            "ai_base": ai_base, "listing": listing,
+            "conservative": conservative, "realistic": realistic, "auction_price": auction_price,
+            "upper": upper, "ai_base": ai_base, "listing": listing,
         }
         print_profit(args.bid_price, scenarios, args.acquisition_rate, args.sale_rate, args.extra_cost)
 
@@ -968,7 +972,7 @@ def main():
             building=args.dong, dong=args.dong, area=args.area,
             period=f"{year_min}.01 ~ {this_year}.12", generated=datetime.now().strftime("%Y.%m.%d %H:%M"),
             confidence=confidence, conservative=conservative, realistic=realistic,
-            upper=upper, ai_base=ai_base, listing=listing,
+            upper=upper, ai_base=ai_base, listing=listing, auction_price=auction_price,
             n_total=n_total, n_close=n_close,
             comparables=comparables, season=season, trend=trend, filtered=filtered,
         )

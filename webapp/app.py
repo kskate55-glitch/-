@@ -14,12 +14,13 @@ CLI 버전과 다른 점은, 사용자가 국토부 API를 직접 실행해 data
 
 ⚠️ apis.data.go.kr / dapi.kakao.com에 접속 가능한 환경(본인 PC, 또는 실제
    배포한 서버)에서 실행해야 한다 — Claude Code 샌드박스에서는 실행 불가.
-⚠️ 여러 방문자가 쓸 걸 가정한 최소 기능(MVP) 버전이다. 8절 매도가·19절
-   수익성 계산·20절 건물정보(승강기/세대수/사용승인일)·24절 시장동향·
-   25절 인근 동 비교·26절 역세권 프리미엄(체크박스로 켜야 계산)까지
-   지원하고, 예상 전세가(16절)·인근 중개업소(21절)·23절 실측 전월세전환율
-   (전월세 실거래 데이터를 아직 실시간으로 안 받아온다)은 아직 웹 버전에
-   없다 — CLI(estimate_price.py)에는 이미 있다.
+⚠️ 여러 방문자가 쓸 걸 가정한 최소 기능(MVP) 버전이다. 8절 매도가(8-2절
+   경매용 매도가 포함)·20절 건물정보(승강기/세대수/사용승인일)·24절
+   시장동향·25절 인근 동 비교·26절 역세권 프리미엄(체크박스로 켜야 계산)
+   까지 지원한다. 19절 수익성 계산은 사용자 요청으로 웹 버전에서 뺐다
+   (CLI에는 그대로 있다). 예상 전세가(16절)·인근 중개업소(21절)·23절
+   실측 전월세전환율(전월세 실거래 데이터를 아직 실시간으로 안 받아온다)도
+   아직 웹 버전에 없다 — CLI(estimate_price.py)에는 이미 있다.
 
 SITE_PASSWORD 환경변수를 설정하면 비밀번호를 아는 사람만 쓸 수 있다 (공개
 URL로 배포했을 때 낯선 방문자가 국토부/카카오 API 일일 할당량을 소진시키는
@@ -110,7 +111,6 @@ def estimate():
     radius = _optional_float("radius", 400)
     this_year = datetime.now().year
     year_min = _optional_int("year_min") or (this_year - 1)
-    bid_price = _optional_float("bid_price")
 
     from geocode import geocode_full
 
@@ -241,13 +241,14 @@ def estimate():
     upper = scen["p75"]
     ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
     listing = round(upper * 1.03, -1)
+    auction_price = round((conservative + realistic) / 2, -1)
 
     from price_chart import render_price_distribution_html
 
     price_chart_html = render_price_distribution_html(filtered, {
-        "보수적 급매가": conservative, "현실적 체결가": realistic, "상단 매도가": upper,
-        "AI 기준매도가": ai_base, "권장 최초 호가": listing,
-    })
+        "보수적 급매가": conservative, "현실적 체결가": realistic, "경매용 매도가": auction_price,
+        "상단 매도가": upper, "AI 기준매도가": ai_base, "권장 최초 호가": listing,
+    }, hero_name="경매용 매도가")
 
     dong_compare = None
     from lawd_lookup import find_dong_in_address
@@ -313,6 +314,7 @@ def estimate():
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),
+        "auction_price": _fmt_eok(auction_price),
         "upper": _fmt_eok(upper), "ai_base": _fmt_eok(ai_base), "listing": _fmt_eok(listing),
         "comparables": [
             {
@@ -326,29 +328,6 @@ def estimate():
             for r in filtered[:8]
         ],
     }
-
-    if bid_price is not None:
-        from estimate_price import compute_profit
-
-        labels = {
-            "conservative": "보수적 급매가", "realistic": "현실적 체결가", "upper": "상단 매도가",
-            "ai_base": "AI 기준매도가", "listing": "권장 최초 호가",
-        }
-        scenario_values = {
-            "conservative": conservative, "realistic": realistic, "upper": upper,
-            "ai_base": ai_base, "listing": listing,
-        }
-        profit_rows = []
-        for key, label in labels.items():
-            p = compute_profit(bid_price, scenario_values[key], 0.035, 0.005, 0)
-            sign = "+" if p["net_profit"] >= 0 else ""
-            profit_rows.append({
-                "label": label,
-                "net_profit": f"{sign}{_fmt_eok(p['net_profit'])}",
-                "roi": f"{sign}{p['roi_pct']:.1f}%",
-            })
-        result["profit"] = profit_rows
-        result["bid_price"] = _fmt_eok(bid_price)
 
     monthly_deposit = _optional_float("monthly_deposit")
     if monthly_deposit is not None:

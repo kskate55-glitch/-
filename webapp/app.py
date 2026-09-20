@@ -267,15 +267,20 @@ def estimate():
     realistic = scen["median"]
     upper = scen["p75"]
     ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
-    listing = round(upper * 1.03, -1)
     auction_price = round((conservative + realistic) / 2, -1)
 
-    from price_chart import render_price_distribution_html
+    from price_chart import MARKER_COLORS, render_price_distribution_html
 
+    # "권장 최초 호가"는 사용자 요청으로 웹 화면에서 뺐다(뭔지 헷갈린다는
+    # 피드백) — CLI에는 그대로 있다.
     price_chart_html = render_price_distribution_html(filtered, {
         "보수적 급매가": conservative, "현실적 체결가": realistic, "경매용 매도가": auction_price,
-        "상단 매도가": upper, "AI 기준매도가": ai_base, "권장 최초 호가": listing,
+        "상단 매도가": upper, "AI 기준매도가": ai_base,
     }, hero_name="경매용 매도가")
+    marker_colors = {
+        "conservative": MARKER_COLORS["보수적 급매가"], "realistic": MARKER_COLORS["현실적 체결가"],
+        "upper": MARKER_COLORS["상단 매도가"], "ai_base": MARKER_COLORS["AI 기준매도가"],
+    }
 
     dong_compare = None
     from lawd_lookup import find_dong_in_address
@@ -346,11 +351,12 @@ def estimate():
         "dong_compare": dong_compare,
         "station_premium": station_premium,
         "price_chart_html": price_chart_html,
+        "marker_colors": marker_colors,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),
         "auction_price": _fmt_eok(auction_price),
-        "upper": _fmt_eok(upper), "ai_base": _fmt_eok(ai_base), "listing": _fmt_eok(listing),
+        "upper": _fmt_eok(upper), "ai_base": _fmt_eok(ai_base),
         "comparable_criteria": comparable_criteria,
         "comparables": [
             {

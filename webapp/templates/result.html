@@ -15,20 +15,16 @@
   </div>
   <p class="muted" style="margin-bottom:14px">→ 경매로 낙찰받아 되파는 경우 일반 매매 시세(현실적 체결가)보다 다소 낮게 형성되는 경향을 반영한 참고값입니다.</p>
   <div class="price-grid">
-    <div class="price-item"><div class="label">보수적 급매가</div><div class="value">{{ result.conservative }}</div></div>
-    <div class="price-item"><div class="label">현실적 체결가 (일반 매매)</div><div class="value">{{ result.realistic }}</div></div>
-    <div class="price-item"><div class="label">상단 매도가</div><div class="value">{{ result.upper }}</div></div>
-    <div class="price-item"><div class="label">AI 기준매도가</div><div class="value">{{ result.ai_base }}</div></div>
+    <div class="price-item"><div class="label"><span class="dot" style="background:{{ result.marker_colors.conservative }}"></span>보수적 급매가</div><div class="value">{{ result.conservative }}</div></div>
+    <div class="price-item"><div class="label"><span class="dot" style="background:{{ result.marker_colors.realistic }}"></span>현실적 체결가 (일반 매매)</div><div class="value">{{ result.realistic }}</div></div>
+    <div class="price-item"><div class="label"><span class="dot" style="background:{{ result.marker_colors.upper }}"></span>상단 매도가</div><div class="value">{{ result.upper }}</div></div>
+    <div class="price-item"><div class="label"><span class="dot" style="background:{{ result.marker_colors.ai_base }}"></span>AI 기준매도가</div><div class="value">{{ result.ai_base }}</div></div>
   </div>
   {% if result.price_chart_html %}
   <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border)">
     {{ result.price_chart_html | safe }}
   </div>
   {% endif %}
-  <div class="listing-row">
-    <span class="label">권장 최초 호가</span>
-    <span class="value">{{ result.listing }}</span>
-  </div>
 </div>
 
 <div class="card">

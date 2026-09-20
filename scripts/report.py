@@ -5,7 +5,7 @@
 estimate_price.py가 --html 옵션을 줬을 때 이 모듈을 사용한다.
 """
 
-from price_chart import render_price_distribution_html
+from price_chart import MARKER_COLORS, render_price_distribution_html
 
 
 def fmt_eok(man: float) -> str:
@@ -170,12 +170,12 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
   <div class="card">
     <h2>매도가 산출 <span class="confidence">신뢰도 {confidence}/100</span></h2>
     <div class="stat-grid">
-      <div class="stat" style="background:#fff7d6"><div class="label">경매용 매도가</div><div class="value">{auction_price}</div></div>
-      <div class="stat"><div class="label">보수적 급매가</div><div class="value">{conservative}</div></div>
-      <div class="stat"><div class="label">현실적 체결가 (일반 매매)</div><div class="value">{realistic}</div></div>
-      <div class="stat"><div class="label">상단 매도가</div><div class="value">{upper}</div></div>
-      <div class="stat"><div class="label">AI 기준매도가</div><div class="value">{ai_base}</div></div>
-      <div class="stat"><div class="label">권장 최초 호가</div><div class="value">{listing}</div></div>
+      <div class="stat" style="background:#fff7d6; border-left:4px solid var(--accent)"><div class="label">경매용 매도가</div><div class="value">{auction_price}</div></div>
+      <div class="stat" style="border-left:4px solid {c_conservative}"><div class="label">보수적 급매가</div><div class="value">{conservative}</div></div>
+      <div class="stat" style="border-left:4px solid {c_realistic}"><div class="label">현실적 체결가 (일반 매매)</div><div class="value">{realistic}</div></div>
+      <div class="stat" style="border-left:4px solid {c_upper}"><div class="label">상단 매도가</div><div class="value">{upper}</div></div>
+      <div class="stat" style="border-left:4px solid {c_ai_base}"><div class="label">AI 기준매도가</div><div class="value">{ai_base}</div></div>
+      <div class="stat" style="border-left:4px solid {c_listing}"><div class="label">권장 최초 호가</div><div class="value">{listing}</div></div>
     </div>
     <p class="note">경매용 매도가 = 보수적 급매가~현실적 체결가 중간값 — 경매로 낙찰받아 되파는 경우 참고용</p>
     <p class="note">유효 비교거래 {n_total}건 (반경 절반 이내 근접 매물 {n_close}건)</p>
@@ -223,6 +223,9 @@ def render_report(*, building, dong, area, period, generated, confidence,
         conservative=fmt_eok(conservative), realistic=fmt_eok(realistic),
         upper=fmt_eok(upper), ai_base=fmt_eok(ai_base), listing=fmt_eok(listing),
         auction_price=fmt_eok(auction_price),
+        c_conservative=MARKER_COLORS["보수적 급매가"], c_realistic=MARKER_COLORS["현실적 체결가"],
+        c_upper=MARKER_COLORS["상단 매도가"], c_ai_base=MARKER_COLORS["AI 기준매도가"],
+        c_listing=MARKER_COLORS["권장 최초 호가"],
         n_total=n_total, n_close=n_close,
         comp_table=_comparables_table_html(comparables),
         price_chart=price_chart,

@@ -573,8 +573,13 @@ MOLIT_SERVICE_KEY="발급받은_인증키" KAKAO_REST_API_KEY="발급받은_키"
    연결, 브랜치 선택
 3. 저장소 루트에 있는 `render.yaml`을 Render가 자동으로 읽어서 빌드/실행
    커맨드(`pip install -r requirements.txt` / `gunicorn --chdir webapp
-   --bind 0.0.0.0:$PORT app:app`)를 채워준다 — 못 읽으면 이 두 값을 직접
-   입력한다.
+   --bind 0.0.0.0:$PORT --timeout 120 app:app`)를 채워준다 — 못 읽으면 이
+   두 값을 직접 입력한다. `--timeout 120`이 꼭 필요하다 — 처음 조회하는
+   지역은 비교거래마다 카카오 지오코딩을 하나씩 호출해서 30초 넘게 걸릴
+   수 있는데, gunicorn 기본 타임아웃(30초)보다 짧으면 요청이 중간에 끊겨
+   500 에러가 난다. Render 대시보드에서 "New Web Service"로 수동 설정한
+   경우 render.yaml이 자동 반영되지 않으니, Settings에서 Start Command를
+   직접 이 값으로 바꿔야 한다.
 4. **Environment** 탭에서 환경변수 입력: `MOLIT_SERVICE_KEY`,
    `KAKAO_REST_API_KEY`, (선택) `SITE_PASSWORD` — 절대 코드나 render.yaml에
    값을 직접 적지 않는다, Render 대시보드에만 입력한다.

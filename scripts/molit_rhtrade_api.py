@@ -44,6 +44,7 @@ import xml.etree.ElementTree as ET
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
+from xml.sax.saxutils import escape
 
 BASE_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcRHTrade/getRTMSDataSvcRHTrade"
 
@@ -152,13 +153,32 @@ def fetch_all_pages(lawd_cd: str, deal_ymd: str, page_size: int = 1000) -> list[
     return all_rows
 
 
+def _rows_to_xml(rows: list[dict]) -> str:
+    """load_transactions()가 파싱할 수 있는 <response>...</response> 형태로 되돌린다."""
+    items = []
+    for row in rows:
+        fields = "".join(f"<{k}>{escape(str(v))}</{k}>" for k, v in row.items())
+        items.append(f"<item>{fields}</item>")
+    return f"<response><body><items>{''.join(items)}</items></body></response>"
+
+
+def save_rows(lawd_cd: str, deal_ymd: str, rows: list[dict], out_dir: str = "data/raw") -> str:
+    """CLAUDE.md 1절 흐름("결과를 data/raw/에 저장")대로 지역별 하위 폴더에 저장한다."""
+    dir_path = os.path.join(out_dir, lawd_cd)
+    os.makedirs(dir_path, exist_ok=True)
+    path = os.path.join(dir_path, f"{deal_ymd}.xml")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(_rows_to_xml(rows))
+    return path
+
+
 if __name__ == "__main__":
-    # 사용 예시: python molit_rhtrade_api.py 11110 202408
-    if len(sys.argv) != 3:
-        print("사용법: python molit_rhtrade_api.py <LAWD_CD> <DEAL_YMD>")
+    # 사용 예시: python molit_rhtrade_api.py 11110 202408 202409 202410
+    if len(sys.argv) < 3:
+        print("사용법: python molit_rhtrade_api.py <LAWD_CD> <DEAL_YMD> [DEAL_YMD2 ...]")
         sys.exit(1)
-    lawd, ymd = sys.argv[1], sys.argv[2]
-    rows = fetch_all_pages(lawd, ymd)
-    print(f"{lawd} / {ymd} : 총 {len(rows)}건")
-    for r in rows[:5]:
-        print(r)
+    lawd = sys.argv[1]
+    for ymd in sys.argv[2:]:
+        rows = fetch_all_pages(lawd, ymd)
+        path = save_rows(lawd, ymd, rows)
+        print(f"{lawd} / {ymd} : 총 {len(rows)}건 -> {path}")

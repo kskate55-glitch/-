@@ -31,7 +31,7 @@ import xml.etree.ElementTree as ET
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
-from molit_rhtrade_api import ERROR_MESSAGES, _get_service_key
+from molit_rhtrade_api import ERROR_MESSAGES, _get_service_key, save_rows
 
 BASE_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcRHRent/getRTMSDataSvcRHRent"
 
@@ -98,11 +98,12 @@ def fetch_all_pages(lawd_cd: str, deal_ymd: str, page_size: int = 1000) -> list[
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("사용법: python molit_rhrent_api.py <LAWD_CD> <DEAL_YMD>")
+    # 사용 예시: python molit_rhrent_api.py 11110 202408 202409 202410
+    if len(sys.argv) < 3:
+        print("사용법: python molit_rhrent_api.py <LAWD_CD> <DEAL_YMD> [DEAL_YMD2 ...]")
         sys.exit(1)
-    lawd, ymd = sys.argv[1], sys.argv[2]
-    rows = fetch_all_pages(lawd, ymd)
-    print(f"{lawd} / {ymd} : 총 {len(rows)}건")
-    for r in rows[:5]:
-        print(r)
+    lawd = sys.argv[1]
+    for ymd in sys.argv[2:]:
+        rows = fetch_all_pages(lawd, ymd)
+        path = save_rows(lawd, ymd, rows, out_dir="data/raw_rent")
+        print(f"{lawd} / {ymd} : 총 {len(rows)}건 -> {path}")

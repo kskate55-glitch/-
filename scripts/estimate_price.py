@@ -50,8 +50,14 @@ from datetime import datetime
 
 
 def load_transactions(xml_dir: str) -> list[dict]:
+    """xml_dir 바로 아래뿐 아니라, molit_rhtrade_api.py/molit_rhrent_api.py가
+    지역별로 나눠 저장하는 하위 폴더(data/raw/<LAWD_CD>/*.xml)까지 재귀적으로
+    찾는다 — --dir data/raw처럼 여러 지역을 한 번에 합쳐서 볼 때도,
+    --dir data/raw/11500처럼 특정 지역만 볼 때도 둘 다 그대로 동작한다."""
     rows = []
-    for path in glob.glob(os.path.join(xml_dir, "*.xml")) + glob.glob(os.path.join(xml_dir, "*.txt")):
+    xml_paths = glob.glob(os.path.join(xml_dir, "**", "*.xml"), recursive=True)
+    txt_paths = glob.glob(os.path.join(xml_dir, "**", "*.txt"), recursive=True)
+    for path in xml_paths + txt_paths:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 content = f.read()

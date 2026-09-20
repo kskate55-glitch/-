@@ -32,12 +32,13 @@
 - DEAL_YMD(계약년월, YYYYMM)는 기본적으로 4절의 연도 필터(기준연도 이후)를 만족하도록
   최근 달부터 역순으로 필요한 만큼 지정한다. 반경 안 비교거래가 부족하면 조회 기간을
   넓히거나(`--year-min`을 낮추거나) 반경(`--radius`)을 넓히도록 안내한다.
-- 실행 커맨드는 그대로 복사해서 쓸 수 있는 형태로 제시한다. 예:
+- 실행 커맨드는 그대로 복사해서 쓸 수 있는 형태로 제시한다. `molit_rhtrade_api.py`/
+  `molit_rhrent_api.py` 둘 다 DEAL_YMD를 여러 개 이어서 한 번에 받을 수 있고, 각
+  달을 `data/raw/<LAWD_CD>/<YYYYMM>.xml`(전월세는 `data/raw_rent/<LAWD_CD>/<YYYYMM>.xml`)
+  형태로 자동 저장한다 — 사용자가 따로 복사/저장할 필요 없다. 예:
   ```
-  MOLIT_SERVICE_KEY="발급받은_인증키" python scripts/molit_rhtrade_api.py 11530 202508
+  MOLIT_SERVICE_KEY="발급받은_인증키" python scripts/molit_rhtrade_api.py 11530 202508 202509 202510
   ```
-  여러 달이 필요하면 달마다 반복하거나, `fetch_all_pages`를 코드에서 여러 월에 대해
-  호출하도록 안내한다.
 - ⚠️ API는 샌드박스 네트워크 허용 목록에 없어 Claude가 직접 호출할 수 없다. 반드시
   사용자가 로컬/서버에서 실행하도록 안내하고, Claude는 커맨드 생성과 결과 해석만 담당한다.
 
@@ -149,13 +150,17 @@ AI 기준매도가: X.XX억
 
 ## 9. 스크립트 참고
 
-- `scripts/molit_rhtrade_api.py`: 매매 실거래가 API 직접 호출 (로컬/서버 전용 — 샌드박스에서 실행 불가)
-- `scripts/molit_rhrent_api.py`: 전월세 실거래가 API 직접 호출 (16절, 로컬/서버 전용)
+- `scripts/molit_rhtrade_api.py`: 매매 실거래가 API 직접 호출 (로컬/서버 전용 — 샌드박스에서 실행 불가).
+  여러 DEAL_YMD를 한 번에 받아 각각 `data/raw/<LAWD_CD>/<YYYYMM>.xml`로 자동 저장한다.
+- `scripts/molit_rhrent_api.py`: 전월세 실거래가 API 직접 호출 (16절, 로컬/서버 전용).
+  마찬가지로 `data/raw_rent/<LAWD_CD>/<YYYYMM>.xml`로 자동 저장한다.
 - `scripts/geocode.py`: 카카오 로컬 API로 지번 주소 → 좌표 변환, `data/geocode_cache.json`에 캐시
 - `scripts/lawd_lookup.py`: `data/lawd_codes.md` 표를 읽어 법정동코드 → (시도, 시/군/구) 역조회
 - `scripts/broker_lookup.py`: 21절 인근 중개업소 조회 (서울 CSV 지오코딩 / 경기데이터드림 API)
 - `scripts/estimate_price.py`: `data/raw/`에 저장된 XML로 1~8절 로직을 그대로 일괄 계산하고,
-  `data/raw_rent/`에 전월세 데이터가 있으면 16절 예상 전세가·매매 대비 비교도 이어서 계산
+  `data/raw_rent/`에 전월세 데이터가 있으면 16절 예상 전세가·매매 대비 비교도 이어서 계산.
+  `--dir`은 `data/raw`(지금까지 조회한 모든 지역을 합쳐서)와
+  `data/raw/<LAWD_CD>`(특정 지역만) 둘 다 그대로 동작한다(하위 폴더까지 재귀적으로 찾는다).
   ```
   python scripts/estimate_price.py --dir data/raw --rent-dir data/raw_rent \
       --address "서울특별시 강북구 수유동 468-202" --dong 수유동 \

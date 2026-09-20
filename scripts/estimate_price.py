@@ -531,6 +531,42 @@ def print_building_info(subject_detail: dict):
         print(f"지상층수: {info['ground_floors']}층")
 
 
+def print_market_trend(address: str):
+    """CLAUDE.md 24절 규칙: KB부동산 스타일 매수우위지수/전세수급지수를
+    참고 카드로 보여준다. 빌라 데이터가 아니라 시/도 단위 아파트 시장
+    지표라 매도가 계산에 반영하지 않고 참고용으로만 표시한다."""
+    from market_index import compute_market_trend, load_market_index, region_from_address
+
+    region = region_from_address(address)
+    if region is None:
+        return  # 표에 없는 시/도(아직 서울/경기 등 일부만 등록) — 조용히 생략
+
+    rows = load_market_index()
+    trend = compute_market_trend(rows, region)
+    if trend is None:
+        return
+
+    def _direction(delta, unit="p"):
+        if delta is None:
+            return "추세 판단 불가"
+        if abs(delta) < 2:
+            return "보합"
+        return f"{'상승' if delta > 0 else '하락'} 중 ({delta:+.1f}{unit})"
+
+    buy_idx = trend["buy_index_latest"]
+    buy_desc = "매도자 우위 — 상승 압력" if buy_idx > 100 else "매수자 우위 — 하락 압력"
+
+    print()
+    print(f"[시장 동향 참고] ({trend['region']}, KB부동산 스타일 지수, {trend['snapshot_date']} 기준 스냅샷)")
+    print(f"매수우위지수: {buy_idx:.1f} ({buy_desc}) — 최근 4주 추세: {_direction(trend['buy_index_trend'])}")
+    if trend["jeonse_index_latest"] is not None:
+        jeonse_idx = trend["jeonse_index_latest"]
+        jeonse_desc = "전세 수요 > 공급" if jeonse_idx > 100 else "전세 수요 < 공급"
+        print(f"전세수급지수: {jeonse_idx:.1f} ({jeonse_desc}) — 최근 4주 추세: {_direction(trend['jeonse_index_trend'])}")
+    print("⚠️ 이 지수는 아파트 시장 지표이며 시/도 단위(빌라 자체 시세 아님) 참고용입니다.")
+    print(f"   {trend['snapshot_date']} 기준 스냅샷이라 이후 갱신되지 않습니다 — 최신 수치는 KB부동산에서 직접 확인하세요.")
+
+
 def print_jeonse_comparison(rent_dir: str, subject_coord: tuple[float, float], area: float,
                              floor: int | None, build_year: str | None, radius_m: float,
                              year_min: int, this_year: int, gu_filter: str | None,
@@ -607,6 +643,7 @@ def main():
     ap.add_argument("--no-brokers", action="store_true", help="인근 중개업소 조회를 건너뛴다")
     ap.add_argument("--monthly-deposit", type=float, default=None, help="예상 월세 추정용 월세보증금(만원) — 주면 23절 예상 월세 추정을 같이 보여준다")
     ap.add_argument("--conversion-rate", type=float, default=6.0, help="전월세전환율(연 %%), 기본 6.0 — 지역/물건마다 달라 참고값일 뿐")
+    ap.add_argument("--no-market-trend", action="store_true", help="24절 시장 동향 참고 지표(매수우위지수 등)를 건너뛴다")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -637,6 +674,9 @@ def main():
 
     if not args.no_building_info:
         print_building_info(subject_detail)
+
+    if not args.no_market_trend:
+        print_market_trend(args.address)
 
     gu_filter = find_gu_in_address(args.address)
 

@@ -149,6 +149,32 @@ def estimate():
     except RuntimeError:
         building = None  # 건축물대장 조회는 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
 
+    market_trend = None
+    from market_index import compute_market_trend, load_market_index, region_from_address
+
+    region = region_from_address(address)
+    if region is not None:
+        trend = compute_market_trend(load_market_index(), region)
+        if trend is not None:
+            def _direction(delta):
+                if delta is None:
+                    return "추세 판단 불가"
+                if abs(delta) < 2:
+                    return "보합"
+                return f"{'상승' if delta > 0 else '하락'} 중 ({delta:+.1f}p)"
+
+            buy_idx = trend["buy_index_latest"]
+            jeonse_idx = trend["jeonse_index_latest"]
+            market_trend = {
+                "region": trend["region"], "date": trend["snapshot_date"],
+                "buy_index": f"{buy_idx:.1f}",
+                "buy_desc": "매도자 우위 — 상승 압력" if buy_idx > 100 else "매수자 우위 — 하락 압력",
+                "buy_trend": _direction(trend["buy_index_trend"]),
+                "jeonse_index": f"{jeonse_idx:.1f}" if jeonse_idx is not None else None,
+                "jeonse_desc": ("전세 수요 > 공급" if jeonse_idx and jeonse_idx > 100 else "전세 수요 < 공급") if jeonse_idx is not None else None,
+                "jeonse_trend": _direction(trend["jeonse_index_trend"]) if jeonse_idx is not None else None,
+            }
+
     from data_source import get_trade_rows
     from estimate_price import compute_scenarios, dedupe, find_comparables
 
@@ -185,6 +211,7 @@ def estimate():
         "address": address,
         "period": f"{year_min}.01 ~ {this_year}.12",
         "building": building,
+        "market_trend": market_trend,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),

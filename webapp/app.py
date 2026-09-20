@@ -1,5 +1,5 @@
 """
-경매 빌라 매도가 추정기 — 웹 버전. CLAUDE.md 22절 규칙.
+빌라 매매가 계산기 — 웹 버전. CLAUDE.md 22절 규칙.
 
 scripts/estimate_price.py의 5~8절 로직(반경 기반 비교거래 선정, 가중 중앙값)을
 그대로 재사용한다 — 계산 자체는 순수 파이썬이라 Claude/AI 호출이 전혀 없다.
@@ -157,12 +157,11 @@ def estimate():
         return f"{'상승' if delta > 0 else '하락'} 중 ({delta:+.1f}{unit})"
 
     villa_market_trend = None
-    market_trend = None
     from market_index import (
-        SIDO_ALIAS, VILLA_SIDO_ALIAS, _plain_market_desc, compute_market_trend,
-        compute_villa_market_trend, format_ranking_peers, latest_value_for,
-        load_market_index, load_villa_market_index, load_villa_seoul_zone_index,
-        rank_region, region_from_address, seoul_zone_from_address, yoy_change,
+        VILLA_SIDO_ALIAS, _plain_market_desc, compute_villa_market_trend,
+        format_ranking_peers, latest_value_for, load_villa_market_index,
+        load_villa_seoul_zone_index, rank_region, region_from_address,
+        seoul_zone_from_address,
     )
 
     villa_zone = seoul_zone_from_address(address)
@@ -208,34 +207,6 @@ def estimate():
             "peers": peers, "national_line": national_line,
             "is_zone": villa_is_zone,
         }
-
-    region = region_from_address(address)
-    if region is not None:
-        rows_kb = load_market_index()
-        trend = compute_market_trend(rows_kb, region)
-        if trend is not None:
-            buy_idx = trend["buy_index_latest"]
-            jeonse_idx = trend["jeonse_index_latest"]
-            kb_sido_names = set(SIDO_ALIAS.values())
-            buy_rank = rank_region(rows_kb, region, "매수우위", allowed_regions=kb_sido_names)
-            buy_peers = format_ranking_peers(buy_rank["ranking"], region, max_show=5) if buy_rank else []
-            buy_yoy = yoy_change(rows_kb, region, "매수우위")
-            jeonse_yoy = yoy_change(rows_kb, region, "전세수급") if jeonse_idx is not None else None
-            market_trend = {
-                "region": trend["region"], "date": trend["snapshot_date"],
-                "buy_index": f"{buy_idx:.1f}", "buy_diff": f"{buy_idx - 100:+.1f}",
-                "buy_plain_desc": _plain_market_desc(buy_idx, kind="buy"),
-                "buy_trend": _direction(trend["buy_index_trend"]),
-                "buy_yoy": (f"작년 이맘때({buy_yoy['year_ago_date']}, {buy_yoy['year_ago_value']:.1f}) 대비 {buy_yoy['delta']:+.1f}p"
-                            if buy_yoy is not None else None),
-                "buy_peers": buy_peers,
-                "jeonse_index": f"{jeonse_idx:.1f}" if jeonse_idx is not None else None,
-                "jeonse_diff": f"{jeonse_idx - 100:+.1f}" if jeonse_idx is not None else None,
-                "jeonse_plain_desc": _plain_market_desc(jeonse_idx, kind="jeonse") if jeonse_idx is not None else None,
-                "jeonse_trend": _direction(trend["jeonse_index_trend"]) if jeonse_idx is not None else None,
-                "jeonse_yoy": (f"작년 이맘때({jeonse_yoy['year_ago_date']}, {jeonse_yoy['year_ago_value']:.1f}) 대비 {jeonse_yoy['delta']:+.1f}p"
-                               if jeonse_yoy is not None else None),
-            }
 
     from data_source import get_trade_rows
     from estimate_price import compute_scenarios, dedupe, find_comparables
@@ -310,7 +281,6 @@ def estimate():
         "period": f"{year_min}.01 ~ {this_year}.12",
         "building": building,
         "villa_market_trend": villa_market_trend,
-        "market_trend": market_trend,
         "dong_compare": dong_compare,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],

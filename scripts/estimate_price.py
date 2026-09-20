@@ -540,19 +540,18 @@ def _trend_direction(delta, threshold=2.0, unit="p"):
 
 
 def print_market_trend(address: str):
-    """CLAUDE.md 24절 규칙: 시장 동향 참고 지표 2종을 보여준다 — 한국부동산원
-    연립다세대 매매수급동향지수(우리 프로젝트 대상과 정확히 일치)와 KB부동산
-    스타일 아파트 매수우위지수(참고용, 시/도 단위). 둘 다 매도가 계산에
-    반영하지 않고 참고용으로만 표시한다. 지수 숫자만 던지면 이해하기 어려워서
-    쉬운 말로도 풀어주고, 다른 지역/작년(또는 자료 시작 시점) 대비 숫자로도
-    비교해준다."""
+    """CLAUDE.md 24절 규칙: 한국부동산원 연립다세대 매매수급동향지수(우리
+    프로젝트 대상과 정확히 일치)를 참고용으로 보여준다. 매도가 계산에는
+    반영하지 않는다. 지수 숫자만 던지면 이해하기 어려워서 쉬운 말로도
+    풀어주고, 다른 지역/최초 집계 시점 대비 숫자로도 비교해준다.
+    (KB부동산 스타일 아파트 지표는 사용자 요청으로 출력에서 뺐다 — 계산
+    로직 자체는 market_index.py에 남아있어 필요하면 다시 켤 수 있다.)"""
     from market_index import (
-        SIDO_ALIAS, VILLA_SIDO_ALIAS, _plain_market_desc, compute_market_trend,
-        compute_villa_market_trend, format_ranking_peers, latest_value_for, load_market_index,
-        load_villa_market_index, load_villa_seoul_zone_index, rank_region,
-        region_from_address, seoul_zone_from_address, yoy_change,
+        VILLA_SIDO_ALIAS, _plain_market_desc, compute_villa_market_trend,
+        format_ranking_peers, latest_value_for, load_villa_market_index,
+        load_villa_seoul_zone_index, rank_region, region_from_address,
+        seoul_zone_from_address,
     )
-    kb_sido_names = set(SIDO_ALIAS.values())
 
     villa_zone = seoul_zone_from_address(address)
     villa_trend = None
@@ -600,44 +599,6 @@ def print_market_trend(address: str):
         print(f"⚠️ {unit_note}. 매도가 계산에 자동 반영되지 않습니다.")
         print("   이 지표는 2025년 11월부터 모은 스냅샷이라 '작년 대비' 계산은 아직 할 수 없습니다 —")
         print(f"   대신 최초 집계({villa_trend['start_date']}) 대비 변화로 참고하세요. 최신 수치는 한국부동산원 R-ONE에서 확인하세요.")
-
-    region = region_from_address(address)
-    if region is None:
-        return  # 표에 없는 시/도(아직 서울/경기 등 일부만 등록) — 조용히 생략
-
-    rows = load_market_index()
-    trend = compute_market_trend(rows, region)
-    if trend is None:
-        return
-
-    buy_idx = trend["buy_index_latest"]
-
-    print()
-    print(f"[시장 동향 참고 - 아파트] ({trend['region']}, KB부동산 스타일 지수, {trend['snapshot_date']} 기준 스냅샷)")
-    print(f"매수우위지수: {buy_idx:.1f} (기준선 100 대비 {buy_idx - 100:+.1f})")
-    print(f"→ {_plain_market_desc(buy_idx, kind='buy')}")
-    print(f"최근 4주 추세: {_trend_direction(trend['buy_index_trend'])}")
-    buy_yoy = yoy_change(rows, region, "매수우위")
-    if buy_yoy is not None:
-        print(f"작년 이맘때({buy_yoy['year_ago_date']}, {buy_yoy['year_ago_value']:.1f}) 대비: {buy_yoy['delta']:+.1f}p")
-    buy_rank = rank_region(rows, region, "매수우위", allowed_regions=kb_sido_names)
-    if buy_rank is not None:
-        print(f"전국 17개 시/도 비교 ({buy_rank['date']} 기준):")
-        for line in format_ranking_peers(buy_rank["ranking"], region, max_show=5):
-            print(f"  {line}")
-
-    if trend["jeonse_index_latest"] is not None:
-        jeonse_idx = trend["jeonse_index_latest"]
-        print()
-        print(f"전세수급지수: {jeonse_idx:.1f} (기준선 100 대비 {jeonse_idx - 100:+.1f})")
-        print(f"→ {_plain_market_desc(jeonse_idx, kind='jeonse')}")
-        print(f"최근 4주 추세: {_trend_direction(trend['jeonse_index_trend'])}")
-        jeonse_yoy = yoy_change(rows, region, "전세수급")
-        if jeonse_yoy is not None:
-            print(f"작년 이맘때({jeonse_yoy['year_ago_date']}, {jeonse_yoy['year_ago_value']:.1f}) 대비: {jeonse_yoy['delta']:+.1f}p")
-
-    print("⚠️ 이 지수는 아파트 시장 지표이며 시/도 단위(빌라 자체 시세 아님) 참고용입니다.")
-    print(f"   {trend['snapshot_date']} 기준 스냅샷이라 이후 갱신되지 않습니다 — 최신 수치는 KB부동산에서 직접 확인하세요.")
 
 
 def print_jeonse_comparison(rent_dir: str, subject_coord: tuple[float, float], area: float,

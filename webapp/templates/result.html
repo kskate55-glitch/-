@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>🏠 매도가 추정 결과</h1>
+<h1>🏠 빌라 매매가 계산기 — 결과</h1>
 <p class="muted">{{ result.address }} · 분석기간 {{ result.period }}</p>
 
 {% if result.building %}
@@ -36,27 +36,6 @@
   <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 시/도 단위(구/동 단위 신호 아님) 참고용입니다. 매도가 계산에 자동 반영되지 않습니다.</p>
   {% endif %}
   <p class="muted">2025년 11월부터 모은 스냅샷이라 '작년 대비' 계산은 아직 안 됩니다 — 최신 수치는 한국부동산원 R-ONE에서 확인하세요.</p>
-</div>
-{% endif %}
-
-{% if result.market_trend %}
-<div class="card">
-  <h3 style="margin-top:0">시장 동향 참고 - 아파트 ({{ result.market_trend.region }}, {{ result.market_trend.date }} 기준 스냅샷)</h3>
-  <p class="muted">매수우위지수: {{ result.market_trend.buy_index }} (기준선 100 대비 {{ result.market_trend.buy_diff }})</p>
-  <p><strong>→ {{ result.market_trend.buy_plain_desc }}</strong></p>
-  <p class="muted">최근 4주 추세: {{ result.market_trend.buy_trend }}{% if result.market_trend.buy_yoy %} · {{ result.market_trend.buy_yoy }}{% endif %}</p>
-  {% if result.market_trend.buy_peers %}
-  <p class="muted" style="margin-top:8px">전국 17개 시/도 비교:</p>
-  <ul class="muted" style="margin:4px 0 0 18px; padding:0">
-    {% for line in result.market_trend.buy_peers %}<li>{{ line }}</li>{% endfor %}
-  </ul>
-  {% endif %}
-  {% if result.market_trend.jeonse_index %}
-  <p class="muted" style="margin-top:10px">전세수급지수: {{ result.market_trend.jeonse_index }} (기준선 100 대비 {{ result.market_trend.jeonse_diff }})</p>
-  <p><strong>→ {{ result.market_trend.jeonse_plain_desc }}</strong></p>
-  <p class="muted">최근 4주 추세: {{ result.market_trend.jeonse_trend }}{% if result.market_trend.jeonse_yoy %} · {{ result.market_trend.jeonse_yoy }}{% endif %}</p>
-  {% endif %}
-  <p class="muted" style="margin-top:8px">⚠️ 아파트 시장 지표이며 시/도 단위(빌라 자체 시세 아님) 참고용입니다. {{ result.market_trend.date }} 기준 스냅샷이라 이후 갱신되지 않습니다.</p>
 </div>
 {% endif %}
 

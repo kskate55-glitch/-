@@ -49,6 +49,31 @@
   }
   .row { display: flex; gap: 12px; }
   .row > div { flex: 1; }
+
+  details.adv {
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    background: #fafbfc; overflow: hidden;
+  }
+  details.adv summary {
+    list-style: none; cursor: pointer; padding: 12px 14px;
+    font-size: 13.5px; font-weight: 700; color: #4a4f54;
+    display: flex; align-items: center; gap: 6px;
+  }
+  details.adv summary::-webkit-details-marker { display: none; }
+  details.adv summary::before {
+    content: "▸"; color: var(--muted-2); font-size: 11px; transition: transform .15s ease;
+  }
+  details.adv[open] summary::before { transform: rotate(90deg); }
+  details.adv summary .muted { font-size: 12.5px; font-weight: 500; }
+  details.adv .adv-body {
+    padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .checkbox-row {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: 13.5px; font-weight: 500; color: #4a4f54;
+  }
+  .checkbox-row input[type="checkbox"] { width: auto; margin: 0; accent-color: var(--primary); }
   button {
     padding: 14px; border: none; border-radius: var(--radius-md);
     background: var(--primary); color: #fff; font-size: 16px; font-weight: 700;

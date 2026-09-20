@@ -55,10 +55,22 @@ def _similarity_tier(t: float) -> str:
     return "낮음"
 
 
+def _estimate_text_width(text: str, font_size: float) -> float:
+    """서버 쪽에는 실제 폰트 메트릭이 없어서(브라우저 렌더링 전이라 canvas
+    측정이 불가능) 글자 수 기반으로 대충 추정한다 — 한글/전각 문자는
+    font_size와 거의 같은 폭, 숫자·영문·기호는 그 절반 조금 넘게 잡는다.
+    라벨 겹침을 "완전히 정확하게"가 아니라 "웬만하면 안 겹치게" 막는 용도라
+    이 정도 근사로 충분하다."""
+    width = 0.0
+    for ch in text:
+        width += font_size * (0.95 if ord(ch) > 0x2E80 else 0.58)
+    return width
+
+
 def render_price_distribution_html(filtered: list[dict], markers: dict[str, float],
                                      highlight: tuple[str, str] = ("보수적 급매가", "현실적 체결가"),
                                      hero_name: str = "경매용 매도가",
-                                     max_dots: int = 40, width: int = 660, height: int = 172,
+                                     max_dots: int = 40, width: int = 660, height: int = 184,
                                      primary: str = PRIMARY) -> str:
     """filtered: find_comparables()가 돌려준 비교거래 목록(거리순 정렬됨,
     _amount_man·_weight 필요). markers: {"보수적 급매가": p25, ...} 순서대로
@@ -147,9 +159,15 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
             f'fill-opacity="0.92" stroke="#fff" stroke-width="2" style="pointer-events:none" />'
         )
 
-    # 산출값 마커 — 축 아래로 눈금 + 라벨, x순서로 정렬해서 두 줄로 번갈아 배치(겹침 방지)
+    # 산출값 마커 — 축 아래로 눈금 + 라벨. 라벨은 실제 글자 폭을 추정해서
+    # 겹치지 않는 첫 번째 줄에 배치한다(최대 3줄) — 값이 서로 가까이 몰린
+    # 경우(예: 6개 값이 좁은 구간에 다 모임) 단순히 짝/홀수로만 두 줄에
+    # 번갈아 넣으면 그래도 겹칠 수 있어서, 가로 폭까지 계산해 배치한다.
+    max_label_rows = 3
+    label_gap_px = 10
+    row_last_right: list[float | None] = [None] * max_label_rows
     marker_items = sorted(markers.items(), key=lambda kv: kv[1])
-    for i, (name, value) in enumerate(marker_items):
+    for name, value in marker_items:
         x = x_of(value)
         is_hero = name == hero_name
         tick_color = primary if is_hero else MUTED_2
@@ -158,16 +176,23 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
             f'<line x1="{x:.1f}" y1="{axis_y}" x2="{x:.1f}" y2="{axis_y + tick_len}" '
             f'stroke="{tick_color}" stroke-width="{2.5 if is_hero else 1.5}" />'
         )
-        label_row = i % 2
-        label_y = axis_y + 24 + label_row * 18
         weight = 800 if is_hero else 700
         size = 12.5 if is_hero else 11.5
         color = INK if is_hero else MUTED
-        label = html.escape(f"{name} {_fmt_eok(value)}")
+        label = f"{name} {_fmt_eok(value)}"
+        label_w = _estimate_text_width(label, size)
+        left, right = x - label_w / 2, x + label_w / 2
+
+        row = 0
+        while row < max_label_rows - 1 and row_last_right[row] is not None and left < row_last_right[row] + label_gap_px:
+            row += 1
+        row_last_right[row] = right
+        label_y = axis_y + 24 + row * 17
+
         svg.append(
             f'<text x="{x:.1f}" y="{label_y}" text-anchor="middle" '
             f'font-size="{size}" font-weight="{weight}" fill="{color}" '
-            f'font-family="-apple-system,BlinkMacSystemFont,\'Malgun Gothic\',sans-serif">{label}</text>'
+            f'font-family="-apple-system,BlinkMacSystemFont,\'Malgun Gothic\',sans-serif">{html.escape(label)}</text>'
         )
 
     svg.append("</svg>")
@@ -177,7 +202,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     truncated_note = f" (가까운 {dot_count}건만 표시)" if len(filtered) > max_dots else ""
     caption = (
         f'<p class="muted" style="margin-top:6px">● 점 하나 = 비교거래 1건{truncated_note}, '
-        f'누르면 상세 정보가 뜹니다 · 진하고 클수록 대상 물건과 조건(거리·계약시기·층)이 더 비슷한 거래예요 · '
+        f'누르면 상세 정보가 뜹니다 · 진하고 클수록 대상 물건과 조건(거리·계약시기·층)이 더 비슷한 거래예요 '
+        f'(점의 위아래 높이는 겹치지 않게 배치한 것뿐, 값과는 무관합니다) · '
         f'색칠된 구간 = <strong>{highlight[0]}~{highlight[1]}</strong> 구간 '
         f'(사용자가 실제 낙찰 후 매도 사례와 대조해 확인한 구간 — 통계적으로 확정된 값이 아닌 참고용)</p>'
     )

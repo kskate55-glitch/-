@@ -10,7 +10,10 @@ CLAUDE.md 2절/10절 규칙대로 사용자에게 재확인을 요청하고 표�
 import os
 import re
 
-LAWD_MD_PATH = os.path.join("data", "lawd_codes.md")
+# __file__ 기준 절대경로로 잡는다 — 실행 시 작업 디렉터리(cwd)에 의존하면
+# webapp/(gunicorn --chdir webapp로 실행)처럼 cwd가 저장소 루트가 아닐 때
+# "data/lawd_codes.md"를 못 찾아서 이 표가 통째로 비어버리는 버그가 생긴다.
+LAWD_MD_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "lawd_codes.md")
 
 _cache: dict[str, tuple[str, str]] | None = None
 

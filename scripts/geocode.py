@@ -19,7 +19,8 @@ from math import atan2, cos, radians, sin, sqrt
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-CACHE_PATH = os.path.join("data", "geocode_cache.json")
+_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
+CACHE_PATH = os.path.join(_DATA_DIR, "geocode_cache.json")
 KAKAO_URL = "https://dapi.kakao.com/v2/local/search/address.json"
 KAKAO_KEYWORD_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
 
@@ -77,7 +78,7 @@ def geocode(address: str) -> tuple[float, float] | None:
     return lat, lon
 
 
-DETAIL_CACHE_PATH = os.path.join("data", "geocode_detail_cache.json")
+DETAIL_CACHE_PATH = os.path.join(_DATA_DIR, "geocode_detail_cache.json")
 
 
 def geocode_full(address: str) -> dict | None:

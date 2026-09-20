@@ -5,7 +5,9 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
 15절 규칙에 따른 월별 가격 추이, 16절 규칙에 따른 예상 전세가·매매 대비 비교,
 19절 규칙에 따른 입지 체크·수익성 계산, 20절 규칙에 따른 건축물대장 조회
 (승강기·세대수·사용승인일), 21절 규칙에 따른 인근 중개업소 조회, 23절 규칙에
-따른 예상 월세 추정(전월세전환율 역산)도 함께 출력한다.
+따른 예상 월세 추정(전월세전환율 역산, --monthly-deposit 생략 시 반경 안
+실제 월세 거래로 역산한 실측치를 우선 쓴다), 26절 규칙에 따른 역세권
+프리미엄 참고(--station-premium, 거리-가격 회귀)도 함께 출력한다.
 
 사용법:
     python estimate_price.py --dir data/raw --rent-dir data/raw_rent \
@@ -34,7 +36,8 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
 --no-brokers       : 인근 중개업소 조회를 건너뛴다
 --monthly-deposit  : 예상 월세 추정용 월세보증금 (만원, 선택 — 주면 23절 예상 월세
                      추정을 같이 보여준다. 순수월세면 0)
---conversion-rate  : 전월세전환율 (연 %, 기본 6.0) — 지역/물건마다 달라 참고값일 뿐
+--conversion-rate  : 전월세전환율 (연 %, 선택) — 생략하면 반경 안 실제 월세
+                     거래로 역산한 실측치를 쓰고, 그것도 없으면 6.0(기본값)
 
 이 스크립트는 실거래가 XML 파일 텍스트만 읽는다 — 국토부 API를 직접 호출하지
 않는다 (그건 molit_rhtrade_api.py/molit_rhrent_api.py의 몫). 다만 --address를
@@ -128,6 +131,73 @@ def filter_pure_jeonse(rows: list[dict]) -> list[dict]:
             continue
         out.append(r)
     return out
+
+
+def filter_wolse(rows: list[dict]) -> list[dict]:
+    """월세가 섞인(monthlyRent != 0) 거래만 남긴다 — 16절과 반대. CLAUDE.md 23-1절
+    실측 전월세전환율 계산에 쓴다. 16절은 이 거래들을 버리지만, 여기서는 반대로
+    이 거래들이야말로 "월세보증금 대비 월세" 실제 사례라 전환율 역산의 재료다."""
+    out = []
+    for r in rows:
+        if to_amount_man(r.get("monthlyRent", "0")) == 0:
+            continue
+        out.append(r)
+    return out
+
+
+def estimate_conversion_rate(rent_dir: str, subject_coord: tuple[float, float], area: float,
+                              floor: int | None, build_year: str | None, radius_m: float,
+                              year_min: int, this_year: int, gu_filter: str | None) -> dict | None:
+    """CLAUDE.md 23-1절 규칙: 8절 매도가 계산에는 안 쓰이고 버려지던 월세 낀
+    전월세 실거래(filter_wolse)를 반경/면적/연식/층 조건(find_comparables)으로
+    같은 물건 기준까지 좁힌 뒤, 각 건의 (월세보증금, 월세)를 16절과 동일한
+    조건으로 구한 "예상 전세보증금"(순수 전세 비교거래의 현실적 전세가)과
+    비교해서 그 지역 실제 전월세전환율을 역산한다.
+
+    전환율(연 %) = 월세×12 ÷ (예상 전세보증금 − 월세보증금) × 100
+
+    예상 전세보증금 자체가 없거나(전세 비교거래 0건), 월세 비교거래가 없거나,
+    계산된 전환율이 죄다 비현실적 범위(0~30%) 밖이면 None을 돌려준다 — 이 경우
+    호출부는 23절 기본값(6.0%)으로 조용히 폴백한다."""
+    rent_rows = dedupe_rent(load_transactions(rent_dir))
+    if not rent_rows:
+        return None
+
+    jeonse_rows = filter_pure_jeonse(rent_rows)
+    jeonse_filtered = find_comparables(jeonse_rows, subject_coord, area, floor, build_year,
+                                        radius_m, year_min, this_year, gu_filter,
+                                        amount_field="deposit")
+    if not jeonse_filtered:
+        return None
+    reference_deposit = compute_scenarios(jeonse_filtered, radius_m, this_year)["median"]
+
+    wolse_rows = filter_wolse(rent_rows)
+    wolse_filtered = find_comparables(wolse_rows, subject_coord, area, floor, build_year,
+                                       radius_m, year_min, this_year, gu_filter,
+                                       amount_field="monthlyRent")
+    if not wolse_filtered:
+        return None
+
+    rates = []
+    for r in wolse_filtered:
+        monthly = r["_amount_man"]
+        deposit = to_amount_man(r.get("deposit", ""))
+        if deposit != deposit:
+            continue
+        denom = reference_deposit - deposit
+        if denom <= 0:
+            continue  # 월세보증금이 예상 전세가보다 크거나 같으면 역산이 성립하지 않는다
+        rate = monthly * 12 / denom * 100
+        if 0 < rate < 30:  # 입력 오류 등으로 인한 비현실적 이상치는 제외 (통상 3~15% 범위)
+            rates.append(rate)
+
+    if not rates:
+        return None
+
+    rates.sort()
+    n = len(rates)
+    median_rate = rates[n // 2] if n % 2 else (rates[n // 2 - 1] + rates[n // 2]) / 2
+    return {"rate": median_rate, "n": n, "reference_deposit": reference_deposit}
 
 
 def to_amount_man(s: str) -> float:
@@ -233,6 +303,7 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
 
             r["_distance_m"] = distance
             r["_amount_man"] = amount
+            r["_lat"], r["_lon"] = coord
             r["_weight"] = (
                 weight_for_year(r.get("dealYear"), this_year) * distance_weight * floor_weight
             )
@@ -293,13 +364,17 @@ def compute_monthly_rent(realistic_sale_man: float, deposit_man: float, annual_r
     return (realistic_sale_man - deposit_man) * annual_rate_pct / 100 / 12
 
 
-def print_monthly_rent(realistic_sale_man: float, deposit_man: float, annual_rate_pct: float, fmt) -> None:
+def print_monthly_rent(realistic_sale_man: float, deposit_man: float, annual_rate_pct: float, fmt,
+                        rate_source: str = "기본값", measured: dict | None = None) -> None:
     monthly_rent = compute_monthly_rent(realistic_sale_man, deposit_man, annual_rate_pct)
     print()
     print("[예상 월세 추정] (전월세전환율 역산, 예상 매도가 기준)")
     print(f"기준 매도가(현실적 체결가): {fmt(realistic_sale_man)}")
-    print(f"가정: 월세보증금 {deposit_man:.0f}만원, 연 전환율 {annual_rate_pct:.1f}%")
+    print(f"가정: 월세보증금 {deposit_man:.0f}만원, 연 전환율 {annual_rate_pct:.1f}% ({rate_source})")
     print(f"예상 월세: {monthly_rent:.0f}만원/월")
+    if measured is not None and abs(measured["rate"] - annual_rate_pct) > 0.05:
+        print(f"참고: 반경 안 실제 월세 거래 {measured['n']}건으로 역산한 이 지역 실측 전환율은 {measured['rate']:.1f}%입니다"
+              f" (예상 전세보증금 {measured['reference_deposit']:,.0f}만원 기준).")
     print("⚠️ 실거래 데이터가 아닌 추정치입니다 — 인근 실제 월세 매물과 비교해서 조정하세요.")
     print("   전환율은 법정 상한(기준금리+2%p)과 실제 시장 관행이 다를 수 있어 참고값일 뿐입니다.")
 
@@ -601,6 +676,82 @@ def print_market_trend(address: str):
         print(f"   대신 최초 집계({villa_trend['start_date']}) 대비 변화로 참고하세요. 최신 수치는 한국부동산원 R-ONE에서 확인하세요.")
 
 
+def compute_distance_premium(filtered: list[dict], keyword: str = "지하철역",
+                              search_radius_m: int = 1500, max_sample: int = 15) -> dict | None:
+    """CLAUDE.md 26절 규칙: find_comparables()가 이미 지오코딩해둔 비교거래
+    좌표를 재사용해서, 대상 시설(기본 지하철역)까지 거리와 평당가 사이의
+    실제 관계를 단순 선형회귀로 추정한다 — "역에서 가까울수록 실제로 평당가가
+    얼마나 비싼지"를 이 지역 실거래 데이터로 직접 계산한다 (19절 입지체크가
+    대상 물건 하나의 거리만 보여주는 것과 달리, 여기서는 그 거리가 가격에
+    실제로 얼마나 영향을 주는지까지 본다).
+
+    이미 거리순으로 정렬된 filtered에서 가까운 상위 max_sample개만 쓴다 —
+    카카오 키워드 검색을 비교거래마다 하나씩 호출해야 해서(geocode()와 달리
+    결과가 좌표+키워드 조합마다 달라 캐시 재사용이 제한적이다) 비용을 이
+    정도로 묶는다."""
+    from geocode import nearby_place
+
+    sample = filtered[:max_sample]
+
+    def _lookup(r):
+        return r, nearby_place(r["_lat"], r["_lon"], keyword, search_radius_m)
+
+    points = []  # (시설까지 거리 m, 평당가 만원/㎡)
+    with ThreadPoolExecutor(max_workers=GEOCODE_WORKERS) as executor:
+        for r, place in executor.map(_lookup, sample):
+            if place is None:
+                continue
+            area = float(r.get("excluUseAr", "nan") or "nan")
+            if area != area or not area:
+                continue
+            points.append((place["distance_m"], r["_amount_man"] / area))
+
+    if len(points) < 5:
+        return None  # 표본이 너무 적으면(카카오에 시설이 안 잡히는 경우 포함) 회귀 자체가 무의미하다
+
+    xs = [p[0] for p in points]
+    ys = [p[1] for p in points]
+    n = len(points)
+    mean_x, mean_y = sum(xs) / n, sum(ys) / n
+    var_x = sum((x - mean_x) ** 2 for x in xs)
+    if var_x == 0:
+        return None  # 표본의 거리가 다 똑같으면(한 건물에 몰림 등) 기울기를 구할 수 없다
+
+    cov_xy = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+    slope = cov_xy / var_x  # 거리 1m 늘어날 때 평당가(만원/㎡) 변화
+    var_y = sum((y - mean_y) ** 2 for y in ys)
+    r_squared = (cov_xy ** 2) / (var_x * var_y) if var_y > 0 else 0.0
+
+    return {
+        "n": n, "keyword": keyword,
+        "change_per_100m": slope * 100,
+        "pct_per_100m": (slope * 100 / mean_y * 100) if mean_y else 0,
+        "r_squared": r_squared,
+        "avg_price_ppyeong": mean_y,
+        "min_distance": min(xs), "max_distance": max(xs),
+    }
+
+
+def print_distance_premium(filtered: list[dict], keyword: str = "지하철역") -> None:
+    result = compute_distance_premium(filtered, keyword)
+    print()
+    label = keyword
+    if result is None:
+        print(f"[역세권 프리미엄 참고] 표본이 부족하거나({label}까지 거리가 다 비슷하거나 검색 결과가 없음) "
+              "계산할 만한 관계를 찾지 못해 생략합니다.")
+        return
+
+    direction = "가까울수록 비싸지는" if result["change_per_100m"] < 0 else "가까울수록 오히려 싸지는"
+    print(f"[역세권 프리미엄 참고] (반경 안 비교거래 {result['n']}건, {label}까지 거리 기준 — {result['min_distance']}~{result['max_distance']}m 분포)")
+    print(f"{label}에서 100m 멀어질 때마다 평당가 {abs(result['change_per_100m']):.1f}만원/㎡ "
+          f"({abs(result['pct_per_100m']):.1f}%) {'하락' if result['change_per_100m'] < 0 else '상승'} 경향")
+    print(f"→ 이 지역 비교거래는 {label}에 {direction} 경향을 보입니다 (설명력 R²={result['r_squared']:.2f}, "
+          f"1에 가까울수록 거리만으로 가격 차이가 잘 설명됨).")
+    if result["r_squared"] < 0.2:
+        print("⚠️ 설명력(R²)이 낮아 거리 외에 다른 요인(층·연식·개별 단지 차이 등)의 영향이 더 클 수 있습니다.")
+    print("⚠️ 표본이 최대 15건인 단순 참고 통계입니다 — 매도가 계산에 자동 반영되지 않습니다.")
+
+
 def print_jeonse_comparison(rent_dir: str, subject_coord: tuple[float, float], area: float,
                              floor: int | None, build_year: str | None, radius_m: float,
                              year_min: int, this_year: int, gu_filter: str | None,
@@ -676,9 +827,10 @@ def main():
     ap.add_argument("--broker-radius", type=float, default=1000, help="인근 중개업소 조회 반경(미터), 기본 1000m")
     ap.add_argument("--no-brokers", action="store_true", help="인근 중개업소 조회를 건너뛴다")
     ap.add_argument("--monthly-deposit", type=float, default=None, help="예상 월세 추정용 월세보증금(만원) — 주면 23절 예상 월세 추정을 같이 보여준다")
-    ap.add_argument("--conversion-rate", type=float, default=6.0, help="전월세전환율(연 %%), 기본 6.0 — 지역/물건마다 달라 참고값일 뿐")
+    ap.add_argument("--conversion-rate", type=float, default=None, help="전월세전환율(연 %%) — 생략하면 반경 안 실제 월세 거래로 역산한 실측치를 쓰고, 그것도 없으면 6.0(참고용 기본값)으로 폴백한다")
     ap.add_argument("--no-market-trend", action="store_true", help="24절 시장 동향 참고 지표(매수우위지수 등)를 건너뛴다")
     ap.add_argument("--no-dong-compare", action="store_true", help="25절 인근 동 비교(거래활발도/가격상승률)를 건너뛴다")
+    ap.add_argument("--station-premium", action="store_true", help="26절 역세권 프리미엄 참고(거리-가격 회귀)를 계산한다 — 카카오 키워드 검색을 비교거래마다 추가로 호출해서 기본은 꺼져 있다")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -751,8 +903,21 @@ def main():
         print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, {floor_txt}, "
               f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m")
 
+    if args.station_premium:
+        print_distance_premium(filtered)
+
     if args.monthly_deposit is not None:
-        print_monthly_rent(realistic, args.monthly_deposit, args.conversion_rate, fmt)
+        measured_rate = estimate_conversion_rate(args.rent_dir, subject_coord, args.area, args.floor,
+                                                   args.build_year, args.radius, year_min, this_year, gu_filter)
+        if args.conversion_rate is not None:
+            effective_rate, rate_source = args.conversion_rate, "사용자 지정"
+        elif measured_rate is not None:
+            effective_rate = measured_rate["rate"]
+            rate_source = f"실측치, 반경 안 월세 거래 {measured_rate['n']}건 기준"
+        else:
+            effective_rate, rate_source = 6.0, "기본값, 반경 안에 참고할 월세 실거래 없음"
+        print_monthly_rent(realistic, args.monthly_deposit, effective_rate, fmt,
+                            rate_source=rate_source, measured=measured_rate)
 
     print_jeonse_comparison(args.rent_dir, subject_coord, args.area, args.floor, args.build_year,
                              args.radius, year_min, this_year, gu_filter, realistic, fmt)

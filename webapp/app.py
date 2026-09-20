@@ -15,9 +15,11 @@ CLI 버전과 다른 점은, 사용자가 국토부 API를 직접 실행해 data
 ⚠️ apis.data.go.kr / dapi.kakao.com에 접속 가능한 환경(본인 PC, 또는 실제
    배포한 서버)에서 실행해야 한다 — Claude Code 샌드박스에서는 실행 불가.
 ⚠️ 여러 방문자가 쓸 걸 가정한 최소 기능(MVP) 버전이다. 8절 매도가·19절
-   수익성 계산·20절 건물정보(승강기/세대수/사용승인일)까지 지원하고,
-   예상 전세가(16절)·인근 중개업소(21절)는 아직 웹 버전에 없다 —
-   CLI(estimate_price.py)에는 이미 있다.
+   수익성 계산·20절 건물정보(승강기/세대수/사용승인일)·24절 시장동향·
+   25절 인근 동 비교·26절 역세권 프리미엄(체크박스로 켜야 계산)까지
+   지원하고, 예상 전세가(16절)·인근 중개업소(21절)·23절 실측 전월세전환율
+   (전월세 실거래 데이터를 아직 실시간으로 안 받아온다)은 아직 웹 버전에
+   없다 — CLI(estimate_price.py)에는 이미 있다.
 
 SITE_PASSWORD 환경변수를 설정하면 비밀번호를 아는 사람만 쓸 수 있다 (공개
 URL로 배포했을 때 낯선 방문자가 국토부/카카오 API 일일 할당량을 소진시키는
@@ -276,12 +278,30 @@ def estimate():
         if not volume_ranked and not price_ranked:
             dong_compare = None
 
+    station_premium = None
+    if form.get("station_premium"):
+        from estimate_price import compute_distance_premium
+
+        premium = compute_distance_premium(filtered)
+        if premium is not None:
+            station_premium = {
+                "n": premium["n"], "keyword": premium["keyword"],
+                "min_distance": premium["min_distance"], "max_distance": premium["max_distance"],
+                "change_per_100m": f"{abs(premium['change_per_100m']):.1f}",
+                "pct_per_100m": f"{abs(premium['pct_per_100m']):.1f}",
+                "direction": "하락" if premium["change_per_100m"] < 0 else "상승",
+                "tendency": "가까울수록 비싸지는" if premium["change_per_100m"] < 0 else "가까울수록 오히려 싸지는",
+                "r_squared": f"{premium['r_squared']:.2f}",
+                "low_confidence": premium["r_squared"] < 0.2,
+            }
+
     result = {
         "address": address,
         "period": f"{year_min}.01 ~ {this_year}.12",
         "building": building,
         "villa_market_trend": villa_market_trend,
         "dong_compare": dong_compare,
+        "station_premium": station_premium,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),

@@ -102,6 +102,19 @@
   </table>
 </div>
 
+{% if result.station_premium %}
+<div class="card">
+  <h3 style="margin-top:0">역세권 프리미엄 참고 (반경 안 비교거래 {{ result.station_premium.n }}건, {{ result.station_premium.keyword }}까지 거리 기준)</h3>
+  <p class="muted">{{ result.station_premium.keyword }}까지 {{ result.station_premium.min_distance }}~{{ result.station_premium.max_distance }}m 분포</p>
+  <p>{{ result.station_premium.keyword }}에서 100m 멀어질 때마다 평당가 <strong>{{ result.station_premium.change_per_100m }}만원/㎡ ({{ result.station_premium.pct_per_100m }}%) {{ result.station_premium.direction }}</strong> 경향</p>
+  <p class="muted">→ 이 지역 비교거래는 {{ result.station_premium.keyword }}에 {{ result.station_premium.tendency }} 경향을 보입니다 (설명력 R²={{ result.station_premium.r_squared }}, 1에 가까울수록 거리만으로 가격 차이가 잘 설명됨).</p>
+  {% if result.station_premium.low_confidence %}
+  <p class="muted">⚠️ 설명력(R²)이 낮아 거리 외에 다른 요인(층·연식·개별 단지 차이 등)의 영향이 더 클 수 있습니다.</p>
+  {% endif %}
+  <p class="muted">⚠️ 표본이 최대 15건인 단순 참고 통계입니다 — 매도가 계산에 자동 반영되지 않습니다.</p>
+</div>
+{% endif %}
+
 {% if result.profit %}
 <div class="card">
   <h3 style="margin-top:0">수익성 계산 (낙찰가 {{ result.bid_price }} 기준)</h3>

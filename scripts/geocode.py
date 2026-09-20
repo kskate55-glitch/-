@@ -151,10 +151,23 @@ def _save_cache_file(path: str, cache: dict) -> None:
         json.dump(cache, f, ensure_ascii=False, indent=2)
 
 
+NEARBY_CACHE_PATH = os.path.join(_DATA_DIR, "nearby_place_cache.json")
+_nearby_cache_lock = threading.Lock()
+
+
 def nearby_place(lat: float, lon: float, keyword: str, radius_m: int = 1000) -> dict | None:
-    """좌표 기준 반경 안에서 키워드로 가장 가까운 장소를 찾는다 (CLAUDE.md 19절).
-    결과 없거나 호출 실패 시 None. 캐시하지 않는다 — 지오코딩과 달리 매번
-    물건마다 다른 키워드/좌표 조합이라 캐시 이득이 적다."""
+    """좌표 기준 반경 안에서 키워드로 가장 가까운 장소를 찾는다 (CLAUDE.md 19절,
+    26절 역세권 프리미엄에서도 재사용). 결과 없거나 호출 실패 시 None.
+
+    좌표를 소수점 5자리(약 1m 오차)로 반올림해서 캐시한다 — 26절처럼 반경 안
+    비교거래 수십 건마다 이 함수를 호출하는 경우, 같은 동네를 반복 조회하면
+    거의 같은 좌표가 계속 나오므로(같은 건물/인접 건물) 캐시 이득이 크다."""
+    cache_key = f"{round(lat, 5)},{round(lon, 5)}|{keyword}|{radius_m}"
+    with _nearby_cache_lock:
+        cache = _load_cache_file(NEARBY_CACHE_PATH)
+        if cache_key in cache:
+            return cache[cache_key]
+
     api_key = _get_api_key()
     params = (
         f"query={urllib.parse.quote(keyword)}&x={lon}&y={lat}"
@@ -170,11 +183,13 @@ def nearby_place(lat: float, lon: float, keyword: str, radius_m: int = 1000) -> 
         return None
 
     docs = data.get("documents", [])
-    if not docs:
-        return None
+    result = {"name": docs[0]["place_name"], "distance_m": int(docs[0]["distance"])} if docs else None
 
-    nearest = docs[0]
-    return {"name": nearest["place_name"], "distance_m": int(nearest["distance"])}
+    with _nearby_cache_lock:
+        cache = _load_cache_file(NEARBY_CACHE_PATH)
+        cache[cache_key] = result
+        _save_cache_file(NEARBY_CACHE_PATH, cache)
+    return result
 
 
 def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

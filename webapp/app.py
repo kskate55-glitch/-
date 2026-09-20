@@ -94,6 +94,30 @@ def estimate():
         except ValueError:
             error = "전용면적을 올바른 숫자로 입력해 주세요."
 
+    # 층·준공년도는 필수다 — 둘 중 하나라도 빠지면 5~7절 유사층/유사연식
+    # 가중치·필터가 제대로 안 걸려서 비교거래가 뒤죽박죽 섞이고 매도가
+    # 산출값이 중구난감해진다(사용자가 실제로 겪은 문제).
+    floor = None
+    if not error:
+        floor_raw = form.get("floor", "").strip()
+        if not floor_raw:
+            error = "층을 입력해 주세요 (반지하/지하는 0 이하로 입력)."
+        else:
+            try:
+                floor = int(floor_raw)
+            except ValueError:
+                error = "층을 올바른 숫자로 입력해 주세요."
+
+    build_year = None
+    if not error:
+        build_year_raw = form.get("build_year", "").strip()
+        if not build_year_raw:
+            error = "준공년도를 입력해 주세요."
+        elif not (build_year_raw.isdigit() and len(build_year_raw) == 4):
+            error = "준공년도를 4자리 숫자로 입력해 주세요 (예: 2012)."
+        else:
+            build_year = build_year_raw
+
     if error:
         return render_template("index.html", error=error, form=form,
                                 last_year=datetime.now().year - 1)
@@ -106,8 +130,6 @@ def estimate():
         raw = form.get(name, "").strip()
         return float(raw) if raw else default
 
-    floor = _optional_int("floor")
-    build_year = form.get("build_year", "").strip() or None
     radius = _optional_float("radius", 400)
     this_year = datetime.now().year
     year_min = _optional_int("year_min") or (this_year - 1)

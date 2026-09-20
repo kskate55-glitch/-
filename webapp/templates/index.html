@@ -19,14 +19,15 @@
              value="{{ form.area if form else '' }}" required>
     </div>
     <div>
-      <label>층 (선택)</label>
-      <input type="number" name="floor" placeholder="5" value="{{ form.floor if form else '' }}">
+      <label>층</label>
+      <input type="number" name="floor" placeholder="5" value="{{ form.floor if form else '' }}" required>
     </div>
   </div>
   <div>
-    <label>준공년도 (선택)</label>
-    <input type="number" name="build_year" placeholder="2012" value="{{ form.build_year if form else '' }}">
+    <label>준공년도</label>
+    <input type="number" name="build_year" placeholder="2012" value="{{ form.build_year if form else '' }}" required>
   </div>
+  <p class="hint" style="margin-top:-6px">※ 층·전용면적·준공년도는 유사층·유사연식 비교에 꼭 필요해서 필수 입력입니다 — 빠지면 엉뚱한 매물과 비교돼 매도가가 부정확해질 수 있어요.</p>
 
   <details class="adv" {{ "open" if adv_filled else "" }}>
     <summary>상세 옵션 펼치기 <span class="muted">(비교 반경·월세 등)</span></summary>

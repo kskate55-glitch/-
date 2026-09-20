@@ -3,6 +3,18 @@
 <h1>🏠 매도가 추정 결과</h1>
 <p class="muted">{{ result.address }} · 분석기간 {{ result.period }}</p>
 
+{% if result.building %}
+<div class="card">
+  <h3 style="margin-top:0">건물 정보 (건축물대장 기준)</h3>
+  <p class="muted">
+    승강기: {{ result.building.elevator }}
+    {% if result.building.household_count %} · 세대수: {{ result.building.household_count }}세대{% endif %}
+    {% if result.building.approval_date %} · 사용승인일: {{ result.building.approval_date }}{% endif %}
+    {% if result.building.ground_floors %} · 지상층수: {{ result.building.ground_floors }}층{% endif %}
+  </p>
+</div>
+{% endif %}
+
 <div class="card">
   <p class="muted">유효 비교거래 {{ result.n_total }}건 (가까운 절반 안 {{ result.n_close }}건 · 올해 계약 {{ result.n_this_year }}건) · 시세 신뢰도 {{ result.confidence }}/100</p>
   <div class="price-grid">

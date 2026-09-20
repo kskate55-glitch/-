@@ -14,9 +14,10 @@ CLI 버전과 다른 점은, 사용자가 국토부 API를 직접 실행해 data
 
 ⚠️ apis.data.go.kr / dapi.kakao.com에 접속 가능한 환경(본인 PC, 또는 실제
    배포한 서버)에서 실행해야 한다 — Claude Code 샌드박스에서는 실행 불가.
-⚠️ 여러 방문자가 쓸 걸 가정한 최소 기능(MVP) 버전이다. 8절 매도가 계산까지만
-   지원하고, 예상 전세가(16절)·건물정보(20절)·인근 중개업소(21절) 등은
-   아직 웹 버전에 없다 — CLI(estimate_price.py)에는 이미 있다.
+⚠️ 여러 방문자가 쓸 걸 가정한 최소 기능(MVP) 버전이다. 8절 매도가·19절
+   수익성 계산·20절 건물정보(승강기/세대수/사용승인일)까지 지원하고,
+   예상 전세가(16절)·인근 중개업소(21절)는 아직 웹 버전에 없다 —
+   CLI(estimate_price.py)에는 이미 있다.
 
 SITE_PASSWORD 환경변수를 설정하면 비밀번호를 아는 사람만 쓸 수 있다 (공개
 URL로 배포했을 때 낯선 방문자가 국토부/카카오 API 일일 할당량을 소진시키는
@@ -130,6 +131,24 @@ def estimate():
         return render_template("index.html", error="주소에서 지역코드를 확인하지 못했습니다.",
                                 form=form, last_year=this_year - 1)
 
+    building = None
+    try:
+        from building_register import get_building_info
+
+        building_info = get_building_info(
+            subject_detail.get("b_code"), subject_detail.get("main_no"),
+            subject_detail.get("sub_no"), subject_detail.get("is_mountain", False),
+        )
+        if building_info:
+            building = {
+                "elevator": f"있음 ({building_info['elevator_count']}대)" if building_info["has_elevator"] else "없음",
+                "household_count": building_info.get("household_count"),
+                "approval_date": building_info.get("approval_date"),
+                "ground_floors": building_info.get("ground_floors"),
+            }
+    except RuntimeError:
+        building = None  # 건축물대장 조회는 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
+
     from data_source import get_trade_rows
     from estimate_price import compute_scenarios, dedupe, find_comparables
 
@@ -165,6 +184,7 @@ def estimate():
     result = {
         "address": address,
         "period": f"{year_min}.01 ~ {this_year}.12",
+        "building": building,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),

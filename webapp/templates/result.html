@@ -15,9 +15,17 @@
 </div>
 {% endif %}
 
+{% if result.villa_market_trend %}
+<div class="card">
+  <h3 style="margin-top:0">시장 동향 참고 - 연립다세대 ({{ result.villa_market_trend.region }}, {{ result.villa_market_trend.date }} 기준 스냅샷)</h3>
+  <p class="muted">매매수급동향지수: {{ result.villa_market_trend.index }} ({{ result.villa_market_trend.desc }}) — 최근 3개월 추세: {{ result.villa_market_trend.trend }}</p>
+  <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 시/도 단위(구/동 단위 신호 아님) 참고용입니다. {{ result.villa_market_trend.date }} 기준 스냅샷이라 이후 갱신되지 않습니다.</p>
+</div>
+{% endif %}
+
 {% if result.market_trend %}
 <div class="card">
-  <h3 style="margin-top:0">시장 동향 참고 ({{ result.market_trend.region }}, {{ result.market_trend.date }} 기준 스냅샷)</h3>
+  <h3 style="margin-top:0">시장 동향 참고 - 아파트 ({{ result.market_trend.region }}, {{ result.market_trend.date }} 기준 스냅샷)</h3>
   <p class="muted">매수우위지수: {{ result.market_trend.buy_index }} ({{ result.market_trend.buy_desc }}) — 최근 4주 추세: {{ result.market_trend.buy_trend }}</p>
   {% if result.market_trend.jeonse_index %}
   <p class="muted">전세수급지수: {{ result.market_trend.jeonse_index }} ({{ result.market_trend.jeonse_desc }}) — 최근 4주 추세: {{ result.market_trend.jeonse_trend }}</p>

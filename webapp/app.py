@@ -149,20 +149,36 @@ def estimate():
     except RuntimeError:
         building = None  # 건축물대장 조회는 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
 
+    def _direction(delta, unit="p"):
+        if delta is None:
+            return "추세 판단 불가"
+        if abs(delta) < 2:
+            return "보합"
+        return f"{'상승' if delta > 0 else '하락'} 중 ({delta:+.1f}{unit})"
+
+    villa_market_trend = None
     market_trend = None
-    from market_index import compute_market_trend, load_market_index, region_from_address
+    from market_index import (
+        VILLA_SIDO_ALIAS, compute_market_trend, compute_villa_market_trend,
+        load_market_index, load_villa_market_index, region_from_address,
+    )
+
+    villa_region = region_from_address(address, VILLA_SIDO_ALIAS)
+    if villa_region is not None:
+        villa_trend = compute_villa_market_trend(load_villa_market_index(), villa_region)
+        if villa_trend is not None:
+            idx = villa_trend["index_latest"]
+            villa_market_trend = {
+                "region": villa_trend["region"], "date": villa_trend["snapshot_date"],
+                "index": f"{idx:.1f}",
+                "desc": "매도자 우위 — 상승 압력" if idx > 100 else "매수자 우위 — 하락 압력",
+                "trend": _direction(villa_trend["index_trend"]),
+            }
 
     region = region_from_address(address)
     if region is not None:
         trend = compute_market_trend(load_market_index(), region)
         if trend is not None:
-            def _direction(delta):
-                if delta is None:
-                    return "추세 판단 불가"
-                if abs(delta) < 2:
-                    return "보합"
-                return f"{'상승' if delta > 0 else '하락'} 중 ({delta:+.1f}p)"
-
             buy_idx = trend["buy_index_latest"]
             jeonse_idx = trend["jeonse_index_latest"]
             market_trend = {
@@ -211,6 +227,7 @@ def estimate():
         "address": address,
         "period": f"{year_min}.01 ~ {this_year}.12",
         "building": building,
+        "villa_market_trend": villa_market_trend,
         "market_trend": market_trend,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],

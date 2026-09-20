@@ -531,11 +531,35 @@ def print_building_info(subject_detail: dict):
         print(f"지상층수: {info['ground_floors']}층")
 
 
+def _trend_direction(delta, threshold=2.0, unit="p"):
+    if delta is None:
+        return "추세 판단 불가"
+    if abs(delta) < threshold:
+        return "보합"
+    return f"{'상승' if delta > 0 else '하락'} 중 ({delta:+.1f}{unit})"
+
+
 def print_market_trend(address: str):
-    """CLAUDE.md 24절 규칙: KB부동산 스타일 매수우위지수/전세수급지수를
-    참고 카드로 보여준다. 빌라 데이터가 아니라 시/도 단위 아파트 시장
-    지표라 매도가 계산에 반영하지 않고 참고용으로만 표시한다."""
-    from market_index import compute_market_trend, load_market_index, region_from_address
+    """CLAUDE.md 24절 규칙: 시장 동향 참고 지표 2종을 보여준다 — 한국부동산원
+    연립다세대 매매수급동향지수(우리 프로젝트 대상과 정확히 일치)와 KB부동산
+    스타일 아파트 매수우위지수(참고용, 시/도 단위). 둘 다 매도가 계산에
+    반영하지 않고 참고용으로만 표시한다."""
+    from market_index import (
+        VILLA_SIDO_ALIAS, compute_market_trend, compute_villa_market_trend,
+        load_market_index, load_villa_market_index, region_from_address,
+    )
+
+    villa_region = region_from_address(address, VILLA_SIDO_ALIAS)
+    if villa_region is not None:
+        villa_trend = compute_villa_market_trend(load_villa_market_index(), villa_region)
+        if villa_trend is not None:
+            idx = villa_trend["index_latest"]
+            desc = "매도자 우위 — 상승 압력" if idx > 100 else "매수자 우위 — 하락 압력"
+            print()
+            print(f"[시장 동향 참고 - 연립다세대] ({villa_trend['region']}, 한국부동산원 매매수급동향지수, {villa_trend['snapshot_date']} 기준 스냅샷)")
+            print(f"매매수급동향지수: {idx:.1f} ({desc}) — 최근 3개월 추세: {_trend_direction(villa_trend['index_trend'])}")
+            print("⚠️ 시/도 단위 참고용입니다 (구/동 단위 신호 아님). 매도가 계산에 자동 반영되지 않습니다.")
+            print(f"   {villa_trend['snapshot_date']} 기준 스냅샷이라 이후 갱신되지 않습니다 — 최신 수치는 한국부동산원 R-ONE에서 직접 확인하세요.")
 
     region = region_from_address(address)
     if region is None:
@@ -546,23 +570,16 @@ def print_market_trend(address: str):
     if trend is None:
         return
 
-    def _direction(delta, unit="p"):
-        if delta is None:
-            return "추세 판단 불가"
-        if abs(delta) < 2:
-            return "보합"
-        return f"{'상승' if delta > 0 else '하락'} 중 ({delta:+.1f}{unit})"
-
     buy_idx = trend["buy_index_latest"]
     buy_desc = "매도자 우위 — 상승 압력" if buy_idx > 100 else "매수자 우위 — 하락 압력"
 
     print()
-    print(f"[시장 동향 참고] ({trend['region']}, KB부동산 스타일 지수, {trend['snapshot_date']} 기준 스냅샷)")
-    print(f"매수우위지수: {buy_idx:.1f} ({buy_desc}) — 최근 4주 추세: {_direction(trend['buy_index_trend'])}")
+    print(f"[시장 동향 참고 - 아파트] ({trend['region']}, KB부동산 스타일 지수, {trend['snapshot_date']} 기준 스냅샷)")
+    print(f"매수우위지수: {buy_idx:.1f} ({buy_desc}) — 최근 4주 추세: {_trend_direction(trend['buy_index_trend'])}")
     if trend["jeonse_index_latest"] is not None:
         jeonse_idx = trend["jeonse_index_latest"]
         jeonse_desc = "전세 수요 > 공급" if jeonse_idx > 100 else "전세 수요 < 공급"
-        print(f"전세수급지수: {jeonse_idx:.1f} ({jeonse_desc}) — 최근 4주 추세: {_direction(trend['jeonse_index_trend'])}")
+        print(f"전세수급지수: {jeonse_idx:.1f} ({jeonse_desc}) — 최근 4주 추세: {_trend_direction(trend['jeonse_index_trend'])}")
     print("⚠️ 이 지수는 아파트 시장 지표이며 시/도 단위(빌라 자체 시세 아님) 참고용입니다.")
     print(f"   {trend['snapshot_date']} 기준 스냅샷이라 이후 갱신되지 않습니다 — 최신 수치는 KB부동산에서 직접 확인하세요.")
 

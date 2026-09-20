@@ -14,6 +14,7 @@
 
 import json
 import os
+import threading
 import urllib.parse
 from math import atan2, cos, radians, sin, sqrt
 from urllib.error import HTTPError, URLError
@@ -23,6 +24,11 @@ _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data
 CACHE_PATH = os.path.join(_DATA_DIR, "geocode_cache.json")
 KAKAO_URL = "https://dapi.kakao.com/v2/local/search/address.json"
 KAKAO_KEYWORD_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
+
+# find_comparables()가 지오코딩을 스레드풀로 병렬 호출하므로, 캐시 파일
+# 읽기/쓰기(네트워크 호출 자체는 제외)만 락으로 보호해서 동시 쓰기로 캐시
+# 항목이 유실되는 걸 막는다.
+_cache_lock = threading.Lock()
 
 
 def _load_cache() -> dict:
@@ -50,9 +56,10 @@ def _get_api_key() -> str:
 
 def geocode(address: str) -> tuple[float, float] | None:
     """지번 주소 -> (위도, 경도). 실패하거나 결과가 없으면 None (캐시됨)."""
-    cache = _load_cache()
-    if address in cache:
-        return tuple(cache[address]) if cache[address] else None
+    with _cache_lock:
+        cache = _load_cache()
+        if address in cache:
+            return tuple(cache[address]) if cache[address] else None
 
     api_key = _get_api_key()
     url = f"{KAKAO_URL}?query={urllib.parse.quote(address)}"
@@ -62,19 +69,25 @@ def geocode(address: str) -> tuple[float, float] | None:
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
     except (HTTPError, URLError, json.JSONDecodeError):
-        cache[address] = None
-        _save_cache(cache)
+        with _cache_lock:
+            cache = _load_cache()
+            cache[address] = None
+            _save_cache(cache)
         return None
 
     docs = data.get("documents", [])
     if not docs:
-        cache[address] = None
-        _save_cache(cache)
+        with _cache_lock:
+            cache = _load_cache()
+            cache[address] = None
+            _save_cache(cache)
         return None
 
     lon, lat = float(docs[0]["x"]), float(docs[0]["y"])
-    cache[address] = [lat, lon]
-    _save_cache(cache)
+    with _cache_lock:
+        cache = _load_cache()
+        cache[address] = [lat, lon]
+        _save_cache(cache)
     return lat, lon
 
 

@@ -46,7 +46,11 @@ import re
 import statistics
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+
+MAX_GEOCODE_CANDIDATES = 200  # 이보다 후보가 많으면 상위 N개까지만 지오코딩한다 (웹 타임아웃 방지)
+GEOCODE_WORKERS = 8  # 지오코딩 병렬 호출 수 — 너무 크면 카카오 초당 호출 제한에 걸릴 수 있다
 
 
 def load_transactions(xml_dir: str) -> list[dict]:
@@ -144,12 +148,17 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
 
     amount_field: 금액 필드명. 매매 행은 "dealAmount", 전세 행은 "deposit"
     (CLAUDE.md 16절 — 예상 전세가도 같은 로직으로 계산한다).
+
+    지오코딩(카카오 API 호출)이 후보 하나마다 순차 네트워크 왕복이라 후보가
+    많은 구(garbage 400건대도 흔함)는 그것만으로 몇 분씩 걸려 웹 서버
+    타임아웃을 넘긴다 — 그래서 비-네트워크 필터(면적/연식/구)를 먼저 다
+    통과한 후보만 모아서 병렬로 지오코딩한다(MAX_GEOCODE_CANDIDATES로 상한도
+    둔다).
     """
     from geocode import geocode, haversine_m
     from lawd_lookup import full_address, gu_name
 
-    subject_lat, subject_lon = subject_coord
-    out = []
+    candidates = []
     for r in rows:
         try:
             deal_year = int(r.get("dealYear", "0"))
@@ -181,35 +190,49 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
         addr = full_address(r)
         if not addr:
             continue
-        coord = geocode(addr)
-        if coord is None:
-            continue
-        distance = haversine_m(subject_lat, subject_lon, coord[0], coord[1])
-        if distance > radius_m:
-            continue
 
-        row_floor = None
-        try:
-            row_floor = int(r.get("floor", "").strip())
-        except (ValueError, AttributeError):
-            pass
+        candidates.append((r, addr, amount))
 
-        subject_is_basement = floor is not None and floor <= 0
-        row_is_basement = row_floor is not None and row_floor <= 0
-        if row_is_basement and not subject_is_basement:
-            continue  # 반지하/지하는 지상층 매물과 가격대가 크게 달라 표본에서 아예 제외
+    if len(candidates) > MAX_GEOCODE_CANDIDATES:
+        candidates = candidates[:MAX_GEOCODE_CANDIDATES]
 
-        similar_floor = floor is not None and row_floor is not None and abs(row_floor - floor) <= 1
-        floor_weight = 1.0 if (floor is None or similar_floor) else 0.6
+    subject_lat, subject_lon = subject_coord
 
-        distance_weight = max(0.2, 1 - distance / radius_m)
+    def _geocode_one(item):
+        r, addr, amount = item
+        return r, amount, geocode(addr)
 
-        r["_distance_m"] = distance
-        r["_amount_man"] = amount
-        r["_weight"] = (
-            weight_for_year(r.get("dealYear"), this_year) * distance_weight * floor_weight
-        )
-        out.append(r)
+    out = []
+    with ThreadPoolExecutor(max_workers=GEOCODE_WORKERS) as executor:
+        for r, amount, coord in executor.map(_geocode_one, candidates):
+            if coord is None:
+                continue
+            distance = haversine_m(subject_lat, subject_lon, coord[0], coord[1])
+            if distance > radius_m:
+                continue
+
+            row_floor = None
+            try:
+                row_floor = int(r.get("floor", "").strip())
+            except (ValueError, AttributeError):
+                pass
+
+            subject_is_basement = floor is not None and floor <= 0
+            row_is_basement = row_floor is not None and row_floor <= 0
+            if row_is_basement and not subject_is_basement:
+                continue  # 반지하/지하는 지상층 매물과 가격대가 크게 달라 표본에서 아예 제외
+
+            similar_floor = floor is not None and row_floor is not None and abs(row_floor - floor) <= 1
+            floor_weight = 1.0 if (floor is None or similar_floor) else 0.6
+
+            distance_weight = max(0.2, 1 - distance / radius_m)
+
+            r["_distance_m"] = distance
+            r["_amount_man"] = amount
+            r["_weight"] = (
+                weight_for_year(r.get("dealYear"), this_year) * distance_weight * floor_weight
+            )
+            out.append(r)
 
     out.sort(key=lambda r: r["_distance_m"])
     return out

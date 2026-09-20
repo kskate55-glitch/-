@@ -2,6 +2,12 @@
 {% block content %}
 <h1>🏠 빌라 매매가 계산기 — 결과</h1>
 <p class="muted">{{ result.address }} · 분석기간 {{ result.period }}</p>
+{% if result.naver_land_url %}
+<a class="back" href="{{ result.naver_land_url }}" target="_blank" rel="noopener"
+   style="display:inline-flex; align-items:center; gap:5px; margin:2px 0 14px">
+  🗺️ 이 지역 네이버부동산 매물 보기 (빌라·매매) ↗
+</a>
+{% endif %}
 
 <div class="hero">
   <div class="hero-label">경매용 매도가</div>

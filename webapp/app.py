@@ -153,6 +153,11 @@ def estimate():
         )
 
     subject_coord = (subject_detail["lat"], subject_detail["lon"])
+
+    from naver_link import naver_land_url
+
+    naver_url = naver_land_url(*subject_coord)
+
     lawd_cd = (subject_detail.get("b_code") or "")[:5]
     if len(lawd_cd) != 5:
         return render_template("index.html", error="주소에서 지역코드를 확인하지 못했습니다.",
@@ -352,6 +357,7 @@ def estimate():
         "station_premium": station_premium,
         "price_chart_html": price_chart_html,
         "marker_colors": marker_colors,
+        "naver_land_url": naver_url,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),

@@ -910,6 +910,12 @@ def main():
         return
     subject_coord = (subject_detail["lat"], subject_detail["lon"])
 
+    from naver_link import naver_land_url
+
+    naver_url = naver_land_url(*subject_coord)
+    print(f"[참고] 이 지역 네이버부동산 매물(빌라·매매) 바로 보기: {naver_url}")
+    print()
+
     if not args.no_location:
         print_location_check(subject_coord)
 
@@ -1040,6 +1046,7 @@ def main():
             upper=upper, ai_base=ai_base, listing=listing, auction_price=auction_price,
             n_total=n_total, n_close=n_close,
             comparables=comparables, season=season, trend=trend, filtered=filtered,
+            naver_url=naver_url,
         )
         reports_dir = "reports"
         os.makedirs(reports_dir, exist_ok=True)

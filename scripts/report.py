@@ -166,6 +166,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 <div class="wrap">
   <h1>{building} 매도가 분석 리포트</h1>
   <div class="subtitle">{dong} · 전용 {area}㎡ · 분석기간 {period} · 생성일 {generated}</div>
+  <div class="subtitle"><a href="{naver_url}" target="_blank" rel="noopener">🗺️ 이 지역 네이버부동산 매물 보기 (빌라·매매) ↗</a></div>
 
   <div class="card">
     <h2>매도가 산출 <span class="confidence">신뢰도 {confidence}/100</span></h2>
@@ -208,7 +209,8 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 
 def render_report(*, building, dong, area, period, generated, confidence,
                    conservative, realistic, upper, ai_base, listing, auction_price,
-                   n_total, n_close, comparables, season, trend, filtered=None) -> str:
+                   n_total, n_close, comparables, season, trend, filtered=None,
+                   naver_url="") -> str:
     price_chart = ""
     if filtered:
         price_chart = render_price_distribution_html(filtered, {
@@ -219,6 +221,7 @@ def render_report(*, building, dong, area, period, generated, confidence,
     return PAGE_TEMPLATE.format(
         title=f"{building} 매도가 분석",
         building=building, dong=dong, area=area, period=period, generated=generated,
+        naver_url=naver_url,
         confidence=confidence,
         conservative=fmt_eok(conservative), realistic=fmt_eok(realistic),
         upper=fmt_eok(upper), ai_base=fmt_eok(ai_base), listing=fmt_eok(listing),

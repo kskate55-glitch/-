@@ -380,6 +380,13 @@ def estimate():
             ],
         }
 
+    # 결과 페이지 안에서 바로 매물을 붙여넣고 재계산할 수 있게, 지금 제출된
+    # 값(주소·면적·층 등)을 숨은 필드로 그대로 echo해둔다 — 28절 UX 개선:
+    # 예전엔 네이버부동산 링크는 결과 페이지에 있고 붙여넣기 칸은 입력 폼
+    # 페이지에 있어서, 링크 열고 복사한 뒤 "뒤로가기"로 폼을 다시 채워야
+    # 했다. 이제 결과 페이지 자체에 작은 재제출 폼을 둬서 그 왕복을 없앤다.
+    resubmit_fields = {k: v for k, v in form.items() if k != "listings_text"}
+
     result = {
         "address": address,
         "period": f"{year_min}.01 ~ {this_year}.12",
@@ -392,6 +399,7 @@ def estimate():
         "naver_land_url": naver_url,
         "price_tiers": price_tiers_display,
         "liquidity": liquidity_display,
+        "resubmit_fields": resubmit_fields,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),
@@ -453,6 +461,7 @@ def estimate():
             similar_listings = {"rows": [], "n_parsed": 0, "n_skipped": skipped, "n_shown": 0}
 
     result["similar_listings"] = similar_listings
+    result["listings_text_echo"] = listings_text
     result["verdict"] = build_verdict(scen["confidence"], scen["n_total"], liquidity=liquidity,
                                        listing_summary=listing_price_summary)
 

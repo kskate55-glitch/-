@@ -94,34 +94,88 @@
   </table>
 </div>
 
-{% if result.similar_listings %}
 <div class="card">
   <h3>비교 매물 유사도 순위 (붙여넣은 네이버부동산 매물 기준)</h3>
-  {% if result.similar_listings.rows %}
   <p class="muted" style="margin-top:-6px; margin-bottom:12px">
-    붙여넣은 텍스트에서 {{ result.similar_listings.n_parsed }}건을 읽었고, 그중 대상 물건과 면적·층·연식이
-    가장 비슷한 상위 {{ result.similar_listings.n_shown }}건입니다 (유사도 높은 순).
-    {% if result.similar_listings.n_skipped %}{{ result.similar_listings.n_skipped }}건은 가격/면적을 인식하지
-    못해 제외했어요.{% endif %}
+    위 지도 링크에서 매물 목록을 드래그해서 복사(Ctrl+C)한 다음, 이 창으로 돌아와
+    아래 "클립보드에서 붙여넣기"를 누르거나 직접 Ctrl+V로 붙여넣고 [매물 분석하기]를 누르세요 —
+    페이지를 벗어나지 않고 바로 다시 계산됩니다.
   </p>
-  <table>
-    <tr><th>단지명</th><th>면적</th><th>층</th><th>호가</th></tr>
-    {% for it in result.similar_listings.rows %}
-    <tr>
-      <td>{{ it.name }}<br><span class="muted" style="font-size:11px">{{ it.note }}</span></td>
-      <td>{{ it.area }}㎡</td><td>{{ it.floor }}층</td><td>{{ it.price }}</td>
-    </tr>
+  <form method="post" action="/estimate">
+    {% for k, v in result.resubmit_fields.items() %}
+    <input type="hidden" name="{{ k }}" value="{{ v }}">
     {% endfor %}
-  </table>
-  <p class="muted" style="margin-top:10px">⚠️ 호가는 실제 체결가가 아니라 매도인 희망가라 실거래가보다 통상 높게
-    형성됩니다. 형식 인식이 완벽하지 않을 수 있어 참고용으로만 활용하세요.</p>
-  {% else %}
-  <p class="muted">붙여넣은 텍스트에서 매물을 인식하지 못했습니다{% if result.similar_listings.n_skipped %}
-    ({{ result.similar_listings.n_skipped }}건 모두 가격/면적 인식 실패){% endif %}. 매물 하나당 단지명·가격·면적이
-    포함되도록 다시 붙여넣어 보세요.</p>
+    <textarea name="listings_text" id="listings_paste" rows="6" placeholder="네이버부동산 매물 목록을 여기에 붙여넣으세요"
+              style="width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:var(--radius-md);
+                     font-size:14px; font-family:inherit; resize:vertical; background:#fafbfc">{{ result.listings_text_echo or '' }}</textarea>
+    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap">
+      <button type="button" id="clipboard-paste-btn"
+              style="flex:1; min-width:160px; padding:11px; border:1.5px solid var(--border); border-radius:var(--radius-md);
+                     background:#fff; color:var(--ink); font-weight:700; font-size:14px; cursor:pointer">
+        📋 클립보드에서 붙여넣기
+      </button>
+      <button type="submit" style="flex:1; min-width:160px; padding:11px">매물 분석하기</button>
+    </div>
+    <p id="clipboard-msg" class="muted" style="margin-top:6px; display:none"></p>
+  </form>
+
+  {% if result.similar_listings %}
+    {% if result.similar_listings.rows %}
+    <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border)">
+      <p class="muted" style="margin-top:0; margin-bottom:12px">
+        붙여넣은 텍스트에서 {{ result.similar_listings.n_parsed }}건을 읽었고, 그중 대상 물건과 면적·층·연식이
+        가장 비슷한 상위 {{ result.similar_listings.n_shown }}건입니다 (유사도 높은 순).
+        {% if result.similar_listings.n_skipped %}{{ result.similar_listings.n_skipped }}건은 가격/면적을 인식하지
+        못해 제외했어요.{% endif %}
+      </p>
+      <table>
+        <tr><th>단지명</th><th>면적</th><th>층</th><th>호가</th></tr>
+        {% for it in result.similar_listings.rows %}
+        <tr>
+          <td>{{ it.name }}<br><span class="muted" style="font-size:11px">{{ it.note }}</span></td>
+          <td>{{ it.area }}㎡</td><td>{{ it.floor }}층</td><td>{{ it.price }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      <p class="muted" style="margin-top:10px">⚠️ 호가는 실제 체결가가 아니라 매도인 희망가라 실거래가보다 통상 높게
+        형성됩니다. 형식 인식이 완벽하지 않을 수 있어 참고용으로만 활용하세요.</p>
+    </div>
+    {% else %}
+    <p class="muted" style="margin-top:14px">붙여넣은 텍스트에서 매물을 인식하지 못했습니다{% if result.similar_listings.n_skipped %}
+      ({{ result.similar_listings.n_skipped }}건 모두 가격/면적 인식 실패){% endif %}. 매물 하나당 단지명·가격·면적이
+      포함되도록 다시 붙여넣어 보세요.</p>
+    {% endif %}
   {% endif %}
 </div>
-{% endif %}
+
+<script>
+(function () {
+  var btn = document.getElementById("clipboard-paste-btn");
+  var msg = document.getElementById("clipboard-msg");
+  var textarea = document.getElementById("listings_paste");
+  if (!btn) return;
+  btn.addEventListener("click", function () {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      msg.textContent = "이 브라우저에서는 자동으로 못 가져와요 — 직접 Ctrl+V로 붙여넣어 주세요.";
+      msg.style.display = "block";
+      return;
+    }
+    navigator.clipboard.readText().then(function (text) {
+      if (!text || !text.trim()) {
+        msg.textContent = "클립보드가 비어 있어요 — 네이버부동산에서 매물 목록을 먼저 복사(Ctrl+C)해 주세요.";
+        msg.style.display = "block";
+        return;
+      }
+      textarea.value = text;
+      msg.textContent = "클립보드 내용을 붙여넣었어요 (" + text.length + "자). 확인 후 [매물 분석하기]를 눌러주세요.";
+      msg.style.display = "block";
+    }).catch(function () {
+      msg.textContent = "클립보드 접근 권한이 없어요 — 브라우저 권한을 허용하거나 직접 Ctrl+V로 붙여넣어 주세요.";
+      msg.style.display = "block";
+    });
+  });
+})();
+</script>
 
 {% if result.monthly_rent %}
 <div class="card">

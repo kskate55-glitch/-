@@ -135,6 +135,7 @@ def estimate():
     area_tolerance_pct = area_tolerance_pct_input / 100
     build_year_tolerance = _optional_int("build_year_tolerance") or 4
     this_year = datetime.now().year
+    this_month = datetime.now().month
     year_min = _optional_int("year_min") or (this_year - 1)
 
     from geocode import geocode_full
@@ -259,7 +260,8 @@ def estimate():
     filtered = find_comparables(rows, subject_coord, area, floor, build_year,
                                  radius, year_min, this_year, gu_filter=None,
                                  area_tolerance_pct=area_tolerance_pct,
-                                 build_year_tolerance=build_year_tolerance)
+                                 build_year_tolerance=build_year_tolerance,
+                                 this_month=this_month)
     if not filtered:
         return render_template(
             "index.html",
@@ -351,7 +353,8 @@ def estimate():
     build_year_note = f", 준공년도 ±{build_year_tolerance}년 이내" if build_year is not None else ""
     comparable_criteria = (
         f"반경 {radius:.0f}m 안, 전용면적 ±{area_tolerance_pct_input:.0f}%{build_year_note}인 실거래 중 "
-        f"거리·계약시기·층이 비슷할수록 가중치를 높게 줘서 고른 것입니다."
+        f"거리·면적·층·준공년도 종합 유사도(0~100점, 표의 '유사도' 열)가 높을수록, "
+        f"계약월이 최근일수록 가중치를 높게 줘서 고른 것입니다."
     )
 
     price_tiers_display = {
@@ -403,6 +406,7 @@ def estimate():
                 "date": f"{r.get('dealYear')}.{r.get('dealMonth')}",
                 "amount": _fmt_eok(r["_amount_man"]),
                 "distance": f"{r['_distance_m']:.0f}m",
+                "score": round(r["_similarity_score"]),
                 "note": describe_comparable_similarity(area, floor, build_year, r),
             }
             for r in filtered[:8]

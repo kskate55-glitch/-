@@ -218,14 +218,24 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
                       floor: int | None, build_year: str | None, radius_m: float,
                       year_min: int, this_year: int, gu_filter: str | None,
                       amount_field: str = "dealAmount",
-                      area_tolerance_pct: float = 0.15, build_year_tolerance: int = 4) -> list[dict]:
+                      area_tolerance_pct: float = 0.15, build_year_tolerance: int = 4,
+                      this_month: int | None = None) -> list[dict]:
     """CLAUDE.md 5절 규칙: 실제 반경(기본 400m) 안의 유사면적 매물만 비교 대상으로
-    삼고, 거리·층·연식 유사도로 가중치를 준다.
+    삼고, 거리·면적·층·준공년도 종합 유사도(`similarity_score()`)와 계약
+    시점 최근성(`weight_for_recency()`)으로 가중치를 준다.
 
     빌라/다세대는 한 건물에 보통 3~4세대뿐이라 "동일건물" 비교는 표본이 거의
     항상 부족하다. 그래서 실제 중개업소·투자자들처럼 "실제 반경 안 + 비슷한
     면적 + 비슷한 층 + 비슷한 연식"을 기준으로 삼는다. 건물명이 같은지는 더
     이상 필터링에 쓰지 않는다.
+
+    `_weight` = `weight_for_recency()`(계약월이 최근일수록 큼) ×
+    `similarity_score()`를 세제곱해서 0~1로 눌러 강조한 값(유사도가 높을수록
+    비교거래 반영 비중이 훨씬 커짐) — 예전엔 "연도가중치 × 거리가중치 ×
+    층가중치"를 각각 곱하는 방식이었는데, 사용자가 "실거래 추세는 최근
+    거래에 더 큰 가중치를, 비교물건 유사도는 0~100점으로 매겨서 고득점을
+    훨씬 크게 반영해달라"고 요청해서 이 방식으로 바꿨다. 각 비교거래의
+    유사도 점수는 `_similarity_score`(0~100)에 그대로 남겨둔다.
 
     amount_field: 금액 필드명. 매매 행은 "dealAmount", 전세 행은 "deposit"
     (CLAUDE.md 16절 — 예상 전세가도 같은 로직으로 계산한다).
@@ -242,6 +252,9 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
     """
     from geocode import geocode, haversine_m
     from lawd_lookup import full_address, gu_name
+
+    if this_month is None:
+        this_month = datetime.now().month  # 명시적으로 안 넘겨주면 실행 시점 기준으로 폴백
 
     candidates = []
     for r in rows:
@@ -307,33 +320,150 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             if row_is_basement and not subject_is_basement:
                 continue  # 반지하/지하는 지상층 매물과 가격대가 크게 달라 표본에서 아예 제외
 
-            similar_floor = floor is not None and row_floor is not None and abs(row_floor - floor) <= 1
-            floor_weight = 1.0 if (floor is None or similar_floor) else 0.6
+            row_area = float(r.get("excluUseAr"))  # 첫 번째 루프에서 이미 유효성 검증됨
+            row_build_year = r.get("buildYear", "").strip()
+            score = similarity_score(
+                distance_m=distance, radius_m=radius_m,
+                area=row_area, subject_area=area, area_tolerance_pct=area_tolerance_pct,
+                floor=row_floor, subject_floor=floor,
+                build_year=int(row_build_year) if row_build_year.isdigit() else None,
+                subject_build_year=int(build_year) if build_year is not None else None,
+                build_year_tolerance=build_year_tolerance,
+            )
+            recency_weight = weight_for_recency(r.get("dealYear"), r.get("dealMonth"), this_year, this_month)
 
-            distance_weight = max(0.2, 1 - distance / radius_m)
-
+            # rows의 원본 dict를 직접 고치지 않고 복사본에 써넣는다 — find_comparables()는
+            # 같은 rows를 다른 조건(예: 30절 유동성 점수가 floor/build_year 없이 더 넓은
+            # 반경으로 다시 호출)으로 여러 번 호출될 수 있는데, 원본을 직접 고치면 먼저 만든
+            # filtered 리스트의 _distance_m/_weight/_similarity_score가 나중 호출로 덮어써지는
+            # 버그가 생긴다(실제로 겪었다 — 30절 유동성 계산 후 "핵심 비교거래"에 찍히는
+            # 유사도 점수가 엉뚱하게 바뀌어 있었다).
+            r = dict(r)
             r["_distance_m"] = distance
             r["_amount_man"] = amount
             r["_lat"], r["_lon"] = coord
-            r["_weight"] = (
-                weight_for_year(r.get("dealYear"), this_year) * distance_weight * floor_weight
-            )
+            r["_similarity_score"] = score
+            r["_weight"] = recency_weight * SIMILARITY_EMPHASIS_CURVE(score)
             out.append(r)
 
     out.sort(key=lambda r: r["_distance_m"])
     return out
 
 
-def weight_for_year(deal_year: str, this_year: int) -> float:
+def weight_for_recency(deal_year: str, deal_month: str, this_year: int, this_month: int) -> float:
+    """CLAUDE.md 7절(개정) — 계약 시점 가중치를 연 단위가 아니라 **월 단위**로
+    더 세밀하게 나눈다.
+
+    이전엔 "올해 계약=1.5 / 작년 계약=1.0 / 그 이전=0.3"으로 연 단위로만
+    나눴다 — 이러면 "올해 1월 거래"와 "올해 12월 거래"가 똑같이 취급되고,
+    "작년 1월"과 "작년 12월"도 똑같이 취급된다는 문제가 있었다. 특히
+    가격이 떨어지는 동네에서는 "작년 초의 고가 거래"가 최근 거래와 동일한
+    가중치를 받아 매도가가 과대평가될 수 있다는 지적을 반영해, 계약월
+    기준 "몇 개월 전 거래인지"로 다시 나눴다:
+    - 최근 3개월 이내: 1.6
+    - 4~12개월 전: 1.0
+    - 13개월 이상 전: 0.4
+
+    ⚠️ 이 배율(1.6/1.0/0.4)은 "최근 3개월 50% + 4~12개월 30% + 전년도 20%"
+    라는 사용자 요청을 참고해서 상대적 비중을 정한 경험적 값이다 —
+    통계적으로 도출한 값이 아니다. 실제로 각 구간에 거래가 몇 건씩
+    있느냐에 따라 최종 반영 비중은 달라진다(예: 최근 3개월 거래가 원래
+    적은 동네라면 배율을 아무리 높여도 실제 영향력은 그만큼 못 나온다).
+    """
     try:
-        y = int(deal_year)
+        y, m = int(deal_year), int(deal_month)
     except (TypeError, ValueError):
         return 0.5
-    if y >= this_year:
-        return 1.5
-    if y == this_year - 1:
+    months_ago = (this_year - y) * 12 + (this_month - m)
+    if months_ago < 0:
+        months_ago = 0  # 미래 계약월(데이터 이상치) 방어 — 최신 취급
+    if months_ago <= 3:
+        return 1.6
+    if months_ago <= 12:
         return 1.0
-    return 0.3  # 기준연도 이전은 원래 필터링되지만, 방어적으로 낮은 가중치만 부여
+    return 0.4  # 13개월 이상 전 — 4절 연도 필터를 이미 통과한 거래만 여기 온다
+
+
+# 유사도 점수(0~100)를 최종 가중치로 바꿀 때 쓰는 강조 곡선. score/100의
+# 세제곱을 쓰면 90점은 0.729, 60점은 0.216이 되어(약 3.4배 차이) 고득점
+# 거래가 저득점 거래보다 "훨씬 크게" 반영된다 — 사용자가 요청한 "90점짜리를
+# 60점짜리보다 훨씬 크게 반영"을 만족하는 지수. 3은 임의로 고른 경험적
+# 값이고, 더 강하게/약하게 강조하고 싶으면 이 지수만 바꾸면 된다.
+SIMILARITY_EMPHASIS_POWER = 3
+
+
+def SIMILARITY_EMPHASIS_CURVE(score: float) -> float:
+    return (score / 100) ** SIMILARITY_EMPHASIS_POWER
+
+
+def similarity_score(distance_m: float, radius_m: float,
+                      area: float, subject_area: float, area_tolerance_pct: float,
+                      floor: int | None, subject_floor: int | None,
+                      build_year: int | None, subject_build_year: int | None,
+                      build_year_tolerance: int) -> float:
+    """CLAUDE.md 7절(개정) — 비교거래 하나가 대상 물건과 얼마나 비슷한지를
+    거리·면적·층·준공년도 네 가지로 0~100점 종합 점수를 매긴다.
+
+    ⚠️ 사용자가 원래 요청한 건 "거리+면적+준공연도+역거리+층+엘리베이터+
+    주차+방/욕실+방향" 9개 요소였다. 이 중 지금 실제로 계산에 넣을 수
+    있는 건 **거리·면적·층·준공년도 네 가지뿐**이다 — 나머지는 이 프로젝트가
+    쓰는 데이터 소스로는 비교거래(과거 실거래) 단위로 구할 방법이 없다:
+    - **역거리**: 26절 역세권 프리미엄처럼 비교거래마다 카카오 키워드 검색을
+      추가로 호출해야 해서 비용 문제로 기본 점수에는 안 넣었다(추후 26절처럼
+      옵션으로 켤 수 있게 확장 가능 — 지금은 안 함).
+    - **엘리베이터**: 20절 건축물대장 조회로 얻을 수는 있지만, 대상 물건
+      하나가 아니라 비교거래 수십 건마다 추가로 호출해야 해서 API
+      호출량이 급격히 늘어난다(현재는 대상 물건 하나에만 쓴다).
+    - **주차/방개수/욕실개수/방향**: 국토부 실거래가(과거 체결 기록)에는
+      애초에 이 필드 자체가 없다 — 18절에서 방 개수를 "현재 매물" 붙여넣기
+      텍스트로만 근사하는 것과 같은 이유다. 과거에 팔린 물건의 방향·주차
+      대수 같은 정보는 공개된 어떤 데이터로도 구할 수 없다.
+
+    그래서 지금은 구할 수 있는 네 요소로만 점수를 매기고, 가중치는
+    거리 35% · 면적 30% · 층 20% · 준공년도 15%로 뒀다(경험적 배분 —
+    검증된 공식이 아니다). 준공년도 정보가 없으면(대상 물건 준공년도를
+    모르거나 비교거래에 buildYear가 없으면) 그 15%를 나머지 세 요소에
+    비례 배분한다.
+
+    각 하위 점수(0~100):
+    - 거리 점수 = 100 × max(0, 1 − 거리/반경) — 반경 경계에서 0에 가까워짐.
+    - 면적 점수 = 100 × max(0, 1 − |면적차이%| / 허용범위%) — 5절 하드
+      필터를 이미 통과했으므로 허용범위 안에서만 움직인다.
+    - 층 점수 = 층 차이가 0~1이면 100, 그 뒤로는 차이 1당 20점씩 깎고
+      최저 20점(대상 물건 층을 모르면 5절처럼 필터링만 안 할 뿐 점수는
+      중립값 60으로 둔다).
+    - 준공년도 점수 = 100 × max(0, 1 − |연식차이| / 허용범위) — 마찬가지로
+      5절 하드 필터를 이미 통과했으므로 허용범위 안에서만 움직인다.
+    """
+    distance_score = 100 * max(0.0, 1 - distance_m / radius_m) if radius_m else 100.0
+
+    area_diff_pct = abs(area - subject_area) / subject_area * 100 if subject_area else 0
+    area_score = 100 * max(0.0, 1 - area_diff_pct / (area_tolerance_pct * 100)) if area_tolerance_pct else 100.0
+
+    if subject_floor is not None and floor is not None:
+        diff = abs(floor - subject_floor)
+        floor_score = 100.0 if diff <= 1 else max(20.0, 100 - (diff - 1) * 20)
+    else:
+        floor_score = 60.0  # 층 정보를 모르면 중립값(예전 7절의 0.6 배율과 같은 취지)
+
+    have_build_year = subject_build_year is not None and build_year is not None
+    if have_build_year and build_year_tolerance:
+        build_year_score = 100 * max(0.0, 1 - abs(build_year - subject_build_year) / build_year_tolerance)
+    else:
+        build_year_score = None
+
+    if have_build_year:
+        weights = {"distance": 0.35, "area": 0.30, "floor": 0.20, "build_year": 0.15}
+        scores = {"distance": distance_score, "area": area_score, "floor": floor_score,
+                  "build_year": build_year_score}
+    else:
+        # 준공년도 정보가 없으면 그 몫(15%)을 나머지 세 요소에 비례 배분한다
+        base = {"distance": 0.35, "area": 0.30, "floor": 0.20}
+        total = sum(base.values())
+        weights = {k: v / total for k, v in base.items()}
+        scores = {"distance": distance_score, "area": area_score, "floor": floor_score}
+
+    return sum(scores[k] * weights[k] for k in weights)
 
 
 def describe_comparable_similarity(subject_area: float, subject_floor: int | None,
@@ -1039,6 +1169,7 @@ def main():
     args = ap.parse_args()
 
     this_year = datetime.now().year
+    this_month = datetime.now().month
     year_min = args.year_min or (this_year - 1)
 
     rows = dedupe(load_transactions(args.dir))
@@ -1082,7 +1213,8 @@ def main():
     filtered = find_comparables(rows, subject_coord, args.area, args.floor, args.build_year,
                                  args.radius, year_min, this_year, gu_filter,
                                  area_tolerance_pct=area_tolerance_pct,
-                                 build_year_tolerance=args.build_year_tolerance)
+                                 build_year_tolerance=args.build_year_tolerance,
+                                 this_month=this_month)
 
     if not filtered:
         print(f"[안내] 반경 {args.radius:.0f}m, 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")
@@ -1140,12 +1272,14 @@ def main():
 
     build_year_note = f", 준공년도 ±{args.build_year_tolerance}년 이내" if args.build_year is not None else ""
     print(f"핵심 비교거래 (가까운 순 — 반경 {args.radius:.0f}m 안, 전용면적 ±{args.area_tolerance:.0f}%{build_year_note}인 "
-          f"실거래 중 거리·계약시기·층이 비슷할수록 가중치를 높게 준 것입니다):")
+          f"실거래 중 거리·면적·층·준공년도 종합 유사도(0~100점, 거리 35%·면적 30%·층 20%·준공년도 15%)가 "
+          f"높을수록, 계약월이 최근일수록 가중치를 높게 준 것입니다):")
     for r in filtered[:8]:
         floor_txt = f"{r.get('floor')}층" if r.get("floor") else "층정보없음"
         note = describe_comparable_similarity(args.area, args.floor, args.build_year, r)
         print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, {floor_txt}, "
-              f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m ({note})")
+              f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m "
+              f"(유사도 {r['_similarity_score']:.0f}점 · {note})")
 
     if args.station_premium:
         print_distance_premium(filtered)

@@ -354,6 +354,8 @@ AI 기준매도가: X.XX억
       --address "서울특별시 강북구 수유동 468-202" --dong 수유동 \
       --area 69.27 --floor 5 --build-year 2012 --radius 400 --year-min 2025
   ```
+- `scripts/tests/`: 33절 — 핵심 계산 함수 단위 테스트
+  (`python3 -m unittest discover -s scripts/tests -v`로 실행)
 
 ## 10. 법정동코드 참고 우선순위
 
@@ -1330,3 +1332,43 @@ vs 이전 3개월), 13절이 "지금까지 조회한 모든 지역"을 대상으
   [종합 판단] (규칙 기반 자동 요약, 참고용)
   <자동 생성된 문단>
   ```
+
+## 33. 테스트 (핵심 계산 함수 회귀 방지)
+
+기능이 32절까지 늘어나면서, 함수 하나를 고치면 다른 절에 영향이 가는지
+매번 사람이 머릿속으로 추적해야 하는 위험이 커졌다 — 실제로 29절/30절을
+만들다가 `find_comparables()`가 입력 dict를 직접 고쳐서 30절 유동성
+계산이 29절 유사도 점수를 덮어쓰는 버그가 있었고, CLI 출력을 우연히
+눈으로 보다가 발견했다. 이 절은 그걸 사람이 매번 확인하지 않고 자동으로
+잡아내는 안전망이다.
+
+- 위치: `scripts/tests/test_estimate_price.py`(7~8절 가중치·매도가 산출,
+  29~32절 확장), `scripts/tests/test_listing_parser.py`(28절/31절 매물
+  파싱·유사도 순위·가격 포지션).
+- **pytest 같은 추가 설치가 필요 없다** — 14절/22절의 "외부 라이브러리
+  최소화" 원칙을 그대로 따라 파이썬 표준 라이브러리 `unittest`만 쓴다.
+- 실행법:
+  ```
+  python3 -m unittest discover -s scripts/tests -v
+  ```
+  (Windows PowerShell도 동일 — `python` 대신 `python3`이 안 먹으면 `python`
+  으로 바꿔서 실행)
+- 커버하는 것: `to_amount_man`/`dedupe`(4절) 파싱, `weight_for_recency`
+  (7절 월 단위 최근성 구간 경계값), `similarity_score`(7절 4요소 종합
+  유사도 — 동일 스펙 100점, 준공년도 없을 때 비중 재배분, 반경 경계값),
+  `SIMILARITY_EMPHASIS_CURVE`(90점이 60점보다 3배 이상 크게 반영되는지),
+  `compute_scenarios`(가중 중앙값·신뢰도 범위), `compute_price_tiers`
+  (5단계가 항상 오름차순인지), `speed_label_for_percentile`(29절 확장
+  구간 경계·유동성 보정 방향), `describe_comparable_similarity`(5절 텍스트
+  요약), `find_comparables`의 필터링 규칙(면적 허용범위·반지하 예외·해제
+  거래 제외)과 **입력 dict를 직접 고치지 않는지(mutation-safety)** —
+  이게 실제로 겪은 버그의 회귀 테스트다. `listing_parser`는 "3억 5,000"/
+  "3.6억"/"32,000만원" 등 가격 혼합 표기 파싱(특히 "3.6억" 뒤 다음 줄
+  숫자를 잘못 삼키던 버그의 회귀 테스트 포함), 평→㎡ 환산, 전세/월세
+  제외, 유사도 순위, 가격 포지션 퍼센타일 계산.
+- ⚠️ **여기 없는 건 아직 안 커버된다는 뜻이다** — 26절 역세권 프리미엄
+  회귀 계산, 24절 시장 동향 지수 계산, 25절 인근 동 비교 랭킹, 지오코딩이
+  필요한 함수들의 네트워크 실패 처리 등은 아직 테스트가 없다. 새 계산
+  로직을 추가하거나 기존 로직을 고칠 때, 특히 여러 절이 같은 함수를
+  공유하는 부분(예: `find_comparables()`, `compute_scenarios()`)을 건드릴
+  때는 이 폴더에 테스트를 같이 추가하는 걸 원칙으로 한다.

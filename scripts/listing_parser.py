@@ -1,6 +1,8 @@
 """
-28절 — 네이버부동산 등에서 사용자가 복사해서 붙여넣은 매물 목록 텍스트를
-파싱해서, 대상 물건과 가장 비슷한 매물 상위 N개를 뽑는다.
+28절/31절 — 네이버부동산 등에서 사용자가 복사해서 붙여넣은 매물 목록 텍스트를
+파싱해서, 대상 물건과 가장 비슷한 매물 상위 N개를 뽑고(28절), 검토 중인
+가격이 그 매물들 사이에서 몇 % 위치(저렴한 쪽부터)인지도 계산한다(31절
+`price_rank_among_listings()`).
 
 11절/18절은 원래 "Claude가 대화 중에 직접 읽고 계산"하는 방식으로 설계돼
 있었다 — 사이트마다 형식이 달라서 정해진 스키마가 없기 때문이다(사용자
@@ -16,6 +18,7 @@ LLM 파싱을 쓸 수 없다 — 그래서 대화창에서 Claude가 직접 읽�
 """
 
 import re
+import statistics
 
 # "3억 5,000", "3.6억", "3억5000만원" 등을 모두 받는다. 억 뒤 나머지(만원
 # 단위)는 같은 줄 안에서만(개행 넘어가지 않게 [ \t]*) 최대 4자리까지만
@@ -160,3 +163,27 @@ def rank_similar_listings(listings: list[dict], subject_area: float,
 
     ranked = sorted(listings, key=score)
     return ranked[:top_n]
+
+
+def price_rank_among_listings(listings: list[dict], subject_area: float,
+                               price_man: float, area_tolerance_pct: float = 0.15) -> dict | None:
+    """CLAUDE.md 31절: 붙여넣은 매물 중 유사면적(5절과 같은 허용범위) 매물의
+    평당가(만원/㎡) 분포에서, 내가 검토 중인 가격이 몇 % 위치(저렴한 쪽부터)에
+    있는지 계산한다. 서로 다른 면적끼리 가격을 직접 비교하면 왜곡되므로 항상
+    평당가로 정규화한다. 유사면적 매물이 3건 미만이면 통계적으로 못 믿을
+    수준이라 None을 돌려준다(호출부는 그 경우 조용히 이 계산을 건너뛴다)."""
+    similar = [it for it in listings
+               if it.get("area") and abs(it["area"] - subject_area) / subject_area <= area_tolerance_pct]
+    if len(similar) < 3:
+        return None
+    subject_ppm = price_man / subject_area
+    listing_ppms = sorted(it["price_man"] / it["area"] for it in similar)
+    cheaper_or_equal = sum(1 for p in listing_ppms if p <= subject_ppm)
+    percentile = round(cheaper_or_equal / len(listing_ppms) * 100)
+    return {
+        "n": len(similar),
+        "percentile": percentile,  # 낮을수록 저렴한 쪽(=가격 경쟁력 높음)
+        "cheaper_count": sum(1 for p in listing_ppms if p < subject_ppm),
+        "median_ppm": round(statistics.median(listing_ppms)),
+        "subject_ppm": round(subject_ppm),
+    }

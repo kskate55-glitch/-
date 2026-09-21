@@ -37,6 +37,47 @@
   {% endif %}
 </div>
 
+{% if result.verdict %}
+<div class="card" style="border-left:4px solid var(--primary); background:var(--primary-tint)">
+  <h3 style="margin-bottom:6px">📝 종합 판단 (규칙 기반 자동 요약)</h3>
+  <p style="margin:0; line-height:1.7; font-size:14px">{{ result.verdict }}</p>
+</div>
+{% endif %}
+
+{% if result.price_tiers %}
+<div class="card">
+  <h3>가격 구간별 매도 전략</h3>
+  <p class="muted" style="margin-top:-6px; margin-bottom:12px">비교거래 분포 안에서의 가격 위치를 기준으로 한 참고 라벨입니다 — "30일/60일"은 실제 매도 소요일수를 측정한 값이 아니라, 낮은 가격일수록 빨리 팔릴 가능성이 높다는 참고용 목표입니다.</p>
+  <table>
+    <tr><th>구간</th><th>가격</th></tr>
+    {% for t in result.price_tiers.rows %}
+    <tr><td>{{ t.label }}</td><td>{{ t.price }}</td></tr>
+    {% endfor %}
+  </table>
+  {% if result.price_tiers.competitive_note %}
+  <p class="muted" style="margin-top:10px">{{ result.price_tiers.competitive_note }}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if result.liquidity %}
+<div class="card">
+  <h3>거래량·유동성 점수 (유사면적 기준, {{ result.liquidity.latest }} 기준)</h3>
+  <table>
+    <tr><th>반경</th><th>최근 3개월</th><th>최근 6개월</th><th>최근 12개월</th></tr>
+    {% for r in result.liquidity.rows %}
+    <tr>
+      <td>{{ r.radius }}m</td>
+      <td>{{ r.m3 }}건 (월평균 {{ r.m3_avg }})</td>
+      <td>{{ r.m6 }}건 (월평균 {{ r.m6_avg }})</td>
+      <td>{{ r.m12 }}건 (월평균 {{ r.m12_avg }})</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="muted" style="margin-top:10px">※ 5절의 층·준공년도 하드 필터는 적용하지 않은, 유사면적만 기준으로 한 거래 빈도입니다.</p>
+</div>
+{% endif %}
+
 <div class="card">
   <h3>핵심 비교거래 (가까운 순)</h3>
   {% if result.comparable_criteria %}

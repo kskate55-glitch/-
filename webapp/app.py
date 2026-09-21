@@ -274,6 +274,12 @@ def estimate():
     ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
     auction_price = round((conservative + realistic) / 2, -1)
 
+    from estimate_price import PRICE_TIER_LABELS, build_verdict, compute_liquidity, compute_price_tiers
+
+    price_tiers = compute_price_tiers(filtered)
+    liquidity = compute_liquidity(rows, subject_coord, area, this_year, gu_filter=None,
+                                   area_tolerance_pct=area_tolerance_pct)
+
     from price_chart import MARKER_COLORS, render_price_distribution_html
 
     # "권장 최초 호가"는 사용자 요청으로 웹 화면에서 뺐다(뭔지 헷갈린다는
@@ -348,6 +354,29 @@ def estimate():
         f"거리·계약시기·층이 비슷할수록 가중치를 높게 줘서 고른 것입니다."
     )
 
+    price_tiers_display = {
+        "rows": [
+            {"label": PRICE_TIER_LABELS[k], "price": _fmt_eok(price_tiers[k])}
+            for k in ("urgent", "d30", "d60", "normal", "test")
+        ],
+    }
+
+    liquidity_display = None
+    if liquidity is not None:
+        c = liquidity["counts"]
+        liquidity_display = {
+            "latest": f"{liquidity['latest_year']}.{liquidity['latest_month']:02d}",
+            "rows": [
+                {
+                    "radius": radius,
+                    "m3": c[(radius, 3)], "m3_avg": f"{c[(radius, 3)] / 3:.1f}",
+                    "m6": c[(radius, 6)], "m6_avg": f"{c[(radius, 6)] / 6:.1f}",
+                    "m12": c[(radius, 12)], "m12_avg": f"{c[(radius, 12)] / 12:.1f}",
+                }
+                for radius in liquidity["radii"]
+            ],
+        }
+
     result = {
         "address": address,
         "period": f"{year_min}.01 ~ {this_year}.12",
@@ -358,6 +387,8 @@ def estimate():
         "price_chart_html": price_chart_html,
         "marker_colors": marker_colors,
         "naver_land_url": naver_url,
+        "price_tiers": price_tiers_display,
+        "liquidity": liquidity_display,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),
@@ -380,8 +411,9 @@ def estimate():
 
     listings_text = form.get("listings_text", "").strip()
     similar_listings = None
+    listing_price_summary = None  # 31절 — 일반 매도가 기준 가격 경쟁력, 붙여넣은 매물이 있을 때만 계산됨
     if listings_text:
-        from listing_parser import parse_listings, rank_similar_listings
+        from listing_parser import parse_listings, price_rank_among_listings, rank_similar_listings
 
         parsed, skipped = parse_listings(listings_text)
         if parsed:
@@ -405,10 +437,20 @@ def estimate():
                 "n_skipped": skipped,
                 "n_shown": len(ranked),
             }
+            listing_price_summary = price_rank_among_listings(parsed, area, price_tiers["normal"],
+                                                                area_tolerance_pct)
+            if listing_price_summary is not None:
+                result["price_tiers"]["competitive_note"] = (
+                    f"일반 매도가({_fmt_eok(price_tiers['normal'])}) 기준 붙여넣은 유사면적 매물 "
+                    f"{listing_price_summary['n']}건 중 가격 경쟁력 상위 {listing_price_summary['percentile']}%"
+                    f" (이보다 싼 매물 {listing_price_summary['cheaper_count']}개)"
+                )
         else:
             similar_listings = {"rows": [], "n_parsed": 0, "n_skipped": skipped, "n_shown": 0}
 
     result["similar_listings"] = similar_listings
+    result["verdict"] = build_verdict(scen["confidence"], scen["n_total"], liquidity=liquidity,
+                                       listing_summary=listing_price_summary)
 
     monthly_deposit = _optional_float("monthly_deposit")
     if monthly_deposit is not None:

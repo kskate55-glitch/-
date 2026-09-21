@@ -376,17 +376,37 @@ def describe_comparable_similarity(subject_area: float, subject_floor: int | Non
     return " · ".join(parts)
 
 
+def _weighted_amounts_sorted(filtered: list[dict]) -> list[float]:
+    """find_comparables()가 채운 _amount_man/_weight로 가중 복제 리스트를
+    만들어 정렬해서 돌려준다(7절 — round(가중치)만큼, 최소 1개 복제).
+    compute_scenarios()의 p25/중앙값/p75와 compute_price_tiers()의 더 세분화된
+    백분위수가 이 리스트를 공유한다."""
+    amounts_weighted = []
+    for r in filtered:
+        amounts_weighted.extend([r["_amount_man"]] * max(1, round(r["_weight"])))
+    return sorted(amounts_weighted)
+
+
+def _weighted_percentile(amounts_sorted: list[float], pct: float) -> float:
+    """정렬된 가중 복제 리스트에서 pct(0~100) 위치의 값을 최근접-순위 방식으로
+    뽑는다. compute_scenarios()의 p25/p75(중앙값-of-절반 방식)보다 더 세밀한
+    구간을 나눠야 하는 29절 가격 구간 전략에 쓴다."""
+    n = len(amounts_sorted)
+    if n == 0:
+        return 0.0
+    idx = min(n - 1, max(0, round(pct / 100 * (n - 1))))
+    return amounts_sorted[idx]
+
+
 def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int) -> dict:
     """CLAUDE.md 7~8절 규칙: 가중 복제 후 p25/중앙값/p75와 시세 신뢰도를 계산한다.
     매매·전세(16절) 양쪽에서 공통으로 쓴다 — find_comparables()가 이미 채워둔
     _amount_man/_weight/_distance_m을 그대로 사용한다."""
-    amounts_weighted = []
-    for r in filtered:
-        amounts_weighted.extend([r["_amount_man"]] * max(1, round(r["_weight"])))
+    amounts_weighted = _weighted_amounts_sorted(filtered)
 
     median_man = statistics.median(amounts_weighted)
-    p25 = statistics.median(sorted(amounts_weighted)[: max(1, len(amounts_weighted) // 2)])
-    p75 = statistics.median(sorted(amounts_weighted)[len(amounts_weighted) // 2 :])
+    p25 = statistics.median(amounts_weighted[: max(1, len(amounts_weighted) // 2)])
+    p75 = statistics.median(amounts_weighted[len(amounts_weighted) // 2 :])
 
     n_total = len(filtered)
     n_this_year = sum(1 for r in filtered if r.get("dealYear") == str(this_year))
@@ -405,6 +425,134 @@ def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int) -> 
         "n_total": n_total, "n_close": n_close, "n_this_year": n_this_year,
         "confidence": confidence,
     }
+
+
+PRICE_TIER_LABELS = {
+    "urgent": "초급매가", "d30": "30일 목표가", "d60": "60일 목표가",
+    "normal": "일반 매도가", "test": "최고가 테스트",
+}
+
+
+def compute_price_tiers(filtered: list[dict]) -> dict:
+    """CLAUDE.md 29절: 8절과 같은 가중 복제 분포를 5단계 백분위수(10/30/50/70/92)로
+    더 세분화해서 "얼마나 빨리 팔릴 만한 가격대인지" 참고용 라벨을 붙인다.
+
+    ⚠️ 실제 "이 가격에 내놓으면 며칠 만에 팔린다"는 데이터(개별 물건의 등록일
+    →계약일 이력)는 이 프로젝트에 없다 — 국토부 실거래가에는 등록일이 없고
+    체결가만 있다. 그래서 "30일/60일"은 확정된 예측이 아니라, 비교거래 분포
+    안에서 가격이 낮을수록(=상대적으로 싸게 내놓을수록) 더 빨리 팔릴 가능성이
+    높다는 상식적 가정을 반영한 목표 라벨일 뿐이다 — 30절 유동성 점수와 함께
+    보면 "이 동네가 원래 거래가 활발한지"까지 고려해서 더 현실적으로 참고할 수
+    있다."""
+    amounts_sorted = _weighted_amounts_sorted(filtered)
+    tiers = {
+        "urgent": _weighted_percentile(amounts_sorted, 10),
+        "d30": _weighted_percentile(amounts_sorted, 30),
+        "d60": _weighted_percentile(amounts_sorted, 50),
+        "normal": _weighted_percentile(amounts_sorted, 70),
+        "test": _weighted_percentile(amounts_sorted, 92),
+    }
+    return {k: round(v, -1) for k, v in tiers.items()}
+
+
+def compute_liquidity(rows: list[dict], subject_coord: tuple[float, float], area: float,
+                       this_year: int, gu_filter: str | None = None,
+                       area_tolerance_pct: float = 0.15, radii: tuple[int, ...] = (300, 500)) -> dict | None:
+    """CLAUDE.md 30절: 반경 300m/500m 안에서 유사면적(5절과 같은 허용범위)
+    거래가 최근 3/6/12개월 동안 몇 건이었는지로 이 동네·이 면적대의 거래
+    유동성(공급 대비 얼마나 빨리 소화되는지)을 근사한다.
+
+    5절의 층·준공년도 하드 필터는 일부러 적용하지 않는다 — 여기서는 "이
+    동네·이 면적대가 원래 얼마나 자주 거래되는지"만 보는 것이라 층/연식까지
+    맞출 필요가 없어서(층/연식까지 맞추면 표본이 너무 줄어 유동성 자체를
+    가늠하기 어려워진다). find_comparables()를 floor=None, build_year=None으로
+    불러써서 재사용한다 — 이미 8절 계산에서 지오코딩된 주소는 캐시(`data/
+    geocode_cache.json`)에 남아 있어 두 번째 호출은 대부분 캐시로 빠르게
+    끝난다.
+
+    12/13/15절과 같은 원칙으로, 시스템 날짜가 아니라 **데이터 안에서 가장 최근
+    계약월**을 기준으로 "최근 N개월"을 센다(실거래 신고가 최대 30일 걸려서
+    이번 달 데이터가 아직 다 안 들어왔을 수 있기 때문)."""
+    year_min = this_year - 2  # 12개월 창을 넉넉히 덮기 위해 2년치를 넓게 가져온다
+    wide = find_comparables(rows, subject_coord, area, None, None, max(radii),
+                             year_min, this_year, gu_filter,
+                             area_tolerance_pct=area_tolerance_pct)
+    if not wide:
+        return None
+
+    def _ym(r):
+        try:
+            return int(r["dealYear"]) * 12 + int(r["dealMonth"])
+        except (KeyError, ValueError, TypeError):
+            return None
+
+    yms = [_ym(r) for r in wide if _ym(r) is not None]
+    if not yms:
+        return None
+    latest = max(yms)
+
+    counts = {}
+    for months in (3, 6, 12):
+        cutoff = latest - months + 1
+        for radius in radii:
+            counts[(radius, months)] = sum(
+                1 for r in wide
+                if r["_distance_m"] <= radius and (ym := _ym(r)) is not None and cutoff <= ym <= latest
+            )
+
+    return {
+        "latest_year": latest // 12, "latest_month": latest % 12 or 12,
+        "counts": counts, "radii": radii,
+    }
+
+
+def build_verdict(confidence: int, n_total: int, liquidity: dict | None = None,
+                   listing_summary: dict | None = None, trend_pct: float | None = None) -> str:
+    """CLAUDE.md 32절: 시세 신뢰도·유동성·경쟁매물 포지션·가격 추이를 한데
+    묶어 사람이 읽는 짧은 종합 판단 문단을 만든다. Claude(LLM)를 호출하지
+    않는 규칙 기반 템플릿이다 — 22절 원칙(웹 버전은 AI 호출 없는 순수
+    파이썬)을 지키기 위해서다. 그래서 뉘앙스가 사람이 직접 쓴 것만큼
+    섬세하지는 않다는 한계가 있고, 참고용 요약이라는 점을 항상 전제로 한다."""
+    parts = []
+
+    if confidence >= 70:
+        parts.append(f"비교거래 {n_total}건이 확보되어 시세 신뢰도({confidence}/100)가 높은 편입니다.")
+    elif confidence >= 40:
+        parts.append(f"비교거래 {n_total}건 기준 시세 신뢰도는 {confidence}/100로 보통 수준입니다 — 반경이나 허용범위를 넓혀 표본을 늘리면 더 정확해질 수 있어요.")
+    else:
+        parts.append(f"비교거래가 {n_total}건뿐이라 시세 신뢰도({confidence}/100)가 낮습니다 — 이 결과는 참고용으로만 활용하고, 반경을 넓혀 다시 확인해 보세요.")
+
+    if liquidity is not None:
+        c = liquidity["counts"]
+        monthly_avg = c.get((500, 3), 0) / 3
+        if monthly_avg >= 3:
+            tone = "거래가 활발한 편이라"
+        elif monthly_avg >= 1:
+            tone = "거래가 보통 수준으로 이뤄지고 있어"
+        else:
+            tone = "최근 거래가 뜸한 편이라"
+        parts.append(f"반경 500m 유사면적 거래가 최근 3개월 월평균 {monthly_avg:.1f}건으로, {tone} "
+                     + ("적정가 수준이면 비교적 빠르게 소화될 가능성이 있습니다." if monthly_avg >= 1
+                        else "가격을 낮춰야 매도 속도를 확보할 수 있습니다."))
+
+    if listing_summary is not None:
+        pct = listing_summary["percentile"]
+        n = listing_summary["n"]
+        if pct <= 30:
+            parts.append(f"현재 붙여넣은 유사면적 매물 {n}건 중 일반 매도가 기준 가격 경쟁력이 상위 {pct}%로 저렴한 편입니다.")
+        elif pct <= 60:
+            parts.append(f"현재 붙여넣은 유사면적 매물 {n}건 대비 일반 매도가는 중간 정도(상위 {pct}%) 가격대입니다.")
+        else:
+            parts.append(f"현재 붙여넣은 유사면적 매물 {n}건 대비 일반 매도가가 상위 {pct}%로 비싼 편이라, 빠른 매도가 필요하면 초급매가~30일 목표가 쪽을 검토해볼 만합니다.")
+
+    if trend_pct is not None:
+        if trend_pct > 3:
+            parts.append(f"최근 가격 추이도 {trend_pct:+.1f}%로 상승세라 매도에 유리한 시점일 수 있습니다.")
+        elif trend_pct < -3:
+            parts.append(f"다만 최근 가격 추이가 {trend_pct:+.1f}%로 하락세라, 너무 늦추면 더 낮은 가격을 감수해야 할 수 있습니다.")
+
+    parts.append("⚠️ 규칙 기반으로 자동 생성한 참고용 요약이며, 최종 판단은 직접 확인 후 내리세요.")
+    return " ".join(parts)
 
 
 def compute_monthly_rent(realistic_sale_man: float, deposit_man: float, annual_rate_pct: float) -> float:
@@ -965,6 +1113,31 @@ def main():
     print(f"AI 기준매도가: {fmt(ai_base)}")
     print(f"권장 최초 호가: {fmt(listing)}")
     print()
+
+    liquidity = compute_liquidity(rows, subject_coord, args.area, this_year, gu_filter,
+                                   area_tolerance_pct=area_tolerance_pct)
+
+    verdict = build_verdict(confidence, n_total, liquidity=liquidity)
+    print("[종합 판단] (규칙 기반 자동 요약, 참고용)")
+    print(verdict)
+    print()
+
+    tiers = compute_price_tiers(filtered)
+    print("[가격 구간별 매도 전략] (비교거래 분포 안에서의 위치 기반 참고 라벨 — 실제 매도 소요일수 데이터는 아님)")
+    for key in ("urgent", "d30", "d60", "normal", "test"):
+        print(f"- {PRICE_TIER_LABELS[key]}: {fmt(tiers[key])}")
+    print("⚠️ '30일/60일' 등은 확정된 판매 기간이 아니라, 가격이 비교거래 분포에서 낮을수록 빨리 팔릴 가능성이 높다는 참고용 목표 라벨입니다.")
+    print()
+
+    if liquidity is not None:
+        c = liquidity["counts"]
+        print(f"[거래량·유동성 점수] (유사면적 기준, 데이터상 최근 계약월 {liquidity['latest_year']}.{liquidity['latest_month']:02d} 기준)")
+        for radius in liquidity["radii"]:
+            m3, m6, m12 = c[(radius, 3)], c[(radius, 6)], c[(radius, 12)]
+            print(f"- 반경 {radius}m: 최근 3개월 {m3}건(월평균 {m3/3:.1f}) · 6개월 {m6}건(월평균 {m6/6:.1f}) · 12개월 {m12}건(월평균 {m12/12:.1f})")
+        print("※ 5절의 층/준공년도 하드 필터는 적용하지 않은, 유사면적만 기준으로 한 거래 빈도입니다.")
+        print()
+
     build_year_note = f", 준공년도 ±{args.build_year_tolerance}년 이내" if args.build_year is not None else ""
     print(f"핵심 비교거래 (가까운 순 — 반경 {args.radius:.0f}m 안, 전용면적 ±{args.area_tolerance:.0f}%{build_year_note}인 "
           f"실거래 중 거리·계약시기·층이 비슷할수록 가중치를 높게 준 것입니다):")

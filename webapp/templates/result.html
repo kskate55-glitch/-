@@ -119,6 +119,30 @@
     <p id="clipboard-msg" class="muted" style="margin-top:6px; display:none"></p>
   </form>
 
+  <details style="margin-top:12px">
+    <summary style="cursor:pointer; font-size:13px; font-weight:700; color:#4a4f54">
+      🔖 드래그 선택도 귀찮으면 — 클릭 한 번으로 복사하는 북마클릿 (선택, 처음 한 번만 등록)
+    </summary>
+    <div style="margin-top:10px; padding:12px; background:#fafbfc; border:1px solid var(--border); border-radius:var(--radius-md)">
+      <p class="muted" style="margin-top:0">
+        아래 버튼을 <b>브라우저 즐겨찾기(북마크) 바로 드래그</b>해서 등록해두세요(클릭하면 안 돼요, 꼭 드래그).
+        다음부터 네이버부동산 매물 목록 페이지에서 이 즐겨찾기를 누르면, 드래그로 선택할 필요 없이
+        페이지 텍스트가 자동으로 클립보드에 복사돼요. 그 다음 이 탭으로 돌아와 위 "클립보드에서 붙여넣기"를 누르면 끝.
+      </p>
+      <a href="javascript:(function(){try{var t=(document.body&amp;&amp;(document.body.innerText||document.body.textContent))||'';if(!t.trim()){alert('페이지에서 텍스트를 찾지 못했어요.');return;}if(navigator.clipboard&amp;&amp;navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){alert('페이지 텍스트를 복사했어요 ('+t.length+'자). 계산기 탭으로 돌아가 클립보드에서 붙여넣기를 눌러주세요.');}).catch(function(){alert('클립보드 복사에 실패했어요. 페이지에서 직접 드래그해서 복사해 주세요.');});}else{alert('이 브라우저에서는 자동 복사가 안 돼요. 직접 드래그해서 복사해 주세요.');}}catch(e){alert('오류가 발생했어요: '+e.message);}})();"
+         style="display:inline-block; padding:9px 16px; background:var(--primary); color:#fff; border-radius:999px;
+                text-decoration:none; font-weight:700; font-size:13px; cursor:grab">
+        📋 매물 텍스트 복사
+      </a>
+      <p class="muted" style="margin-top:10px; margin-bottom:0">
+        ⚠️ 네이버부동산 페이지의 정확한 구조를 확인할 방법이 없어서, 매물 목록만 딱 골라내지 못하고
+        <b>페이지에 보이는 전체 텍스트</b>를 복사해요 — 메뉴·광고 같은 잡다한 내용도 같이 딸려올 수 있어요.
+        다행히 분석기가 "가격+면적이 같이 있는 부분"만 골라 읽어서 어느 정도는 걸러지지만, 실제로 써보시고
+        인식이 잘 안 되면 알려주세요.
+      </p>
+    </div>
+  </details>
+
   {% if result.similar_listings %}
     {% if result.similar_listings.rows %}
     <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border)">

@@ -636,6 +636,47 @@ def compute_liquidity(rows: list[dict], subject_coord: tuple[float, float], area
     }
 
 
+def speed_label_for_percentile(percentile: float, liquidity_monthly_avg: float | None = None) -> str:
+    """CLAUDE.md 29절(확장) — 사용자가 "가격별 매도확률"을 직접 설명해준 방식을
+    반영한다: 가격 구간(29절 5단계) 각각이 **지금 나와 있는 경쟁 매물** 대비
+    몇 % 위치인지(31절 `price_rank_among_listings()`가 계산한 퍼센타일 —
+    낮을수록 저렴한 쪽)와 최근 거래 속도(30절 유동성, 반경 500m 최근 3개월
+    월평균 거래건수)를 합쳐서 "이 가격이면 얼마나 빨리 소진될 것 같은지"를
+    사람이 읽는 말로 바꾼다.
+
+    핵심 아이디어(사용자 설명 그대로): 단순히 "과거 실거래 대비 싼 가격"이
+    아니라 "지금 이 순간 경쟁하는 매물들 사이에서 내 가격이 어디쯤인지"가
+    실제 매도 속도를 더 잘 설명한다 — 예를 들어 최근 실거래가 1.5억인데
+    지금 1.45억 매물이 이미 여러 개 쌓여 있다면(=낮은 가격인데도 퍼센타일이
+    높게 나옴), 그 가격대 시장 자체가 약해졌을 가능성을 뜻한다. 29절의
+    가격 구간(초급매가~최고가 테스트)은 **과거** 실거래 분포 기준이고, 이
+    함수가 계산하는 퍼센타일은 **현재** 매물 분포 기준이라, 둘이 어긋나면
+    (예: "최고가 테스트" 가격인데 현재 매물 대비로는 오히려 싼 편) 그 자체가
+    "지금 시장이 과거보다 오른 상태"라는 신호가 된다.
+
+    ⚠️ 29절과 같은 한계 — 실측 매도소요일 데이터(등록일→계약일 이력)가
+    없어서 "몇 주/몇 개월" 같은 구체적 기간은 여전히 말할 수 없다. 그래서
+    "빠른 소진 가능성" 같은 상대적 표현만 쓰고, 확정 기간은 말하지 않는다.
+    """
+    adjusted = percentile
+    if liquidity_monthly_avg is not None:
+        if liquidity_monthly_avg >= 3:
+            adjusted -= 10  # 거래가 활발한 동네면 같은 가격도 더 빨리 소화될 여지
+        elif liquidity_monthly_avg < 1:
+            adjusted += 10  # 거래가 뜸한 동네면 같은 가격도 더 오래 걸릴 여지
+    adjusted = max(0, min(100, adjusted))
+
+    if adjusted <= 20:
+        return "빠른 소진 가능성 매우 높음"
+    if adjusted <= 40:
+        return "빠른 소진 가능성 높음"
+    if adjusted <= 65:
+        return "정상 매도 구간"
+    if adjusted <= 85:
+        return "다소 느릴 수 있음"
+    return "장기화 가능성 큼"
+
+
 def build_verdict(confidence: int, n_total: int, liquidity: dict | None = None,
                    listing_summary: dict | None = None, trend_pct: float | None = None) -> str:
     """CLAUDE.md 32절: 시세 신뢰도·유동성·경쟁매물 포지션·가격 추이를 한데

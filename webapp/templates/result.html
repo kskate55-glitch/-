@@ -47,13 +47,26 @@
   <h3>가격 구간별 매도 전략</h3>
   <p class="muted" style="margin-top:-6px; margin-bottom:12px">비교거래 분포 안에서의 가격 위치를 기준으로 한 참고 라벨입니다 — "30일/60일"은 실제 매도 소요일수를 측정한 값이 아니라, 낮은 가격일수록 빨리 팔릴 가능성이 높다는 참고용 목표입니다.</p>
   <table>
-    <tr><th>구간</th><th>가격</th></tr>
+    <tr><th>구간</th><th>가격</th>{% if result.similar_listings %}<th>현재 매물 대비</th><th>예상 소진 속도</th>{% endif %}</tr>
     {% for t in result.price_tiers.rows %}
-    <tr><td>{{ t.label }}</td><td>{{ t.price }}</td></tr>
+    <tr>
+      <td>{{ t.label }}</td><td>{{ t.price }}</td>
+      {% if result.similar_listings %}
+      <td>{{ "상위 " ~ t.percentile ~ "%" if t.percentile is not none else "—" }}</td>
+      <td>{{ t.speed or "—" }}</td>
+      {% endif %}
+    </tr>
     {% endfor %}
   </table>
   {% if result.price_tiers.competitive_note %}
   <p class="muted" style="margin-top:10px">{{ result.price_tiers.competitive_note }}</p>
+  {% endif %}
+  {% if result.similar_listings %}
+  <p class="muted" style="margin-top:6px">
+    "현재 매물 대비"는 붙여넣은 유사면적 매물 중 이 가격보다 싸거나 같은 비율입니다(낮을수록 저렴한 편).
+    "예상 소진 속도"는 그 위치와 30절 유동성(거래 빈도)을 합쳐 추정한 참고용 라벨이지, 실제 매도
+    소요일수를 측정한 값이 아닙니다.
+  </p>
   {% endif %}
 </div>
 {% endif %}

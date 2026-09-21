@@ -276,7 +276,10 @@ def estimate():
     ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
     auction_price = round((conservative + realistic) / 2, -1)
 
-    from estimate_price import PRICE_TIER_LABELS, build_verdict, compute_liquidity, compute_price_tiers
+    from estimate_price import (
+        PRICE_TIER_LABELS, build_verdict, compute_liquidity, compute_price_tiers,
+        speed_label_for_percentile,
+    )
 
     price_tiers = compute_price_tiers(filtered)
     liquidity = compute_liquidity(rows, subject_coord, area, this_year, gu_filter=None,
@@ -359,7 +362,8 @@ def estimate():
 
     price_tiers_display = {
         "rows": [
-            {"label": PRICE_TIER_LABELS[k], "price": _fmt_eok(price_tiers[k])}
+            {"key": k, "label": PRICE_TIER_LABELS[k], "price": _fmt_eok(price_tiers[k]),
+             "speed": None, "percentile": None}
             for k in ("urgent", "d30", "d60", "normal", "test")
         ],
     }
@@ -457,6 +461,18 @@ def estimate():
                     f"{listing_price_summary['n']}건 중 가격 경쟁력 상위 {listing_price_summary['percentile']}%"
                     f" (이보다 싼 매물 {listing_price_summary['cheaper_count']}개)"
                 )
+
+            # 29절 확장 — 5단계 가격 구간 각각이 "지금 나와 있는 경쟁 매물" 대비
+            # 몇 % 위치인지(31절)와 30절 유동성을 합쳐서 구간마다 예상 소진
+            # 속도를 붙인다. 과거 실거래 기준 구간(29절)과 현재 매물 기준
+            # 퍼센타일(31절)이 어긋나면(예: "최고가 테스트"인데 현재 매물
+            # 대비로는 오히려 싼 편) 그 자체가 시장이 움직였다는 신호가 된다.
+            liquidity_avg_500_3m = liquidity["counts"][(500, 3)] / 3 if liquidity is not None else None
+            for row in result["price_tiers"]["rows"]:
+                tier_rank = price_rank_among_listings(parsed, area, price_tiers[row["key"]], area_tolerance_pct)
+                if tier_rank is not None:
+                    row["percentile"] = tier_rank["percentile"]
+                    row["speed"] = speed_label_for_percentile(tier_rank["percentile"], liquidity_avg_500_3m)
         else:
             similar_listings = {"rows": [], "n_parsed": 0, "n_skipped": skipped, "n_shown": 0}
 

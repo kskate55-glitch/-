@@ -318,31 +318,42 @@ def estimate():
     ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
     auction_price = round((conservative + realistic) / 2, -1)
 
-    # CLAUDE.md 35절 — 강의에서 나온 수리상태별 매도가능가격 참고 배율.
-    # "기본"이나 미선택이면 배율이 1.0이라 카드 자체를 표시하지 않는다.
+    # CLAUDE.md 38절 — 상태별 매도가 3단계. 35절이 "고른 상태 하나에 배율을
+    # 한 번 곱한 값"만 보여줬다면, 여기서는 지금 상태에서 손볼수록 매도가가
+    # 얼마씩 올라가는지(그리고 공사비를 넣으면 남는 장사인지까지) 사다리로
+    # 보여준다. 기준값은 경매용 매도가 — 이 계산기가 전제하는 "낙찰받아
+    # 되파는" 상황에 가장 가까운 값이라서다.
     condition = form.get("condition", "").strip()
     condition_display = None
-    if condition in CONDITION_MULTIPLIER and condition != "기본":
-        from estimate_price import compute_condition_adjustment
+    if condition in CONDITION_MULTIPLIER:
+        from estimate_price import CONDITION_MULTIPLIER as _CM
+        from estimate_price import compute_condition_ladder
 
-        condition_scenarios = {
-            "conservative": conservative, "realistic": realistic, "auction_price": auction_price,
-            "upper": upper, "ai_base": ai_base,
-        }
-        condition_adjusted = compute_condition_adjustment(condition_scenarios, condition)
-        multiplier = CONDITION_MULTIPLIER[condition]
-        condition_display = {
-            "label": CONDITION_LABELS[condition],
-            "sign": "+" if multiplier >= 1 else "",
-            "pct": f"{(multiplier - 1) * 100:.0f}",
-            "rows": [
-                {"label": label, "before": _fmt_eok(condition_scenarios[key]), "after": _fmt_eok(condition_adjusted[key])}
-                for key, label in [
-                    ("conservative", "보수적 급매가"), ("realistic", "현실적 체결가"),
-                    ("auction_price", "경매용 매도가"), ("upper", "상단 매도가"), ("ai_base", "AI 기준매도가"),
-                ]
-            ],
-        }
+        repair_costs = {}
+        for step, field in (("기본", "repair_cost_basic"), ("올수리", "repair_cost_full")):
+            cost = _optional_float(field)
+            if cost is not None:
+                repair_costs[step] = cost
+        ladder = compute_condition_ladder(auction_price, condition, repair_costs)
+        if ladder:
+            condition_display = {
+                "current_label": CONDITION_LABELS[condition],
+                "base_label": "경매용 매도가",
+                "rows": [
+                    {
+                        "label": row["label"],
+                        "is_current": row["is_current"],
+                        "price": _fmt_eok(row["price_man"]),
+                        "gain": None if row["is_current"] else _fmt_eok(row["gain_man"]),
+                        "cost": f"{row['cost_man']:,.0f}만원" if row["cost_man"] is not None else None,
+                        "net": _fmt_eok(row["net_man"]) if row["net_man"] is not None else None,
+                        "net_positive": None if row["net_man"] is None else row["net_man"] > 0,
+                        "multiplier_pct": f"{(_CM[row['condition']] - 1) * 100:+.0f}",
+                    }
+                    for row in ladder
+                ],
+                "has_cost": any(row["cost_man"] is not None for row in ladder),
+            }
 
     from estimate_price import (
         PRICE_TIER_LABELS, build_verdict, compute_liquidity, compute_price_tiers,
@@ -538,8 +549,10 @@ def estimate():
     listings_text = form.get("listings_text", "").strip()
     similar_listings = None
     listing_price_summary = None  # 31절 — 일반 매도가 기준 가격 경쟁력, 붙여넣은 매물이 있을 때만 계산됨
+    pressure = None  # 39절 — 경쟁매물 ÷ 최근 실거래, 마찬가지로 매물을 붙여넣은 경우만
     if listings_text:
-        from listing_parser import parse_listings, price_rank_among_listings, rank_similar_listings
+        from listing_parser import (parse_listings, price_rank_among_listings,
+                                     rank_similar_listings, sale_pressure)
 
         parsed, skipped = parse_listings(listings_text)
         if parsed:
@@ -578,6 +591,10 @@ def estimate():
             # 퍼센타일(31절)이 어긋나면(예: "최고가 테스트"인데 현재 매물
             # 대비로는 오히려 싼 편) 그 자체가 시장이 움직였다는 신호가 된다.
             liquidity_avg_500_3m = liquidity["counts"][(500, 3)] / 3 if liquidity is not None else None
+
+            # 39절 — 지금 쌓인 경쟁 매물이 이 동네 거래 속도로 몇 개월치인지.
+            pressure = sale_pressure(parsed, area, liquidity_avg_500_3m, area_tolerance_pct)
+
             for row in result["price_tiers"]["rows"]:
                 tier_rank = price_rank_among_listings(parsed, area, price_tiers[row["key"]], area_tolerance_pct)
                 if tier_rank is not None:
@@ -587,10 +604,12 @@ def estimate():
             similar_listings = {"rows": [], "n_parsed": 0, "n_skipped": skipped, "n_shown": 0}
 
     result["similar_listings"] = similar_listings
+    result["sale_pressure"] = pressure
     result["listings_text_echo"] = listings_text
     result["verdict"] = build_verdict(scen["confidence"], scen["n_total"], liquidity=liquidity,
                                        listing_summary=listing_price_summary,
-                                       model_divergence_pct=scen.get("model_divergence_pct"))
+                                       model_divergence_pct=scen.get("model_divergence_pct"),
+                                       sale_pressure=pressure)
 
     monthly_deposit = _optional_float("monthly_deposit")
     if monthly_deposit is not None:

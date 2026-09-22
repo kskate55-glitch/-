@@ -262,6 +262,23 @@ CONDITION_LABELS = {
     "노후": "노후 (수리 필요)",
 }
 
+# CLAUDE.md 38절: 상태별 매도가 3단계(사다리). 위 배율을 "하나 골라서 한 번
+# 곱하는" 데서 그치지 않고, 노후 → 기본 → 올수리로 올라갈 때 매도가가 얼마씩
+# 올라가는지를 한 표에 나란히 보여주기 위한 순서/라벨이다. 강의가 짚은
+# "험한 집/깔끔한 기본집/올수리집은 각각 다른 매도가능가격을 가진다"를
+# 그대로 옮긴 것 — 배율 자체는 위와 동일한 (검증 안 된) 경험적 참고치다.
+CONDITION_ORDER = ["노후", "기본", "올수리"]
+CONDITION_STEP_LABELS = {
+    "기본": "기본 정리 후 (청소·도배·장판 등)",
+    "올수리": "올수리 후 (전체 리모델링)",
+}
+# 지금 상태인 줄은 "~ 후"라고 쓰면 어색해서(이미 그 상태다) 별도 라벨을 쓴다.
+CONDITION_CURRENT_LABELS = {
+    "노후": "현재 상태 (노후 — 수리 필요)",
+    "기본": "현재 상태 (기본 — 깨끗함)",
+    "올수리": "현재 상태 (올수리 완료)",
+}
+
 # CLAUDE.md 36절: 임장 체크리스트 — 같은 강의에서 "이 요소들이 나쁘면 가격을
 # 낮춰도 잘 안 팔린다"고 짚은 8가지. 국토부 실거래가·카카오 API 어디에도
 # 이 정보가 없어 계산에는 전혀 반영하지 않는다 — 임장(현장답사) 때 사용자가
@@ -944,7 +961,8 @@ MODEL_DIVERGENCE_MENTION_THRESHOLD_PCT = 8  # 이 정도부터는 우연한 오�
 
 def build_verdict(confidence: int, n_total: int, liquidity: dict | None = None,
                    listing_summary: dict | None = None, trend_pct: float | None = None,
-                   model_divergence_pct: float | None = None) -> str:
+                   model_divergence_pct: float | None = None,
+                   sale_pressure: dict | None = None) -> str:
     """CLAUDE.md 32절: 시세 신뢰도·유동성·경쟁매물 포지션·가격 추이를 한데
     묶어 사람이 읽는 짧은 종합 판단 문단을 만든다. Claude(LLM)를 호출하지
     않는 규칙 기반 템플릿이다 — 22절 원칙(웹 버전은 AI 호출 없는 순수
@@ -981,6 +999,11 @@ def build_verdict(confidence: int, n_total: int, liquidity: dict | None = None,
             parts.append(f"현재 붙여넣은 유사면적 매물 {n}건 대비 일반 매도가는 중간 정도(상위 {pct}%) 가격대입니다.")
         else:
             parts.append(f"현재 붙여넣은 유사면적 매물 {n}건 대비 일반 매도가가 상위 {pct}%로 비싼 편이라, 빠른 매도가 필요하면 초급매가~30일 목표가 쪽을 검토해볼 만합니다.")
+
+    if sale_pressure is not None and sale_pressure.get("months_of_supply") is not None:
+        parts.append(f"지금 나와 있는 유사면적 경쟁 매물 {sale_pressure['n_listings']}건은 이 동네 거래 속도"
+                     f"(월평균 {sale_pressure['monthly_deal_avg']}건)로 따지면 약 {sale_pressure['months_of_supply']}개월치 물량이라"
+                     f" 매도 압력은 '{sale_pressure['level']}' 수준입니다.")
 
     if trend_pct is not None:
         if trend_pct > 3:
@@ -1201,6 +1224,68 @@ def print_profit(bid_price_man: float, scenarios: dict, acquisition_rate: float,
     print("⚠️ 취득세율은 다주택 여부·규제지역 여부에 따라 1.1%~최대 13%까지 크게 달라집니다.")
     print("   본인 상황에 맞는 정확한 세율로 --acquisition-rate를 조정하세요.")
     print("⚠️ 명도비·수리비·대출이자 등은 --extra-cost로 직접 반영해야 합니다 (기본값 0).")
+
+
+def compute_condition_ladder(base_man: float, current_condition: str,
+                              repair_costs: dict | None = None) -> list[dict]:
+    """CLAUDE.md 38절: 지금 상태에서 손을 볼수록 매도가가 얼마나 올라가는지,
+    그리고 그 공사비를 들일 값어치가 있는지를 한 표로 만든다.
+
+    - `base_man`: 8절/8-2절 산출값 하나(만원). 이 값은 반경 안 실거래를
+      섞어서 낸 값이라 **"기본"(깔끔한 보통 상태)** 을 가정한 것으로 본다 —
+      그래서 각 단계 가격 = `base_man × CONDITION_MULTIPLIER[단계]`다.
+    - `current_condition`: 지금 이 물건의 상태. 이 단계부터 위(더 좋은 상태)
+      로만 사다리를 만든다 — 올수리된 집을 "노후로 되돌리면 얼마"는 의미가
+      없어서다.
+    - `repair_costs`: {단계: 예상 공사비(만원)} — 사용자가 넣은 값만 쓴다.
+      넣으면 "추가 회수액 − 공사비 = 순증"까지 계산한다.
+
+    ⚠️ 35절과 같은 한계가 그대로 적용된다 — 국토부 실거래가에는 수리상태
+    필드가 없어 이 배율은 데이터로 검증할 수 없는 경험적 참고치다."""
+    if current_condition not in CONDITION_MULTIPLIER:
+        return []
+    repair_costs = repair_costs or {}
+    start = CONDITION_ORDER.index(current_condition)
+    current_price = round(base_man * CONDITION_MULTIPLIER[current_condition], -1)
+
+    rows = []
+    for cond in CONDITION_ORDER[start:]:
+        price = round(base_man * CONDITION_MULTIPLIER[cond], -1)
+        gain = round(price - current_price, -1)
+        cost = repair_costs.get(cond)
+        row = {
+            "condition": cond,
+            "label": (CONDITION_CURRENT_LABELS[cond] if cond == current_condition
+                       else CONDITION_STEP_LABELS[cond]),
+            "is_current": cond == current_condition,
+            "price_man": price,
+            "gain_man": gain,
+            "cost_man": cost,
+            "net_man": None,
+        }
+        if cost is not None and cond != current_condition:
+            row["net_man"] = round(gain - cost, -1)
+        rows.append(row)
+    return rows
+
+
+def print_condition_ladder(rows: list[dict], base_label: str, fmt):
+    """38절 사다리를 CLI 텍스트로 출력한다."""
+    if not rows:
+        return
+    print(f"[상태별 매도가 3단계] ({base_label} 기준 — 수리 상태에 따라 매도가능가격이 달라진다는 경매 강의 인사이트 반영)")
+    print("⚠️ 국토부 실거래가에는 수리상태 정보가 없어 검증된 수치가 아닙니다 — 강의/경험에서 나온 참고 배율(노후 0.90 · 기본 1.00 · 올수리 1.08)일 뿐입니다.")
+    for row in rows:
+        line = f"- {row['label']}: {fmt(row['price_man'])}"
+        if not row["is_current"]:
+            line += f" (현재 대비 +{fmt(row['gain_man'])})"
+            if row["cost_man"] is not None:
+                verdict = "남는 장사" if row["net_man"] > 0 else "손해"
+                line += f" · 예상 공사비 {row['cost_man']:,.0f}만원 → 순증 {fmt(row['net_man'])} ({verdict})"
+        print(line)
+    if any(r["cost_man"] is None and not r["is_current"] for r in rows):
+        print("  (예상 공사비를 넣으면 '고쳐서 남는지'까지 계산합니다)")
+    print()
 
 
 def compute_condition_adjustment(scenarios: dict, condition: str) -> dict:
@@ -1689,7 +1774,11 @@ def main():
     ap.add_argument("--station-premium", action="store_true", help="26절 역세권 프리미엄 참고(거리-가격 회귀)를 계산한다 — 카카오 키워드 검색을 비교거래마다 추가로 호출해서 기본은 꺼져 있다")
     ap.add_argument("--no-time-correction", action="store_true", help="7-2절 시계열 가격보정(오래된 거래를 이 동네 가격 추이로 지금 시세 수준으로 환산)을 건너뛴다")
     ap.add_argument("--condition", choices=list(CONDITION_MULTIPLIER), default=None,
-                     help="35절 수리상태별 매도가능가격 참고 배율 — 생략하면 표시하지 않는다 (검증된 수치가 아닌 경험적 참고치)")
+                     help="35절/38절 현재 수리상태 — 주면 상태별 매도가 3단계 사다리를 보여준다 (검증된 수치가 아닌 경험적 참고치)")
+    ap.add_argument("--repair-cost-basic", type=float, default=None,
+                     help="38절 기본 정리(청소·도배·장판 등) 예상 공사비(만원) — 주면 '고쳐서 남는지'까지 계산한다")
+    ap.add_argument("--repair-cost-full", type=float, default=None,
+                     help="38절 올수리(전체 리모델링) 예상 공사비(만원)")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -1787,11 +1876,17 @@ def main():
     print()
 
     if args.condition:
-        condition_scenarios = {
-            "conservative": conservative, "realistic": realistic, "auction_price": auction_price,
-            "upper": upper, "ai_base": ai_base, "listing": listing,
-        }
-        print_condition_adjustment(condition_scenarios, args.condition, fmt)
+        # 38절 — 지금 상태에서 손볼수록 매도가가 얼마나 올라가는지 사다리로
+        # 보여준다. 기준값은 경매용 매도가(8-2절) — 이 계산기가 전제하는
+        # "낙찰받아 되파는" 상황에 가장 가까운 값이라서다.
+        repair_costs = {}
+        if args.repair_cost_basic is not None:
+            repair_costs["기본"] = args.repair_cost_basic
+        if args.repair_cost_full is not None:
+            repair_costs["올수리"] = args.repair_cost_full
+        print_condition_ladder(
+            compute_condition_ladder(auction_price, args.condition, repair_costs),
+            "경매용 매도가", fmt)
 
     liquidity = compute_liquidity(rows, subject_coord, args.area, this_year, gu_filter,
                                    area_tolerance_pct=area_tolerance_pct)

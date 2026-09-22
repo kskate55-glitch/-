@@ -187,3 +187,65 @@ def price_rank_among_listings(listings: list[dict], subject_area: float,
         "median_ppm": round(statistics.median(listing_ppms)),
         "subject_ppm": round(subject_ppm),
     }
+
+
+# CLAUDE.md 39절: 매도압력(경쟁매물 ÷ 최근 실거래) 구간 경계. 부동산에서
+# 흔히 쓰는 "months of supply"(재고 소진 개월수)를 이 계산기가 가진 두
+# 데이터로 근사한 것이다 — 분자는 사용자가 붙여넣은 유사면적 경쟁매물 수,
+# 분모는 30절 유동성이 센 반경 500m 최근 3개월 월평균 실거래 건수.
+# ⚠️ 경계값 자체는 검증된 기준이 아니라 경험적으로 끊은 참고치다.
+SALE_PRESSURE_BANDS = [
+    (2.0, "낮음", "지금 나와 있는 경쟁 매물이 이 동네 거래 속도에 비해 적은 편이라, 값만 맞으면 비교적 빨리 소화될 가능성이 있어요."),
+    (4.0, "보통", "경쟁 매물 수가 이 동네 거래 속도와 얼추 균형을 이루고 있어요 — 가격이 매도 속도를 가르는 구간입니다."),
+    (8.0, "다소 높음", "거래 속도에 비해 경쟁 매물이 쌓여 있는 편이에요 — 빨리 팔아야 한다면 29절 30일 목표가 쪽을 검토하세요."),
+]
+SALE_PRESSURE_HIGH = ("높음", "거래는 뜸한데 경쟁 매물이 많이 쌓여 있어요 — 호가를 높게 걸면 오래 묶일 가능성이 큽니다.")
+
+
+def sale_pressure(listings: list[dict], subject_area: float,
+                   monthly_deal_avg: float | None,
+                   area_tolerance_pct: float = 0.15) -> dict | None:
+    """CLAUDE.md 39절: "지금 나와 있는 경쟁 매물 수 ÷ 이 동네 월평균 실거래
+    건수" = 지금 쌓인 매물이 다 소화되는 데 걸리는 개월수(재고 소진 개월수)를
+    근사한다. "매물이 없으면 빨리 팔리나?"를 느낌이 아니라 숫자로 바꾼 것이다.
+
+    - `listings`: 28절에서 붙여넣어 파싱된 매물 전체. 여기서 유사면적
+      (31절과 같은 허용범위)만 남겨서 센다 — 평형이 다른 매물은 내 경쟁
+      상대가 아니다.
+    - `monthly_deal_avg`: 30절 유동성의 반경 500m 최근 3개월 월평균 거래건수.
+      None이거나 0이면 나눌 수가 없어 개월수는 못 내고, 그 사실만 돌려준다.
+
+    ⚠️ 분자와 분모의 범위가 정확히 같지 않다 — 붙여넣은 매물은 사용자가
+    네이버부동산에서 직접 잡은 검색 범위의 결과이고(반경 500m와 다를 수
+    있고, 전수도 아니다), 분모는 반경 500m 실거래다. 그래서 절대값보다
+    "많이 쌓였나/적나"의 방향만 참고해야 한다 — 출력에 항상 명시한다."""
+    similar = [it for it in listings
+               if it.get("area") and abs(it["area"] - subject_area) / subject_area <= area_tolerance_pct]
+    n_listings = len(similar)
+    if n_listings == 0:
+        return None
+
+    if not monthly_deal_avg:
+        return {
+            "n_listings": n_listings,
+            "monthly_deal_avg": monthly_deal_avg or 0.0,
+            "months_of_supply": None,
+            "level": "판단 보류",
+            "desc": ("반경 500m 안에서 최근 3개월 유사면적 실거래가 잡히지 않아 "
+                      "'몇 개월치 물량인지'는 계산할 수 없어요 — 거래 자체가 뜸한 동네라는 "
+                      "신호일 수 있으니 매도 기간을 넉넉히 잡는 편이 안전합니다."),
+        }
+
+    months = n_listings / monthly_deal_avg
+    for threshold, level, desc in SALE_PRESSURE_BANDS:
+        if months < threshold:
+            break
+    else:
+        level, desc = SALE_PRESSURE_HIGH
+    return {
+        "n_listings": n_listings,
+        "monthly_deal_avg": round(monthly_deal_avg, 1),
+        "months_of_supply": round(months, 1),
+        "level": level,
+        "desc": desc,
+    }

@@ -176,5 +176,42 @@ class PriceRankAmongListingsTests(unittest.TestCase):
         self.assertEqual(r["n"], 4)  # 딴평형은 허용범위 밖이라 제외됨
 
 
+class TestSalePressure(unittest.TestCase):
+    """CLAUDE.md 39절 — 경쟁매물 ÷ 최근 실거래 = 몇 개월치 물량인지."""
+
+    def _listings(self, n, area=69.0):
+        return [{"name": f"매물{i}", "price_man": 30000, "area": area} for i in range(n)]
+
+    def test_months_of_supply_is_listings_over_monthly_deals(self):
+        r = lp.sale_pressure(self._listings(14), 69.0, monthly_deal_avg=2 / 3)
+        self.assertEqual(r["n_listings"], 14)
+        self.assertEqual(r["months_of_supply"], 21.0)
+        self.assertEqual(r["level"], "높음")
+
+    def test_few_listings_in_an_active_market_is_low_pressure(self):
+        r = lp.sale_pressure(self._listings(2), 69.0, monthly_deal_avg=8 / 3)
+        self.assertLess(r["months_of_supply"], 2.0)
+        self.assertEqual(r["level"], "낮음")
+
+    def test_band_boundaries(self):
+        # 월 1건 기준으로 매물 수가 곧 개월수가 된다
+        self.assertEqual(lp.sale_pressure(self._listings(3), 69.0, 1.0)["level"], "보통")
+        self.assertEqual(lp.sale_pressure(self._listings(5), 69.0, 1.0)["level"], "다소 높음")
+        self.assertEqual(lp.sale_pressure(self._listings(9), 69.0, 1.0)["level"], "높음")
+
+    def test_no_recent_deals_cannot_be_divided_but_still_reports(self):
+        r = lp.sale_pressure(self._listings(5), 69.0, monthly_deal_avg=0)
+        self.assertIsNone(r["months_of_supply"])
+        self.assertEqual(r["level"], "판단 보류")
+
+    def test_dissimilar_area_listings_are_not_counted_as_competitors(self):
+        listings = self._listings(3) + self._listings(4, area=120.0)
+        r = lp.sale_pressure(listings, 69.0, monthly_deal_avg=1.0)
+        self.assertEqual(r["n_listings"], 3)
+
+    def test_no_similar_listings_returns_none(self):
+        self.assertIsNone(lp.sale_pressure(self._listings(3, area=120.0), 69.0, 1.0))
+
+
 if __name__ == "__main__":
     unittest.main()

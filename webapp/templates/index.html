@@ -34,7 +34,8 @@
 
 {% set adv_filled = form and (form.monthly_deposit or form.conversion_rate or form.station_premium or form.year_min
    or (form.radius and form.radius != '400') or (form.area_tolerance and form.area_tolerance != '15')
-   or (form.build_year_tolerance and form.build_year_tolerance != '4') or form.listings_text or form.condition) %}
+   or (form.build_year_tolerance and form.build_year_tolerance != '4') or form.listings_text or form.condition
+   or form.repair_cost_basic or form.repair_cost_full) %}
 <form method="post" action="/estimate">
   <div>
     <label>지번 주소</label>
@@ -85,16 +86,27 @@
       <p class="hint" style="margin-top:-8px">※ 비교거래를 더 넓게(느슨하게) 또는 더 좁게(엄격하게) 잡고 싶을 때 조정하세요 — 기본값은 국토부 실거래 비교 관행(면적 ±15%, 연식 ±4년)입니다.</p>
       <div class="row">
         <div>
-          <label>수리상태(선택 — 경매 강의 경험칙 참고 배율)</label>
+          <label>현재 수리상태(선택 — 상태별 매도가 3단계를 보려면)</label>
           <select name="condition">
             <option value="" {{ "selected" if not form or not form.condition else "" }}>선택 안 함</option>
-            <option value="올수리" {{ "selected" if form and form.condition == '올수리' else "" }}>올수리 (전체 리모델링 완료)</option>
+            <option value="노후" {{ "selected" if form and form.condition == '노후' else "" }}>노후 (수리 필요 / 험한 집)</option>
             <option value="기본" {{ "selected" if form and form.condition == '기본' else "" }}>기본 (깨끗한 상태)</option>
-            <option value="노후" {{ "selected" if form and form.condition == '노후' else "" }}>노후 (수리 필요)</option>
+            <option value="올수리" {{ "selected" if form and form.condition == '올수리' else "" }}>올수리 (전체 리모델링 완료)</option>
           </select>
-          <p class="hint" style="margin-top:4px">국토부 실거래가엔 수리상태 정보가 없어 검증된 수치가 아닌 참고 배율이에요.</p>
+          <p class="hint" style="margin-top:4px">지금 상태에서 손볼수록 매도가가 얼마나 올라가는지 보여드려요. 국토부 실거래가엔 수리상태 정보가 없어 검증된 수치가 아닌 참고 배율입니다.</p>
         </div>
       </div>
+      <div class="row">
+        <div>
+          <label>기본 정리 예상 공사비(만원, 선택)</label>
+          <input type="number" name="repair_cost_basic" placeholder="450" value="{{ form.repair_cost_basic if form else '' }}">
+        </div>
+        <div>
+          <label>올수리 예상 공사비(만원, 선택)</label>
+          <input type="number" name="repair_cost_full" placeholder="1200" value="{{ form.repair_cost_full if form else '' }}">
+        </div>
+      </div>
+      <p class="hint" style="margin-top:-8px">※ 공사비를 넣으면 "고쳐서 얼마나 더 받는지 − 공사비 = 순증"까지 계산해 드려요.</p>
       <div class="row">
         <div>
           <label>월세보증금(만원, 선택 — 예상 월세도 보려면)</label>

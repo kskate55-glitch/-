@@ -675,5 +675,54 @@ class ComputeTerrainCheckTests(unittest.TestCase):
             self.assertIn("키 미설정", t["mountain_error"])
 
 
+class TestConditionLadder(unittest.TestCase):
+    """CLAUDE.md 38절 — 상태별 매도가 3단계 사다리."""
+
+    def test_ladder_starts_at_current_condition_and_only_goes_up(self):
+        rows = ep.compute_condition_ladder(15000, "노후")
+        self.assertEqual([r["condition"] for r in rows], ["노후", "기본", "올수리"])
+        self.assertTrue(rows[0]["is_current"])
+        # 올수리 집이면 그 위가 없으니 한 줄만
+        self.assertEqual([r["condition"] for r in ep.compute_condition_ladder(15000, "올수리")], ["올수리"])
+
+    def test_prices_follow_the_multipliers_and_gains_are_vs_current(self):
+        rows = ep.compute_condition_ladder(10000, "노후")
+        by = {r["condition"]: r for r in rows}
+        self.assertAlmostEqual(by["노후"]["price_man"], 9000, delta=10)
+        self.assertAlmostEqual(by["기본"]["price_man"], 10000, delta=10)
+        self.assertAlmostEqual(by["올수리"]["price_man"], 10800, delta=10)
+        self.assertEqual(by["노후"]["gain_man"], 0)
+        self.assertAlmostEqual(by["기본"]["gain_man"], 1000, delta=10)
+
+    def test_repair_cost_turns_gain_into_net(self):
+        rows = ep.compute_condition_ladder(10000, "노후", {"기본": 400, "올수리": 2500})
+        by = {r["condition"]: r for r in rows}
+        self.assertAlmostEqual(by["기본"]["net_man"], 600, delta=10)   # +1000 회수 − 400 공사비
+        self.assertAlmostEqual(by["올수리"]["net_man"], -700, delta=10)  # +1800 회수 − 2500 공사비 → 손해
+        self.assertIsNone(by["노후"]["net_man"])  # 현재 상태에는 공사비 개념이 없다
+
+    def test_unknown_condition_returns_empty(self):
+        self.assertEqual(ep.compute_condition_ladder(10000, "모름"), [])
+
+
+class TestSalePressureVerdict(unittest.TestCase):
+    """CLAUDE.md 39절 — 매도압력이 32절 종합 판단 문단에 들어가는지."""
+
+    def test_pressure_sentence_is_added_when_months_known(self):
+        v = ep.build_verdict(80, 12, sale_pressure={
+            "n_listings": 14, "monthly_deal_avg": 0.7, "months_of_supply": 21.0,
+            "level": "높음", "desc": "...",
+        })
+        self.assertIn("21.0개월치", v)
+        self.assertIn("높음", v)
+
+    def test_pressure_sentence_is_skipped_when_months_unknown(self):
+        v = ep.build_verdict(80, 12, sale_pressure={
+            "n_listings": 5, "monthly_deal_avg": 0.0, "months_of_supply": None,
+            "level": "판단 보류", "desc": "...",
+        })
+        self.assertNotIn("개월치", v)
+
+
 if __name__ == "__main__":
     unittest.main()

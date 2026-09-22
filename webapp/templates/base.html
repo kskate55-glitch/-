@@ -54,11 +54,19 @@
     border: 1px solid var(--border); box-shadow: var(--shadow);
   }
   label { font-size: 13px; font-weight: 600; color: #4a4f54; display: block; }
-  input[type="text"], input[type="number"], input[type="password"] {
+  input[type="text"], input[type="number"], input[type="password"], select {
     padding: 11px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-md);
     font-size: 15px; width: 100%; margin-top: 6px; background: #fafbfc;
     transition: border-color .15s ease, background .15s ease;
   }
+  /* select은 기본 브라우저 스타일이라 그냥 두면 옆 입력칸들과 높이·테두리가
+     따로 논다 — 위 규칙에 묶어 맞추고, 화살표만 직접 그려 넣는다. */
+  select {
+    -webkit-appearance: none; appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23555b61' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 13px center; padding-right: 34px;
+  }
+  select:focus { outline: none; border-color: var(--primary); background-color: #fff; }
   input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, textarea:focus {
     outline: none; border-color: var(--primary); background: #fff;
   }

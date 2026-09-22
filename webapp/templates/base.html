@@ -499,6 +499,9 @@
        받고 찾은 원인이라, 롱핸드를 먼저 쓰고 inset은 뒤에 남겨 둔다. */
     top: 0; right: 0; bottom: 0; left: 0; inset: 0;
     background: rgba(242, 244, 246, 0.96);
+    /* 사파리가 이 레이어를 따로 합성하게 해서, 페이지를 떠나기 직전의 한
+       프레임 안에 확실히 그려지도록 돕는다(아래 JS의 rAF 2회와 한 세트). */
+    -webkit-transform: translateZ(0); transform: translateZ(0); will-change: opacity;
     z-index: 2147483000; flex-direction: column; align-items: center; justify-content: center;
     gap: 14px; padding: 20px 16px; overflow-y: auto;
   }
@@ -588,30 +591,67 @@
   });
 
   document.querySelectorAll("form").forEach(function (form) {
-    form.addEventListener("submit", function () {
-      // ⚠️ 모바일에서 오버레이가 안 보인다는 신고로 고친 부분이다.
-      // (1) 입력칸에 포커스가 남아 있으면 소프트 키보드가 떠 있는데, iOS
-      //     Safari는 키보드가 뜬 동안 position:fixed 요소를 화면 밖(레이아웃
-      //     뷰포트 기준)에 그려버린다 — 포커스를 먼저 풀어 키보드를 닫는다.
-      // (2) 스크롤이 내려가 있으면(제출 버튼은 폼 맨 아래에 있으니 거의
-      //     항상 그렇다) fixed가 제대로 안 먹는 브라우저에서 오버레이가
-      //     화면 밖에 남는다 — 맨 위로 올려 확실히 보이게 한다.
-      if (document.activeElement && document.activeElement.blur) {
-        document.activeElement.blur();
+    var handing = false;   // 우리가 다시 보내는 제출까지 가로채지 않도록
+
+    form.addEventListener("submit", function (e) {
+      if (handing) return;          // 두 번째 제출(우리가 보낸 것)은 그냥 통과
+      handing = true;
+
+      // ⚠️⚠️ **아이폰 사파리에서 로딩 마크가 안 뜨던 진짜 원인이 여기다.**
+      // iOS Safari는 화면 전환(내비게이션)이 시작되면 **떠나는 페이지를 더
+      // 이상 다시 그리지 않는다.** 제출 핸들러 안에서 오버레이를 켜 봐야
+      // 핸들러가 끝나는 즉시 전환이 시작되므로 새 프레임이 **한 번도**
+      // 그려지지 않는다 — DOM은 바뀌었는데 화면은 그대로인 것이다.
+      // (`void offsetHeight`는 레이아웃만 강제할 뿐 페인트는 강제하지 못해서
+      //  소용이 없었다.)
+      //
+      // 그래서 전송을 일단 막고, **실제로 한 프레임이 그려진 뒤에**(rAF 두
+      // 번 — 첫 번째는 다음 프레임 직전, 두 번째는 그 프레임이 그려진 뒤)
+      // 직접 form.submit()으로 보낸다.
+      // ⚠️ form.submit()은 submit 이벤트를 다시 발생시키지 않고 HTML5 검증도
+      //    건너뛴다 — 하지만 이 핸들러는 **검증을 통과한 뒤에만** 불리므로
+      //    (사용자 제출은 검증 후에 submit 이벤트가 난다) 문제되지 않는다.
+      e.preventDefault();
+
+      var sent = false;
+      function send() {
+        if (sent) { return; }
+        sent = true;
+        form.submit();
       }
-      window.scrollTo(0, 0);
 
-      var overlay = document.getElementById("loading-overlay");
-      overlay.classList.add("active");
-      // 강제 리플로우 — 내비게이션이 시작되기 전에 오버레이가 실제로 한 번
-      // 그려지도록 한다(모바일 브라우저는 페이지를 떠나기 직전 페인트를
-      // 건너뛰는 경우가 있다).
-      void overlay.offsetHeight;
+      try {
+        // (1) 입력칸에 포커스가 남아 있으면 소프트 키보드가 떠 있는데, iOS
+        //     Safari는 키보드가 뜬 동안 position:fixed 요소를 화면 밖(레이아웃
+        //     뷰포트 기준)에 그려버린다 — 포커스를 먼저 풀어 키보드를 닫는다.
+        // (2) 스크롤이 내려가 있으면(제출 버튼은 폼 맨 아래에 있으니 거의
+        //     항상 그렇다) fixed가 제대로 안 먹는 브라우저에서 오버레이가
+        //     화면 밖에 남는다 — 맨 위로 올려 확실히 보이게 한다.
+        if (document.activeElement && document.activeElement.blur) {
+          document.activeElement.blur();
+        }
+        window.scrollTo(0, 0);
 
-      // ⚠️ 제출 이벤트 안에서 버튼을 바로 disabled로 만들면 일부 구형
-      //    WebKit이 **폼 전송 자체를 취소한다** — 다음 틱으로 미룬다.
-      var btn = form.querySelector("button[type=submit]");
-      if (btn) setTimeout(function () { btn.disabled = true; }, 0);
+        var overlay = document.getElementById("loading-overlay");
+        overlay.classList.add("active");
+        void overlay.offsetHeight;   // 레이아웃 확정(페인트는 아래 rAF가 보장)
+
+        // ⚠️ 제출 이벤트 안에서 버튼을 바로 disabled로 만들면 일부 구형
+        //    WebKit이 폼 전송 자체를 취소한다 — 다음 틱으로 미룬다.
+        var btn = form.querySelector("button[type=submit]");
+        if (btn) setTimeout(function () { btn.disabled = true; }, 0);
+      } catch (err) {
+        // 연출이 실패해도 **전송은 반드시 되어야 한다** — 바로 보낸다.
+        send();
+        return;
+      }
+
+      // 한 프레임이 실제로 그려진 뒤 전송한다.
+      if (window.requestAnimationFrame) {
+        requestAnimationFrame(function () { requestAnimationFrame(send); });
+      }
+      // rAF가 안 오는 경우(백그라운드 탭 등) 대비 — 어떤 일이 있어도 전송된다.
+      setTimeout(send, 400);
 
       var textEl = document.getElementById("loading-text");
 

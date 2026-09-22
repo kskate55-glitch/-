@@ -236,6 +236,9 @@ def backtest_one():
         "n": r["n_comparables"], "in_band": bool(r["in_band"]),
         "divergence": (round(r["divergence"], 1)
                        if r.get("divergence") is not None else None),
+        "sb": r.get("same_building_n"),
+        "outliers": r.get("outlier_n"),
+        "share": r.get("top_weight_share"),
     } for r in out["results"]]
 
     return jsonify({"ok": True, "lawd_cd": lawd_cd, "gu": out["gu"],

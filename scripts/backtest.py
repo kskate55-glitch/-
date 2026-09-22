@@ -118,6 +118,19 @@ def pick_targets(rows: list[dict], months: int, n: int, gu: str | None,
     return pool[:n], len(pool)
 
 
+def _top_weight_share(filtered: list[dict]) -> float | None:
+    """가장 큰 한 건이 전체 가중치에서 차지하는 지분(%).
+
+    7절 가중 중앙값은 가중치에 비례해 표를 복제하므로, 이 값이 크면
+    **그 한 건이 사실상 답을 정한다**(동일건물 보너스 2.0 × 최근성 1.6이
+    겹치면 표본 3건에서 80%까지 간다 — 실측으로 확인). 오차가 큰 건의
+    원인을 사후에 가리는 데 쓴다.
+    """
+    weights = [r.get("_weight") or 0 for r in filtered]
+    total = sum(weights)
+    return round(max(weights) / total * 100, 1) if total > 0 else None
+
+
 def estimate_as_of(rows: list[dict], target: dict, radius_m: float,
                    year_window: int, area_tolerance_pct: float,
                    build_year_tolerance: int) -> dict | None:
@@ -176,6 +189,14 @@ def estimate_as_of(rows: list[dict], target: dict, radius_m: float,
         # 가격 편향이 아니라 **이 값**으로 드러난다(50:50 블렌딩이 편향 자체는
         # 상쇄해서다) — 크게 튄 건의 원인을 가리는 데 꼭 필요해서 같이 싣는다.
         "divergence": scen.get("model_divergence_pct"),
+        # 48-2-2절 — 오차를 가르는 진짜 변수로 지목된 두 가지.
+        #  · same_building_n : 동일건물 보너스(×2.0)를 받은 비교거래 수
+        #  · top_weight_share: 가장 큰 한 건이 전체 표에서 차지하는 지분(%)
+        # 표본 수보다 이 둘이 오차를 훨씬 잘 가른다는 게 시뮬레이션 결과였고,
+        # 실제 데이터로 확인하려면 건별로 들고 나와야 한다.
+        "same_building_n": sum(1 for r in filtered if r.get("_same_building")),
+        "outlier_n": sum(1 for r in filtered if r.get("_price_outlier")),
+        "top_weight_share": _top_weight_share(filtered),
         "n_comparables": len(filtered),
         "skipped": None,
     }
@@ -327,7 +348,8 @@ def main() -> None:
         os.makedirs(os.path.dirname(os.path.abspath(args.csv)), exist_ok=True)
         cols = ["ymd", "name", "address", "area", "floor", "build_year",
                 "actual", "p25", "median", "p75", "error_pct",
-                "n_comparables", "confidence", "divergence"]
+                "n_comparables", "confidence", "divergence",
+                "same_building_n", "outlier_n", "top_weight_share"]
         with open(args.csv, "w", newline="", encoding="utf-8-sig") as f:
             w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
             w.writeheader()

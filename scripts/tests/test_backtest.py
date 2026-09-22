@@ -229,3 +229,69 @@ class TestDivergenceIsCarried(unittest.TestCase):
         self.assertIn('"divergence"', src)
 
 
+
+
+class TestTopWeightShare(unittest.TestCase):
+    """48-2-2절 — 한 건이 전체 가중치에서 차지하는 지분.
+
+    시뮬레이션이 "오차를 가르는 건 표본 수가 아니라 **한 건의 지배력**"이라고
+    지목한 지표라, 값이 실제로 그 뜻대로 나오는지 고정한다.
+    """
+
+    def test_equal_weights_split_evenly(self):
+        rows = [{"_weight": 1.0} for _ in range(4)]
+        self.assertAlmostEqual(bt._top_weight_share(rows), 25.0)
+
+    def test_one_dominant_row_shows_up(self):
+        rows = [{"_weight": 8.0}, {"_weight": 1.0}, {"_weight": 1.0}]
+        self.assertAlmostEqual(bt._top_weight_share(rows), 80.0)
+
+    def test_single_row_is_total_dominance(self):
+        self.assertAlmostEqual(bt._top_weight_share([{"_weight": 0.3}]), 100.0)
+
+    def test_empty_or_zero_weights_is_none(self):
+        self.assertIsNone(bt._top_weight_share([]))
+        self.assertIsNone(bt._top_weight_share([{"_weight": 0}, {"_weight": 0}]))
+
+    def test_missing_weight_key_is_treated_as_zero(self):
+        self.assertAlmostEqual(bt._top_weight_share([{"_weight": 3.0}, {}]), 100.0)
+
+
+class TestDiagnosticFieldsAreCarried(unittest.TestCase):
+    """건별 결과에 원인 진단용 필드가 실려 나오는지 — 없으면 사후 분석이 불가능하다."""
+
+    def setUp(self):
+        self._orig_geo = geo.geocode
+        self._orig_bt_geo = bt.geocode
+        self._orig_cache = lawd_lookup._get_cache
+        lawd_lookup._get_cache = lambda: {"11305": ("서울특별시", "강북구")}
+        coords = {}
+
+        def fake(addr):
+            if addr not in coords:
+                coords[addr] = (37.6 + len(coords) * 0.0004, 127.0)
+            return coords[addr]
+
+        geo.geocode = fake
+        bt.geocode = fake
+
+    def tearDown(self):
+        geo.geocode = self._orig_geo
+        bt.geocode = self._orig_bt_geo
+        lawd_lookup._get_cache = self._orig_cache
+
+    def test_all_diagnostic_fields_present(self):
+        rows = [_row(f"{i}-1", 2026, 5, 10 + i, 30000 + i * 400) for i in range(8)]
+        target = _row("99-1", 2026, 9, 1, 31000)
+        out = bt.estimate_as_of(rows + [target], target, 400, 2, 0.15, 4)
+        self.assertIsNone(out.get("skipped"))
+        for key in ("same_building_n", "outlier_n", "top_weight_share", "divergence"):
+            self.assertIn(key, out)
+        self.assertGreater(out["top_weight_share"], 0)
+        self.assertLessEqual(out["top_weight_share"], 100)
+
+    def test_diagnostic_fields_are_in_csv(self):
+        import inspect
+        src = inspect.getsource(bt.main)
+        for key in ('"same_building_n"', '"top_weight_share"'):
+            self.assertIn(key, src)

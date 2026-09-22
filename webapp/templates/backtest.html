@@ -314,6 +314,41 @@
        {label: '60~85㎡', lo: 60, hi: 85},
        {label: '85㎡ 이상 (대형)', lo: 85, hi: 1e9}]);
 
+    // ★ 시뮬레이션이 "표본 수보다 이게 오차를 훨씬 잘 가른다"고 지목한 두 가지.
+    var bySb = bandTable('같은 건물 거래가 끼면 달라지나?',
+      '같은 건물의 직전 거래는 가중치를 2배로 받습니다 — 그게 대표성 있으면 정확해지고, 아니면 그대로 끌려갑니다.',
+      function (c) { return c.sb; },
+      [{label: '같은 건물 거래 없음', lo: 0, hi: 1},
+       {label: '1건', lo: 1, hi: 2},
+       {label: '2건 이상', lo: 2, hi: 1e9}]);
+
+    var byShare = bandTable('한 건이 답을 독점하면 더 틀리나?',
+      '가장 큰 비교거래 한 건이 전체에서 차지하는 지분입니다. 높을수록 "가중 중앙값"이 아니라 사실상 그 한 건의 가격이에요.',
+      function (c) { return c.share; },
+      [{label: '30% 미만 (고르게 반영)', lo: 0, hi: 30},
+       {label: '30~50%', lo: 30, hi: 50},
+       {label: '50~70%', lo: 50, hi: 70},
+       {label: '70% 이상 (사실상 한 건이 결정)', lo: 70, hi: 1e9}]);
+
+    // 최소 비교거래 기준을 올리면 무엇을 얻고 무엇을 잃는지 — 한 표로.
+    var thrRows = [3, 5, 7, 10].map(function (t) {
+      var g = cases.filter(function (c) { return c.n >= t; });
+      if (!g.length) return '';
+      var e = g.map(function (c) { return c.err; });
+      var a = e.map(Math.abs);
+      return '<tr><td>' + t + '건 이상만</td><td>' + g.length + '건 (' +
+        (g.length / cases.length * 100).toFixed(0) + '%)</td><td>' +
+        mean(a).toFixed(1) + '%</td><td>' + (mean(e) >= 0 ? '+' : '') + mean(e).toFixed(1) +
+        '%</td><td>' + pct(a.map(function (x) { return x <= 10; })) + '%</td></tr>';
+    }).join('');
+    var thrTbl = '<div class="card"><h3>최소 비교거래 기준을 올리면?</h3>' +
+      '<p class="muted" style="margin-top:-4px">기준을 올리면 오차는 줄지만 계산해 줄 수 있는 물건도 줄어듭니다 — 그 맞바꿈을 보는 표예요.</p>' +
+      '<div class="table-scroll"><table>' +
+      '<tr><th>기준</th><th>남는 건수</th><th>평균 오차</th><th>편향</th><th>±10%</th></tr>' +
+      thrRows + '</table></div>' +
+      '<ul class="note-lines" style="margin-top:10px">' +
+      '<li>기준을 올려도 평균 오차가 <b>거의 그대로면</b>, 표본 수는 원인이 아니라는 뜻입니다 — 위 두 표(같은 건물·지분)를 보세요.</li></ul></div>';
+
     var byDiv = bandTable('두 계산 방식이 엇갈릴수록 더 틀리나?',
       '총액 기준과 ㎡당가 기준이 서로 다른 답을 낼수록 실제로 부정확한지 봅니다.',
       function (c) { return c.divergence; },
@@ -326,13 +361,17 @@
     var worstTbl = '<div class="card"><h3>가장 크게 빗나간 15건</h3>' +
       '<p class="muted" style="margin-top:-4px">비교거래 수·신뢰도·모델 괴리율을 같이 봤을 때 공통점이 보이면 그게 원인입니다.</p>' +
       '<div class="table-scroll"><table><tr><th>지역</th><th>단지명</th><th>계약</th><th>면적</th><th>층</th>' +
-      '<th>실제</th><th>예상</th><th>오차</th><th>비교거래</th><th>신뢰도</th><th>괴리율</th></tr>' +
+      '<th>실제</th><th>예상</th><th>오차</th><th>비교거래</th><th>같은건물</th><th>최대지분</th>' +
+      '<th>신뢰도</th><th>괴리율</th></tr>' +
       worst.map(function (c) {
         return '<tr><td>' + esc(c.gu) + '</td><td>' + esc(c.name) + '</td><td>' + esc(c.date) +
           '</td><td>' + c.area + '㎡</td><td>' + esc(c.floor) + '층</td><td><b>' + eok(c.actual) +
           '</b></td><td>' + eok(c.median) + '</td><td style="color:#d33232;font-weight:700">' +
           (c.err >= 0 ? '+' : '') + c.err.toFixed(1) + '%</td><td' +
           (c.n < 5 ? ' style="color:#d33232;font-weight:700"' : '') + '>' + c.n +
+          '</td><td>' + (c.sb == null ? '—' : c.sb + '건') + '</td><td' +
+          (c.share != null && c.share >= 50 ? ' style="color:#d33232;font-weight:700"' : '') +
+          '>' + (c.share == null ? '—' : c.share.toFixed(0) + '%') +
           '</td><td>' + c.conf + '</td><td>' +
           (c.divergence == null ? '—' : c.divergence.toFixed(1) + '%') + '</td></tr>';
       }).join('') + '</table></div></div>';
@@ -354,7 +393,7 @@
           return esc(r.gu) + '(' + esc(r.why) + ')'; }).join(' · ') + '</li></ul>' : '') +
       '</div>';
 
-    out.innerHTML = head + byN + byConf + byArea + byDiv + worstTbl + regionTbl +
+    out.innerHTML = head + byN + bySb + byShare + thrTbl + byConf + byArea + byDiv + worstTbl + regionTbl +
       '<div class="card"><h3>결과 내려받기</h3>' +
       '<p class="muted" style="margin-top:-4px">엑셀로 열어 직접 뜯어볼 수 있는 파일입니다.</p>' +
       '<button type="button" id="sweep_csv" class="cta-submit">⬇ CSV로 저장</button></div>';
@@ -365,7 +404,8 @@
 
   function downloadCsv() {
     var cols = ['gu', 'name', 'date', 'area', 'floor', 'build_year',
-                'actual', 'median', 'err', 'n', 'conf', 'divergence', 'in_band'];
+                'actual', 'median', 'err', 'n', 'sb', 'outliers', 'share',
+                'conf', 'divergence', 'in_band'];
     var lines = [cols.join(',')].concat(cases.map(function (c) {
       return cols.map(function (k) {
         var v = c[k];

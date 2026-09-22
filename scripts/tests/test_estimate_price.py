@@ -180,69 +180,47 @@ class SpeedLabelForPercentileTests(unittest.TestCase):
 
 
 class DescribeComparableSimilarityTests(unittest.TestCase):
-    def test_similar_area_floor_buildyear(self):
-        row = {"excluUseAr": "69.5", "floor": "4", "buildYear": "2012"}
-        note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
-        self.assertIn("면적 비슷", note)
-        self.assertIn("4층 동일", note)
-        self.assertIn("준공 동일", note)
+    """사용자가 화면에서 직접 보고 "이해하기 너무 어렵다"고 지적해서, 상대
+    차이(±N%, 신축/구축, 선호순위 등) 대신 절대값(면적㎡+평/층/준공년도)만
+    단순하게 보여주는 방식으로 되돌렸다 — 그 단순화 결과를 검증한다."""
 
-    def test_reports_differences_with_direction(self):
-        # 비교거래가 대상 물건보다 면적 넓고(+), 층 높고(+2), 구축(4년 더 오래됨)
-        row = {"excluUseAr": "80.0", "floor": "6", "buildYear": "2008"}
+    def test_shows_area_in_sqm_and_pyeong(self):
+        row = {"excluUseAr": "69.27", "floor": "4", "buildYear": "2012"}
         note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
-        self.assertIn("6층(+2)", note)
-        self.assertIn("준공 4년 구축", note)
+        self.assertIn("69.3㎡", note)
+        self.assertIn("21.0평", note)
 
-    def test_reports_newer_buildyear_direction(self):
-        # 비교거래가 대상 물건보다 신축(2년 더 최근 준공)이면 방향이 반대로 나와야 함
-        row = {"excluUseAr": "69.27", "floor": "4", "buildYear": "2014"}
+    def test_shows_plain_floor_number(self):
+        row = {"excluUseAr": "69.27", "floor": "6", "buildYear": "2012"}
         note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
-        self.assertIn("준공 2년 신축", note)
+        self.assertIn("6층", note)
+        # 대상 물건과의 차이(+2 등)나 선호순위 같은 부가 판단은 더 이상 안 붙는다
+        self.assertNotIn("+2", note)
+        self.assertNotIn("선호순위", note)
+
+    def test_shows_plain_build_year(self):
+        row = {"excluUseAr": "69.27", "floor": "4", "buildYear": "2008"}
+        note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
+        self.assertIn("2008년식", note)
+        self.assertNotIn("차이", note)
+        self.assertNotIn("신축", note)
+        self.assertNotIn("구축", note)
+
+    def test_banjiha_shown_as_plain_label(self):
+        row = {"excluUseAr": "69.27", "floor": "0", "buildYear": "2012"}
+        note = ep.describe_comparable_similarity(69.27, 0, "2012", row)
+        self.assertIn("반지하", note)
 
     def test_missing_floor_info(self):
         row = {"excluUseAr": "69.27", "floor": "", "buildYear": "2012"}
         note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
         self.assertIn("층 정보없음", note)
 
-    def test_floor_preference_rank_shown_for_known_floors(self):
-        row = {"excluUseAr": "69.27", "floor": "3", "buildYear": "2012"}
+    def test_missing_area_and_buildyear_info(self):
+        row = {"excluUseAr": "", "floor": "4", "buildYear": ""}
         note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
-        self.assertIn("3층(-1) · 선호순위 1위", note)
-
-    def test_floor_1_and_6_are_tied_for_worst_rank(self):
-        row_1f = {"excluUseAr": "69.27", "floor": "1", "buildYear": "2012"}
-        row_6f = {"excluUseAr": "69.27", "floor": "6", "buildYear": "2012"}
-        note_1f = ep.describe_comparable_similarity(69.27, 4, "2012", row_1f)
-        note_6f = ep.describe_comparable_similarity(69.27, 4, "2012", row_6f)
-        self.assertIn("선호순위 5위", note_1f)
-        self.assertIn("선호순위 5위", note_6f)
-
-    def test_top_floor_caution_shown_for_5_and_6(self):
-        row_5f = {"excluUseAr": "69.27", "floor": "5", "buildYear": "2012"}
-        row_6f = {"excluUseAr": "69.27", "floor": "6", "buildYear": "2012"}
-        note_5f = ep.describe_comparable_similarity(69.27, 4, "2012", row_5f)
-        note_6f = ep.describe_comparable_similarity(69.27, 4, "2012", row_6f)
-        self.assertIn("탑층이면", note_5f)
-        self.assertIn("탑층이면", note_6f)
-        # 1층은 탑층 걱정이 없으니 주의 문구가 붙지 않아야 함
-        row_1f = {"excluUseAr": "69.27", "floor": "1", "buildYear": "2012"}
-        note_1f = ep.describe_comparable_similarity(69.27, 4, "2012", row_1f)
-        self.assertNotIn("탑층", note_1f)
-
-    def test_banjiha_floor_gets_price_note_not_rank(self):
-        row = {"excluUseAr": "69.27", "floor": "0", "buildYear": "2012"}
-        note = ep.describe_comparable_similarity(69.27, 0, "2012", row)
-        self.assertIn("반지하", note)
-        self.assertIn("절반", note)
-        self.assertNotIn("선호순위", note)
-
-    def test_floor_preference_rank_omitted_for_unranked_floors(self):
-        # 1층/7층처럼 아직 선호순위를 모르는 층은 태그를 안 붙인다(추측 금지)
-        row = {"excluUseAr": "69.27", "floor": "7", "buildYear": "2012"}
-        note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
-        self.assertIn("7층(+3)", note)
-        self.assertNotIn("선호순위", note)
+        self.assertIn("면적 정보없음", note)
+        self.assertIn("준공년도 정보없음", note)
 
 
 class FindComparablesMutationSafetyTests(unittest.TestCase):

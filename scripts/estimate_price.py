@@ -466,79 +466,43 @@ def similarity_score(distance_m: float, radius_m: float,
     return sum(scores[k] * weights[k] for k in weights)
 
 
-# 층 선호순위 (사용자가 실제 임장·매도 경험으로 확인해준 값 — 검증된 통계가
-# 아니라 경험적 순위다). 낮은 숫자일수록 선호도가 높다: 3층 > 2층 > 4층 > 5층,
-# 그리고 1층·6층은 서로 동급으로 가장 선호도가 낮은 층으로 묶인다(엘리베이터
-# 없는 빌라 특성상 6층은 사실상 항상 기피 대상이고, 1층은 보안·사생활 노출
-# 문제로 기피된다는 사용자 경험). 반지하는 아래 별도로 처리한다(단순 순위가
-# 아니라 시세 자체가 크게 달라지는 문제라서).
-FLOOR_PREFERENCE_RANK = {3: 1, 2: 2, 4: 3, 5: 4, 1: 5, 6: 5}
-
-# 5층·6층은 "탑층"(건물의 맨 위층)이면 누수·더위 등으로 선호순위보다도 더
-# 나쁘게 볼 수 있다는 사용자 확인 사항이다. 다만 MOLIT 실거래가 데이터에는
-# 그 건물의 총 층수가 없어서(7절에서 엘리베이터 정보를 못 넣는 것과 같은
-# 이유 — 비교거래 하나하나마다 건축물대장을 추가로 조회해야 해서 API 호출량이
-# 급격히 늘어난다) 이 비교거래가 실제로 탑층인지는 확인할 방법이 없다. 그래서
-# 확정하지 않고 "탑층이면 더 낮게 볼 것"이라는 주의 문구만 덧붙인다.
-TOP_FLOOR_CAUTION_FLOORS = {5, 6}
+PYEONG_PER_SQM = 1 / 3.3058  # listing_parser.py와 같은 환산 계수(평 = ㎡ × 이 값)
 
 
 def describe_comparable_similarity(subject_area: float, subject_floor: int | None,
                                     subject_build_year: str | None, row: dict) -> str:
-    """비교거래 하나가 대상 물건과 정확히 어떤 부분이 비슷하고 어떤 부분이
-    다른지 짧게 요약한다(면적/층/준공년도) — "핵심 비교거래" 목록에 물건마다
-    괄호로 달아서, 왜 이 물건이 골라졌는지/어디를 감안하고 봐야 하는지
-    사용자가 바로 알 수 있게 한다. 거리는 목록에 이미 따로 표시되므로 여기
-    넣지 않는다.
+    """비교거래 하나의 정보를 짧게 요약한다 — "핵심 비교거래" 목록에 물건마다
+    붙여서, 표를 따로 안 보고 이 한 줄만 봐도 어떤 물건인지 감이 오게 한다.
 
-    면적·층·준공년도 모두 단순히 "차이가 몇인지"뿐 아니라 그 차이의 **방향**
-    (더 넓은지/좁은지, 더 신축인지/구축인지, 선호도가 높은 층인지)까지 같이
-    보여준다 — 예를 들어 "준공 2년 차이"만 보면 대상 물건보다 신축인지 구축인지
-    알 수 없어서, 그 비교거래가 대상 물건보다 조건이 더 좋은 건지 나쁜 건지
-    판단할 수 없다는 지적을 반영했다."""
+    ⚠️ **이 절은 개정됐다.** 원래는 대상 물건과의 차이(면적 ±N%·층 ±N·
+    준공 N년 신축/구축)와 층 선호순위·탑층 주의 같은 부가 판단까지 얹었는데,
+    사용자가 실제 화면을 보고 "이해하기 너무 어렵다"고 지적해서 전부 걷어내고
+    **절대값 정보 세 가지**(면적/㎡+평, 층, 준공년도)만 단순하게 보여주는
+    방식으로 되돌렸다. 비교거래가 대상 물건과 얼마나 비슷한지는 이미 같은
+    행의 "유사도" 점수와 거리로 충분히 드러나므로, 여기서는 그 판단을 다시
+    설명하려 하지 않고 그냥 "이 물건이 뭔지"만 빠르게 읽히게 한다."""
     parts = []
 
     row_area = row.get("excluUseAr")
     try:
         row_area = float(row_area)
-        diff_pct = (row_area - subject_area) / subject_area * 100
-        if abs(diff_pct) <= 3:
-            parts.append("면적 비슷")
-        else:
-            parts.append(f"면적 {diff_pct:+.0f}%")
+        pyeong = row_area * PYEONG_PER_SQM
+        parts.append(f"{row_area:.1f}㎡({pyeong:.1f}평)")
     except (TypeError, ValueError):
         parts.append("면적 정보없음")
 
-    if subject_floor is not None:
-        row_floor_raw = (row.get("floor") or "").strip()
+    row_floor_raw = (row.get("floor") or "").strip()
+    if row_floor_raw:
         try:
             row_floor = int(row_floor_raw)
-            diff = row_floor - subject_floor
-            floor_text = f"{row_floor}층" + (" 동일" if diff == 0 else f"({diff:+d})")
-            if row_floor <= 0:
-                floor_text += " · 반지하(시세가 보통 지상층의 절반 수준으로 형성됨)"
-            else:
-                rank = FLOOR_PREFERENCE_RANK.get(row_floor)
-                if rank is not None:
-                    floor_text += f" · 선호순위 {rank}위"
-                if row_floor in TOP_FLOOR_CAUTION_FLOORS:
-                    floor_text += " · 탑층이면 더 낮게 볼 것(건물 총 층수 미확인)"
-            parts.append(floor_text)
+            parts.append("반지하" if row_floor <= 0 else f"{row_floor}층")
         except ValueError:
             parts.append("층 정보없음")
+    else:
+        parts.append("층 정보없음")
 
-    if subject_build_year is not None:
-        row_build_year = (row.get("buildYear") or "").strip()
-        if row_build_year.isdigit():
-            diff = int(row_build_year) - int(subject_build_year)
-            if diff == 0:
-                parts.append("준공 동일")
-            elif diff > 0:
-                parts.append(f"준공 {diff}년 신축")
-            else:
-                parts.append(f"준공 {abs(diff)}년 구축")
-        else:
-            parts.append("준공년도 정보없음")
+    row_build_year = (row.get("buildYear") or "").strip()
+    parts.append(f"{row_build_year}년식" if row_build_year.isdigit() else "준공년도 정보없음")
 
     return " · ".join(parts)
 

@@ -213,13 +213,14 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 def render_report(*, building, dong, area, period, generated, confidence,
                    conservative, realistic, upper, ai_base, listing, auction_price,
                    n_total, n_close, comparables, season, trend, filtered=None,
-                   naver_url="") -> str:
+                   naver_url="", this_year=None, this_month=None) -> str:
     price_chart = ""
     if filtered:
         price_chart = render_price_distribution_html(filtered, {
             "보수적 급매가": conservative, "현실적 체결가": realistic, "경매용 매도가": auction_price,
             "상단 매도가": upper, "AI 기준매도가": ai_base, "권장 최초 호가": listing,
-        }, hero_name="경매용 매도가", primary="#4f46e5")  # 이 리포트 자체의 accent 색(인디고)에 맞춘다
+        }, hero_name="경매용 매도가", primary="#4f46e5",  # 이 리포트 자체의 accent 색(인디고)에 맞춘다
+            this_year=this_year, this_month=this_month)
 
     return PAGE_TEMPLATE.format(
         title=f"{building} 매도가 분석",

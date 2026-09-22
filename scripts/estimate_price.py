@@ -1773,7 +1773,7 @@ def main():
             upper=upper, ai_base=ai_base, listing=listing, auction_price=auction_price,
             n_total=n_total, n_close=n_close,
             comparables=comparables, season=season, trend=trend, filtered=filtered,
-            naver_url=naver_url,
+            naver_url=naver_url, this_year=this_year, this_month=this_month,
         )
         reports_dir = "reports"
         os.makedirs(reports_dir, exist_ok=True)

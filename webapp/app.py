@@ -330,7 +330,7 @@ def estimate():
     price_chart_html = render_price_distribution_html(filtered, {
         "보수적 급매가": conservative, "현실적 체결가": realistic, "경매용 매도가": auction_price,
         "상단 매도가": upper, "AI 기준매도가": ai_base,
-    }, hero_name="경매용 매도가")
+    }, hero_name="경매용 매도가", this_year=this_year, this_month=this_month)
     marker_colors = {
         "conservative": MARKER_COLORS["보수적 급매가"], "realistic": MARKER_COLORS["현실적 체결가"],
         "upper": MARKER_COLORS["상단 매도가"], "ai_base": MARKER_COLORS["AI 기준매도가"],

@@ -638,6 +638,39 @@ def estimate():
         sale_pressure=pressure)
     result["verdict"] = " ".join(result["verdict_lines"])
 
+    # 44절 — 계절성(12절)·가격 추이(15절)를 웹에도 그림으로 붙인다. 계산
+    # 함수는 CLI와 같은 걸 그대로 쓰고, 그리기만 웹용 렌더러를 쓴다.
+    # ⚠️ 웹은 year_min 이후 데이터만 들고 있어서(CLI는 data/raw 전체 기간)
+    #    "전체 기간" 기준인 12절 원문과 달리 최근 몇 년치 기준이다 — 화면에
+    #    그 사실을 적는다.
+    from estimate_price import compute_price_trend, compute_seasonality
+    from price_chart import render_price_trend_svg, render_seasonality_bars_html
+
+    season_card = trend_card = None
+    if target_dong:
+        season = compute_seasonality(rows, target_dong)
+        season_chart = render_seasonality_bars_html(season)
+        if season_chart:
+            season_card = {
+                "chart_html": season_chart,
+                "scope": season["scope_label"],
+                "busy": [f"{m}월" for m in season["busy"]],
+                "slow": [f"{m}월" for m in season["slow"]],
+            }
+        trend = compute_price_trend(rows, target_dong)
+        trend_chart = render_price_trend_svg(trend)
+        if trend_chart:
+            first_v, last_v = trend["series"][0][1], trend["series"][-1][1]
+            trend_card = {
+                "chart_html": trend_chart,
+                "scope": trend["scope_label"],
+                "first": f"{trend['series'][0][0]} {first_v:,.0f}",
+                "last": f"{trend['series'][-1][0]} {last_v:,.0f}",
+                "change_pct": f"{(last_v / first_v - 1) * 100:+.1f}" if first_v else None,
+            }
+    result["seasonality"] = season_card
+    result["price_trend"] = trend_card
+
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
     # 매물을 붙여넣었으면 경쟁 매물·가격 위치 항목까지 채워진다.
     from estimate_price import MARKETABILITY_ICONS, build_marketability_report

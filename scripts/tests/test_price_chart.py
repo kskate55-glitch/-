@@ -206,5 +206,41 @@ class CompactLegendTests(unittest.TestCase):
         self.assertNotIn("시계열", legend)  # 7-2절 보정은 껐다
 
 
+class SeasonalityAndTrendChartTests(unittest.TestCase):
+    """CLAUDE.md 44절 — 웹 결과 페이지용 계절성 막대·가격 추이 꺾은선."""
+
+    def test_seasonality_draws_twelve_columns(self):
+        out = pc.render_seasonality_bars_html(
+            {"index": {m: 100 for m in range(1, 13)}, "busy": [], "slow": []})
+        for m in range(1, 13):
+            self.assertIn(f"{m}월", out)
+
+    def test_busy_and_slow_months_get_different_colors(self):
+        out = pc.render_seasonality_bars_html(
+            {"index": {m: 100 for m in range(1, 13)}, "busy": [4], "slow": [1]})
+        self.assertIn(pc.SEASON_BAR_BUSY, out)
+        self.assertIn(pc.SEASON_BAR_SLOW, out)
+
+    def test_missing_seasonality_returns_empty_so_the_card_is_skipped(self):
+        self.assertEqual(pc.render_seasonality_bars_html({"index": None}), "")
+        self.assertEqual(pc.render_seasonality_bars_html({}), "")
+
+    def test_price_trend_draws_a_point_per_month(self):
+        series = [("2025.01", 500), ("2025.02", 520), ("2025.03", 495)]
+        out = pc.render_price_trend_svg({"series": series})
+        self.assertEqual(out.count("<circle"), len(series))
+        self.assertIn("<polyline", out)
+
+    def test_price_trend_needs_at_least_three_months(self):
+        self.assertEqual(pc.render_price_trend_svg({"series": [("2025.01", 500)]}), "")
+        self.assertEqual(pc.render_price_trend_svg({"series": []}), "")
+
+    def test_flat_series_does_not_divide_by_zero(self):
+        out = pc.render_price_trend_svg(
+            {"series": [("2025.01", 500), ("2025.02", 500), ("2025.03", 500)]})
+        self.assertIn("<polyline", out)
+        self.assertNotIn("nan", out.lower())
+
+
 if __name__ == "__main__":
     unittest.main()

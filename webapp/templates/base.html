@@ -139,6 +139,23 @@
   .insp-box.on { border-color: #e0475a; background: #fff5f5; color: #c0293c; }
   .insp-clean.on { border-color: var(--primary); background: var(--primary-tint); color: var(--primary-dark); }
 
+  /* 28절 매물 붙여넣기 — 41절 진단의 "경쟁 매물" 항목 안에 접어 넣는다.
+     쓸 때만 펼쳐지니 결과 페이지가 덜 장황해지고, "이 항목이 왜 정보
+     없음인지 → 여기서 채우면 된다"가 한자리에서 이어진다. */
+  .paste-fold { margin-top: 10px; }
+  .paste-fold > summary {
+    cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 999px; border: 1.5px dashed var(--border);
+    background: #fff; font-size: 13px; font-weight: 700; color: var(--primary-dark);
+  }
+  .paste-fold > summary::-webkit-details-marker { display: none; }
+  .paste-fold > summary:hover { border-color: var(--primary); background: var(--primary-tint); }
+  .paste-fold[open] > summary { border-style: solid; border-color: var(--primary); background: var(--primary-tint); }
+  .paste-fold-body {
+    margin-top: 10px; padding: 14px; background: #fff;
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+  }
+
   /* 41절 환금성·경쟁 진단 — 중요한 순서대로 번호를 달고,
      판정(좋음/보통/주의)을 왼쪽 색 띠와 오른쪽 배지 두 군데로 드러낸다.
      예전엔 이모지 하나 + 줄글이라 "뭐가 문제인지" 훑어보기 어려웠다. */

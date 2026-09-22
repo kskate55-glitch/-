@@ -641,3 +641,99 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         f'<div class="price-dist" id="{chart_id}" style="position:relative">'
         f'{intro}{toggles}{svg_markup}{tooltip_box}{detail_box}{compact_legend}{script}</div>'
     )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# CLAUDE.md 44절 — 결과 페이지가 표·글자만 이어져 "공부하는 것처럼 지루하다"는
+# 지적을 반영해, 이미 CLI에서만 보여주던 12절 계절성·15절 가격 추이를 웹에도
+# 그림으로 붙인다. report.py에도 비슷한 렌더러가 있지만 그쪽은 그 페이지의
+# CSS 클래스에 묶여 있어서, 여기서는 **인라인 스타일로 자립적인** 버전을
+# 따로 만들었다(어느 페이지에 넣어도 그대로 그려진다).
+# ──────────────────────────────────────────────────────────────────────
+
+SEASON_BAR_BUSY = "#03c75a"
+SEASON_BAR_SLOW = "#c0c6cc"
+SEASON_BAR_MID = "#9fb4d4"
+
+
+def render_seasonality_bars_html(season: dict, height: int = 120) -> str:
+    """12절 계절성(월별 거래량 지수, 전체 평균=100)을 12칸 막대로 그린다.
+    표본이 부족해 지수가 없으면 빈 문자열을 돌려줘서 호출부가 카드 자체를
+    생략하게 한다(20절/26절과 같은 "없으면 조용히 생략" 원칙)."""
+    index = season.get("index")
+    if not index:
+        return ""
+    busy, slow = set(season.get("busy") or []), set(season.get("slow") or [])
+    max_v = max(index.values()) or 1
+
+    cols = []
+    for m in range(1, 13):
+        v = index.get(m, 0)
+        h = max(3, round(v / max_v * height))
+        color = SEASON_BAR_BUSY if m in busy else (SEASON_BAR_SLOW if m in slow else SEASON_BAR_MID)
+        weight = "800" if m in busy else "600"
+        cols.append(
+            f'<div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0">'
+            f'<div style="font-size:11.5px; font-weight:{weight}; color:{INK if m in busy else MUTED}">{v}</div>'
+            f'<div style="width:100%; max-width:26px; height:{h}px; background:{color}; border-radius:4px 4px 0 0"></div>'
+            f'<div style="font-size:11px; color:{MUTED}; white-space:nowrap">{m}월</div>'
+            f'</div>'
+        )
+    return (
+        f'<div style="display:flex; align-items:flex-end; gap:5px; margin-top:6px; '
+        f'padding:10px 4px 0; border-bottom:1px solid {BORDER}">{"".join(cols)}</div>'
+    )
+
+
+def render_price_trend_svg(trend: dict, width: int = 720, height: int = 210,
+                            primary: str = PRIMARY) -> str:
+    """15절 가격 추이(월별 평균 평당가)를 꺾은선으로 그린다. 시계열이 3개월
+    미만이면(compute_price_trend가 이미 걸러 빈 series를 준다) 빈 문자열."""
+    series = trend.get("series") or []
+    if len(series) < 3:
+        return ""
+
+    pad_l, pad_r, pad_t, pad_b = 52, 14, 18, 30
+    values = [v for _, v in series]
+    min_v, max_v = min(values), max(values)
+    span = (max_v - min_v) or 1
+    n = len(series)
+
+    def x(i: int) -> float:
+        return pad_l + (width - pad_l - pad_r) * (i / (n - 1))
+
+    def y(v: float) -> float:
+        return pad_t + (height - pad_t - pad_b) * (1 - (v - min_v) / span)
+
+    parts = [
+        f'<svg viewBox="0 0 {width} {height}" style="width:100%; height:auto; min-width:520px; display:block" '
+        f'role="img" aria-label="월별 평균 평당가 추이">'
+    ]
+    # 가로 눈금 3줄(최저·중간·최고) — 값을 안 눌러봐도 수준이 읽히게(8-1절과 같은 원칙)
+    for frac, val in ((0.0, max_v), (0.5, (min_v + max_v) / 2), (1.0, min_v)):
+        gy = pad_t + (height - pad_t - pad_b) * frac
+        parts.append(f'<line x1="{pad_l}" y1="{gy:.1f}" x2="{width - pad_r}" y2="{gy:.1f}" '
+                     f'stroke="{BORDER}" stroke-width="1" stroke-dasharray="2,3" />')
+        parts.append(f'<text x="{pad_l - 8}" y="{gy + 4:.1f}" font-size="11.5" fill="{MUTED}" '
+                     f'text-anchor="end">{val:,.0f}</text>')
+
+    area = (f'M {x(0):.1f},{height - pad_b:.1f} '
+            + " ".join(f"L {x(i):.1f},{y(v):.1f}" for i, (_, v) in enumerate(series))
+            + f' L {x(n - 1):.1f},{height - pad_b:.1f} Z')
+    parts.append(f'<path d="{area}" fill="{primary}" fill-opacity="0.10" stroke="none" />')
+    parts.append('<polyline points="'
+                 + " ".join(f"{x(i):.1f},{y(v):.1f}" for i, (_, v) in enumerate(series))
+                 + f'" fill="none" stroke="{primary}" stroke-width="2.5" '
+                 'stroke-linejoin="round" stroke-linecap="round" />')
+    for i, (_, v) in enumerate(series):
+        parts.append(f'<circle cx="{x(i):.1f}" cy="{y(v):.1f}" r="3.5" fill="#fff" '
+                     f'stroke="{primary}" stroke-width="2" />')
+
+    # x축 라벨은 처음·중간·마지막 3개만 — 12개월치가 넘어가면 다 쓰면 겹친다
+    for i in {0, n // 2, n - 1}:
+        label = html.escape(str(series[i][0]))
+        anchor = "start" if i == 0 else ("end" if i == n - 1 else "middle")
+        parts.append(f'<text x="{x(i):.1f}" y="{height - 9:.1f}" font-size="11.5" fill="{MUTED}" '
+                     f'text-anchor="{anchor}">{label}</text>')
+    parts.append("</svg>")
+    return f'<div style="overflow-x:auto; -webkit-overflow-scrolling:touch">{"".join(parts)}</div>'

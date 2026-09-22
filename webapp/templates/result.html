@@ -1,5 +1,53 @@
 {% extends "base.html" %}
 {% block content %}
+{% macro listing_paste_ui() %}
+  <p class="muted" style="margin:0 0 10px">
+    위 네이버부동산 링크에서 매물 목록을 드래그해 복사(Ctrl+C)한 다음, 아래 "클립보드에서 붙여넣기"를
+    누르거나 직접 Ctrl+V로 붙여넣고 [매물 분석하기]를 누르세요 — 페이지를 벗어나지 않고 바로 다시 계산돼요.
+  </p>
+  <form method="post" action="/estimate">
+    {% for k, v in result.resubmit_fields.items() %}
+    <input type="hidden" name="{{ k }}" value="{{ v }}">
+    {% endfor %}
+    <textarea name="listings_text" id="listings_paste" rows="6" placeholder="네이버부동산 매물 목록을 여기에 붙여넣으세요"
+              style="width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:var(--radius-md);
+                     font-size:14px; font-family:inherit; resize:vertical; background:#fafbfc">{{ result.listings_text_echo or '' }}</textarea>
+    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap">
+      <button type="button" id="clipboard-paste-btn"
+              style="flex:1; min-width:160px; padding:11px; border:1.5px solid var(--border); border-radius:var(--radius-md);
+                     background:#fff; color:var(--ink); font-weight:700; font-size:14px; cursor:pointer">
+        📋 클립보드에서 붙여넣기
+      </button>
+      <button type="submit" style="flex:1; min-width:160px; padding:11px">매물 분석하기</button>
+    </div>
+    <p id="clipboard-msg" class="muted" style="margin-top:6px; display:none"></p>
+  </form>
+
+  <details style="margin-top:12px">
+    <summary style="cursor:pointer; font-size:13px; font-weight:700; color:#4a4f54">
+      🔖 드래그 선택도 귀찮으면 — 클릭 한 번으로 복사하는 북마클릿 (선택, 처음 한 번만 등록)
+    </summary>
+    <div style="margin-top:10px; padding:12px; background:#fafbfc; border:1px solid var(--border); border-radius:var(--radius-md)">
+      <p class="muted" style="margin-top:0">
+        아래 버튼을 <b>브라우저 즐겨찾기(북마크) 바로 드래그</b>해서 등록해두세요(클릭하면 안 돼요, 꼭 드래그).
+        다음부터 네이버부동산 매물 목록 페이지에서 이 즐겨찾기를 누르면, 드래그로 선택할 필요 없이
+        페이지 텍스트가 자동으로 클립보드에 복사돼요. 그 다음 이 탭으로 돌아와 위 "클립보드에서 붙여넣기"를 누르면 끝.
+      </p>
+      <a href="javascript:(function(){try{var t=(document.body&amp;&amp;(document.body.innerText||document.body.textContent))||'';if(!t.trim()){alert('페이지에서 텍스트를 찾지 못했어요.');return;}if(navigator.clipboard&amp;&amp;navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){alert('페이지 텍스트를 복사했어요 ('+t.length+'자). 계산기 탭으로 돌아가 클립보드에서 붙여넣기를 눌러주세요.');}).catch(function(){alert('클립보드 복사에 실패했어요. 페이지에서 직접 드래그해서 복사해 주세요.');});}else{alert('이 브라우저에서는 자동 복사가 안 돼요. 직접 드래그해서 복사해 주세요.');}}catch(e){alert('오류가 발생했어요: '+e.message);}})();"
+         style="display:inline-block; padding:9px 16px; background:var(--primary); color:#fff; border-radius:999px;
+                text-decoration:none; font-weight:700; font-size:13px; cursor:grab">
+        📋 매물 텍스트 복사
+      </a>
+      <p class="muted" style="margin-top:10px; margin-bottom:0">
+        ⚠️ 네이버부동산 페이지의 정확한 구조를 확인할 방법이 없어서, 매물 목록만 딱 골라내지 못하고
+        <b>페이지에 보이는 전체 텍스트</b>를 복사해요 — 메뉴·광고 같은 잡다한 내용도 같이 딸려올 수 있어요.
+        다행히 분석기가 "가격+면적이 같이 있는 부분"만 골라 읽어서 어느 정도는 걸러지지만, 실제로 써보시고
+        인식이 잘 안 되면 알려주세요.
+      </p>
+    </div>
+  </details>
+{% endmacro %}
+
 <h1>🏠 빌라 매매가 계산기 — 결과</h1>
 <p class="muted">{{ result.address }} · 분석기간 {{ result.period }}</p>
 {% if result.naver_land_url %}
@@ -211,6 +259,12 @@
     </div>
     <p class="mk-text">{{ item.text }}</p>
     <p class="mk-lecture">{{ item.why }}</p>
+    {% if item.key == 'competition' %}
+    <details class="paste-fold"{{ ' open' if result.similar_listings and not result.similar_listings.rows else '' }}>
+      <summary>📋 네이버부동산 매물 목록 붙여넣기 {% if result.similar_listings and result.similar_listings.rows %}(다시 붙여넣기){% else %}— 누르면 열려요{% endif %}</summary>
+      <div class="paste-fold-body">{{ listing_paste_ui() }}</div>
+    </details>
+    {% endif %}
   </div>
   {% endfor %}
 
@@ -301,58 +355,43 @@
 </div>
 {% endif %}
 
+{% if result.price_trend %}
 <div class="card">
-  <h3>비교 매물 유사도 순위 (붙여넣은 네이버부동산 매물 기준)</h3>
-  <p class="muted" style="margin-top:-6px; margin-bottom:12px">
-    위 지도 링크에서 매물 목록을 드래그해서 복사(Ctrl+C)한 다음, 이 창으로 돌아와
-    아래 "클립보드에서 붙여넣기"를 누르거나 직접 Ctrl+V로 붙여넣고 [매물 분석하기]를 누르세요 —
-    페이지를 벗어나지 않고 바로 다시 계산됩니다.
-  </p>
-  <form method="post" action="/estimate">
-    {% for k, v in result.resubmit_fields.items() %}
-    <input type="hidden" name="{{ k }}" value="{{ v }}">
-    {% endfor %}
-    <textarea name="listings_text" id="listings_paste" rows="6" placeholder="네이버부동산 매물 목록을 여기에 붙여넣으세요"
-              style="width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:var(--radius-md);
-                     font-size:14px; font-family:inherit; resize:vertical; background:#fafbfc">{{ result.listings_text_echo or '' }}</textarea>
-    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap">
-      <button type="button" id="clipboard-paste-btn"
-              style="flex:1; min-width:160px; padding:11px; border:1.5px solid var(--border); border-radius:var(--radius-md);
-                     background:#fff; color:var(--ink); font-weight:700; font-size:14px; cursor:pointer">
-        📋 클립보드에서 붙여넣기
-      </button>
-      <button type="submit" style="flex:1; min-width:160px; padding:11px">매물 분석하기</button>
-    </div>
-    <p id="clipboard-msg" class="muted" style="margin-top:6px; display:none"></p>
-  </form>
+  <h3>📈 가격 추이 ({{ result.price_trend.scope }} 월별 평균 평당가)</h3>
+  <ul class="note-lines" style="margin-top:-6px; margin-bottom:10px">
+    <li>이 동네 빌라가 <b>㎡당 얼마에</b> 거래돼 왔는지 시간순으로 이은 선이에요.</li>
+    <li>{{ result.price_trend.first }}만원/㎡ → {{ result.price_trend.last }}만원/㎡
+        {% if result.price_trend.change_pct %}(<b>{{ result.price_trend.change_pct }}%</b>){% endif %}</li>
+  </ul>
+  {{ result.price_trend.chart_html | safe }}
+  <ul class="note-lines" style="margin-top:10px">
+    <li>※ 조회한 기간 안의 계약월만 이은 것이고, 월마다 거래 건수가 달라 한두 건뿐인 달은 크게 튈 수 있어요.</li>
+    <li>매도가 계산에는 반영되지 않는 참고 그래프입니다.</li>
+  </ul>
+</div>
+{% endif %}
 
-  <details style="margin-top:12px">
-    <summary style="cursor:pointer; font-size:13px; font-weight:700; color:#4a4f54">
-      🔖 드래그 선택도 귀찮으면 — 클릭 한 번으로 복사하는 북마클릿 (선택, 처음 한 번만 등록)
-    </summary>
-    <div style="margin-top:10px; padding:12px; background:#fafbfc; border:1px solid var(--border); border-radius:var(--radius-md)">
-      <p class="muted" style="margin-top:0">
-        아래 버튼을 <b>브라우저 즐겨찾기(북마크) 바로 드래그</b>해서 등록해두세요(클릭하면 안 돼요, 꼭 드래그).
-        다음부터 네이버부동산 매물 목록 페이지에서 이 즐겨찾기를 누르면, 드래그로 선택할 필요 없이
-        페이지 텍스트가 자동으로 클립보드에 복사돼요. 그 다음 이 탭으로 돌아와 위 "클립보드에서 붙여넣기"를 누르면 끝.
-      </p>
-      <a href="javascript:(function(){try{var t=(document.body&amp;&amp;(document.body.innerText||document.body.textContent))||'';if(!t.trim()){alert('페이지에서 텍스트를 찾지 못했어요.');return;}if(navigator.clipboard&amp;&amp;navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){alert('페이지 텍스트를 복사했어요 ('+t.length+'자). 계산기 탭으로 돌아가 클립보드에서 붙여넣기를 눌러주세요.');}).catch(function(){alert('클립보드 복사에 실패했어요. 페이지에서 직접 드래그해서 복사해 주세요.');});}else{alert('이 브라우저에서는 자동 복사가 안 돼요. 직접 드래그해서 복사해 주세요.');}}catch(e){alert('오류가 발생했어요: '+e.message);}})();"
-         style="display:inline-block; padding:9px 16px; background:var(--primary); color:#fff; border-radius:999px;
-                text-decoration:none; font-weight:700; font-size:13px; cursor:grab">
-        📋 매물 텍스트 복사
-      </a>
-      <p class="muted" style="margin-top:10px; margin-bottom:0">
-        ⚠️ 네이버부동산 페이지의 정확한 구조를 확인할 방법이 없어서, 매물 목록만 딱 골라내지 못하고
-        <b>페이지에 보이는 전체 텍스트</b>를 복사해요 — 메뉴·광고 같은 잡다한 내용도 같이 딸려올 수 있어요.
-        다행히 분석기가 "가격+면적이 같이 있는 부분"만 골라 읽어서 어느 정도는 걸러지지만, 실제로 써보시고
-        인식이 잘 안 되면 알려주세요.
-      </p>
-    </div>
-  </details>
+{% if result.seasonality %}
+<div class="card">
+  <h3>🗓️ 계절성 — 몇 월에 거래가 몰리나 ({{ result.seasonality.scope }})</h3>
+  <ul class="note-lines" style="margin-top:-6px; margin-bottom:10px">
+    <li>월별 거래량을 <b>전체 평균 100</b>으로 놓고 지수화한 값이에요 — 130이면 평균보다 30% 많다는 뜻.</li>
+    {% if result.seasonality.busy %}<li>거래 활발한 달: <b>{{ result.seasonality.busy | join(' · ') }}</b>{% if result.seasonality.slow %} · 거래 적은 달: {{ result.seasonality.slow | join(' · ') }}{% endif %}</li>
+    {% else %}<li>뚜렷한 성수기·비수기가 보이지 않는 동네예요 — 시점보다 가격에 집중하는 편이 낫습니다.</li>{% endif %}
+  </ul>
+  {{ result.seasonality.chart_html | safe }}
+  <ul class="note-lines" style="margin-top:10px">
+    <li>※ 조회한 기간 기준이라 표본이 적을수록 들쭉날쭉할 수 있어요.</li>
+    {% if result.seasonality.busy %}<li>매도 시점을 고를 수 있다면 활발한 달에 맞춰 내놓는 게 매수 수요가 가장 많습니다.</li>{% endif %}
+  </ul>
+</div>
+{% endif %}
 
-  {% if result.similar_listings %}
-    {% if result.similar_listings.rows %}
-    <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border)">
+{% if result.similar_listings %}
+<div class="card">
+  <h3>📋 비교 매물 유사도 순위 (붙여넣은 네이버부동산 매물 기준)</h3>
+  {% if result.similar_listings.rows %}
+    <div style="margin-top:2px">
       <p class="muted" style="margin-top:0; margin-bottom:12px">
         붙여넣은 텍스트에서 {{ result.similar_listings.n_parsed }}건을 읽었고, 그중 대상 물건과 면적·층·연식이
         가장 비슷한 상위 {{ result.similar_listings.n_shown }}건입니다 (유사도 높은 순).
@@ -373,13 +412,13 @@
       <p class="muted" style="margin-top:10px">⚠️ 호가는 실제 체결가가 아니라 매도인 희망가라 실거래가보다 통상 높게
         형성됩니다. 형식 인식이 완벽하지 않을 수 있어 참고용으로만 활용하세요.</p>
     </div>
-    {% else %}
+  {% else %}
     <p class="muted" style="margin-top:14px">붙여넣은 텍스트에서 매물을 인식하지 못했습니다{% if result.similar_listings.n_skipped %}
       ({{ result.similar_listings.n_skipped }}건 모두 가격/면적 인식 실패){% endif %}. 매물 하나당 단지명·가격·면적이
       포함되도록 다시 붙여넣어 보세요.</p>
-    {% endif %}
   {% endif %}
 </div>
+{% endif %}
 
 <script>
 (function () {

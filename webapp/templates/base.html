@@ -170,16 +170,26 @@
      라이선스 부담이 따라온다. */
   .home-hero {
     position: relative; overflow: hidden;
-    background: linear-gradient(135deg, #eafaf0 0%, #f4fbff 58%, #fdf6ea 100%);
+    background: linear-gradient(135deg, #eafaf0 0%, #f3fbf7 56%, #f8fcfb 100%);
     border: 1px solid var(--border); border-radius: var(--radius-lg);
     padding: 24px 26px; margin-bottom: 14px;
   }
+  /* 46절 — 히어로 우측 일러스트. 사용자가 직접 만든 이미지라
+     `webapp/static/`에 두고 그대로 쓴다(37절에서 지웠던 폴더를 되살림).
+     배경은 투명하게 빼뒀고, 왼쪽 가장자리는 mask로 서서히 사라지게 해서
+     글줄과 겹쳐도 지저분해 보이지 않는다. */
   .home-hero::after {
-    content: "🏙️"; position: absolute; right: 18px; bottom: -10px;
-    font-size: 86px; opacity: .18; line-height: 1; pointer-events: none;
+    content: ""; position: absolute; right: 0; bottom: 0;
+    width: 210px; height: 200px; pointer-events: none;
+    background: url("{{ url_for('static', filename='hero-building.png') }}") right bottom / contain no-repeat;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 42%);
+    mask-image: linear-gradient(to right, transparent 0, #000 42%);
+  }
+  .home-hero .home-title-icon {
+    width: 34px; height: 32px; vertical-align: -6px; margin-right: 6px;
   }
   .home-hero h1 { margin: 0 0 6px; font-size: 25px; }
-  .home-hero .home-sub { font-size: 13.5px; color: #4a5358; line-height: 1.7; margin: 0; max-width: 620px; }
+  .home-hero .home-sub { font-size: 14.5px; color: #40484d; line-height: 1.7; margin: 0; max-width: 600px; }
   .home-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
   .home-chip {
     display: inline-flex; align-items: center; gap: 5px;
@@ -209,6 +219,8 @@
     .field-icon { flex-basis: 36px; height: 36px; font-size: 16px; }
     .home-hero { padding: 20px 18px; }
     .home-hero h1 { font-size: 21px; }
+    .home-hero::after { width: 112px; height: 108px; opacity: .45; }
+    .home-hero .home-title-icon { width: 28px; height: 26px; vertical-align: -5px; }
   }
 
   /* 큼직한 제출 버튼 */

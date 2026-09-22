@@ -546,6 +546,10 @@
     {% if result.building.approval_date %} · 사용승인일: {{ result.building.approval_date }}{% endif %}
     {% if result.building.ground_floors %} · 지상층수: {{ result.building.ground_floors }}층{% endif %}
   </p>
+  <ul class="note-lines" style="margin-top:10px">
+    <li>⚠️ <b>위반건축물 딱지(불법 증축·용도변경 등)는 이 조회로 확인할 수 없어요</b> — 표제부 조회 응답에 해당 항목이 없습니다.</li>
+    <li>낙찰 전에 <b>정부24 "건축물대장 열람"</b>에서 직접 확인하세요 — 위반건축물이면 대출·매도 양쪽에서 크게 불리해집니다.</li>
+  </ul>
 </div>
 {% endif %}
 

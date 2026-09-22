@@ -772,6 +772,60 @@ class TestMarketabilityReport(unittest.TestCase):
         self.assertEqual(r["score"], 100)  # 층 good + 신뢰도 good만 반영
 
 
+class TestFloorAndElevator(unittest.TestCase):
+    """41절 층·승강기 항목 — 사용자 지적 반영분 고정.
+    (1) 승강기 유무를 항상 문장에 쓴다, (2) 4층과 5층 이상을 가른다,
+    (3) 건축물대장 지상층수로 탑층을 실제 확인한다."""
+
+    def _item(self, floor, has_elevator=None, ground_floors=None):
+        building = None
+        if has_elevator is not None or ground_floors is not None:
+            building = {"has_elevator": has_elevator, "ground_floors": ground_floors}
+        r = ep.build_marketability_report(floor=floor, building=building)
+        return next(i for i in r["items"] if i["key"] == "floor")
+
+    def test_elevator_is_always_stated(self):
+        self.assertIn("승강기가 있어", self._item(3, True)["text"])
+        self.assertIn("승강기가 없어", self._item(3, False)["text"])
+        self.assertIn("확인하지 못했어요", self._item(3)["text"])
+
+    def test_fourth_floor_without_elevator_is_only_ok(self):
+        """예전엔 4층 이상 승강기 없음을 전부 warn으로 묶었다 — 사용자가
+        "4층은 무난하거나 조금 나쁜 편"이라고 해서 5층 이상과 갈랐다."""
+        item = self._item(4, False)
+        self.assertEqual(item["verdict"], "ok")
+        self.assertIn("무난하거나 조금 나쁜 편", item["text"])
+
+    def test_fifth_floor_without_elevator_stays_warn(self):
+        self.assertEqual(self._item(5, False)["verdict"], "warn")
+
+    def test_elevator_still_rescues_high_floors(self):
+        self.assertEqual(self._item(5, True)["verdict"], "good")
+
+    def test_top_floor_is_detected_from_the_register(self):
+        item = self._item(5, True, ground_floors=5)
+        self.assertIn("탑층", item["text"])
+        self.assertEqual(item["verdict"], "ok")  # good에서 한 단계 내려온다
+
+    def test_not_top_floor_says_nothing_about_it(self):
+        self.assertNotIn("탑층", self._item(3, True, ground_floors=5)["text"])
+
+    def test_single_storey_building_is_not_called_a_top_floor(self):
+        """지상 1층짜리 건물에 1층이면 '탑층'이라는 말 자체가 의미 없다."""
+        self.assertNotIn("탑층", self._item(1, False, ground_floors=1)["text"])
+
+    def test_unreadable_ground_floor_value_is_ignored(self):
+        """건축물대장 값은 문자열로 오고 빈 값·'-'도 섞인다 — 못 읽으면
+        탑층 판정을 조용히 건너뛰고 나머지 판정은 그대로 나와야 한다."""
+        for bad in ("", "-", None, "미상"):
+            item = self._item(5, True, ground_floors=bad)
+            self.assertNotIn("탑층", item["text"])
+            self.assertEqual(item["verdict"], "good")
+
+    def test_ground_floors_as_string_still_works(self):
+        self.assertIn("탑층", self._item(5, True, ground_floors="5")["text"])
+
+
 class TestLocationKeywords(unittest.TestCase):
     """19절 — 입지 체크를 10개(4갈래)로 늘렸지만, 45절 환금성 판정에 쓰이는
     항목은 여전히 지하철역·초등학교 둘뿐이어야 한다."""

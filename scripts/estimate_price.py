@@ -1092,6 +1092,15 @@ MARKETABILITY_ORDER = [
 # 갈린다"는 안내(`info`)만 했는데, 사용자가 "완전 구축이면 그것도 디버프
 # 요소로 넣어달라"고 해서 실제 감점 항목으로 바꿨다.
 # ⚠️ 경계값은 경험적으로 끊은 참고값이지 데이터로 검증한 수치가 아니다.
+def _as_int(value) -> int | None:
+    """건축물대장 응답은 숫자도 문자열("5")로 오고, 빈 값·None·"-"도 섞인다 —
+    숫자로 못 읽으면 조용히 None을 돌려준다(판정에서 그냥 빠진다)."""
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+
+
 BUILD_AGE_NEW_MAX = 15   # 이내면 준신축 — 실거주 매수층이 가장 두껍다
 BUILD_AGE_OK_MAX = 30    # 이내면 무난 / 넘으면 "완전 구축"
 
@@ -1182,24 +1191,53 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         items.append({"key": "apt_gap", "label": "인근 아파트 대비 (참고 — 중·장기 신호)", "verdict": v, "text": t,
                        "why": "아파트와 값 차이가 클수록 예산이 모자라 내려오는 수요가 두껍고, 키 맞추기 상승 여력도 남습니다"})
 
-    # ④ 층·엘리베이터 — 강의 "팔기 어려운 요소" 중 이 계산기가 데이터로
-    #    확인할 수 있는 두 가지(나머지는 36절 임장 체크리스트로 넘긴다).
+    # ④ 층·승강기 — "팔기 어려운 요소" 중 이 계산기가 데이터로 확인할 수
+    #    있는 것들(나머지는 36절 임장 체크리스트로 넘긴다).
+    #    ⚠️ 사용자 지적 두 가지를 반영해 개정했다:
+    #    (1) "층·승강기인데 왜 승강기 유무가 안 써 있냐" — 건축물대장에서
+    #        이미 받아온 값을 **항상 문장으로** 붙인다(있으면 유리/없으면 불리).
+    #    (2) "4층은 승강기 없어도 무난하거나 조금 나쁜 편" — 예전엔 4층 이상
+    #        승강기 없음을 전부 warn으로 묶었는데, 4층과 5층 이상을 갈랐다.
+    #    (3) 5·6층 같은 고층은 건축물대장 지상층수(`grndFlrCnt`)와 비교해
+    #        **탑층인지 실제로 확인**한다 — 5-1절 비교거래의 "관측된 최고층"
+    #        추정과 달리 이건 대장 원본 값이라 훨씬 확실하다.
     if floor is not None:
         has_elevator = building.get("has_elevator") if building else None
-        if floor <= 0:
-            v, t = "warn", "반지하·지하는 지상층보다 시세가 절반 가까이 낮게 형성되는 경우가 많아 매수층이 크게 좁아집니다."
-        elif floor == 1:
-            v, t = "ok", "1층은 사생활·채광 때문에 선호도가 낮은 편이지만, 노인·유아 가구에는 오히려 장점이 되기도 해요."
-        elif floor >= 4 and has_elevator is False:
-            v, t = "warn", f"{floor}층인데 건축물대장상 승강기가 없어요 — 고층인데 승강기가 없는 건 대표적인 '팔기 어려운 요소'예요."
-        elif floor >= 4 and has_elevator:
-            v, t = "good", f"{floor}층이지만 승강기가 있어 고층의 불리함이 크게 줄어듭니다."
-        elif floor in (2, 3):
-            v, t = "good", f"{floor}층은 빌라에서 가장 선호되는 층대예요."
+        ground_floors = _as_int(building.get("ground_floors")) if building else None
+        is_top_floor = bool(ground_floors and floor >= ground_floors > 1)
+
+        if has_elevator is True:
+            elv = "승강기가 있어 매도에 유리해요"
+        elif has_elevator is False:
+            elv = "승강기가 없어 매도에 불리해요"
         else:
-            v, t = "ok", f"{floor}층은 무난한 편이에요."
-            if has_elevator is False:
-                t += " (승강기는 없습니다)"
+            elv = "승강기 유무는 건축물대장에서 확인하지 못했어요"
+
+        if floor <= 0:
+            v, head = "warn", "반지하·지하는 지상층보다 시세가 절반 가까이 낮게 형성되는 경우가 많아 매수층이 크게 좁아집니다"
+        elif floor == 1:
+            v, head = "ok", "1층은 사생활·채광 때문에 선호도가 낮은 편이지만, 노인·유아 가구에는 오히려 장점이 되기도 해요"
+        elif floor in (2, 3):
+            v, head = "good", f"{floor}층은 빌라에서 가장 선호되는 층대예요"
+        elif has_elevator:
+            v, head = "good", f"{floor}층이지만 승강기가 있어 고층의 불리함이 크게 줄어듭니다"
+        elif floor == 4 and has_elevator is False:
+            # 4층은 계단으로 오르내릴 만한 마지막 층이라 5층 이상과 나눠 본다.
+            v, head = "ok", f"{floor}층은 승강기가 없어도 무난하거나 조금 나쁜 편이에요"
+        elif floor >= 5 and has_elevator is False:
+            v, head = "warn", f"{floor}층인데 승강기가 없어요 — 고층인데 승강기가 없는 건 대표적인 '팔기 어려운 요소'예요"
+        else:
+            v, head = "ok", f"{floor}층은 무난한 편이에요"
+
+        t = f"{head}. {elv}."
+        if is_top_floor:
+            # 탑층은 누수·단열·여름 더위 때문에 같은 건물 안에서도 선호도가
+            # 떨어진다 — 좋게 나온 판정은 한 단계 내리고 문장으로도 밝힌다.
+            t += (f" 건축물대장상 지상 {ground_floors}층 건물이라 이 집이 탑층이에요 — "
+                  f"누수·단열·여름 더위 때문에 같은 건물 안에서도 선호도가 떨어지는 편이라 "
+                  f"임장 때 옥상 방수 상태를 꼭 확인하세요.")
+            if v == "good":
+                v = "ok"
         items.append({"key": "floor", "label": "층·승강기 (팔기 어려운 요소)", "verdict": v, "text": t,
                        "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사가 나쁘면 값을 낮춰도 잘 안 팔립니다"})
 
@@ -1869,7 +1907,11 @@ def print_building_info(subject_detail: dict):
         print(f"사용승인일: {info['approval_date']}")
     if info.get("ground_floors"):
         print(f"지상층수: {info['ground_floors']}층")
-    return info  # 41절 환금성 진단이 승강기 유무를 쓴다
+    # 사용자가 "위반건축물 딱지도 대장으로 확인되지 않냐"고 물어서 넣은 안내 —
+    # 20절대로 이 오퍼레이션(getBrTitleInfo) 응답에는 해당 필드가 없다. 조용히
+    # 빼두면 "확인됐다"고 오해할 수 있어서, 확인 못 한다는 사실을 명시한다.
+    print("⚠️ 위반건축물 딱지(불법 증축·용도변경 등)는 이 조회로는 확인할 수 없습니다 — 표제부 조회 응답에 해당 필드가 없어서예요. 낙찰 전에 정부24 '건축물대장 열람'에서 직접 확인하세요. 위반건축물이면 대출·매도 양쪽에서 크게 불리해집니다.")
+    return info  # 41절 환금성 진단이 승강기 유무·지상층수를 쓴다
 
 
 def _trend_direction(delta, threshold=2.0, unit="p"):

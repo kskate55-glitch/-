@@ -438,7 +438,9 @@ def estimate():
                         "corrected_realistic": _fmt_eok(realistic * correction["factor"]),
                     }
 
-    from estimate_price import describe_comparable_similarity
+    from estimate_price import describe_comparable_similarity, estimate_building_top_floors, is_estimated_top_floor
+
+    top_floor_map = estimate_building_top_floors(rows)
 
     build_year_note = f", 준공년도 ±{build_year_tolerance}년 이내" if build_year is not None else ""
     expanded_note = (
@@ -520,6 +522,7 @@ def estimate():
                 "name": r.get("mhouseNm", "(단지명없음)"),
                 "area": r.get("excluUseAr", "?"),
                 "floor": r.get("floor") or "?",
+                "is_top_floor": is_estimated_top_floor(r, top_floor_map),
                 "date": f"{r.get('dealYear')}.{r.get('dealMonth')}",
                 "amount": _fmt_eok(r["_amount_man"]),
                 "distance": f"{r['_distance_m']:.0f}m",

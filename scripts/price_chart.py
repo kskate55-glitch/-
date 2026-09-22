@@ -68,7 +68,7 @@ BORDER = "#e7e9ec"
 # 인코딩 — 사용자가 참고로 보내준 목업의 파란 계열 톤에 맞춰 회색조에서 바꿨다.
 DOT_COLOR_LOW = (0xd8, 0xe3, 0xf3)
 DOT_COLOR_HIGH = (0x14, 0x2b, 0x52)
-DOT_R_MIN, DOT_R_MAX = 4.0, 7.5
+DOT_R_MIN, DOT_R_MAX = 5.0, 9.0
 DIAMOND_SCALE = 1.15  # 다이아몬드(직거래)가 원과 비슷한 면적으로 보이도록 살짝 키운다
 
 # 강조 구간(보수적 급매가~현실적 체결가) 배경색 — primary(히어로 색)와는
@@ -191,7 +191,7 @@ def _histogram_counts(amounts: list[float], domain_lo: float, domain_hi: float, 
 def render_price_distribution_html(filtered: list[dict], markers: dict[str, float],
                                      highlight: tuple[str, str] = ("보수적 급매가", "현실적 체결가"),
                                      hero_name: str = "경매용 매도가",
-                                     max_dots: int = EMPHASIS_CAP_DEFAULT, width: int = 660, height: int = 215,
+                                     max_dots: int = EMPHASIS_CAP_DEFAULT, width: int = 420, height: int = 300,
                                      primary: str = PRIMARY,
                                      this_year: int | None = None, this_month: int | None = None) -> str:
     """filtered: find_comparables()가 돌려준 비교거래 목록(거리순 정렬됨,
@@ -229,9 +229,9 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     def x_of(v: float) -> float:
         return margin_l + (v - domain_lo) / (domain_hi - domain_lo) * plot_w
 
-    axis_y = 120
-    hit_r = 13
-    row_gap = 14
+    axis_y = 150
+    hit_r = 15
+    row_gap = 16
     min_gap_px = DOT_R_MAX * 2 + 4
 
     # 가중치 색·크기 램프는 전체 표본(rows) 기준으로 고정한다 — 강조/배경
@@ -260,7 +260,7 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         vals = [markers[n] for n in highlight]
         bx1, bx2 = x_of(min(vals)), x_of(max(vals))
         svg.append(
-            f'<rect x="{bx1:.1f}" y="22" width="{max(bx2 - bx1, 1):.1f}" height="{axis_y - 22:.1f}" '
+            f'<rect x="{bx1:.1f}" y="26" width="{max(bx2 - bx1, 1):.1f}" height="{axis_y - 26:.1f}" '
             f'fill="{HIGHLIGHT_FILL}" fill-opacity="{HIGHLIGHT_FILL_OPACITY}" '
             f'stroke="{HIGHLIGHT_EDGE}" stroke-width="1" stroke-dasharray="3,2" stroke-opacity="0.7" />'
         )
@@ -278,9 +278,9 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     for tick_val in sorted({lo, (lo + hi) / 2, hi}):
         tick_x = x_of(tick_val)
         svg.append(
-            f'<line x1="{tick_x:.1f}" y1="20" x2="{tick_x:.1f}" y2="{axis_y}" '
+            f'<line x1="{tick_x:.1f}" y1="24" x2="{tick_x:.1f}" y2="{axis_y}" '
             f'stroke="{BORDER}" stroke-width="1" stroke-dasharray="2,3" />'
-            f'<text x="{tick_x:.1f}" y="13" font-size="10" fill="{MUTED}" '
+            f'<text x="{tick_x:.1f}" y="16" font-size="13" font-weight="600" fill="{MUTED}" '
             f'text-anchor="middle">{html.escape(_fmt_eok(tick_val))}</text>'
         )
 
@@ -394,8 +394,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         x = x_of(value)
         is_hero = name == hero_name
         color = primary if is_hero else MARKER_COLORS.get(name, MUTED_2)
-        tick_len = 12 if is_hero else 9
-        pin_r = 5 if is_hero else 4
+        tick_len = 15 if is_hero else 11
+        pin_r = 7 if is_hero else 5.5
         svg.append(
             f'<line x1="{x:.1f}" y1="{axis_y}" x2="{x:.1f}" y2="{axis_y + tick_len}" '
             f'stroke="{color}" stroke-width="{2.5 if is_hero else 2}" />'
@@ -407,10 +407,10 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         # 알아보게 하기 위함이다. 가장자리를 벗어나지 않게 x를 클램프한다.
         if is_hero:
             text_x = min(max(x, margin_l + 34), width - margin_r - 34)
-            text_y = axis_y + tick_len + pin_r + 13
+            text_y = axis_y + tick_len + pin_r + 15
             svg.append(
                 f'<text x="{text_x:.1f}" y="{text_y:.1f}" text-anchor="middle" '
-                f'font-size="11" font-weight="700" fill="{color}">{html.escape(name)}</text>'
+                f'font-size="13" font-weight="700" fill="{color}">{html.escape(name)}</text>'
             )
 
     # 거래 밀집도 — 강조/배경 구분 없이 표본 전체(rows)의 가격이 어디에 몰려
@@ -418,8 +418,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     # "점이 많아서 잘라냈나?" 싶을 수 있어서, 전체 분포를 한 번 더 눈에 띄게
     # 보여주는 용도. 막대그래프 대신 매끈한 곡선을 쓴 건 사용자가 참고로
     # 보내준 목업 스타일을 반영한 것 — `_smooth_area_path()`가 그린다.
-    hist_y0 = axis_y + 46
-    hist_h = 26
+    hist_y0 = axis_y + 55
+    hist_h = 34
     n_bins = min(28, max(8, len(rows) // 2))
     counts = _histogram_counts([r["_amount_man"] for r in rows], lo, hi, n_bins)
     max_count = max(counts) if counts else 0
@@ -432,7 +432,7 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         area_d = _smooth_area_path(closed_pts)
         svg.append(f'<path d="{area_d} Z" fill="{HIST_BAR_COLOR}" fill-opacity="0.9" stroke="none" />')
         svg.append(
-            f'<text x="{margin_l}" y="{baseline + 13:.1f}" font-size="10" fill="{MUTED}">거래 밀집도</text>'
+            f'<text x="{margin_l}" y="{baseline + 16:.1f}" font-size="12" font-weight="600" fill="{MUTED}">거래 밀집도</text>'
         )
 
     svg.append("</svg>")
@@ -448,9 +448,9 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
 
     def _legend_row(head_color: str, head: str, sub: str) -> str:
         return (
-            f'<div style="display:flex; flex-direction:column; gap:1px">'
-            f'<span style="color:{head_color}; font-weight:700; font-size:12.5px; line-height:1.4">{head}</span>'
-            f'<span style="color:{MUTED}; font-size:11px; line-height:1.5">{sub}</span>'
+            f'<div style="display:flex; flex-direction:column; gap:2px">'
+            f'<span style="color:{head_color}; font-weight:700; font-size:14px; line-height:1.4">{head}</span>'
+            f'<span style="color:{MUTED}; font-size:12.5px; line-height:1.5">{sub}</span>'
             f'</div>'
         )
 
@@ -460,7 +460,7 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     # (모바일에서 특히 중요 — 화면을 덜 차지해야 한다).
     compact_legend = (
         f'<div style="margin-top:10px; padding-top:8px; border-top:1px dashed {BORDER}; '
-        f'font-size:11.5px; color:{MUTED}; display:flex; flex-wrap:wrap; align-items:center; gap:9px">'
+        f'font-size:13px; color:{MUTED}; display:flex; flex-wrap:wrap; align-items:center; gap:9px">'
         f'<span>{sample_note}</span>'
         f'<span>●&nbsp;일반거래</span>'
         f'<span>◆&nbsp;직거래</span>'
@@ -469,7 +469,7 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         f'<span>↔&nbsp;시계열보정</span>'
         f'<span>크기·진하기=반영도</span>'
         f'</div>'
-        f'<details style="margin-top:6px; font-size:11.5px; color:{MUTED}">'
+        f'<details style="margin-top:6px; font-size:13px; color:{MUTED}">'
         f'<summary style="cursor:pointer; color:{INK}; font-weight:600">? 그래프 보는 법</summary>'
         f'<div style="margin-top:8px; display:flex; flex-direction:column; gap:7px">'
         + _legend_row(
@@ -517,14 +517,14 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         f'background:#fff; padding:7px 11px; border-radius:10px; white-space:nowrap; '
         f'pointer-events:none; box-shadow:0 6px 16px rgba(28,30,33,0.16); '
         f'transform:translate(-50%,-100%)">'
-        f'<div class="pd-tip-title" style="font-size:12.5px; font-weight:700; color:{INK}"></div>'
-        f'<div class="pd-tip-sub" style="font-size:11px; color:{MUTED}; margin-top:1px"></div>'
+        f'<div class="pd-tip-title" style="font-size:14px; font-weight:700; color:{INK}"></div>'
+        f'<div class="pd-tip-sub" style="font-size:12.5px; color:{MUTED}; margin-top:1px"></div>'
         f'</div>'
     )
     detail_box = (
-        f'<div class="pd-detail" style="display:none; margin-top:8px; padding:10px 12px; '
-        f'background:#f7f8f9; border-radius:10px; font-size:12px; color:{INK}; '
-        f'white-space:pre-line; line-height:1.6"></div>'
+        f'<div class="pd-detail" style="display:none; margin-top:8px; padding:11px 13px; '
+        f'background:#f7f8f9; border-radius:10px; font-size:13.5px; color:{INK}; '
+        f'white-space:pre-line; line-height:1.65"></div>'
     )
     # 최근 3개월/반경 200m 이내만 강조해서 보는 토글 — 데이터를 다시 안
     # 불러오고, 이미 SVG에 박아둔 data-months-ago/data-distance만으로 해당
@@ -532,10 +532,10 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     toggles = (
         '<div style="display:flex; gap:6px; margin:8px 0 2px; flex-wrap:wrap">'
         f'<button type="button" class="pd-toggle" data-filter="recent3" '
-        f'style="font-size:11px; padding:4px 10px; border-radius:999px; border:1px solid {BORDER}; '
+        f'style="font-size:12.5px; padding:5px 12px; border-radius:999px; border:1px solid {BORDER}; '
         f'background:#fff; color:{MUTED}; cursor:pointer">최근 3개월만 강조</button>'
         f'<button type="button" class="pd-toggle" data-filter="near200" '
-        f'style="font-size:11px; padding:4px 10px; border-radius:999px; border:1px solid {BORDER}; '
+        f'style="font-size:12.5px; padding:5px 12px; border-radius:999px; border:1px solid {BORDER}; '
         f'background:#fff; color:{MUTED}; cursor:pointer">200m 이내만 강조</button>'
         '</div>'
     )
@@ -603,8 +603,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
 </script>"""
     intro = (
         '<div style="margin-bottom:8px">'
-        f'<div style="font-size:13.5px; font-weight:800; color:{INK}">📊 매도가 산출 근거 — 실제 비교거래 분포</div>'
-        f'<div style="font-size:11.5px; color:{MUTED}; margin-top:2px; line-height:1.5">'
+        f'<div style="font-size:16px; font-weight:800; color:{INK}">📊 매도가 산출 근거 — 실제 비교거래 분포</div>'
+        f'<div style="font-size:13px; color:{MUTED}; margin-top:2px; line-height:1.5">'
         '아래 점 하나하나가 실제로 거래된 가격이에요. 그 안에서 위 매도가 값들이 어디쯤 '
         '위치하는지 보면, 이 매도가가 어떤 실거래를 근거로 나온 숫자인지 알 수 있습니다. '
         '점을 누르면 왜 그 거래가 많이/적게 반영됐는지도 볼 수 있어요.</div>'

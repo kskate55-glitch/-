@@ -129,6 +129,34 @@
 {% endif %}
 </div>
 
+<div class="card">
+  <h3>📋 매도가 산출 근거 — 핵심 비교거래 (가까운 순)</h3>
+  <p class="muted" style="margin-top:-6px; margin-bottom:12px">
+    바로 위 그래프에 찍힌 점들의 실제 목록이에요. 국토교통부에 신고된 <b>과거 실거래(실제로 체결된 매매 기록)</b>이지,
+    지금 나와 있는 매물 호가가 아닙니다 — 이 기록들을 기준으로 위 매도가 값들을 계산했어요.
+  </p>
+  {% if result.comparable_criteria %}
+  <p class="muted" style="margin-top:-6px; margin-bottom:12px">{{ result.comparable_criteria }} 반경·허용범위는 첫 화면 "상세 옵션"에서 직접 조정할 수 있어요.</p>
+  {% endif %}
+  <table>
+    <tr><th>단지명</th><th>면적</th><th>층</th><th>계약</th><th>금액</th><th>거리</th><th>유사도</th></tr>
+    {% for c in result.comparables %}
+    <tr>
+      <td>
+        {{ c.name }}
+        {% if c.map_url %}<a href="{{ c.map_url }}" target="_blank" rel="noopener" class="comp-search-link" title="네이버부동산 지도에서 &quot;{{ c.name }}&quot; 위치 보기">🗺️</a>{% endif %}
+        {% if c.search_url %}<a href="{{ c.search_url }}" target="_blank" rel="noopener" class="comp-search-link" title="네이버에서 &quot;{{ c.name }}&quot; 검색">🔍</a>{% endif %}
+        <br><span class="muted" style="font-size:11px">{{ c.note }}</span>
+      </td>
+      <td>{{ c.area }}㎡</td>
+      <td style="white-space:nowrap">{{ c.floor }}층{% if c.is_top_floor %}<br><span class="muted" style="font-size:10.5px">(탑층 추정)</span>{% endif %}</td>
+      <td>{{ c.date }}</td><td>{{ c.amount }}</td><td>{{ c.distance }}</td>
+      <td>{{ c.score }}점</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
 {% if result.verdict %}
 <div class="card" style="border-left:4px solid var(--primary); background:var(--primary-tint)">
   <h3 style="margin-bottom:6px">📝 종합 판단 (규칙 기반 자동 요약)</h3>
@@ -153,29 +181,6 @@
   <p class="muted" style="margin-top:10px">※ 5절의 층·준공년도 하드 필터는 적용하지 않은, 유사면적만 기준으로 한 거래 빈도입니다.</p>
 </div>
 {% endif %}
-
-<div class="card">
-  <h3>핵심 비교거래 (가까운 순)</h3>
-  {% if result.comparable_criteria %}
-  <p class="muted" style="margin-top:-6px; margin-bottom:12px">{{ result.comparable_criteria }} 반경·허용범위는 첫 화면 "상세 옵션"에서 직접 조정할 수 있어요.</p>
-  {% endif %}
-  <table>
-    <tr><th>단지명</th><th>면적</th><th>층</th><th>계약</th><th>금액</th><th>거리</th><th>유사도</th></tr>
-    {% for c in result.comparables %}
-    <tr>
-      <td>
-        {{ c.name }}
-        {% if c.map_url %}<a href="{{ c.map_url }}" target="_blank" rel="noopener" class="comp-search-link" title="네이버부동산 지도에서 &quot;{{ c.name }}&quot; 위치 보기">🗺️</a>{% endif %}
-        {% if c.search_url %}<a href="{{ c.search_url }}" target="_blank" rel="noopener" class="comp-search-link" title="네이버에서 &quot;{{ c.name }}&quot; 검색">🔍</a>{% endif %}
-        <br><span class="muted" style="font-size:11px">{{ c.note }}</span>
-      </td>
-      <td>{{ c.area }}㎡</td><td>{{ c.floor }}층</td>
-      <td>{{ c.date }}</td><td>{{ c.amount }}</td><td>{{ c.distance }}</td>
-      <td>{{ c.score }}점</td>
-    </tr>
-    {% endfor %}
-  </table>
-</div>
 
 <div class="card">
   <h3>비교 매물 유사도 순위 (붙여넣은 네이버부동산 매물 기준)</h3>

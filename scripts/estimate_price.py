@@ -609,6 +609,70 @@ def similarity_score(distance_m: float, radius_m: float,
 PYEONG_PER_SQM = 1 / 3.3058  # listing_parser.py와 같은 환산 계수(평 = ㎡ × 이 값)
 
 
+def estimate_building_top_floors(rows: list[dict]) -> dict[tuple[str, str], int]:
+    """CLAUDE.md 5절 "핵심 비교거래" 층 표시 확장 — 같은 지번(umdNm+jibun,
+    사실상 같은 건물)으로 묶은 전체 실거래 기록(rows, 필터링 전 원본) 안에서
+    "지금까지 거래된 기록 중 가장 높은 층"을 추정한다.
+
+    ⚠️ 이건 **추정치**다 — 건축물대장 실제 총 층수(20절)를 매 비교거래마다
+    조회하면 정확하겠지만, 7절에서 이미 "비교거래 수십 건마다 추가로
+    건축물대장을 호출하면 API 호출량이 급격히 는다"는 이유로 엘리베이터
+    정보를 포기한 것과 같은 이유로 하지 않는다. 대신 이미 갖고 있는 MOLIT
+    데이터만으로 근사한다 — 진짜 탑층이 우리가 가진 기간 동안 한 번도 안
+    팔렸다면 놓칠 수 있다는 한계가 있다.
+
+    한 건물에 서로 다른 층이 2개 이상 관측돼야만 포함한다 — 거래가 1건뿐인
+    건물은 "관측된 최고층"이라는 말 자체가 의미가 없다(그 1건이 진짜
+    최고층인지 알 방법이 없다)."""
+    floors_by_building: dict[tuple[str, str], set[int]] = {}
+    for r in rows:
+        umd = (r.get("umdNm") or "").strip()
+        jibun = (r.get("jibun") or "").strip()
+        if not umd or not jibun:
+            continue
+        try:
+            floor = int((r.get("floor") or "").strip())
+        except (TypeError, ValueError):
+            continue
+        if floor <= 0:
+            continue
+        floors_by_building.setdefault((umd, jibun), set()).add(floor)
+    return {key: max(floors) for key, floors in floors_by_building.items() if len(floors) >= 2}
+
+
+def is_estimated_top_floor(row: dict, top_floor_map: dict[tuple[str, str], int]) -> bool:
+    """`estimate_building_top_floors()`가 만든 지도로 이 거래가 관측된
+    최고층인지만 불리언으로 돌려준다 — 웹 템플릿에서 "N층"과 "(탑층 추정)"을
+    따로 렌더링(줄바꿈 등)하고 싶을 때 쓴다. CLI는 `format_floor_label()`의
+    합쳐진 문자열을 그대로 쓴다."""
+    floor_raw = (row.get("floor") or "").strip()
+    try:
+        floor = int(floor_raw)
+    except ValueError:
+        return False
+    if floor <= 0:
+        return False
+    key = ((row.get("umdNm") or "").strip(), (row.get("jibun") or "").strip())
+    return top_floor_map.get(key) == floor
+
+
+def format_floor_label(row: dict, top_floor_map: dict[tuple[str, str], int]) -> str:
+    """CLAUDE.md 5절 — CLI "핵심 비교거래" 층 열에 쓰는 표시용 문자열. 대상
+    건물에서 관측된 최고층과 같으면 "(탑층 추정)"을 붙인다."""
+    floor_raw = (row.get("floor") or "").strip()
+    if not floor_raw:
+        return "층정보없음"
+    try:
+        floor = int(floor_raw)
+    except ValueError:
+        return "층정보없음"
+    if floor <= 0:
+        return f"{floor}층"
+    if is_estimated_top_floor(row, top_floor_map):
+        return f"{floor}층(탑층 추정)"
+    return f"{floor}층"
+
+
 def describe_comparable_similarity(subject_area: float, subject_floor: int | None,
                                     subject_build_year: str | None, row: dict) -> str:
     """비교거래 하나의 정보를 짧게 요약한다 — "핵심 비교거래" 목록에 물건마다
@@ -1755,11 +1819,13 @@ def main():
         print()
 
     build_year_note = f", 준공년도 ±{args.build_year_tolerance}년 이내" if args.build_year is not None else ""
-    print(f"핵심 비교거래 (가까운 순 — 반경 {effective_radius:.0f}m 안, 전용면적 ±{args.area_tolerance:.0f}%{build_year_note}인 "
+    top_floor_map = estimate_building_top_floors(rows)
+    print(f"핵심 비교거래 (과거 실거래 기준 — 국토교통부에 신고된 실제 체결 기록입니다, 지금 나온 매물 호가가 아닙니다):")
+    print(f"가까운 순 — 반경 {effective_radius:.0f}m 안, 전용면적 ±{args.area_tolerance:.0f}%{build_year_note}인 "
           f"실거래 중 거리·면적·층·준공년도 종합 유사도(0~100점, 거리 35%·면적 30%·층 20%·준공년도 15%)가 "
-          f"높을수록, 계약월이 최근일수록 가중치를 높게 준 것입니다):")
+          f"높을수록, 계약월이 최근일수록 가중치를 높게 준 것입니다:")
     for r in filtered[:8]:
-        floor_txt = f"{r.get('floor')}층" if r.get("floor") else "층정보없음"
+        floor_txt = format_floor_label(r, top_floor_map)
         note = describe_comparable_similarity(args.area, args.floor, args.build_year, r)
         print(f"- {r.get('mhouseNm','(단지명없음)')} {r.get('excluUseAr','?')}㎡, {floor_txt}, "
               f"{r.get('dealYear')}.{r.get('dealMonth')} 계약, {fmt(r['_amount_man'])} — {r['_distance_m']:.0f}m "

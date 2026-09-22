@@ -11,6 +11,7 @@
 </a>
 {% endif %}
 
+<div class="hero-row{% if result.price_tiers %} two-col{% endif %}">
 <div class="hero">
   <div class="hero-label">경매용 매도가</div>
   <div class="hero-price">{{ result.auction_price }}</div>
@@ -35,17 +36,11 @@
   {% endif %}
 </div>
 
-{% if result.verdict %}
-<div class="card" style="border-left:4px solid var(--primary); background:var(--primary-tint)">
-  <h3 style="margin-bottom:6px">📝 종합 판단 (규칙 기반 자동 요약)</h3>
-  <p style="margin:0; line-height:1.7; font-size:14px">{{ result.verdict }}</p>
-</div>
-{% endif %}
-
 {% if result.price_tiers %}
 <div class="card">
   <h3>가격 구간별 매도 전략</h3>
   <p class="muted" style="margin-top:-6px; margin-bottom:12px">비교거래 분포 안에서의 가격 위치를 기준으로 한 참고 라벨입니다 — "30일/60일"은 실제 매도 소요일수를 측정한 값이 아니라, 낮은 가격일수록 빨리 팔릴 가능성이 높다는 참고용 목표입니다.</p>
+  <div class="tier-table-wrap">
   <table>
     <tr><th>구간</th><th>가격</th>{% if result.similar_listings %}<th>현재 매물 대비</th><th>예상 소진 속도</th>{% endif %}</tr>
     {% for t in result.price_tiers.rows %}
@@ -58,6 +53,7 @@
     </tr>
     {% endfor %}
   </table>
+  </div>
   {% if result.price_tiers.competitive_note %}
   <p class="muted" style="margin-top:10px">{{ result.price_tiers.competitive_note }}</p>
   {% endif %}
@@ -68,6 +64,14 @@
     소요일수를 측정한 값이 아닙니다.
   </p>
   {% endif %}
+</div>
+{% endif %}
+</div>
+
+{% if result.verdict %}
+<div class="card" style="border-left:4px solid var(--primary); background:var(--primary-tint)">
+  <h3 style="margin-bottom:6px">📝 종합 판단 (규칙 기반 자동 요약)</h3>
+  <p style="margin:0; line-height:1.7; font-size:14px">{{ result.verdict }}</p>
 </div>
 {% endif %}
 

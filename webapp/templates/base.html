@@ -29,6 +29,9 @@
     color: var(--ink); background: var(--bg);
     -webkit-font-smoothing: antialiased;
   }
+  @media (min-width: 900px) {
+    body { max-width: 1000px; }
+  }
   h1 { font-size: 21px; font-weight: 800; margin: 4px 0 2px; letter-spacing: -0.3px; }
   h3 { font-size: 15px; font-weight: 700; margin: 0 0 12px; color: var(--ink); }
   a { color: var(--primary-dark); }
@@ -94,11 +97,20 @@
     border: 1px solid var(--border); margin-bottom: 14px; box-shadow: var(--shadow);
   }
 
+  /* 히어로 카드 + 가격 구간별 매도 전략을 나란히 놓는 행 —
+     넓은 화면에서만 2열, 좁은 화면(대부분의 방문자)에서는 그대로 세로로 쌓인다 */
+  .hero-row { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
+  @media (min-width: 900px) {
+    .hero-row.two-col { grid-template-columns: 1.35fr 1fr; }
+  }
+  .hero-row .card { margin-bottom: 0; }
+  .tier-table-wrap { overflow-x: auto; }
+
   /* 가격 히어로 카드 */
   .hero {
     background: linear-gradient(165deg, #ffffff 0%, var(--primary-tint) 130%);
     border: 1px solid var(--border); border-radius: var(--radius-lg);
-    padding: 24px 22px 20px; margin-bottom: 14px; box-shadow: var(--shadow);
+    padding: 24px 22px 20px; margin-bottom: 0; box-shadow: var(--shadow);
   }
   .hero-label { font-size: 13px; font-weight: 700; color: var(--primary-dark); }
   .hero-price { font-size: 40px; font-weight: 800; letter-spacing: -1px; margin: 4px 0 2px; color: var(--ink); }

@@ -225,26 +225,6 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   #loading-overlay p { color: #444; font-size: 14px; margin: 0; text-align: center; max-width: 520px; }
 
-  /* 로딩 중 보여주는 강의 자료 카드 — 대기 시간이 길어져도 그냥 버리는 시간이
-     되지 않게, 사용자가 들은 평공쌤 강의의 지역 분석 표를 같이 돌려 보여준다 */
-  #loading-figure {
-    display: none; margin: 0; max-width: 640px; width: 100%; text-align: center;
-    animation: tipfade 0.45s ease;
-  }
-  #loading-figure.on { display: block; }
-  @keyframes tipfade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  /* 표가 세로로 길어서(가로:세로 ≈ 1:1.4) 높이가 먼저 걸린다 — width:100%로
-     늘리면 object-fit 때문에 좌우 여백만 생기고 표는 더 작아져서, 폭·높이
-     둘 중 더 빡빡한 쪽에 자연스럽게 맞도록 max-만 걸어둔다 */
-  #loading-figure img {
-    max-width: 100%; max-height: 68vh; width: auto; height: auto;
-    border-radius: var(--radius-md); border: 1px solid var(--border);
-    background: #fff; box-shadow: var(--shadow); cursor: zoom-in;
-  }
-  #loading-figure figcaption {
-    margin-top: 7px; font-size: 11.5px; color: var(--muted-2); line-height: 1.6;
-  }
-
   @media (max-width: 420px) {
     .hero-price { font-size: 32px; }
     .price-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -262,10 +242,6 @@
 <div id="loading-overlay">
   <div class="spinner"></div>
   <p id="loading-text">실거래가 조회 중이에요, 처음 보는 지역이면 최대 1~2분 정도 걸릴 수 있어요…</p>
-  <figure id="loading-figure">
-    <img id="loading-img" alt="" />
-    <figcaption id="loading-caption"></figcaption>
-  </figure>
 </div>
 <script>
   // 로딩이 길어질 때(특히 처음 조회하는 지역 — 비교거래마다 카카오 지오코딩을
@@ -279,11 +255,8 @@
     "반경 안 비교거래를 찾는 중이에요…",
     "매도가를 계산하는 중이에요…",
   ];
-  // 팁은 두 종류다 — 글자만 있는 짧은 팁과, 사용자가 들은 평공쌤(텐엑스
-  // 재테크 아카데미) 강의의 지역 분석 표를 같이 보여주는 팁. 표가 있는 팁은
-  // 읽는 데 시간이 걸리니 더 오래(9초) 띄우고, 글자 팁은 3.5초만 띄운다.
-  var TIP_BASE = "{{ url_for('static', filename='tips/') }}";
-  // 로딩 중 순환하는 팁 카드 (37절).
+  // 팁은 글자 한 줄짜리만 쓴다 — 3.5초씩 순서대로 돌린다.
+  // 로딩 중 순환하는 글자 팁 (37절).
   // 글자 팁 출처: 이 프로젝트 규칙(CLAUDE.md) + data/lecture_notes_villa.md
   //   (평공쌤 빌라특강 텍스트 정리본 — 무거운 PDF 대신 이 파일을 본다).
   // 숫자가 들어간 강의 내용은 "강의 예시"라고 반드시 밝힌다 — 보장 수치가 아니고
@@ -293,44 +266,19 @@
     { text: "💡 빌라는 아파트의 대체재예요 — 인근 아파트보다 비싸지면 잘 안 팔립니다" },
     { text: "💡 \"싸게 사는 것\"보다 \"실제로 팔릴 가격\"을 먼저 계산하는 게 순서예요" },
     { text: "💡 반지하는 보통 지상층 시세의 절반 수준으로 형성돼요" },
-    {
-      text: "📊 경기도 규제지역 빌라 낙찰·단타 추천 TOP 10",
-      img: "gyeonggi_regulated_top10.png",
-      caption: "광명 광명동(342건)·성남 은행동(227건)·금광동(116건) 순으로 실거래가 많아요 · 출처: 텐엑스 재테크 아카데미 평공쌤 정리",
-    },
     { text: "💡 싸다고 다 팔리는 건 아니에요 — \"팔리는 빌라의 하한선\"을 잡는 게 핵심" },
     { text: "💡 빌라는 개별성이 강해서 실거래 한 건만 보고 가격을 정하면 위험해요" },
     { text: "💡 3층이 가장 인기 있고, 1층·6층은 상대적으로 덜 선호되는 편이에요" },
     { text: "💡 평당가만 맹신하지 마세요 — 면적·층·연식·상태가 섞이면 왜곡될 수 있어요" },
-    {
-      text: "📊 경기 비규제지역 소·중형 빌라(전용 35~66㎡) 거래량 TOP 20",
-      img: "gyeonggi_small_top20.png",
-      caption: "안양 안양동 294건 · 수원 세류동 199건 · 부천 원종동 198건 — 1~2억대가 주력 구간 · 출처: 평공쌤 정리",
-    },
     { text: "💡 채광·엘리베이터·주차·누수·악취·소음·관리상태·경사는 임장 때 꼭 확인하세요" },
     { text: "💡 호가·실거래에도 업거래 같은 왜곡이 섞일 수 있어요 — 여러 건을 같이 보세요" },
     { text: "💡 경쟁을 피하는 하자 6단계: 입지 · 물종 · 물건 · 법리 · 절차 · 시장 (강의 정리)" },
-    {
-      text: "📊 경기 비규제지역 중대형 빌라(전용 66~85㎡) 거래량 TOP 20",
-      img: "gyeonggi_large_top20.png",
-      caption: "안산 본오동 179건 · 사동 138건 · 부곡동 103건 — 안산 상록구에 중대형 거래가 몰려 있어요 · 출처: 평공쌤 정리",
-    },
     { text: "💡 \"하자 있는 물건\"이 아니라 \"통제 가능한 하자\"인지가 갈림길이에요" },
     { text: "💡 매도 전엔 네이버부동산에서 주변 경쟁 매물을 꼭 확인해보세요" },
     { text: "💡 수익률이 높은 물건일수록 환금성(빨리 팔리는 정도)은 낮아질 수 있어요" },
-    {
-      text: "📊 준공연도별 거래량 — 2010년 이전 구옥 vs 이후 준신축",
-      img: "gyeonggi_buildyear_top20.png",
-      caption: "구옥은 정비·저가단타 타겟, 준신축은 실수요 타겟으로 접근 구간이 달라요 · 출처: 평공쌤 정리",
-    },
     { text: "💡 같은 건물이라도 수리 상태(올수리/기본/노후)에 따라 매도가능가격이 달라져요" },
     { text: "💡 강의 예시 기준 현금:대출 3:7, 낙찰가는 투자금의 약 3~3.5배 — 예시일 뿐 보장 수치는 아니에요" },
     { text: "💡 거래량 · 거래시기 · 면적 · 연식 · 상태 · 주변 아파트와의 가격차를 함께 보세요" },
-    {
-      text: "📊 정비구역 영향권 vs 순수 비정비구역 거래량 TOP 20",
-      img: "gyeonggi_redevelop_top20.png",
-      caption: "정비구역은 재개발·몸테크 엑시트, 비정비구역은 실거주 급매 엑시트로 출구 전략이 갈려요 · 출처: 평공쌤 정리",
-    },
     { text: "💡 취득세 중과배제 기준은 수도권 공시가 1억 · 지방 2억 이하 — 세법은 시점마다 달라지니 최신 기준을 꼭 확인하세요" },
     { text: "💡 명도는 인도명령까지 가도 길어야 3~6개월, 어려우면 대행(강의 예시 약 200만원)" },
     { text: "💡 투자금 5천~2억 구간은 수도권 비규제 빌라 올현금 단타가 주 타겟이에요 (강의 예시)" },
@@ -338,7 +286,6 @@
     { text: "💡 처음 조회하는 지역은 지오코딩 때문에 조금 더 걸릴 수 있어요" },
   ];
   var TIP_MS_TEXT = 3500;
-  var TIP_MS_IMAGE = 9000;
 
   document.querySelectorAll("form").forEach(function (form) {
     form.addEventListener("submit", function () {
@@ -346,36 +293,13 @@
       if (btn) btn.disabled = true;
       document.getElementById("loading-overlay").classList.add("active");
 
-      // 표 이미지는 로딩이 시작된 뒤에만 미리 받는다 — 첫 화면 로딩까지
-      // 무겁게 만들지 않으면서, 첫 표 팁이 뜨는 시점(10초쯤 뒤)에는 이미
-      // 받아져 있어서 빈 칸이 보이지 않는다.
-      LOADING_TIPS.forEach(function (t) {
-        if (t.img) { var pre = new Image(); pre.src = TIP_BASE + t.img; }
-      });
-
       var textEl = document.getElementById("loading-text");
-      var figEl = document.getElementById("loading-figure");
-      var imgEl = document.getElementById("loading-img");
-      var capEl = document.getElementById("loading-caption");
-      imgEl.addEventListener("click", function () {
-        if (imgEl.src) window.open(imgEl.src, "_blank", "noopener");
-      });
 
       function showTip(i) {
-        var tip = LOADING_TIPS[i];
-        textEl.textContent = tip.text;
-        if (tip.img) {
-          imgEl.src = TIP_BASE + tip.img;
-          imgEl.alt = tip.text;
-          capEl.textContent = (tip.caption || "") + " · 눌러서 크게 보기";
-          figEl.classList.add("on");
-        } else {
-          figEl.classList.remove("on");
-          imgEl.removeAttribute("src");
-        }
+        textEl.textContent = LOADING_TIPS[i].text;
         setTimeout(function () {
           showTip((i + 1) % LOADING_TIPS.length);
-        }, tip.img ? TIP_MS_IMAGE : TIP_MS_TEXT);
+        }, TIP_MS_TEXT);
       }
 
       var stepIdx = 0;

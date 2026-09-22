@@ -268,7 +268,9 @@ def estimate():
         }
 
     from data_source import get_trade_rows
-    from estimate_price import compute_scenarios, dedupe, find_comparables
+    from estimate_price import (
+        ADAPTIVE_RADIUS_MIN_COMPARABLES, compute_scenarios, dedupe, find_comparables_adaptive,
+    )
 
     try:
         rows = dedupe(get_trade_rows(lawd_cd, year_min))
@@ -283,15 +285,16 @@ def estimate():
             form=form, last_year=this_year - 1,
         )
 
-    filtered = find_comparables(rows, subject_coord, area, floor, build_year,
-                                 radius, year_min, this_year, gu_filter=None,
-                                 area_tolerance_pct=area_tolerance_pct,
-                                 build_year_tolerance=build_year_tolerance,
-                                 this_month=this_month)
+    filtered, radius, radius_expanded = find_comparables_adaptive(
+        rows, subject_coord, area, floor, build_year,
+        radius, year_min, this_year, gu_filter=None,
+        area_tolerance_pct=area_tolerance_pct,
+        build_year_tolerance=build_year_tolerance,
+        this_month=this_month)
     if not filtered:
         return render_template(
             "index.html",
-            error=f"반경 {radius:.0f}m, 유사면적 조건에 맞는 비교거래를 찾지 못했습니다. 반경을 넓혀서 다시 시도해 보세요.",
+            error="반경을 최대한 넓혀봤지만 유사면적 조건에 맞는 비교거래를 찾지 못했습니다. 면적 허용범위를 넓혀서 다시 시도해 보세요.",
             form=form, last_year=this_year - 1,
         )
 
@@ -380,10 +383,14 @@ def estimate():
     from estimate_price import describe_comparable_similarity
 
     build_year_note = f", 준공년도 ±{build_year_tolerance}년 이내" if build_year is not None else ""
+    expanded_note = (
+        f" (지정한 반경 안 비교거래가 {ADAPTIVE_RADIUS_MIN_COMPARABLES}건 미만이라 자동으로 넓혔습니다.)"
+        if radius_expanded else ""
+    )
     comparable_criteria = (
         f"반경 {radius:.0f}m 안, 전용면적 ±{area_tolerance_pct_input:.0f}%{build_year_note}인 실거래 중 "
         f"거리·면적·층·준공년도 종합 유사도(0~100점, 표의 '유사도' 열)가 높을수록, "
-        f"계약월이 최근일수록 가중치를 높게 줘서 고른 것입니다."
+        f"계약월이 최근일수록 가중치를 높게 줘서 고른 것입니다.{expanded_note}"
     )
 
     price_tiers_display = {

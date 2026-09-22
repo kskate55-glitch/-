@@ -214,6 +214,27 @@ def to_amount_man(s: str) -> float:
         return float("nan")
 
 
+# 거래유형(dealingGbn)별 가중치 — molit_rhtrade_api.py 상단의 공식 기술문서로
+# 검증된 필드다(✅). 직거래는 가족 간 거래처럼 시세를 반영 안 하는 경우가 섞일
+# 수 있지만, 그렇다고 완전히 제외하면 안 된다 — 빌라는 표본 자체가 워낙 적어서
+# 거래를 통째로 버리면 표본 부족 문제가 더 심해질 수 있다는 지적을 반영해
+# "제외"가 아니라 "가중치 감소"로만 처리한다. ⚠️ 실제 응답 문자열이 정확히
+# "중개거래"/"직거래"인지는 아직 실측 샘플로 확인하지 못했다 — 알려진 두 값 외에
+# 다른 표기(빈 문자열 포함)는 잘못 추측해서 부당하게 낮추는 것보다 안전하게
+# 중개거래와 동일한 가중치(1.0)로 둔다. 실제 값이 다르면 이 표만 고치면 된다.
+DEALING_TYPE_WEIGHT = {"중개거래": 1.0, "직거래": 0.4}
+DEALING_TYPE_WEIGHT_DEFAULT = 1.0
+
+# 평당가(㎡당가) 기준 이상치 다운웨이트 — median ± PRICE_OUTLIER_MAD_MULTIPLIER×MAD
+# 밖이면 PRICE_OUTLIER_WEIGHT로 가중치를 낮춘다(제외는 아님 — 마찬가지로 표본이
+# 적은 빌라 특성상 통째로 버리기보다 낮춰서 반영하는 쪽이 안전하다). MAD는
+# 스케일 보정(×1.4826) 없이 그대로 쓴다 — 통계적으로 검증된 값이 아니라 경험적
+# 임계치라는 점은 동일하다.
+PRICE_OUTLIER_MAD_MULTIPLIER = 3
+PRICE_OUTLIER_WEIGHT = 0.1
+PRICE_OUTLIER_MIN_SAMPLE = 5  # 이보다 표본이 적으면 이상치 판단 자체가 무의미해서 건너뜀
+
+
 def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area: float,
                       floor: int | None, build_year: str | None, radius_m: float,
                       year_min: int, this_year: int, gu_filter: str | None,
@@ -331,6 +352,8 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
                 build_year_tolerance=build_year_tolerance,
             )
             recency_weight = weight_for_recency(r.get("dealYear"), r.get("dealMonth"), this_year, this_month)
+            dealing_gbn = (r.get("dealingGbn") or "").strip()
+            dealing_weight = DEALING_TYPE_WEIGHT.get(dealing_gbn, DEALING_TYPE_WEIGHT_DEFAULT)
 
             # rows의 원본 dict를 직접 고치지 않고 복사본에 써넣는다 — find_comparables()는
             # 같은 rows를 다른 조건(예: 30절 유동성 점수가 floor/build_year 없이 더 넓은
@@ -343,11 +366,74 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             r["_amount_man"] = amount
             r["_lat"], r["_lon"] = coord
             r["_similarity_score"] = score
-            r["_weight"] = recency_weight * SIMILARITY_EMPHASIS_CURVE(score)
+            r["_dealing_gbn"] = dealing_gbn or None
+            r["_weight"] = recency_weight * SIMILARITY_EMPHASIS_CURVE(score) * dealing_weight
             out.append(r)
+
+    # 평당가(㎡당가) 기준 이상치 다운웨이트 — 같은 반경·면적대인데 가격이
+    # 유독 튀는 거래(특수관계자 거래, 입력 오류 등)가 가중 중앙값을 왜곡하지
+    # 않도록, median ± 3×MAD 밖인 거래는 가중치를 크게 낮춘다(제외는 아님).
+    price_per_sqm = []
+    for r in out:
+        try:
+            row_area = float(r.get("excluUseAr"))
+        except (TypeError, ValueError):
+            continue
+        if row_area > 0:
+            price_per_sqm.append((r, r["_amount_man"] / row_area))
+
+    if len(price_per_sqm) >= PRICE_OUTLIER_MIN_SAMPLE:
+        pps_values = [pps for _, pps in price_per_sqm]
+        median_pps = statistics.median(pps_values)
+        mad = statistics.median([abs(pps - median_pps) for pps in pps_values])
+        if mad > 0:
+            threshold = PRICE_OUTLIER_MAD_MULTIPLIER * mad
+            for r, pps in price_per_sqm:
+                if abs(pps - median_pps) > threshold:
+                    r["_weight"] *= PRICE_OUTLIER_WEIGHT
+                    r["_price_outlier"] = True
 
     out.sort(key=lambda r: r["_distance_m"])
     return out
+
+
+# 적응형 반경(5절 확장) — 사용자가 지정한(또는 기본 400m) 반경에서 유효 비교거래가
+# 너무 적으면 이 단계들을 따라 단계적으로 넓혀본다. 사용자가 지정한 반경보다
+# 좁게는 절대 시도하지 않는다(사용자 설정을 최소값으로 존중).
+ADAPTIVE_RADIUS_STEPS_M = (200, 300, 400, 600, 800, 1000)
+ADAPTIVE_RADIUS_MIN_COMPARABLES = 7
+
+
+def find_comparables_adaptive(rows: list[dict], subject_coord: tuple[float, float], area: float,
+                               floor: int | None, build_year: str | None, base_radius_m: float,
+                               year_min: int, this_year: int, gu_filter: str | None,
+                               **kwargs) -> tuple[list[dict], float, bool]:
+    """CLAUDE.md 5절 확장 — 고정 반경 하나만 보면 동네마다 표본 편차가 크다
+    (어떤 동네는 400m 안에 15건, 어떤 동네는 2건뿐). 그래서 사용자가 지정한
+    반경에서 먼저 찾아보고, `ADAPTIVE_RADIUS_MIN_COMPARABLES`(기본 7)건보다
+    적으면 `ADAPTIVE_RADIUS_STEPS_M`을 따라 그보다 넓은 단계로만 다시 찾는다.
+    거리가 멀어질수록 `similarity_score()`의 거리 점수가 자동으로 낮아지므로
+    "억지로 먼 거래를 가깝게 취급"하는 문제는 생기지 않는다 — 단지 표본을
+    좀 더 확보할 뿐이다. 매 단계 `find_comparables()`를 새로 호출하지만
+    지오코딩 결과가 `data/geocode_cache.json`에 캐시돼 있어 재호출 비용이
+    크지 않다(30절 유동성 계산이 이미 같은 방식을 쓰고 있다).
+
+    반환값: (비교거래 리스트, 실제 사용된 반경(m), 반경을 확대했는지 여부)."""
+    result = find_comparables(rows, subject_coord, area, floor, build_year, base_radius_m,
+                               year_min, this_year, gu_filter, **kwargs)
+    if len(result) >= ADAPTIVE_RADIUS_MIN_COMPARABLES:
+        return result, base_radius_m, False
+
+    best, best_radius = result, base_radius_m
+    for step in ADAPTIVE_RADIUS_STEPS_M:
+        if step <= base_radius_m:
+            continue
+        widened = find_comparables(rows, subject_coord, area, floor, build_year, step,
+                                    year_min, this_year, gu_filter, **kwargs)
+        best, best_radius = widened, step
+        if len(widened) >= ADAPTIVE_RADIUS_MIN_COMPARABLES:
+            break
+    return best, best_radius, best_radius != base_radius_m
 
 
 def weight_for_recency(deal_year: str, deal_month: str, this_year: int, this_month: int) -> float:
@@ -1247,7 +1333,8 @@ def main():
     ap.add_argument("--area", type=float, required=True)
     ap.add_argument("--floor", type=int, default=None, help="대상 물건의 층 (선택 — 유사층 가중치 판단에 사용)")
     ap.add_argument("--build-year", default=None, help="대상 물건의 준공년도 (선택 — 유사연식 가중치 판단에 사용)")
-    ap.add_argument("--radius", type=float, default=400, help="비교 반경(미터), 기본 400m")
+    ap.add_argument("--radius", type=float, default=400,
+                     help="비교 반경(미터), 기본 400m — 최소값일 뿐, 이 안에 비교거래가 7건 미만이면 자동으로 더 넓혀서 찾는다")
     ap.add_argument("--area-tolerance", type=float, default=15.0, help="면적 허용범위(%%, 기본 15) — 대상 물건 전용면적과 이 범위 안 오차인 실거래만 비교 대상으로 삼는다")
     ap.add_argument("--build-year-tolerance", type=int, default=4, help="준공년도 허용범위(년, 기본 4) — --build-year를 줬을 때만 적용")
     ap.add_argument("--year-min", type=int, default=None)
@@ -1311,18 +1398,24 @@ def main():
     gu_filter = find_gu_in_address(args.address)
 
     area_tolerance_pct = args.area_tolerance / 100
-    filtered = find_comparables(rows, subject_coord, args.area, args.floor, args.build_year,
-                                 args.radius, year_min, this_year, gu_filter,
-                                 area_tolerance_pct=area_tolerance_pct,
-                                 build_year_tolerance=args.build_year_tolerance,
-                                 this_month=this_month)
+    filtered, effective_radius, radius_expanded = find_comparables_adaptive(
+        rows, subject_coord, args.area, args.floor, args.build_year,
+        args.radius, year_min, this_year, gu_filter,
+        area_tolerance_pct=area_tolerance_pct,
+        build_year_tolerance=args.build_year_tolerance,
+        this_month=this_month)
 
     if not filtered:
-        print(f"[안내] 반경 {args.radius:.0f}m, 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")
-        print("       반경을 넓히거나(--radius), data/raw에 더 많은 지역/기간 데이터를 추가해 보세요.")
+        print(f"[안내] 반경을 최대 {ADAPTIVE_RADIUS_STEPS_M[-1]:.0f}m까지 넓혀봤지만, 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")
+        print("       면적 허용범위를 넓히거나(--area-tolerance), data/raw에 더 많은 지역/기간 데이터를 추가해 보세요.")
         return
 
-    scen = compute_scenarios(filtered, args.radius, this_year)
+    if radius_expanded:
+        print(f"[안내] 지정한 반경({args.radius:.0f}m) 안 비교거래가 {ADAPTIVE_RADIUS_MIN_COMPARABLES}건 미만이라, "
+              f"반경을 {effective_radius:.0f}m로 자동으로 넓혀서 다시 찾았습니다.")
+        print()
+
+    scen = compute_scenarios(filtered, effective_radius, this_year)
     n_total, n_close, n_2026, confidence = scen["n_total"], scen["n_close"], scen["n_this_year"], scen["confidence"]
     conservative = scen["p25"]
     realistic = scen["median"]
@@ -1336,7 +1429,7 @@ def main():
         return f"{eok:.2f}억"
 
     print(f"분석기간: {year_min}.01 ~ {this_year}.12")
-    print(f"유효 비교거래: {n_total}건 (반경 {args.radius:.0f}m 이내, {args.radius/2:.0f}m 이내 {n_close}건 / {this_year}년 {n_2026}건)")
+    print(f"유효 비교거래: {n_total}건 (반경 {effective_radius:.0f}m 이내, {effective_radius/2:.0f}m 이내 {n_close}건 / {this_year}년 {n_2026}건)")
     print(f"시세 신뢰도: {confidence}/100")
     print()
     print(f"보수적 급매가: {fmt(conservative)}")
@@ -1372,7 +1465,7 @@ def main():
         print()
 
     build_year_note = f", 준공년도 ±{args.build_year_tolerance}년 이내" if args.build_year is not None else ""
-    print(f"핵심 비교거래 (가까운 순 — 반경 {args.radius:.0f}m 안, 전용면적 ±{args.area_tolerance:.0f}%{build_year_note}인 "
+    print(f"핵심 비교거래 (가까운 순 — 반경 {effective_radius:.0f}m 안, 전용면적 ±{args.area_tolerance:.0f}%{build_year_note}인 "
           f"실거래 중 거리·면적·층·준공년도 종합 유사도(0~100점, 거리 35%·면적 30%·층 20%·준공년도 15%)가 "
           f"높을수록, 계약월이 최근일수록 가중치를 높게 준 것입니다):")
     for r in filtered[:8]:

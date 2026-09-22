@@ -300,6 +300,130 @@ class FindComparablesFilteringTests(unittest.TestCase):
             self.assertEqual(out, [])
 
 
+class DealingTypeWeightTests(unittest.TestCase):
+    """GPT 조언 반영 — 직거래(dealingGbn)는 제외가 아니라 다운웨이트만 한다."""
+
+    def test_jikgeorae_gets_downweighted_relative_to_junggae(self):
+        with patch("geocode.geocode", return_value=(37.65, 127.02)):
+            row_junggae = _fake_row("중개빌라", "1", 69.27, 4, 2012, 2026, 9, 35000)
+            row_junggae["dealingGbn"] = "중개거래"
+            row_jikgeorae = _fake_row("직거래빌라", "2", 69.27, 4, 2012, 2026, 9, 35000)
+            row_jikgeorae["dealingGbn"] = "직거래"
+
+            out = ep.find_comparables(
+                [row_junggae, row_jikgeorae], (37.65, 127.02), 69.27, 4, "2012", 400,
+                2025, 2026, None, area_tolerance_pct=0.15, this_month=9,
+            )
+            by_name = {r["mhouseNm"]: r for r in out}
+            ratio = by_name["직거래빌라"]["_weight"] / by_name["중개빌라"]["_weight"]
+            self.assertAlmostEqual(ratio, ep.DEALING_TYPE_WEIGHT["직거래"], places=6)
+
+    def test_unknown_or_missing_dealing_gbn_is_not_penalized(self):
+        with patch("geocode.geocode", return_value=(37.65, 127.02)):
+            row = _fake_row("정보없는빌라", "1", 69.27, 4, 2012, 2026, 9, 35000)
+            # dealingGbn 키 자체가 없음 — _fake_row 기본값
+            out = ep.find_comparables(
+                [row], (37.65, 127.02), 69.27, 4, "2012", 400, 2025, 2026, None,
+                area_tolerance_pct=0.15, this_month=9,
+            )
+            expected = ep.weight_for_recency("2026", "9", 2026, 9) * ep.SIMILARITY_EMPHASIS_CURVE(100.0)
+            self.assertAlmostEqual(out[0]["_weight"], expected, places=6)
+
+
+class PriceOutlierDownweightTests(unittest.TestCase):
+    """평당가 기준 median ± 3×MAD 밖인 거래는 제외가 아니라 가중치만 낮춘다."""
+
+    def _rows_with_pps(self, pps_list):
+        rows = []
+        for i, pps in enumerate(pps_list):
+            amount = round(pps * 60)  # area=60㎡ 고정
+            rows.append(_fake_row(f"빌라{i}", str(i), 60, 4, 2012, 2026, 9, amount))
+        return rows
+
+    def test_far_outlier_is_downweighted_not_removed(self):
+        with patch("geocode.geocode", return_value=(37.65, 127.02)):
+            # median=500, MAD=10(위 설계 계산) -> 임계값 30, 1500은 이상치
+            rows = self._rows_with_pps([480, 495, 500, 510, 1500])
+            out = ep.find_comparables(
+                rows, (37.65, 127.02), 60, 4, "2012", 400, 2025, 2026, None,
+                area_tolerance_pct=0.15, this_month=9,
+            )
+            self.assertEqual(len(out), 5)  # 제외되지 않고 그대로 남아있어야 함
+            by_amount = {round(r["_amount_man"]): r for r in out}
+            outlier_row = by_amount[round(1500 * 60)]
+            normal_row = by_amount[round(500 * 60)]
+            self.assertTrue(outlier_row.get("_price_outlier"))
+            self.assertFalse(normal_row.get("_price_outlier", False))
+            ratio = outlier_row["_weight"] / normal_row["_weight"]
+            self.assertAlmostEqual(ratio, ep.PRICE_OUTLIER_WEIGHT, places=6)
+
+    def test_no_downweight_when_sample_too_small(self):
+        with patch("geocode.geocode", return_value=(37.65, 127.02)):
+            # PRICE_OUTLIER_MIN_SAMPLE(5) 미만이면 이상치 판단 자체를 건너뜀
+            rows = self._rows_with_pps([480, 500, 5000])
+            out = ep.find_comparables(
+                rows, (37.65, 127.02), 60, 4, "2012", 400, 2025, 2026, None,
+                area_tolerance_pct=0.15, this_month=9,
+            )
+            self.assertTrue(all(not r.get("_price_outlier") for r in out))
+
+
+class FindComparablesAdaptiveTests(unittest.TestCase):
+    """5절 확장 — 적응형 반경. 지정 반경 안에 표본이 부족하면 단계적으로 넓힌다."""
+
+    NEAR_JIBUN = "near"
+    FAR_JIBUN = "far"
+
+    def _fake_geocode(self, address):
+        # full_address()는 "...동 {jibun}" 형태라 끝부분으로 근/원거리를 구분한다.
+        if address.endswith(self.FAR_JIBUN):
+            return (37.65 + 0.00315, 127.02)  # 대상 좌표에서 약 350m
+        return (37.65, 127.02)  # 대상 좌표와 동일(0m)
+
+    def _rows(self, n_near, n_far):
+        rows = []
+        for i in range(n_near):
+            rows.append(_fake_row(f"근접빌라{i}", f"{i}{self.NEAR_JIBUN}", 69.27, 4, 2012, 2026, 9, 35000))
+        for i in range(n_far):
+            rows.append(_fake_row(f"원거리빌라{i}", f"{i}{self.FAR_JIBUN}", 69.27, 4, 2012, 2026, 9, 35000))
+        return rows
+
+    def test_does_not_expand_when_base_radius_already_has_enough(self):
+        with patch("geocode.geocode", side_effect=self._fake_geocode):
+            rows = self._rows(n_near=3, n_far=5)  # 400m 안에 총 8건 (>= 최소 7건)
+            out, radius, expanded = ep.find_comparables_adaptive(
+                rows, (37.65, 127.02), 69.27, 4, "2012", 400, 2025, 2026, None,
+                area_tolerance_pct=0.15, this_month=9,
+            )
+            self.assertEqual(radius, 400)
+            self.assertFalse(expanded)
+            self.assertEqual(len(out), 8)
+
+    def test_expands_when_base_radius_has_too_few(self):
+        with patch("geocode.geocode", side_effect=self._fake_geocode):
+            rows = self._rows(n_near=3, n_far=5)  # 200m 안엔 근접 3건뿐
+            out, radius, expanded = ep.find_comparables_adaptive(
+                rows, (37.65, 127.02), 69.27, 4, "2012", 200, 2025, 2026, None,
+                area_tolerance_pct=0.15, this_month=9,
+            )
+            self.assertTrue(expanded)
+            self.assertEqual(radius, 400)  # 300m엔 여전히 못 미쳐서 400m까지 넓어짐
+            self.assertEqual(len(out), 8)
+
+    def test_never_tries_narrower_than_requested_radius(self):
+        with patch("geocode.geocode", side_effect=self._fake_geocode):
+            rows = self._rows(n_near=1, n_far=0)  # 어떤 반경에서도 표본 부족(최소 7건 못 채움)
+            out, radius, expanded = ep.find_comparables_adaptive(
+                rows, (37.65, 127.02), 69.27, 4, "2012", 500, 2025, 2026, None,
+                area_tolerance_pct=0.15, this_month=9,
+            )
+            # 500m보다 좁은 단계(200/300/400)는 시도하지 않고, 끝까지 못 채우면
+            # 가장 넓은 단계(1000m)에서 멈춘다 — 그래도 지정한 500m 밑으로는 안 내려감
+            self.assertEqual(radius, 1000)
+            self.assertTrue(expanded)
+            self.assertEqual(len(out), 1)
+
+
 class ComputeTerrainCheckTests(unittest.TestCase):
     """34절 — 산/하천 근접 참고(실험적)."""
 

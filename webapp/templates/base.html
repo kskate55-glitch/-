@@ -240,14 +240,50 @@
 
 <div id="loading-overlay">
   <div class="spinner"></div>
-  <p>실거래가 조회 중이에요, 처음 보는 지역이면 최대 1~2분 정도 걸릴 수 있어요…</p>
+  <p id="loading-text">실거래가 조회 중이에요, 처음 보는 지역이면 최대 1~2분 정도 걸릴 수 있어요…</p>
 </div>
 <script>
+  // 로딩이 길어질 때(특히 처음 조회하는 지역 — 비교거래마다 카카오 지오코딩을
+  // 하나씩 호출해서 느림) 스피너만 덩그러니 있으면 지루하고 멈춘 것처럼
+  // 보인다는 지적을 반영해, 실제 백엔드가 처리하는 순서 그대로 단계 문구를
+  // 몇 초 간격으로 바꿔 보여주고(체감 대기시간을 줄이는 효과), 그 뒤로는
+  // 이 프로젝트의 참고 팁을 계속 돌려서 오래 걸려도 화면이 비어 보이지 않게 한다.
+  var LOADING_STEPS = [
+    "주소를 좌표로 변환하는 중이에요…",
+    "국토부 실거래가를 조회하는 중이에요…",
+    "반경 안 비교거래를 찾는 중이에요…",
+    "매도가를 계산하는 중이에요…",
+  ];
+  var LOADING_TIPS = [
+    "💡 경매 낙찰 후 빠르게 팔려면 보통 \"30일 목표가\" 근처가 적당해요",
+    "💡 반지하는 보통 지상층 시세의 절반 수준으로 형성돼요",
+    "💡 3층이 가장 인기 있고, 1층·6층은 상대적으로 덜 선호되는 편이에요",
+    "💡 매도 전엔 네이버부동산에서 주변 경쟁 매물을 꼭 확인해보세요",
+    "💡 처음 조회하는 지역은 지오코딩 때문에 조금 더 걸릴 수 있어요",
+  ];
   document.querySelectorAll("form").forEach(function (form) {
     form.addEventListener("submit", function () {
       var btn = form.querySelector("button[type=submit]");
       if (btn) btn.disabled = true;
       document.getElementById("loading-overlay").classList.add("active");
+
+      var textEl = document.getElementById("loading-text");
+      var stepIdx = 0;
+      textEl.textContent = LOADING_STEPS[0];
+      var stepTimer = setInterval(function () {
+        stepIdx++;
+        if (stepIdx < LOADING_STEPS.length) {
+          textEl.textContent = LOADING_STEPS[stepIdx];
+          return;
+        }
+        clearInterval(stepTimer);
+        var tipIdx = 0;
+        textEl.textContent = LOADING_TIPS[0];
+        setInterval(function () {
+          tipIdx = (tipIdx + 1) % LOADING_TIPS.length;
+          textEl.textContent = LOADING_TIPS[tipIdx];
+        }, 3500);
+      }, 2200);
     });
   });
 </script>

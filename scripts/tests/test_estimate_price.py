@@ -775,5 +775,21 @@ class TestMarketabilityReport(unittest.TestCase):
         self.assertEqual(r["grade"], "판단 보류")
 
 
+class TestNormalizeDealingGbn(unittest.TestCase):
+    """5절 — 실측으로 확인 못 한 필드라 완전 일치 대신 느슨하게 판정한다."""
+
+    def test_exact_values(self):
+        self.assertEqual(ep.normalize_dealing_gbn("직거래"), "직거래")
+        self.assertEqual(ep.normalize_dealing_gbn("중개거래"), "중개거래")
+
+    def test_surrounding_noise_is_tolerated(self):
+        self.assertEqual(ep.normalize_dealing_gbn(" 직거래 "), "직거래")
+        self.assertEqual(ep.normalize_dealing_gbn("중개거래(법인)"), "중개거래")
+
+    def test_empty_or_unknown_is_none(self):
+        for v in ("", None, "기타"):
+            self.assertIsNone(ep.normalize_dealing_gbn(v))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -411,7 +411,7 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
                 build_year_tolerance=build_year_tolerance,
             )
             recency_weight = weight_for_recency(r.get("dealYear"), r.get("dealMonth"), this_year, this_month)
-            dealing_gbn = (r.get("dealingGbn") or "").strip()
+            dealing_gbn = normalize_dealing_gbn(r.get("dealingGbn"))
             dealing_weight = DEALING_TYPE_WEIGHT.get(dealing_gbn, DEALING_TYPE_WEIGHT_DEFAULT)
 
             # rows의 원본 dict를 직접 고치지 않고 복사본에 써넣는다 — find_comparables()는
@@ -425,7 +425,7 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             r["_amount_man"] = amount
             r["_lat"], r["_lon"] = coord
             r["_similarity_score"] = score
-            r["_dealing_gbn"] = dealing_gbn or None
+            r["_dealing_gbn"] = dealing_gbn
             r["_weight"] = recency_weight * SIMILARITY_EMPHASIS_CURVE(score) * dealing_weight
             if distance <= SAME_BUILDING_DISTANCE_M:
                 r["_weight"] *= SAME_BUILDING_BONUS
@@ -505,6 +505,26 @@ def find_comparables_adaptive(rows: list[dict], subject_coord: tuple[float, floa
         if len(widened) >= ADAPTIVE_RADIUS_MIN_COMPARABLES:
             break
     return best, best_radius, best_radius != base_radius_m
+
+
+def normalize_dealing_gbn(raw) -> str | None:
+    """실거래 응답의 거래유형(`dealingGbn`) 표기를 "중개거래"/"직거래"로 정규화한다.
+
+    ⚠️ 5절에 적어둔 대로 **실제 응답 문자열을 실측 샘플로 확인하지 못했다.**
+    그래서 완전 일치(`==`)로만 보면, 앞뒤에 공백이나 부가 표기가 섞여 오는
+    순간 모든 거래가 조용히 "알 수 없음"으로 떨어져 5절 다운웨이트도
+    8-1-1절 다이아몬드 표시도 통째로 작동하지 않게 된다 — 그 상태를 화면
+    으로는 알아챌 수 없다는 게 특히 나쁘다. 그래서 포함 여부로 느슨하게
+    판정한다. 둘 다 아니면 `None`을 돌려주고, 호출부는 5절 원칙대로
+    중개거래와 동일하게(감점 없이) 다룬다."""
+    text = (raw or "").strip()
+    if not text:
+        return None
+    if "직거래" in text:
+        return "직거래"
+    if "중개" in text:
+        return "중개거래"
+    return None
 
 
 def weight_for_recency(deal_year: str, deal_month: str, this_year: int, this_month: int) -> float:

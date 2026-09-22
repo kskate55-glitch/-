@@ -169,5 +169,44 @@ class RenderPriceDistributionStructureTests(unittest.TestCase):
         self.assertNotIn("주요 유사거래", out)
 
 
+class CompactLegendTests(unittest.TestCase):
+    """압축 범례는 실제로 그려진 기호만 보여준다 — 표본에 직거래가 없는데
+    "◆ 직거래"만 떠 있으면 "다이아몬드가 왜 사라졌지?"라고 오해하게 된다
+    (사용자가 실제로 그렇게 물어서 고친 부분이다)."""
+
+    def _legend(self, rows):
+        out = pc.render_price_distribution_html(rows, {})
+        return out.split("border-top:1px dashed")[1].split("</div>")[0]
+
+    def test_jikgeorae_count_is_shown_when_present(self):
+        rows = [_fake_row("직거래빌라", 30000, 1.0, 50, dealing_gbn="직거래"),
+                _fake_row("중개빌라", 31000, 1.0, 60, dealing_gbn="중개거래")]
+        legend = self._legend(rows)
+        self.assertIn("직거래 1", legend.replace("&nbsp;", " "))
+
+    def test_zero_jikgeorae_is_stated_explicitly(self):
+        rows = [_fake_row("중개빌라", 30000, 1.0, 50, dealing_gbn="중개거래")]
+        self.assertIn("직거래 0건", self._legend(rows).replace("&nbsp;", " "))
+
+    def test_missing_dealing_type_says_so_instead_of_pretending(self):
+        rows = [_fake_row("정보없음빌라", 30000, 1.0, 50)]
+        self.assertIn("거래유형 정보 없음", self._legend(rows).replace("&nbsp;", " "))
+
+    def test_absent_symbols_are_not_listed(self):
+        rows = [_fake_row("중개빌라", 30000, 1.0, 50, dealing_gbn="중개거래")]
+        legend = self._legend(rows)
+        self.assertNotIn("동일건물", legend)
+        self.assertNotIn("이상치", legend)
+        self.assertNotIn("시계열보정", legend)
+
+    def test_present_symbols_are_listed_with_counts(self):
+        rows = [_fake_row("동일건물빌라", 30000, 1.0, 50, dealing_gbn="중개거래",
+                          same_building=True, outlier=True, adjusted=33000)]
+        legend = self._legend(rows).replace("&nbsp;", " ")
+        self.assertIn("동일건물 1", legend)
+        self.assertIn("이상치 1", legend)
+        self.assertIn("시계열보정 1", legend)
+
+
 if __name__ == "__main__":
     unittest.main()

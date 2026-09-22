@@ -245,7 +245,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     # 주는 방식으로 바꿨다(그래프가 몇 건짜리 표본인지 숨기지 않기 위해서).
     rows_by_weight = sorted(rows, key=lambda r: r.get("_weight") or 0, reverse=True)
     render_rows = rows_by_weight[:MAX_TOTAL_DOTS]  # 극단적으로 큰 표본에 대한 안전 상한
-    emphasis_ids = {id(r) for r in render_rows[:max_dots]}
+    emphasis_rows = render_rows[:max_dots]
+    emphasis_ids = {id(r) for r in emphasis_rows}
     max_rows = 6 if len(render_rows) > 40 else 4
 
     chart_id = f"pd-{uuid.uuid4().hex[:8]}"
@@ -477,16 +478,47 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     # 늘어나면서(모양·테두리·연결선까지) 그대로 두면 캡션이 너무 길어진다.
     # 한 줄 압축 범례만 항상 보여주고, 자세한 설명은 <details>로 접어둔다
     # (모바일에서 특히 중요 — 화면을 덜 차지해야 한다).
+    # 압축 범례는 **실제로 그려진 기호만** 보여준다. 예전엔 다섯 기호를
+    # 항상 늘어놓았는데, 이 표본에 직거래가 한 건도 없으면 "◆ 직거래"만
+    # 범례에 떠 있고 그래프에는 안 나와서 "왜 다이아몬드가 사라졌지?"라고
+    # 오해하게 된다(사용자가 실제로 그렇게 물었다). 건수를 같이 적어
+    # "없어서 안 보이는 것"임을 분명히 한다.
+    def _count(pred) -> int:
+        return sum(1 for r in emphasis_rows if pred(r))
+
+    jikgeorae_n = _count(lambda r: r.get("_dealing_gbn") == "직거래")
+    same_building_n = _count(lambda r: r.get("_same_building"))
+    outlier_n = _count(lambda r: r.get("_price_outlier"))
+    corrected_n = _count(lambda r: (
+        r.get("_amount_man_adjusted") is not None and r.get("_amount_man")
+        and abs(r["_amount_man_adjusted"] - r["_amount_man"]) / r["_amount_man"] * 100
+        >= TIME_CORRECTION_SHOW_THRESHOLD_PCT
+    ))
+    has_dealing_info = any(r.get("_dealing_gbn") for r in emphasis_rows)
+
+    chips = [f'<span>{sample_note}</span>']
+    if has_dealing_info:
+        chips.append(f'<span>●&nbsp;일반거래 {len(emphasis_rows) - jikgeorae_n}</span>')
+        if jikgeorae_n:
+            chips.append(f'<span>◆&nbsp;직거래 {jikgeorae_n}</span>')
+        else:
+            chips.append('<span style="opacity:.55">◆&nbsp;직거래 0건</span>')
+    else:
+        chips.append('<span>●&nbsp;일반거래</span>')
+        chips.append('<span style="opacity:.55" title="국토부 응답에 거래유형(dealingGbn) 값이 없어 직거래를 구분할 수 없습니다">'
+                     '◆&nbsp;직거래 — 거래유형 정보 없음</span>')
+    if same_building_n:
+        chips.append(f'<span style="color:{SAME_BUILDING_RING_COLOR}">◎&nbsp;동일건물 {same_building_n}</span>')
+    if outlier_n:
+        chips.append(f'<span style="color:{OUTLIER_RING_COLOR}">⚠&nbsp;이상치 {outlier_n}</span>')
+    if corrected_n:
+        chips.append(f'<span>↔&nbsp;시계열보정 {corrected_n}</span>')
+    chips.append('<span>크기·진하기=반영도</span>')
+
     compact_legend = (
         f'<div style="margin-top:10px; padding-top:8px; border-top:1px dashed {BORDER}; '
         f'font-size:13px; color:{MUTED}; display:flex; flex-wrap:wrap; align-items:center; gap:9px">'
-        f'<span>{sample_note}</span>'
-        f'<span>●&nbsp;일반거래</span>'
-        f'<span>◆&nbsp;직거래</span>'
-        f'<span style="color:{SAME_BUILDING_RING_COLOR}">◎&nbsp;동일건물</span>'
-        f'<span style="color:{OUTLIER_RING_COLOR}">⚠&nbsp;이상치</span>'
-        f'<span>↔&nbsp;시계열보정</span>'
-        f'<span>크기·진하기=반영도</span>'
+        + "".join(chips) +
         f'</div>'
         f'<details style="margin-top:6px; font-size:13px; color:{MUTED}">'
         f'<summary style="cursor:pointer; color:{INK}; font-weight:600">? 그래프 보는 법</summary>'

@@ -355,6 +355,36 @@
 </div>
 {% endif %}
 
+{% if result.apt_gap %}
+{% set g = result.apt_gap %}
+{% set gc = '#2f9e44' if g.verdict == 'good' else ('#e8920a' if g.verdict == 'ok' else '#e0475a') %}
+<div class="card">
+  <h3>🏢 인근 아파트 대비 — 아파트의 <span style="color:{{ gc }}">{{ g.ratio_pct }}%</span> 수준</h3>
+  <ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
+    <li>빌라는 아파트의 <b>대체재</b>라, 아파트와 값 차이가 클수록 예산이 모자라 내려오는 수요가 두껍습니다.</li>
+    <li>빌라 값은 결국 아파트와 <b>키 맞추기</b>를 하려는 경향이 있어 상승 여력도 그만큼 남아요.</li>
+  </ul>
+  <div class="gap-bars">
+    <div class="gap-row">
+      <span class="gap-label">{{ g.dong }} 아파트</span>
+      <span class="gap-track"><span class="gap-fill" style="width:100%; background:#9fb4d4"></span></span>
+      <span class="gap-val">{{ "{:,}".format(g.apt_unit_price) }}만원/㎡</span>
+    </div>
+    <div class="gap-row">
+      <span class="gap-label">이 빌라</span>
+      <span class="gap-track"><span class="gap-fill" style="width:{{ g.ratio_pct if g.ratio_pct < 100 else 100 }}%; background:{{ gc }}"></span></span>
+      <span class="gap-val" style="color:{{ gc }}; font-weight:800">{{ "{:,}".format(g.villa_unit_price) }}만원/㎡</span>
+    </div>
+  </div>
+  <p style="margin:12px 0 0; font-size:14px; line-height:1.75"><b>갭 {{ g.gap_pct }}%</b> — {{ g.sentence }}</p>
+  <ul class="note-lines" style="margin-top:10px">
+    <li>※ {{ g.dong }} 아파트 실거래 {{ g.n }}건(전용 ±30%)의 ㎡당가 중앙값과 비교한 값이에요.</li>
+    <li>빌라와 아파트는 평형 구성이 달라 면적 허용범위를 8절(±15%)보다 넓게 잡았습니다.</li>
+    <li>매도가 계산에는 반영되지 않는 참고 수치입니다.</li>
+  </ul>
+</div>
+{% endif %}
+
 {% if result.price_trend %}
 <div class="card">
   <h3>📈 가격 추이 ({{ result.price_trend.scope }} 월별 평균 평당가)</h3>

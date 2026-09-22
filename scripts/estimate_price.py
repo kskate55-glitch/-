@@ -1078,7 +1078,7 @@ MARKETABILITY_VERDICT_LABELS = {
 #   5) 시세 판단 근거 — "개별성이 강해 실거래 하나로 정하면 안 된다"(4절).
 #   6) 연식 — "연식별 거래량을 따로 보라"(6절 4번). 판정이 아닌 참고.
 MARKETABILITY_ORDER = [
-    "price_position", "floor", "inspection", "volume", "competition", "confidence", "build_year",
+    "price_position", "apt_gap", "floor", "inspection", "volume", "competition", "confidence", "build_year",
 ]
 
 
@@ -1088,7 +1088,8 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
                                 listing_summary: dict | None = None,
                                 building: dict | None = None,
                                 inspection_bad: list[str] | None = None,
-                                inspection_clean: bool = False) -> dict:
+                                inspection_clean: bool = False,
+                                apt_gap: dict | None = None) -> dict:
     """CLAUDE.md 41절: "이 빌라가 실제로 잘 팔릴 물건인가"를 강의
     (`data/lecture_notes_villa.md`)가 짚은 기준으로 항목별 진단한다.
 
@@ -1145,6 +1146,16 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
                              f"— 빌라는 싸야 팔리는 물건이라 이 위치면 오래 걸릴 수 있습니다.")
         items.append({"key": "price_position", "label": "가격 위치 (경쟁 매물 대비)", "verdict": v, "text": t,
                        "why": "빌라는 아파트의 대체재라, 인근 아파트보다 비싸지면 잘 안 팔립니다"})
+
+    # 인근 아파트 대비 — 40절. "빌라는 아파트의 대체재"라는 명제를 숫자로
+    #   옮긴 항목이라 가격 위치 바로 뒤에 둔다.
+    if apt_gap:
+        v = apt_gap["verdict"]
+        t = (f"{apt_gap['dong']} 아파트 {apt_gap['n']}건의 ㎡당가 중앙값 {apt_gap['apt_unit_price']:,}만원 대비, "
+             f"이 빌라는 {apt_gap['villa_unit_price']:,}만원으로 아파트의 {apt_gap['ratio_pct']}% 수준이에요"
+             f" (갭 {apt_gap['gap_pct']}%). " + _apt_gap_sentence(apt_gap))
+        items.append({"key": "apt_gap", "label": "인근 아파트 대비 (대체재 경쟁력)", "verdict": v, "text": t,
+                       "why": "아파트와 값 차이가 클수록 예산이 모자라 내려오는 수요가 두껍고, 키 맞추기 상승 여력도 남습니다"})
 
     # ④ 층·엘리베이터 — 강의 "팔기 어려운 요소" 중 이 계산기가 데이터로
     #    확인할 수 있는 두 가지(나머지는 36절 임장 체크리스트로 넘긴다).
@@ -2042,6 +2053,8 @@ def main():
     ap.add_argument("--inspection-bad", nargs="*", choices=INSPECTION_CHECKLIST, default=None,
                      metavar="항목",
                      help="43절 임장에서 걸린다고 본 항목 (예: --inspection-bad 누수 경사) — 41절 환금성 점수에 반영된다")
+    ap.add_argument("--apt-dir", default="data/raw_apt",
+                     help="40절 아파트 매매 실거래가 XML 폴더 — 데이터가 있으면 인근 아파트 대비 가격비율도 함께 보여준다")
     ap.add_argument("--inspection-clean", action="store_true",
                      help="43절 임장에서 8가지 항목 중 걸리는 게 없었음 — 41절 환금성 점수에 가점으로 반영된다")
     args = ap.parse_args()
@@ -2160,12 +2173,20 @@ def main():
     print(verdict)
     print()
 
+    # 40절 — 인근 아파트 대비 가격비율. data/raw_apt에 데이터가 없으면 조용히 생략.
+    apt_gap = None
+    if os.path.isdir(args.apt_dir):
+        apt_gap = compute_apt_gap(dedupe(load_transactions(args.apt_dir)), args.dong,
+                                   args.area, auction_price, this_year, year_min)
+        print_apt_gap(apt_gap)
+
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
     print_marketability_report(build_marketability_report(
         floor=args.floor, build_year=args.build_year, this_year=this_year,
         confidence=confidence, liquidity=liquidity, building=building_info,
         inspection_bad=args.inspection_bad,
-        inspection_clean=args.inspection_clean and not args.inspection_bad))
+        inspection_clean=args.inspection_clean and not args.inspection_bad,
+        apt_gap=apt_gap))
 
     tiers = compute_price_tiers(filtered)
     print("[가격 구간별 매도 전략] (비교거래 분포 안에서의 위치 기반 참고 라벨 — 실제 매도 소요일수 데이터는 아님)")
@@ -2289,3 +2310,110 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ──────────────────────────────────────────────────────────────────────
+# CLAUDE.md 40절 — 인근 아파트 대비 가격비율
+# ──────────────────────────────────────────────────────────────────────
+# 사용자가 현업 중개사에게 배운 내용: **인근 아파트 시세가 높고 빌라와 차이가
+# 많이 날수록 빌라가 잘 팔린다.** 아파트를 사고 싶은데 돈이 모자라 빌라로
+# 내려오는 수요가 두텁고, 빌라 값은 결국 아파트와 "키 맞추기"를 하려는
+# 경향이 있어서 상승 여력도 남는다는 것이다. 반대로 빌라가 아파트 값에
+#바짝 붙어 있으면 "굳이 빌라를 살 이유"가 사라진다.
+#
+# 그래서 비율(빌라 ㎡당가 ÷ 아파트 ㎡당가)은 **낮을수록 좋다.**
+# ⚠️ 구간 경계는 검증된 수치가 아니라 위 경험칙을 옮긴 참고값이다.
+APT_GAP_GOOD_MAX = 0.60   # 이하: 갭이 넉넉함
+APT_GAP_OK_MAX = 0.80     # 이하: 보통, 초과: 빌라 매력 약함
+APT_GAP_MIN_SAMPLE = 5    # 이보다 적으면 비율을 못 믿으므로 계산 자체를 건너뛴다
+
+
+def compute_apt_gap(apt_rows: list[dict], dong: str, area: float, villa_price_man: float,
+                    this_year: int, year_min: int,
+                    area_tolerance_pct: float = 0.30) -> dict | None:
+    """같은 동(`umdNm`) 아파트 실거래의 ㎡당가 중앙값과 대상 빌라를 비교한다.
+
+    - **지오코딩을 하지 않는다.** 5절처럼 반경으로 자르려면 아파트 거래마다
+      카카오를 한 번씩 더 불러야 해서(7절에서 엘리베이터·역거리를 포기한
+      것과 같은 비용 문제) 같은 법정동으로 근사한다. "인근 아파트 시세"는
+      동 단위로도 충분히 잡힌다.
+    - 면적 허용범위는 8절(±15%)보다 **넓게(±30%) 잡는다** — 빌라와 아파트는
+      평형 구성 자체가 달라서 좁게 잡으면 표본이 거의 안 남는다. 어차피
+      비교는 총액이 아니라 ㎡당가로 하므로 면적 차이에 덜 민감하다.
+    - `cdealType`이 "해제"인 거래와 기준연도 미만은 4절 규칙대로 뺀다.
+
+    반환: {"ratio", "apt_unit_price", "villa_unit_price", "n", "dong",
+           "verdict", "gap_pct"} 또는 표본 부족 시 None."""
+    if not apt_rows or not dong or not area or not villa_price_man:
+        return None
+
+    lo, hi = area * (1 - area_tolerance_pct), area * (1 + area_tolerance_pct)
+    unit_prices = []
+    for r in apt_rows:
+        if (r.get("cdealType") or "").strip() == "해제":
+            continue
+        if (r.get("umdNm") or "").strip() != dong.strip():
+            continue
+        try:
+            if int(r["dealYear"]) < year_min:
+                continue
+            a = float(r["excluUseAr"])
+            amount = to_amount_man(r["dealAmount"])
+        except (KeyError, ValueError, TypeError):
+            continue
+        if not a or amount is None or not (lo <= a <= hi):
+            continue
+        unit_prices.append(amount / a)
+
+    if len(unit_prices) < APT_GAP_MIN_SAMPLE:
+        return None
+
+    apt_unit = statistics.median(unit_prices)
+    villa_unit = villa_price_man / area
+    if apt_unit <= 0:
+        return None
+
+    ratio = villa_unit / apt_unit
+    if ratio <= APT_GAP_GOOD_MAX:
+        verdict = "good"
+    elif ratio <= APT_GAP_OK_MAX:
+        verdict = "ok"
+    else:
+        verdict = "warn"
+    return _finish_apt_gap({
+        "ratio": ratio,
+        "ratio_pct": round(ratio * 100),
+        "gap_pct": round((1 - ratio) * 100),
+        "apt_unit_price": round(apt_unit),
+        "villa_unit_price": round(villa_unit),
+        "n": len(unit_prices),
+        "dong": dong,
+        "verdict": verdict,
+    })
+
+
+def _finish_apt_gap(gap: dict) -> dict:
+    gap["sentence"] = _apt_gap_sentence(gap)
+    return gap
+
+
+def print_apt_gap(gap: dict | None, fmt=None):
+    """40절 결과를 CLI 텍스트로 출력한다."""
+    if not gap:
+        return
+    print(f"[인근 아파트 대비] ({gap['dong']} 아파트 실거래 {gap['n']}건, 유사면적 ±30% ㎡당가 중앙값 기준)")
+    print(f"아파트 {gap['apt_unit_price']:,}만원/㎡ vs 이 빌라 {gap['villa_unit_price']:,}만원/㎡ "
+          f"→ 아파트의 {gap['ratio_pct']}% 수준 (갭 {gap['gap_pct']}%)")
+    print(f"→ {_apt_gap_sentence(gap)}")
+    print("⚠️ 같은 동 아파트 실거래로 낸 참고 수치입니다 — 매도가 계산에는 반영되지 않습니다.")
+    print()
+
+
+def _apt_gap_sentence(gap: dict) -> str:
+    if gap["verdict"] == "good":
+        return (f"아파트와 값 차이가 넉넉해서(갭 {gap['gap_pct']}%), 아파트를 사려다 예산이 모자라 "
+                "빌라로 내려오는 수요가 붙기 좋은 구간이에요.")
+    if gap["verdict"] == "ok":
+        return "아파트와의 격차가 보통 수준이에요 — 가격이 매도 속도를 가르는 구간입니다."
+    return (f"이 빌라 값이 인근 아파트의 {gap['ratio_pct']}%까지 붙어 있어요 — "
+            "이 정도면 매수자가 굳이 빌라를 고를 이유가 약해집니다.")

@@ -151,6 +151,18 @@
   .paste-fold > summary::-webkit-details-marker { display: none; }
   .paste-fold > summary:hover { border-color: var(--primary); background: var(--primary-tint); }
   .paste-fold[open] > summary { border-style: solid; border-color: var(--primary); background: var(--primary-tint); }
+  /* 40절 인근 아파트 대비 — 아파트 ㎡당가를 100으로 놓고 빌라를 그 비율만큼
+     칠해서, 갭이 얼마나 벌어져 있는지 길이로 바로 보이게 한다. */
+  .gap-bars { display: flex; flex-direction: column; gap: 9px; }
+  .gap-row { display: flex; align-items: center; gap: 10px; }
+  .gap-label { flex: 0 0 96px; font-size: 13px; font-weight: 700; color: var(--muted); }
+  .gap-track { flex: 1; height: 16px; border-radius: 999px; background: #eceef1; overflow: hidden; }
+  .gap-fill { display: block; height: 100%; border-radius: 999px; }
+  .gap-val { flex: 0 0 auto; font-size: 13px; font-weight: 700; white-space: nowrap; }
+  @media (max-width: 520px) {
+    .gap-label { flex-basis: 70px; font-size: 12px; }
+    .gap-val { font-size: 12px; }
+  }
   .paste-fold-body {
     margin-top: 10px; padding: 14px; background: #fff;
     border: 1px solid var(--border); border-radius: var(--radius-md);

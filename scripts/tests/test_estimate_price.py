@@ -865,5 +865,58 @@ class TestInspectionScoring(unittest.TestCase):
         self.assertEqual(item["verdict"], "ok")
 
 
+class TestAptGap(unittest.TestCase):
+    """CLAUDE.md 40절 — 인근 아파트 대비 가격비율. **비율이 낮을수록(갭이
+    클수록) 좋다** — 아파트를 사려다 예산이 모자라 내려오는 수요가 두껍고,
+    키 맞추기 상승 여력도 남는다는 현업 경험칙을 옮긴 것이다."""
+
+    def _apt(self, n=8, area="84.9", base=92000, dong="수유동", year="2026"):
+        return [{"umdNm": dong, "excluUseAr": area, "dealAmount": f"{base + i * 1500:,}",
+                 "dealYear": year, "dealMonth": "3"} for i in range(n)]
+
+    def test_big_gap_is_good_small_gap_is_warn(self):
+        apt = self._apt()
+        cheap = ep.compute_apt_gap(apt, "수유동", 69.27, 22500, 2026, 2025)
+        mid = ep.compute_apt_gap(apt, "수유동", 69.27, 40000, 2026, 2025)
+        pricey = ep.compute_apt_gap(apt, "수유동", 69.27, 65000, 2026, 2025)
+        self.assertEqual(cheap["verdict"], "good")
+        self.assertEqual(mid["verdict"], "good")
+        self.assertEqual(pricey["verdict"], "warn")
+        self.assertGreater(cheap["gap_pct"], pricey["gap_pct"])
+
+    def test_ratio_is_unit_price_based_not_total_price(self):
+        # 빌라(69.27㎡)와 아파트(84.9㎡)는 면적이 달라 총액 비교는 왜곡된다.
+        g = ep.compute_apt_gap(self._apt(), "수유동", 69.27, 22500, 2026, 2025)
+        self.assertAlmostEqual(g["villa_unit_price"], round(22500 / 69.27), delta=1)
+        self.assertAlmostEqual(g["ratio"], g["villa_unit_price"] / g["apt_unit_price"], places=2)
+
+    def test_too_few_apartments_returns_none(self):
+        self.assertIsNone(ep.compute_apt_gap(self._apt(n=ep.APT_GAP_MIN_SAMPLE - 1),
+                                              "수유동", 69.27, 22500, 2026, 2025))
+
+    def test_other_dong_and_cancelled_and_old_deals_are_excluded(self):
+        apt = self._apt(n=6)
+        apt += [{"umdNm": "딴동네", "excluUseAr": "84.9", "dealAmount": "10,000",
+                 "dealYear": "2026", "dealMonth": "3"}] * 20
+        apt += [dict(r, cdealType="해제") for r in self._apt(n=20, base=10000)]
+        apt += [dict(r, dealYear="2019") for r in self._apt(n=20, base=10000)]
+        g = ep.compute_apt_gap(apt, "수유동", 69.27, 22500, 2026, 2025)
+        self.assertEqual(g["n"], 6)  # 같은 동·해제 아님·기준연도 이후인 6건만
+
+    def test_area_tolerance_is_wider_than_the_villa_rule(self):
+        # 빌라 69.27㎡ 기준 ±30%면 48~90㎡ — 84.9㎡ 아파트가 들어와야 한다.
+        self.assertIsNotNone(ep.compute_apt_gap(self._apt(), "수유동", 69.27, 22500, 2026, 2025))
+        # ±15%(8절 기본값)로 좁히면 84.9㎡는 빠져서 표본이 0이 된다.
+        self.assertIsNone(ep.compute_apt_gap(self._apt(), "수유동", 69.27, 22500,
+                                              2026, 2025, area_tolerance_pct=0.15))
+
+    def test_report_places_apt_gap_right_after_price_position(self):
+        g = ep.compute_apt_gap(self._apt(), "수유동", 69.27, 22500, 2026, 2025)
+        r = ep.build_marketability_report(floor=3, confidence=80, apt_gap=g,
+                                           listing_summary={"percentile": 20, "n": 5})
+        keys = [i["key"] for i in r["items"]]
+        self.assertEqual(keys[:2], ["price_position", "apt_gap"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -53,3 +53,39 @@ def get_trade_rows(lawd_cd: str, year_min: int) -> list[dict]:
         all_rows.extend(rows)
 
     return all_rows
+
+
+def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
+    """CLAUDE.md 40절 — 같은 구의 아파트 매매 실거래를 받아온다(빌라와 비교할
+    기준선용). 캐시 정책은 get_trade_rows()와 완전히 같다 — 완료된 달만
+    `webapp/cache/apt/<LAWD_CD>/<YYYYMM>.json`에 저장하고, 이번 달은 신고가
+    계속 들어오므로 캐시하지 않는다.
+
+    ⚠️ 아파트 API는 활용신청·오퍼레이션명이 별개라 실패할 수 있다 — 호출부가
+    빈 목록으로 받아 40절 카드만 조용히 생략하도록, 여기서 예외를 삼킨다
+    (20절 건축물대장과 같은 "참고 정보는 실패해도 계산을 막지 않는다" 원칙)."""
+    from molit_apt_api import fetch_all_pages, normalize_apt_row
+
+    now = datetime.now()
+    this_ym = f"{now.year}{now.month:02d}"
+    cache_dir = os.path.join(CACHE_DIR, "apt", lawd_cd)
+
+    all_rows = []
+    for ym in _month_range(year_min, now.year, now.month):
+        cache_path = os.path.join(cache_dir, f"{ym}.json")
+        if ym != this_ym and os.path.exists(cache_path):
+            with open(cache_path, encoding="utf-8") as f:
+                all_rows.extend(json.load(f))
+            continue
+        try:
+            rows = fetch_all_pages(lawd_cd, ym)
+        except Exception:
+            continue  # 한 달 실패해도 나머지 달로 계속 간다
+        rows = [r for r in (normalize_apt_row(r) for r in rows) if r]
+        if ym != this_ym:
+            os.makedirs(cache_dir, exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(rows, f, ensure_ascii=False)
+        all_rows.extend(rows)
+
+    return all_rows

@@ -671,6 +671,21 @@ def estimate():
     result["seasonality"] = season_card
     result["price_trend"] = trend_card
 
+    # 40절 — 인근 아파트 대비 가격비율. 아파트 API는 활용신청이 별개라
+    # 실패할 수 있어서, 실패하면 조용히 생략하고 나머지 계산은 그대로 간다.
+    apt_gap = None
+    if target_dong:
+        try:
+            from data_source import get_apt_rows
+            from estimate_price import compute_apt_gap
+
+            apt_rows = get_apt_rows(lawd_cd, year_min)
+            apt_gap = compute_apt_gap(apt_rows, target_dong, area, auction_price,
+                                       this_year, year_min)
+        except Exception:
+            apt_gap = None
+    result["apt_gap"] = apt_gap
+
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
     # 매물을 붙여넣었으면 경쟁 매물·가격 위치 항목까지 채워진다.
     from estimate_price import MARKETABILITY_ICONS, build_marketability_report
@@ -679,7 +694,8 @@ def estimate():
         floor=floor, build_year=int(build_year), this_year=this_year,
         confidence=scen["confidence"], liquidity=liquidity, sale_pressure=pressure,
         listing_summary=listing_price_summary, building=building,
-        inspection_bad=inspection_bad, inspection_clean=inspection_clean)
+        inspection_bad=inspection_bad, inspection_clean=inspection_clean,
+        apt_gap=apt_gap)
     for item in marketability["items"]:
         item["icon"] = MARKETABILITY_ICONS.get(item["verdict"], "·")
     result["marketability"] = marketability

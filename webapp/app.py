@@ -371,7 +371,12 @@ def estimate():
     price_chart_html = render_price_distribution_html(filtered, {
         "보수적 급매가": conservative, "현실적 체결가": realistic, "경매용 매도가": auction_price,
         "상단 매도가": upper, "AI 기준매도가": ai_base,
-    }, hero_name="경매용 매도가", this_year=this_year, this_month=this_month)
+    }, hero_name="경매용 매도가", this_year=this_year, this_month=this_month,
+        # 8-1절 — 이 그래프는 히어로 카드 안이 아니라 전용 카드(결과 페이지
+        # 전체 폭)에 들어간다. 좁은 칸에 끼워넣던 때(420×300)와 달리 가로로
+        # 긴 viewBox(880×330)를 쓰고, 좁은 화면에서는 720px 아래로 줄어들지
+        # 않게 막은 뒤 가로 스크롤로 넘긴다.
+        width=880, height=270, min_width=720)
     marker_colors = {
         "conservative": MARKER_COLORS["보수적 급매가"], "realistic": MARKER_COLORS["현실적 체결가"],
         "upper": MARKER_COLORS["상단 매도가"], "ai_base": MARKER_COLORS["AI 기준매도가"],

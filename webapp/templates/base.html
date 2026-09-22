@@ -32,6 +32,12 @@
   @media (min-width: 900px) {
     body { max-width: 1000px; }
   }
+  /* 8-1절 — 가격 분포 그래프를 히어로 카드에서 빼내 전용 카드로 넓게
+     보여주면서, 넓은 모니터에서는 본문 자체도 조금 더 넓게 쓴다
+     (사용자가 모바일이 아니라 데스크톱으로만 본다고 확인해줬다). */
+  @media (min-width: 1280px) {
+    body { max-width: 1180px; }
+  }
   h1 { font-size: 21px; font-weight: 800; margin: 4px 0 2px; letter-spacing: -0.3px; }
   h3 { font-size: 15px; font-weight: 700; margin: 0 0 12px; color: var(--ink); }
   a { color: var(--primary-dark); }

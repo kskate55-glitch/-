@@ -223,7 +223,10 @@ def render_report(*, building, dong, area, period, generated, confidence,
             "보수적 급매가": conservative, "현실적 체결가": realistic, "경매용 매도가": auction_price,
             "상단 매도가": upper, "AI 기준매도가": ai_base, "권장 최초 호가": listing,
         }, hero_name="경매용 매도가", primary="#4f46e5",  # 이 리포트 자체의 accent 색(인디고)에 맞춘다
-            this_year=this_year, this_month=this_month)
+            this_year=this_year, this_month=this_month,
+            # 웹 결과 페이지(22절)와 같은 가로로 긴 비율 — 이 리포트도 본문
+            # 폭이 880px라 좁은 칸에 끼워넣을 이유가 없다.
+            width=880, height=270, min_width=720)
 
     return PAGE_TEMPLATE.format(
         title=f"{building} 매도가 분석",

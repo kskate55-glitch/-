@@ -192,7 +192,7 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
                                      highlight: tuple[str, str] = ("보수적 급매가", "현실적 체결가"),
                                      hero_name: str = "경매용 매도가",
                                      max_dots: int = EMPHASIS_CAP_DEFAULT, width: int = 420, height: int = 300,
-                                     primary: str = PRIMARY,
+                                     primary: str = PRIMARY, min_width: int = 0,
                                      this_year: int | None = None, this_month: int | None = None) -> str:
     """filtered: find_comparables()가 돌려준 비교거래 목록(거리순 정렬됨,
     _amount_man·_weight 필요. _dealing_gbn/_same_building/_price_outlier/
@@ -260,8 +260,15 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     # viewBox보다 넓으면 확대돼서 보임), 좁을 때는 비율 그대로 줄어든다 —
     # 모바일/데스크톱 어느 쪽이든 "컨테이너 폭 = 실제 렌더링 폭"이 항상
     # 성립한다.
+    # `min_width`가 있으면 그 폭 아래로는 더 줄어들지 않게 막고, 대신 부모
+    # 쪽에서 가로 스크롤을 준다(아래 `svg_markup` 래퍼) — 카드를 가로로 길게
+    # 쓰는 레이아웃(웹 결과 페이지의 전용 카드)에서는 viewBox를 넓게 잡아야
+    # 글자·점이 시원하게 보이는데, 그대로 두면 좁은 화면에서 0.4배까지
+    # 축소돼 글씨가 뭉개지기 때문이다. 표가 넘칠 때 `.tier-table-wrap`으로
+    # 가로 스크롤을 주는 것과 같은 처리다.
+    min_w = f' min-width:{min_width}px;' if min_width else ''
     svg = [
-        f'<svg viewBox="0 0 {width} {height}" style="width:100%; height:auto; display:block" '
+        f'<svg viewBox="0 0 {width} {height}" style="width:100%; height:auto;{min_w} display:block" '
         f'role="img" aria-label="비교거래 가격 분포와 산출값">'
     ]
 
@@ -447,6 +454,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
 
     svg.append("</svg>")
     svg_markup = "".join(svg)
+    if min_width:
+        svg_markup = f'<div style="overflow-x:auto; -webkit-overflow-scrolling:touch">{svg_markup}</div>'
 
     dot_count = len(rows)
     emphasis_count = len(emphasis_ids)

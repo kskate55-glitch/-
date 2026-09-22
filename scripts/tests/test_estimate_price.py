@@ -1313,3 +1313,61 @@ class TestAdaptiveRadiusIsOff(unittest.TestCase):
     def test_the_function_itself_still_works(self):
         """되살릴 수 있게 남겨 둔 것이므로 함수는 계속 동작해야 한다."""
         self.assertTrue(callable(ep.find_comparables_adaptive))
+
+
+class TestSaleCalibration(unittest.TestCase):
+    """48절 백테스트로 잡은 매매가 보정 계수(`SALE_CALIBRATION_FACTOR`).
+
+    ⚠️ 제일 중요한 보증은 **전세(16절)에 새어 들어가지 않는 것**이다 — 매매
+    실거래로만 잰 편향이라 전세에 쓰면 근거 없는 보정이 된다."""
+
+    def _rows(self):
+        return [{"_amount_man": a, "_weight": 0.5, "excluUseAr": "45",
+                 "_distance_m": 100, "dealYear": "2026", "dealMonth": "5"}
+                for a in (15000, 16000, 17000, 18000, 19000)]
+
+    def test_default_is_no_calibration(self):
+        """기본값 1.0 — 전세 호출부가 인자를 안 넘겨도 안전해야 한다."""
+        rows = self._rows()
+        a = ep.compute_scenarios(rows, 400, 2026, subject_area=45.0)
+        b = ep.compute_scenarios(rows, 400, 2026, subject_area=45.0, calibration=1.0)
+        self.assertEqual(a["median"], b["median"])
+
+    def test_scales_all_three_values(self):
+        rows = self._rows()
+        plain = ep.compute_scenarios(rows, 400, 2026, subject_area=45.0)
+        cal = ep.compute_scenarios(rows, 400, 2026, subject_area=45.0, calibration=0.97)
+        for key in ("p25", "median", "p75"):
+            self.assertAlmostEqual(cal[key] / plain[key], 0.97, places=9)
+
+    def test_confidence_is_unaffected(self):
+        """세 값에 같은 배율을 곱하므로 스프레드 비율이 안 변한다 — 보정 때문에
+        신뢰도 점수가 흔들리면 안 된다."""
+        rows = self._rows()
+        plain = ep.compute_scenarios(rows, 400, 2026, subject_area=45.0)
+        cal = ep.compute_scenarios(rows, 400, 2026, subject_area=45.0, calibration=0.97)
+        self.assertEqual(plain["confidence"], cal["confidence"])
+
+    def test_price_tiers_get_the_same_calibration(self):
+        """29절 구간과 8절 산출값이 어긋나면 화면 안에서 숫자가 안 맞는다."""
+        rows = self._rows()
+        plain = ep.compute_price_tiers(rows)
+        cal = ep.compute_price_tiers(rows, calibration=0.97)
+        for key in plain:
+            self.assertLess(cal[key], plain[key])
+            self.assertAlmostEqual(cal[key] / plain[key], 0.97, delta=0.005)
+
+    def test_factor_lowers_the_estimate(self):
+        """사용자 요청은 '3% 낮게'였다 — 부호가 뒤집히면 바로 잡아야 한다."""
+        self.assertLess(ep.SALE_CALIBRATION_FACTOR, 1.0)
+        self.assertGreater(ep.SALE_CALIBRATION_FACTOR, 0.8)   # 오타로 0.097 같은 값 방지
+
+    def test_jeonse_path_does_not_get_sale_calibration(self):
+        """16절 전세 계산부(`compute_scenarios`를 인자 없이 부르는 곳)가
+        매매 보정을 받지 않는지 소스로 고정한다."""
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(root, "estimate_price.py"), encoding="utf-8") as f:
+            source = f.read()
+        for line in source.splitlines():
+            if "compute_scenarios(jeonse_filtered" in line:
+                self.assertNotIn("calibration", line)

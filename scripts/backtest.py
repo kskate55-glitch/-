@@ -36,8 +36,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import lawd_lookup
-from estimate_price import (compute_scenarios, dedupe, find_comparables,
-                            load_transactions, to_amount_man)
+from estimate_price import (SALE_CALIBRATION_FACTOR, compute_scenarios, dedupe,
+                            find_comparables, load_transactions, to_amount_man)
 from geocode import geocode
 
 # .env에 적어둔 키를 환경변수로 올린다 (6절) — 이미 설정된 값은 안 덮어쓴다.
@@ -156,7 +156,10 @@ def estimate_as_of(rows: list[dict], target: dict, radius_m: float,
     if len(filtered) < MIN_COMPARABLES:
         return {"n_comparables": len(filtered), "skipped": "표본부족"}
 
-    scen = compute_scenarios(filtered, radius_m, target_y, subject_area=area)
+    # 백테스트도 실제 화면과 **같은 보정**을 써야 한다 — 안 그러면 보정이
+    # 먹혔는지 잴 수가 없다.
+    scen = compute_scenarios(filtered, radius_m, target_y, subject_area=area,
+                             calibration=SALE_CALIBRATION_FACTOR)
     return {
         "address": subject_address,
         "name": (target.get("mhouseNm") or "").strip() or "(단지명없음)",

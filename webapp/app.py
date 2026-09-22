@@ -388,7 +388,8 @@ def estimate():
         }
 
     from data_source import get_trade_rows
-    from estimate_price import compute_scenarios, dedupe, find_comparables
+    from estimate_price import (SALE_CALIBRATION_FACTOR, compute_scenarios,
+                                dedupe, find_comparables)
     from lawd_lookup import find_dong_in_address
 
     try:
@@ -431,7 +432,8 @@ def estimate():
             form=form, last_year=this_year - 1,
         )
 
-    scen = compute_scenarios(filtered, radius, this_year, subject_area=area)
+    scen = compute_scenarios(filtered, radius, this_year, subject_area=area,
+                             calibration=SALE_CALIBRATION_FACTOR)
     conservative = scen["p25"]
     realistic = scen["median"]
     upper = scen["p75"]
@@ -480,7 +482,7 @@ def estimate():
         speed_label_for_percentile,
     )
 
-    price_tiers = compute_price_tiers(filtered)
+    price_tiers = compute_price_tiers(filtered, calibration=SALE_CALIBRATION_FACTOR)
     liquidity = compute_liquidity(rows, subject_coord, area, this_year, gu_filter=None,
                                    area_tolerance_pct=area_tolerance_pct)
 

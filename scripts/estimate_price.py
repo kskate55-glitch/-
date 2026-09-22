@@ -248,6 +248,19 @@ PRICE_OUTLIER_MIN_SAMPLE = 5  # 이보다 표본이 적으면 이상치 판단 �
 #    100을 곱한 뒤 반올림하면 각각 117개 / 5개가 되어 배율이 그대로 살아난다.
 WEIGHT_REPLICATION_SCALE = 100
 
+# 48절 백테스트 실측으로 잡은 매매가 보정 계수.
+# ⚠️ **검증된 상수가 아니라 표본 10건으로 잡은 1차 보정치다.** 고양시 덕양구
+#    최근 1개월 매매 10건을 백테스트한 결과 계산기가 실제 체결가보다 평균
+#    +2.6% 높게 불렀고(한 건을 뺀 9건 기준으로는 +5.8%), 사용자 요청으로 3%를
+#    낮춘다. 적용 후 같은 표본에서 평균 오차 8.2%→7.8%, 편향 +2.6%→-0.5%,
+#    ±10% 적중 70%→80%로 개선되는 것까지 확인했다.
+# ⚠️ **표본이 작고 한 지역뿐이라 언제든 바뀔 수 있는 숫자다.** 지역·면적대를
+#    바꿔 백테스트를 더 돌린 뒤 이 값 하나만 고치면 된다(1.0이면 보정 없음).
+# ⚠️ **전세(16절)에는 적용하지 않는다** — 매매 실거래로만 잰 편향이라 전세에
+#    그대로 쓰면 근거 없는 보정이 된다. 그래서 기본값을 1.0으로 두고 매매
+#    호출부만 명시적으로 이 값을 넘긴다.
+SALE_CALIBRATION_FACTOR = 0.97
+
 # 동일건물 보너스 — 좌표가 거의 겹치는(=사실상 같은 건물) 거래는 "바로 이
 # 건물이 실제로 얼마에 팔렸는지" 보여주는 가장 직접적인 증거라 가중치를 한 번
 # 더 높인다. 지번 문자열(jibun)을 비교하는 대신 좌표 거리로 판정한다 — 5절이
@@ -866,7 +879,8 @@ def _weighted_percentile(amounts_sorted: list[float], pct: float) -> float:
 
 
 def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int,
-                       subject_area: float | None = None) -> dict:
+                       subject_area: float | None = None,
+                       calibration: float = 1.0) -> dict:
     """CLAUDE.md 7~8절 규칙: 가중 복제 후 p25/중앙값/p75와 시세 신뢰도를 계산한다.
     매매·전세(16절) 양쪽에서 공통으로 쓴다 — find_comparables()가 이미 채워둔
     _amount_man/_weight/_distance_m을 그대로 사용한다.
@@ -876,7 +890,13 @@ def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int,
     "총액 모델 50% + 단가 모델 50%"라는 두 독립적인 계산 경로의 평균을 최종
     값으로 쓰고, 두 모델이 크게 갈리면(`model_divergence_pct`) 그 자체를
     불확실성 신호로 보고 시세 신뢰도에서 깎는다(최대 15점). subject_area를
-    생략하면(기존 호출부와의 하위호환) 예전처럼 총액 모델만 쓴다."""
+    생략하면(기존 호출부와의 하위호환) 예전처럼 총액 모델만 쓴다.
+
+    `calibration`은 48절 백테스트로 잡은 보정 계수다(1.0이면 보정 없음).
+    ⚠️ 기본값을 1.0으로 둔 건 **전세(16절)에 실수로 매매 보정이 새어 들어가는
+    걸 막기 위해서다** — 매매 호출부만 `SALE_CALIBRATION_FACTOR`를 명시적으로
+    넘긴다. 세 값에 같은 배율을 곱하므로 스프레드 비율은 그대로이고, 따라서
+    **시세 신뢰도 점수는 보정의 영향을 받지 않는다**."""
     amounts_weighted = _weighted_amounts_sorted(filtered)
 
     median_total = statistics.median(amounts_weighted)
@@ -896,6 +916,9 @@ def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int,
             model_divergence_pct = abs(median_total - median_unit) / median_man * 100
     else:
         median_man, p25, p75 = median_total, p25_total, p75_total
+
+    if calibration != 1.0:
+        median_man, p25, p75 = median_man * calibration, p25 * calibration, p75 * calibration
 
     n_total = len(filtered)
     n_this_year = sum(1 for r in filtered if r.get("dealYear") == str(this_year))
@@ -924,7 +947,7 @@ PRICE_TIER_LABELS = {
 }
 
 
-def compute_price_tiers(filtered: list[dict]) -> dict:
+def compute_price_tiers(filtered: list[dict], calibration: float = 1.0) -> dict:
     """CLAUDE.md 29절: 8절과 같은 가중 복제 분포를 5단계 백분위수(10/30/50/70/92)로
     더 세분화해서 "얼마나 빨리 팔릴 만한 가격대인지" 참고용 라벨을 붙인다.
 
@@ -943,7 +966,8 @@ def compute_price_tiers(filtered: list[dict]) -> dict:
         "normal": _weighted_percentile(amounts_sorted, 70),
         "test": _weighted_percentile(amounts_sorted, 92),
     }
-    return {k: round(v, -1) for k, v in tiers.items()}
+    # 8절 산출값과 같은 보정을 걸어야 화면 안에서 두 숫자가 어긋나지 않는다.
+    return {k: round(v * calibration, -1) for k, v in tiers.items()}
 
 
 def compute_liquidity(rows: list[dict], subject_coord: tuple[float, float], area: float,
@@ -2426,7 +2450,8 @@ def main():
               "data/raw에 더 많은 지역/기간 데이터를 추가해 보세요.")
         return
 
-    scen = compute_scenarios(filtered, effective_radius, this_year, subject_area=args.area)
+    scen = compute_scenarios(filtered, effective_radius, this_year, subject_area=args.area,
+                             calibration=SALE_CALIBRATION_FACTOR)
     n_total, n_close, n_2026, confidence = scen["n_total"], scen["n_close"], scen["n_this_year"], scen["confidence"]
     conservative = scen["p25"]
     realistic = scen["median"]
@@ -2489,7 +2514,7 @@ def main():
         inspection_clean=args.inspection_clean and not args.inspection_bad,
         apt_gap=apt_gap, location=location_check))
 
-    tiers = compute_price_tiers(filtered)
+    tiers = compute_price_tiers(filtered, calibration=SALE_CALIBRATION_FACTOR)
     print("[가격 구간별 매도 전략] (비교거래 분포 안에서의 위치 기반 참고 라벨 — 실제 매도 소요일수 데이터는 아님)")
     for key in ("urgent", "d30", "d60", "normal", "test"):
         print(f"- {PRICE_TIER_LABELS[key]}: {fmt(tiers[key])}")

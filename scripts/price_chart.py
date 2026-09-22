@@ -652,14 +652,22 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
   }});
 }})();
 </script>"""
+    # 설명은 문장마다 줄을 나눈다 — 한 덩어리 줄글로 흘려보내면 눈이
+    # 어디를 읽고 있는지 놓치기 쉽다는 지적을 반영했다(결과 페이지의
+    # 다른 안내 문단도 같은 방식으로 맞춰뒀다).
+    intro_lines = [
+        "아래 점 하나하나가 <b>실제로 거래된 가격</b>이에요.",
+        "그 안에서 위 매도가 값들이 어디쯤 위치하는지 보면, 이 매도가가 어떤 실거래를 근거로 나온 숫자인지 알 수 있습니다.",
+        "점을 누르면 왜 그 거래가 많이/적게 반영됐는지도 볼 수 있어요.",
+    ]
     intro = (
-        '<div style="margin-bottom:8px">'
+        '<div style="margin-bottom:10px">'
         f'<div style="font-size:16px; font-weight:800; color:{INK}">📊 매도가 산출 근거 — 실제 비교거래 분포</div>'
-        f'<div style="font-size:13px; color:{MUTED}; margin-top:2px; line-height:1.5">'
-        '아래 점 하나하나가 실제로 거래된 가격이에요. 그 안에서 위 매도가 값들이 어디쯤 '
-        '위치하는지 보면, 이 매도가가 어떤 실거래를 근거로 나온 숫자인지 알 수 있습니다. '
-        '점을 누르면 왜 그 거래가 많이/적게 반영됐는지도 볼 수 있어요.</div>'
-        '</div>'
+        + "".join(
+            f'<div style="font-size:13px; color:{MUTED}; margin-top:4px; line-height:1.7">{line}</div>'
+            for line in intro_lines
+        )
+        + '</div>'
     )
     return (
         f'<div class="price-dist" id="{chart_id}" style="position:relative">'

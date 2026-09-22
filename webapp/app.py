@@ -612,10 +612,16 @@ def estimate():
     result["similar_listings"] = similar_listings
     result["sale_pressure"] = pressure
     result["listings_text_echo"] = listings_text
-    result["verdict"] = build_verdict(scen["confidence"], scen["n_total"], liquidity=liquidity,
-                                       listing_summary=listing_price_summary,
-                                       model_divergence_pct=scen.get("model_divergence_pct"),
-                                       sale_pressure=pressure)
+    # 32절 — 문장을 한 덩어리로 흘려보내지 않고 문장 리스트 그대로 받아서
+    # 화면에서 줄을 나눈다(긴 줄글은 읽기 어렵다는 사용자 지적 반영).
+    from estimate_price import build_verdict_parts
+
+    result["verdict_lines"] = build_verdict_parts(
+        scen["confidence"], scen["n_total"], liquidity=liquidity,
+        listing_summary=listing_price_summary,
+        model_divergence_pct=scen.get("model_divergence_pct"),
+        sale_pressure=pressure)
+    result["verdict"] = " ".join(result["verdict_lines"])
 
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
     # 매물을 붙여넣었으면 경쟁 매물·가격 위치 항목까지 채워진다.

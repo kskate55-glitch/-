@@ -979,10 +979,10 @@ def speed_label_for_percentile(percentile: float, liquidity_monthly_avg: float |
 MODEL_DIVERGENCE_MENTION_THRESHOLD_PCT = 8  # 이 정도부터는 우연한 오차가 아니라 언급할 만하다고 판단
 
 
-def build_verdict(confidence: int, n_total: int, liquidity: dict | None = None,
-                   listing_summary: dict | None = None, trend_pct: float | None = None,
-                   model_divergence_pct: float | None = None,
-                   sale_pressure: dict | None = None) -> str:
+def build_verdict_parts(confidence: int, n_total: int, liquidity: dict | None = None,
+                         listing_summary: dict | None = None, trend_pct: float | None = None,
+                         model_divergence_pct: float | None = None,
+                         sale_pressure: dict | None = None) -> list[str]:
     """CLAUDE.md 32절: 시세 신뢰도·유동성·경쟁매물 포지션·가격 추이를 한데
     묶어 사람이 읽는 짧은 종합 판단 문단을 만든다. Claude(LLM)를 호출하지
     않는 규칙 기반 템플릿이다 — 22절 원칙(웹 버전은 AI 호출 없는 순수
@@ -1035,7 +1035,17 @@ def build_verdict(confidence: int, n_total: int, liquidity: dict | None = None,
         parts.append(f"총액 기준 추정과 ㎡당가 기준 추정이 {model_divergence_pct:.0f}% 차이 나 모델 간 의견이 다소 엇갈립니다 — 표본을 늘리거나 참고용으로만 활용하세요.")
 
     parts.append("⚠️ 규칙 기반으로 자동 생성한 참고용 요약이며, 최종 판단은 직접 확인 후 내리세요.")
-    return " ".join(parts)
+    return parts
+
+
+def build_verdict(*args, **kwargs) -> str:
+    """32절 종합 판단을 한 문단 문자열로 돌려준다(CLI·기존 호출부용).
+
+    화면에서는 문장마다 줄을 나눠 보여주는 편이 훨씬 읽기 쉬워서
+    (사용자가 "설명 문장들 줄바꿈 좀 제대로 해달라"고 지적했다) 웹
+    버전은 `build_verdict_parts()`를 직접 불러 문장 리스트를 그대로
+    받아 쓴다 — 이 함수는 그걸 공백으로 이어붙인 것뿐이다."""
+    return " ".join(build_verdict_parts(*args, **kwargs))
 
 
 # CLAUDE.md 41절: 환금성·경쟁 진단(강의 관점) — 판정 등급별 가점.
@@ -1162,16 +1172,24 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         grade = "주의 — 팔기 어려울 수 있음"
 
     weaknesses = [i["label"].split(" (")[0] for i in items if i["verdict"] == "warn"]
+    # 요약도 한 덩어리 줄글이 아니라 문장 리스트로 돌려준다 — 화면에서
+    # 줄을 나눠 보여주기 위해서다(32절 `build_verdict_parts()`와 같은 이유).
     if score is None:
-        summary = "진단에 쓸 지표가 아직 부족해요."
+        summary_lines = ["진단에 쓸 지표가 아직 부족해요."]
     elif weaknesses:
-        summary = (f"환금성 {score}/100 — {grade}. 약점은 {' · '.join(weaknesses)}입니다. "
-                    "강의 표현대로 '금액이 싸면 팔리긴 팔리는 빌라'가 되려면 이 항목들을 가격으로 상쇄해야 해요.")
+        summary_lines = [
+            f"환금성 {score}/100 — {grade}.",
+            f"약점은 {' · '.join(weaknesses)}입니다.",
+            "강의 표현대로 '금액이 싸면 팔리긴 팔리는 빌라'가 되려면 이 항목들을 가격으로 상쇄해야 해요.",
+        ]
     else:
-        summary = f"환금성 {score}/100 — {grade}. 눈에 띄는 약점 없이 고르게 괜찮은 편이에요."
+        summary_lines = [
+            f"환금성 {score}/100 — {grade}.",
+            "눈에 띄는 약점 없이 고르게 괜찮은 편이에요.",
+        ]
 
-    return {"score": score, "grade": grade, "summary": summary,
-            "items": items, "weaknesses": weaknesses}
+    return {"score": score, "grade": grade, "summary": " ".join(summary_lines),
+            "summary_lines": summary_lines, "items": items, "weaknesses": weaknesses}
 
 
 def print_marketability_report(report: dict):
@@ -1184,7 +1202,8 @@ def print_marketability_report(report: dict):
         icon = MARKETABILITY_ICONS.get(item["verdict"], "·")
         print(f"{icon} {item['label']}: {item['text']}")
         print(f"   └ {item['lecture']}")
-    print(f"→ {report['summary']}")
+    for line in report["summary_lines"]:
+        print(f"→ {line}" if line is report["summary_lines"][0] else f"  {line}")
     print("⚠️ 이미 계산된 지표를 강의 경험칙에 맞춰 등급만 매긴 규칙 기반 판정입니다 — 통계로 검증한 기준이 아닙니다.")
     print()
 

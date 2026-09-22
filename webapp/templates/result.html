@@ -64,7 +64,10 @@
     <span class="badge muted">반경 안 절반 {{ result.n_close }}건</span>
     <span class="badge muted">올해 계약 {{ result.n_this_year }}건</span>
   </div>
-  <p class="muted" style="margin-bottom:14px">→ 경매로 낙찰받아 되파는 경우 일반 매매 시세(현실적 체결가)보다 다소 낮게 형성되는 경향을 반영한 참고값입니다.</p>
+  <ul class="note-lines" style="margin-bottom:14px">
+    <li>경매로 낙찰받아 되파는 경우, 일반 매매 시세보다 다소 낮게 형성되는 경향이 있어요.</li>
+    <li>그 경향을 반영한 참고값입니다.</li>
+  </ul>
   <div class="price-grid">
     <div class="price-item"><div class="label"><span class="dot" style="background:{{ result.marker_colors.conservative }}"></span>보수적 급매가</div><div class="value">{{ result.conservative }}</div></div>
     <div class="price-item"><div class="label"><span class="dot" style="background:{{ result.marker_colors.realistic }}"></span>현실적 체결가 (일반 매매)</div><div class="value">{{ result.realistic }}</div></div>
@@ -76,7 +79,11 @@
 {% if result.price_tiers %}
 <div class="card">
   <h3>가격 구간별 매도 전략</h3>
-  <p class="muted" style="margin-top:-6px; margin-bottom:12px">비교거래 분포 안에서의 가격 위치를 기준으로 한 참고 라벨입니다 — "30일/60일"은 실제 매도 소요일수를 측정한 값이 아니라, 낮은 가격일수록 빨리 팔릴 가능성이 높다는 참고용 목표입니다.</p>
+  <ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
+    <li>비교거래 분포 안에서의 <b>가격 위치</b>를 기준으로 붙인 참고 라벨입니다.</li>
+    <li>"30일/60일"은 실제 매도 소요일수를 측정한 값이 <b>아닙니다</b>.</li>
+    <li>낮은 가격일수록 빨리 팔릴 가능성이 높다는 뜻의 참고용 목표예요.</li>
+  </ul>
   <div class="tier-table-wrap">
   <table>
     {% set tier_colors = {"urgent": "#e0475a", "d30": "#f5a623", "d60": "#2f9e44", "normal": "#3b82c4", "test": "#8b5fbf"} %}
@@ -109,16 +116,19 @@
     {% endfor %}
   </table>
   </div>
-  <p class="muted" style="margin-top:10px">🎯 표시된 <b>30일 목표가</b>는 경매 낙찰 후 빠르게 정리하려는 분들이 가장 많이 참고하는 구간이라 강조했습니다 — 위 "경매용 매도가"와 함께 비교해 보세요.</p>
+  <ul class="note-lines" style="margin-top:10px">
+    <li>🎯 표시된 <b>30일 목표가</b>는 경매 낙찰 후 빠르게 정리하려는 분들이 가장 많이 참고하는 구간이라 강조했어요.</li>
+    <li>위 "경매용 매도가"와 나란히 놓고 비교해 보세요.</li>
+  </ul>
   {% if result.price_tiers.competitive_note %}
   <p class="muted" style="margin-top:6px">{{ result.price_tiers.competitive_note }}</p>
   {% endif %}
   {% if result.similar_listings %}
-  <p class="muted" style="margin-top:6px">
-    "현재 매물 대비"는 붙여넣은 유사면적 매물 중 이 가격보다 싸거나 같은 비율입니다(낮을수록 저렴한 편).
-    "예상 소진 속도"는 그 위치와 30절 유동성(거래 빈도)을 합쳐 추정한 참고용 라벨이지, 실제 매도
-    소요일수를 측정한 값이 아닙니다.
-  </p>
+  <ul class="note-lines" style="margin-top:6px">
+    <li><b>"현재 매물 대비"</b> — 붙여넣은 유사면적 매물 중 이 가격보다 싸거나 같은 비율이에요 (낮을수록 저렴한 편).</li>
+    <li><b>"예상 소진 속도"</b> — 그 위치와 거래 빈도를 합쳐 추정한 참고용 라벨입니다.</li>
+    <li>둘 다 실제 매도 소요일수를 측정한 값은 아닙니다.</li>
+  </ul>
   {% endif %}
 </div>
 {% endif %}
@@ -132,13 +142,18 @@
 
 <div class="card">
   <h3>📋 매도가 산출 근거 — 핵심 비교거래 (가까운 순)</h3>
-  <p class="muted" style="margin-top:-6px; margin-bottom:12px">
-    바로 위 그래프에 찍힌 점들의 실제 목록이에요. 국토교통부에 신고된 <b>과거 실거래(실제로 체결된 매매 기록)</b>이지,
-    지금 나와 있는 매물 호가가 아닙니다 — 이 기록들을 기준으로 위 매도가 값들을 계산했어요.
-  </p>
+  <ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
+    <li>바로 위 그래프에 찍힌 점들의 실제 목록이에요.</li>
+    <li>국토교통부에 신고된 <b>과거 실거래(실제로 체결된 매매 기록)</b>입니다 — 지금 나와 있는 매물 호가가 아니에요.</li>
+    <li>이 기록들을 기준으로 위 매도가 값들을 계산했습니다.</li>
+  </ul>
   {% if result.comparable_criteria %}
-  <p class="muted" style="margin-top:-6px; margin-bottom:12px">{{ result.comparable_criteria }} 반경·허용범위는 첫 화면 "상세 옵션"에서 직접 조정할 수 있어요.</p>
+  <ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
+    <li>{{ result.comparable_criteria }}</li>
+    <li>반경·허용범위는 첫 화면 "상세 옵션"에서 직접 조정할 수 있어요.</li>
+  </ul>
   {% endif %}
+  <div class="table-scroll">
   <table>
     <tr><th>단지명</th><th>면적</th><th>층</th><th>계약</th><th>금액</th><th>거리</th><th>유사도</th></tr>
     {% for c in result.comparables %}
@@ -156,12 +171,15 @@
     </tr>
     {% endfor %}
   </table>
+  </div>
 </div>
 
-{% if result.verdict %}
+{% if result.verdict_lines %}
 <div class="card" style="border-left:4px solid var(--primary); background:var(--primary-tint)">
-  <h3 style="margin-bottom:6px">📝 종합 판단 (규칙 기반 자동 요약)</h3>
-  <p style="margin:0; line-height:1.7; font-size:14px">{{ result.verdict }}</p>
+  <h3 style="margin-bottom:8px">📝 종합 판단 (규칙 기반 자동 요약)</h3>
+  {% for line in result.verdict_lines %}
+  <p style="margin:0 0 7px; line-height:1.75; font-size:14px">{{ line }}</p>
+  {% endfor %}
 </div>
 {% endif %}
 
@@ -173,9 +191,10 @@
     <span class="badge {{ 'warn' if result.marketability.score < 50 else '' }}" style="margin-left:6px">{{ result.marketability.score }}/100 · {{ result.marketability.grade }}</span>
     {% endif %}
   </h3>
-  <p class="muted" style="margin-top:0; margin-bottom:12px">
-    "얼마에 팔리나"(위 매도가)와 별개로 <b>"얼마나 잘 팔리나"</b>를 빌라 강의 기준으로 항목별로 본 것이에요.
-  </p>
+  <ul class="note-lines" style="margin-top:0; margin-bottom:12px">
+    <li>"얼마에 팔리나"(위 매도가)와 별개로, <b>"얼마나 잘 팔리나"</b>를 본 것이에요.</li>
+    <li>빌라 강의가 짚은 기준으로 항목마다 등급을 매겼습니다.</li>
+  </ul>
   <ul class="ref-list" style="margin-top:4px">
     {% for item in result.marketability['items'] %}
     <li style="margin-bottom:10px">
@@ -185,21 +204,27 @@
     </li>
     {% endfor %}
   </ul>
-  <p style="margin:12px 0 0; font-size:14px; line-height:1.7"><b>→ {{ result.marketability.summary }}</b></p>
-  <p class="muted" style="margin-top:8px">
-    ⚠️ 이미 계산된 지표(거래량·경쟁매물·가격위치·신뢰도·건축물대장)를 강의 경험칙에 맞춰 등급만 매긴 <b>규칙 기반 판정</b>입니다 —
-    통계로 검증한 기준이 아니고, 채광·누수·악취·소음·관리상태처럼 데이터로 알 수 없는 항목은 아래 임장 체크리스트로 직접 확인하셔야 해요.
-  </p>
+  <div style="margin-top:12px">
+    {% for line in result.marketability.summary_lines %}
+    <p style="margin:0 0 5px; font-size:14px; line-height:1.75"><b>{% if loop.first %}→ {% endif %}{{ line }}</b></p>
+    {% endfor %}
+  </div>
+  <ul class="note-lines" style="margin-top:8px">
+    <li>⚠️ 이미 계산된 지표(거래량·경쟁매물·가격위치·신뢰도·건축물대장)를 강의 경험칙에 맞춰 등급만 매긴 <b>규칙 기반 판정</b>입니다.</li>
+    <li>통계로 검증한 기준이 아니에요.</li>
+    <li>채광·누수·악취·소음·관리상태처럼 데이터로 알 수 없는 항목은 아래 임장 체크리스트로 직접 확인하셔야 합니다.</li>
+  </ul>
 </div>
 {% endif %}
 
 {% if result.condition_adjustment %}
 <div class="card">
   <h3>🔧 상태별 매도가 3단계 ({{ result.condition_adjustment.base_label }} 기준)</h3>
-  <p class="muted" style="margin-top:-6px; margin-bottom:12px">
-    같은 집이라도 <b>험한 집 / 깔끔한 기본집 / 올수리집</b>은 팔리는 가격이 다릅니다.
-    지금 상태({{ result.condition_adjustment.current_label }})에서 손을 볼수록 매도가가 얼마나 올라가는지 보여드려요.
-  </p>
+  <ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
+    <li>같은 집이라도 <b>험한 집 / 깔끔한 기본집 / 올수리집</b>은 팔리는 가격이 다릅니다.</li>
+    <li>지금 상태({{ result.condition_adjustment.current_label }})에서 손을 볼수록 매도가가 얼마나 올라가는지 보여드려요.</li>
+  </ul>
+  <div class="table-scroll">
   <table>
     <tr><th>상태</th><th>예상 매도가</th><th>현재 대비</th>{% if result.condition_adjustment.has_cost %}<th>예상 공사비</th><th>순증</th>{% endif %}</tr>
     {% for row in result.condition_adjustment.rows %}
@@ -214,10 +239,12 @@
     </tr>
     {% endfor %}
   </table>
-  <p class="muted" style="margin-top:10px">
-    ⚠️ 국토부 실거래가에는 수리상태 정보가 없어 <b>검증된 수치가 아닙니다</b> — 경매 강의·경험에서 나온 참고 배율(노후 0.90 · 기본 1.00 · 올수리 1.08)을 곱한 값일 뿐이에요.
-    {% if not result.condition_adjustment.has_cost %}상세 옵션에서 예상 공사비를 넣으면 "고쳐서 남는지"까지 계산해 드립니다.{% endif %}
-  </p>
+  </div>
+  <ul class="note-lines" style="margin-top:10px">
+    <li>⚠️ 국토부 실거래가에는 수리상태 정보가 없어 <b>검증된 수치가 아닙니다</b>.</li>
+    <li>경매 강의·경험에서 나온 참고 배율(노후 0.90 · 기본 1.00 · 올수리 1.08)을 곱한 값일 뿐이에요.</li>
+    {% if not result.condition_adjustment.has_cost %}<li>상세 옵션에서 예상 공사비를 넣으면 "고쳐서 남는지"까지 계산해 드립니다.</li>{% endif %}
+  </ul>
 </div>
 {% endif %}
 
@@ -232,16 +259,19 @@
     {% endif %}
   </p>
   <p style="margin:0; font-size:14px; line-height:1.7">{{ result.sale_pressure.desc }}</p>
-  <p class="muted" style="margin-top:10px">
-    ⚠️ 분자와 분모의 범위가 정확히 같지 않습니다 — 매물 수는 <b>직접 검색해서 붙여넣은 범위</b>의 결과(전수가 아니고 반경 500m와도 다를 수 있음)이고,
-    실거래는 반경 500m 기준이에요. 절대값보다 "쌓여 있나 / 적나"의 방향만 참고하세요.
-  </p>
+  <ul class="note-lines" style="margin-top:10px">
+    <li>⚠️ 분자와 분모의 범위가 정확히 같지 않습니다.</li>
+    <li>매물 수는 <b>직접 검색해서 붙여넣은 범위</b>의 결과예요 — 전수가 아니고, 반경 500m와도 다를 수 있습니다.</li>
+    <li>실거래는 반경 500m 기준이에요.</li>
+    <li>그래서 절대값보다 <b>"쌓여 있나 / 적나"의 방향만</b> 참고하세요.</li>
+  </ul>
 </div>
 {% endif %}
 
 {% if result.liquidity %}
 <div class="card">
   <h3>거래량·유동성 점수 (유사면적 기준, {{ result.liquidity.latest }} 기준)</h3>
+  <div class="table-scroll">
   <table>
     <tr><th>반경</th><th>최근 3개월</th><th>최근 6개월</th><th>최근 12개월</th></tr>
     {% for r in result.liquidity.rows %}
@@ -253,7 +283,11 @@
     </tr>
     {% endfor %}
   </table>
-  <p class="muted" style="margin-top:10px">※ 5절의 층·준공년도 하드 필터는 적용하지 않은, 유사면적만 기준으로 한 거래 빈도입니다.</p>
+  </div>
+  <ul class="note-lines" style="margin-top:10px">
+    <li>※ 층·준공년도 조건은 빼고, <b>유사면적만</b> 기준으로 센 거래 빈도입니다.</li>
+    <li>조건을 너무 좁히면 표본이 줄어 동네 유동성 자체를 가늠하기 어려워지기 때문이에요.</li>
+  </ul>
 </div>
 {% endif %}
 
@@ -315,6 +349,7 @@
         {% if result.similar_listings.n_skipped %}{{ result.similar_listings.n_skipped }}건은 가격/면적을 인식하지
         못해 제외했어요.{% endif %}
       </p>
+      <div class="table-scroll">
       <table>
         <tr><th>단지명</th><th>면적</th><th>층</th><th>호가</th></tr>
         {% for it in result.similar_listings.rows %}
@@ -324,6 +359,7 @@
         </tr>
         {% endfor %}
       </table>
+      </div>
       <p class="muted" style="margin-top:10px">⚠️ 호가는 실제 체결가가 아니라 매도인 희망가라 실거래가보다 통상 높게
         형성됩니다. 형식 인식이 완벽하지 않을 수 있어 참고용으로만 활용하세요.</p>
     </div>
@@ -369,7 +405,10 @@
   <h3>예상 월세 추정 (전월세전환율 역산)</h3>
   <p class="muted">가정: 월세보증금 {{ result.monthly_rent.deposit }}만원, 연 전환율 {{ result.monthly_rent.rate }}%</p>
   <div class="price-item" style="max-width:220px; margin-top:8px"><div class="label">예상 월세</div><div class="value">{{ result.monthly_rent.amount }}만원/월</div></div>
-  <p class="muted" style="margin-top:10px">⚠️ 실거래 데이터가 아니라 위 매도가(현실적 체결가)에 전환율을 적용한 추정치입니다 — 인근 실제 월세 매물과 비교해서 조정하세요.</p>
+  <ul class="note-lines" style="margin-top:10px">
+    <li>⚠️ 실거래 데이터가 아니라, 위 매도가(현실적 체결가)에 전환율을 적용한 추정치입니다.</li>
+    <li>인근 실제 월세 매물과 비교해서 조정하세요.</li>
+  </ul>
 </div>
 {% endif %}
 
@@ -380,7 +419,10 @@
 {% if result.inspection_checklist %}
 <div class="card">
   <h3>임장 체크리스트 (참고용)</h3>
-  <p class="muted">아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있다고 해요 — 임장(현장답사) 때 직접 확인하세요. 매도가 계산에는 반영되지 않습니다.</p>
+  <ul class="note-lines">
+    <li>아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있다고 해요.</li>
+    <li>임장(현장답사) 때 직접 확인하세요 — 매도가 계산에는 반영되지 않습니다.</li>
+  </ul>
   <p style="margin-top:8px">{{ result.inspection_checklist | join(' · ') }}</p>
 </div>
 {% endif %}

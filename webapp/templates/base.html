@@ -28,6 +28,12 @@
     max-width: 720px; margin: 0 auto; padding: 24px 16px 48px;
     color: var(--ink); background: var(--bg);
     -webkit-font-smoothing: antialiased;
+    /* 한글은 기본값(break-word)으로 두면 어절 한가운데서 줄이 끊겨
+       ("팔리긴 / 팔리는" 이 아니라 "팔리 / 긴 팔리는") 읽는 흐름이 계속
+       끊긴다. keep-all로 어절 단위로만 넘기고, 대신 URL처럼 긴 통짜
+       문자열은 overflow-wrap으로 넘치지 않게 잡아준다. */
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
   @media (min-width: 900px) {
     body { max-width: 1000px; }
@@ -96,7 +102,7 @@
     background: var(--danger-bg); color: var(--danger); padding: 12px 14px;
     border-radius: var(--radius-md); margin-bottom: 12px; font-size: 14px; font-weight: 600;
   }
-  .hint { color: var(--muted); font-size: 12.5px; line-height: 1.6; margin: 6px 2px 0; }
+  .hint { color: var(--muted); font-size: 12.5px; line-height: 1.7; margin: 6px 2px 0; }
 
   .card {
     background: var(--card); padding: 20px 22px; border-radius: var(--radius-lg);
@@ -115,6 +121,24 @@
   }
   .hero-row .card { margin-bottom: 0; }
   .tier-table-wrap { overflow-x: auto; }
+  /* 열이 많은 표(핵심 비교거래 7열 등)는 좁은 화면에서 카드 밖으로 삐져나가
+     페이지 전체에 가로 스크롤이 생긴다 — 표만 따로 스크롤되게 감싼다. */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* 설명 문단을 한 덩어리로 흘려보내지 않고 문장 단위로 끊어 보여준다 —
+     결과 페이지에 긴 안내 문장이 많아서, 줄글로 두면 눈이 어디를 읽고
+     있는지 놓치기 쉽다는 지적을 반영했다. 각 줄 앞에 옅은 점을 찍어
+     "여러 줄짜리 설명"임을 시각적으로도 드러낸다. */
+  ul.note-lines { margin: 6px 0 0; padding: 0; list-style: none; }
+  ul.note-lines li {
+    position: relative; padding-left: 12px; margin-bottom: 5px;
+    color: var(--muted); font-size: 13px; line-height: 1.75;
+  }
+  ul.note-lines li:last-child { margin-bottom: 0; }
+  ul.note-lines li::before {
+    content: ""; position: absolute; left: 0; top: 9px;
+    width: 4px; height: 4px; border-radius: 50%; background: var(--border);
+  }
 
   /* 27-2절 — 핵심 비교거래 단지명 옆 네이버 검색 링크 아이콘 */
   .comp-search-link {
@@ -207,7 +231,7 @@
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fafbfc; }
 
-  .muted { color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .muted { color: var(--muted); font-size: 13px; line-height: 1.75; }
   ul.ref-list { margin: 4px 0 0 0; padding: 0; list-style: none; }
   ul.ref-list li {
     padding: 6px 0; font-size: 13.5px; color: #4a4f54;

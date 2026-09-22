@@ -91,7 +91,7 @@ def _similarity_tier(t: float) -> str:
 def render_price_distribution_html(filtered: list[dict], markers: dict[str, float],
                                      highlight: tuple[str, str] = ("보수적 급매가", "현실적 체결가"),
                                      hero_name: str = "경매용 매도가",
-                                     max_dots: int = 40, width: int = 660, height: int = 142,
+                                     max_dots: int = 40, width: int = 660, height: int = 190,
                                      primary: str = PRIMARY) -> str:
     """filtered: find_comparables()가 돌려준 비교거래 목록(거리순 정렬됨,
     _amount_man·_weight 필요). markers: {"보수적 급매가": p25, ...} — 값이
@@ -118,7 +118,7 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     def x_of(v: float) -> float:
         return margin_l + (v - domain_lo) / (domain_hi - domain_lo) * plot_w
 
-    axis_y = 88
+    axis_y = 120
     hit_r = 13
     row_gap = 14
     max_rows = 4
@@ -139,7 +139,7 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         vals = [markers[n] for n in highlight]
         bx1, bx2 = x_of(min(vals)), x_of(max(vals))
         svg.append(
-            f'<rect x="{bx1:.1f}" y="6" width="{max(bx2 - bx1, 1):.1f}" height="{axis_y - 6:.1f}" '
+            f'<rect x="{bx1:.1f}" y="22" width="{max(bx2 - bx1, 1):.1f}" height="{axis_y - 22:.1f}" '
             f'fill="{HIGHLIGHT_FILL}" fill-opacity="{HIGHLIGHT_FILL_OPACITY}" '
             f'stroke="{HIGHLIGHT_EDGE}" stroke-width="1" stroke-dasharray="3,2" stroke-opacity="0.7" />'
         )
@@ -148,6 +148,20 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         f'<line x1="{margin_l}" y1="{axis_y}" x2="{width - margin_r}" y2="{axis_y}" '
         f'stroke="{BORDER}" stroke-width="1" />'
     )
+
+    # 가격 눈금(최저/중간/최고) — 값을 안 눌러봐도 대략적인 가격대가 바로
+    # 읽히도록 그래프 위쪽에 점선 세로 눈금선과 숫자를 3개만 찍는다(사용자가
+    # "그래프가 뭘 근거로 한 건지 더 자세히 보고 싶다"고 요청해서 추가). 마커
+    # 이름표를 SVG에 다 못 넣는 것과 같은 이유로, 너무 많이 찍으면 좁은
+    # 가격대에서 겹쳐 안 보이니 3개(최저·중간·최고)로만 제한한다.
+    for tick_val in sorted({lo, (lo + hi) / 2, hi}):
+        tick_x = x_of(tick_val)
+        svg.append(
+            f'<line x1="{tick_x:.1f}" y1="20" x2="{tick_x:.1f}" y2="{axis_y}" '
+            f'stroke="{BORDER}" stroke-width="1" stroke-dasharray="2,3" />'
+            f'<text x="{tick_x:.1f}" y="13" font-size="10" fill="{MUTED}" '
+            f'text-anchor="middle">{html.escape(_fmt_eok(tick_val))}</text>'
+        )
 
     # 개별 비교거래 점 — 겹치지 않게 아래에서 위로 쌓는 간단한 비스웜(beeswarm) 배치.
     # 점 크기·색 진하기는 _weight(7절 가중치 — 거리·연도·층 유사도)를 반영한다.
@@ -280,7 +294,15 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
   document.addEventListener("click", function () {{ hideTip(); }});
 }})();
 </script>"""
+    intro = (
+        '<div style="margin-bottom:8px">'
+        f'<div style="font-size:13.5px; font-weight:800; color:{INK}">📊 매도가 산출 근거 — 실제 비교거래 분포</div>'
+        f'<div style="font-size:11.5px; color:{MUTED}; margin-top:2px; line-height:1.5">'
+        '아래 점 하나하나가 실제로 거래된 가격이에요. 그 안에서 위 매도가 값들이 어디쯤 '
+        '위치하는지 보면, 이 매도가가 어떤 실거래를 근거로 나온 숫자인지 알 수 있습니다.</div>'
+        '</div>'
+    )
     return (
         f'<div class="price-dist" id="{chart_id}" style="position:relative">'
-        f'{svg_markup}{tooltip_box}{caption}{script}</div>'
+        f'{intro}{svg_markup}{tooltip_box}{caption}{script}</div>'
     )

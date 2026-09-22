@@ -2370,17 +2370,22 @@ API 키를 발급받고 표고 조회 관련 공식 문서(또는 실제 요청/
   같은 원칙으로, 검증된 보정 공식이 없어 판단은 사용자 몫으로 남긴다.
 
 **API 상태**
-- Endpoint `https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade` ✅ 사용자가
-  공공데이터포털 상세페이지에서 확인. 데이터포맷 XML ✅. 인증키는
-  `MOLIT_SERVICE_KEY`를 그대로 쓴다(같은 계정·같은 제공기관 1613000).
-- ⚠️ **오퍼레이션명(`getRTMSDataSvcAptTrade`)과 응답 필드명은 아직 추정이다**
-  — 기술문서(.hwp)나 실제 응답을 받으면 `scripts/molit_apt_api.py` 상단
-  주석을 "확인 완료"로 바꾸고 `OPERATION`/`NAME_FIELDS`만 고치면 된다
-  (21절 경기데이터드림, 22-1절 탱크옥션과 같은 "추정 → 실측 교정" 절차).
-- **필드명을 잘못 짚어도 틀린 숫자가 나오지 않는다** — `normalize_apt_row()`가
-  계산에 필요한 필드(umdNm·excluUseAr·dealAmount·dealYear·dealMonth)를 못
-  찾은 행을 버려서, 그 경우 "0건"으로 드러나 카드가 아예 안 뜬다. CLI
-  실행 시에는 실제로 온 필드 목록을 출력해 준다.
+- ✅ **전부 실측으로 확인됐다.** Endpoint
+  `https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade`, 오퍼레이션
+  `getRTMSDataSvcAptTrade`, XML 포맷. 인증키는 `MOLIT_SERVICE_KEY`를 그대로
+  쓴다(같은 계정·같은 제공기관 1613000 — 아파트 API만 활용신청을 따로 하면
+  된다). 사용자가 강북구(11305) 2026-04~07을 실제로 조회해서 205/196/109/
+  132건을 받았고 **받은 행이 전부 `normalize_apt_row()`를 통과했다** — 즉
+  계산에 필요한 필드가 연립다세대 API와 같은 이름으로 온다.
+- 단지명 필드(`NAME_FIELDS`)만은 후보를 여러 개 받아둔다 — 아파트는 `aptNm`이
+  표준이지만 연립다세대는 `mhouseNm`이라 규격이 통일돼 있지 않고, 단지명은
+  계산에 안 쓰여서 틀려도 "(단지명없음)"으로 뜰 뿐 숫자에는 영향이 없다.
+- **필드명이 틀리면 틀린 숫자가 아니라 "0건"으로 드러난다** — `normalize_apt_row()`가
+  필수 필드를 못 찾은 행을 버리므로 카드가 아예 안 뜨고, CLI는 실제로 온
+  필드 목록을 출력해 준다.
+- ⚠️ **아파트 데이터는 대상 물건과 같은 구(LAWD_CD)로 받아야 한다** — 40절은
+  같은 법정동(`umdNm`) 아파트만 쓰므로, 다른 구 데이터만 있으면 표본 0건으로
+  카드가 조용히 생략된다.
 - 관련 파일: `scripts/molit_apt_api.py`(조회·`data/raw_apt/` 저장),
   `webapp/data_source.py`의 `get_apt_rows()`(웹 조회·`webapp/cache/apt/`
   캐시, 실패는 삼켜서 카드만 생략), `estimate_price.py`의

@@ -5,24 +5,24 @@
 기준선을 세우기 위해, 같은 동네 아파트 실거래가를 따로 받아온다.
 
 API 기본 정보
-- Endpoint : https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade   ✅ 사용자 확인
-- Operation: getRTMSDataSvcAptTrade                                ⚠️ 추정
-- 데이터포맷: XML                                                   ✅ 사용자 확인
+- Endpoint : https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade   ✅ 실측 확인
+- Operation: getRTMSDataSvcAptTrade                                ✅ 실측 확인
+- 데이터포맷: XML                                                   ✅ 실측 확인
 - 요청 파라미터·에러코드·인증키는 연립다세대 API(molit_rhtrade_api.py)와 동일하다
   (같은 제공기관 1613000, 같은 계정 인증키 `MOLIT_SERVICE_KEY`를 그대로 쓴다).
 
-⚠️ **오퍼레이션명과 응답 필드명은 아직 실측으로 확인하지 못했다.**
-   사용자가 공공데이터포털 상세페이지에서 확인해준 것은 End Point와 데이터
-   포맷까지다. 기술문서(.hwp)나 실제 응답 한 건을 받으면 이 파일 상단 주석을
-   "확인 완료"로 바꾸고 필요한 부분만 고치면 된다(21절 경기데이터드림,
-   22-1절 탱크옥션과 같은 "추정 스펙 → 실측으로 교정" 절차).
+✅ **실측으로 확인했다** — 사용자가 실제로 강북구(11305) 2026-04~07을
+   조회해서 205/196/109/132건을 받았고, **받은 행이 전부 `normalize_apt_row()`를
+   통과했다**(205건 중 205건). 즉 계산에 필요한 필드
+   (umdNm·excluUseAr·dealAmount·dealYear·dealMonth)가 연립다세대 API와 같은
+   이름으로 온다는 뜻이다. 오퍼레이션명도 이 값이 맞다.
 
-   - 오퍼레이션명이 다르면 `OPERATION` 상수 하나만 고치면 된다.
-   - 응답 필드명은 아래 `normalize_apt_row()`가 흡수한다 — 단지명은
-     aptNm/mhouseNm/offiNm 등 어느 이름으로 와도 받고, 계산에 꼭 필요한
-     필드(umdNm·excluUseAr·dealAmount·dealYear·dealMonth)를 못 찾은 행은
-     조용히 버린다. **필드명을 잘못 짚으면 "숫자가 틀리는" 게 아니라
-     "0건"으로 나오므로**, 화면에서 바로 알아챌 수 있다.
+   - 단지명 필드만은 여전히 후보를 여러 개 받아둔다(`NAME_FIELDS`) — 아파트는
+     `aptNm`이 표준으로 알려져 있지만 연립다세대는 `mhouseNm`이라 규격이
+     통일돼 있지 않고, 단지명은 계산에 안 쓰여서 틀려도 "(단지명없음)"으로
+     표시될 뿐 숫자에는 영향이 없다.
+   - 필수 필드를 못 찾은 행은 조용히 버린다 — **필드명이 틀리면 "숫자가
+     틀리는" 게 아니라 "0건"으로 나오므로** 화면에서 바로 알아챌 수 있다.
 
 ⚠️ 이 스크립트는 Claude 샌드박스에서 실행할 수 없다 — apis.data.go.kr이
    허용 목록에 없어 403으로 막힌다(2절). 본인 PC/서버에서 실행한다.
@@ -45,7 +45,7 @@ from molit_rhtrade_api import (  # noqa: F401  (재노출)
 from molit_rhtrade_api import fetch_rhtrade as _fetch_generic
 
 BASE = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade"
-OPERATION = "getRTMSDataSvcAptTrade"  # ⚠️ 추정 — 실제 응답으로 확인되면 고친다
+OPERATION = "getRTMSDataSvcAptTrade"  # ✅ 실측 확인 (강북구 2026-04~07)
 BASE_URL = f"{BASE}/{OPERATION}"
 
 # 단지명이 올 수 있는 필드 이름 후보. 아파트 API는 aptNm이 표준으로 알려져

@@ -1078,8 +1078,18 @@ MARKETABILITY_VERDICT_LABELS = {
 #   5) 시세 판단 근거 — "개별성이 강해 실거래 하나로 정하면 안 된다"(4절).
 #   6) 연식 — "연식별 거래량을 따로 보라"(6절 4번). 판정이 아닌 참고.
 MARKETABILITY_ORDER = [
-    "price_position", "apt_gap", "floor", "inspection", "volume", "competition", "confidence", "build_year",
+    "price_position", "apt_gap", "floor", "transit_school", "inspection",
+    "volume", "competition", "confidence", "build_year",
 ]
+
+# CLAUDE.md 45절 — 역세권·초품아 판정 거리. 사용자가 "층·승강기 다음으로
+# 중요한 요소"라고 짚어서 41절 진단에 넣었다.
+# ⚠️ 경계값은 통상 쓰이는 기준(역까지 도보 10분 ≈ 800m, 초등학교 도보
+# 통학권 ≈ 500m)을 옮긴 참고값이지 데이터로 검증한 수치가 아니다.
+STATION_NEAR_M = 800    # 이내면 역세권
+STATION_OK_M = 1200     # 이내면 걸어갈 만함
+SCHOOL_NEAR_M = 500     # 이내면 초품아급 도보 통학권
+SCHOOL_OK_M = 1000      # 이내면 통학 가능권
 
 
 def build_marketability_report(floor: int | None = None, build_year: int | None = None,
@@ -1089,7 +1099,8 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
                                 building: dict | None = None,
                                 inspection_bad: list[str] | None = None,
                                 inspection_clean: bool = False,
-                                apt_gap: dict | None = None) -> dict:
+                                apt_gap: dict | None = None,
+                                location: dict | None = None) -> dict:
     """CLAUDE.md 41절: "이 빌라가 실제로 잘 팔릴 물건인가"를 강의
     (`data/lecture_notes_villa.md`)가 짚은 기준으로 항목별 진단한다.
 
@@ -1177,6 +1188,39 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
                 t += " (승강기는 없습니다)"
         items.append({"key": "floor", "label": "층·승강기 (팔기 어려운 요소)", "verdict": v, "text": t,
                        "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사가 나쁘면 값을 낮춰도 잘 안 팔립니다"})
+
+    # 역세권·초품아 — 45절. 19절 입지 체크(`compute_location_check()`)가 이미
+    #   구해둔 거리를 판정으로만 옮긴다(추가 API 호출 없음).
+    if location:
+        station = (location.get("지하철역") or {}).get("place")
+        school = (location.get("초등학교") or {}).get("place")
+        failed = all((location.get(k) or {}).get("error") for k in ("지하철역", "초등학교"))
+        if failed:
+            items.append({"key": "transit_school", "label": "역세권·학세권 (입지)", "verdict": "unknown",
+                           "text": "카카오 로컬 조회에 실패해서 역·학교까지 거리를 확인하지 못했어요.",
+                           "why": "역과 초등학교까지의 거리는 매수층을 직접 넓히거나 좁히는 요소입니다"})
+        else:
+            s_d = station["distance_m"] if station else None
+            c_d = school["distance_m"] if school else None
+            score = 0
+            score += 2 if (s_d is not None and s_d <= STATION_NEAR_M) else (
+                1 if (s_d is not None and s_d <= STATION_OK_M) else 0)
+            score += 2 if (c_d is not None and c_d <= SCHOOL_NEAR_M) else (
+                1 if (c_d is not None and c_d <= SCHOOL_OK_M) else 0)
+            v = "good" if score >= 3 else ("ok" if score == 2 else "warn")
+
+            none_txt = f"{LOCATION_SEARCH_RADIUS_M / 1000:.1f}km 안에 없음"
+            s_txt = f"{station['name']} {s_d}m" if station else none_txt
+            c_txt = f"{school['name']} {c_d}m" if school else none_txt
+            if v == "good":
+                tail = "역·학교가 둘 다 가까워서 매수층이 넓어지는 입지예요."
+            elif v == "ok":
+                tail = "둘 중 하나는 가깝고 하나는 애매해요 — 가까운 쪽을 매물 설명에 앞세우는 게 좋습니다."
+            else:
+                tail = "역·학교 모두 걸어가기엔 먼 편이라 매수층이 좁아집니다 — 가격으로 상쇄해야 해요."
+            items.append({"key": "transit_school", "label": "역세권·학세권 (입지)", "verdict": v,
+                           "text": f"지하철역 {s_txt} · 초등학교 {c_txt}. {tail}",
+                           "why": "역과 초등학교까지의 거리는 매수층을 직접 넓히거나 좁히는 요소입니다"})
 
     # ⑤ 임장 체크 — 36절 목록을 "직접 보고 온 결과"로 받아 점수에 반영한다.
     #    데이터로는 절대 알 수 없는 항목이라, 사용자가 채워주기 전까지는
@@ -1596,22 +1640,49 @@ def print_inspection_checklist():
     print()
 
 
-def print_location_check(subject_coord: tuple[float, float]):
-    """CLAUDE.md 19절 규칙: 카카오 로컬 API로 가까운 지하철역/초등학교/마트를 찾는다."""
+# CLAUDE.md 19절/45절 — 입지 체크 검색 반경. 1km였던 걸 1.5km로 넓혔다:
+# 45절에서 "역까지 1.1km"와 "아예 없음"을 구분해서 판정해야 하는데, 1km에서
+# 자르면 둘 다 "없음"으로 뭉개진다.
+LOCATION_SEARCH_RADIUS_M = 1500
+LOCATION_KEYWORDS = [("지하철역", "가장 가까운 지하철역"),
+                     ("초등학교", "가장 가까운 초등학교"),
+                     ("마트", "가장 가까운 마트")]
+
+
+def compute_location_check(subject_coord: tuple[float, float],
+                            keywords=None, radius_m: int = LOCATION_SEARCH_RADIUS_M) -> dict:
+    """19절 입지 체크를 dict로 계산한다 — CLI 출력(`print_location_check`)과
+    웹 버전, 45절 환금성 항목이 같은 결과를 나눠 쓴다.
+
+    반환: {키워드: {"place": {...}|None, "error": str|None}}. 호출 실패는
+    예외로 올리지 않고 `error`에 담는다 — 입지 체크는 참고 정보이지
+    매도가 계산의 필수 조건이 아니다(20절/34절과 같은 원칙)."""
     from geocode import nearby_place
 
-    print()
-    print("[입지 체크] (카카오 로컬 기준, 반경 1km)")
-    for keyword, label in [("지하철역", "가장 가까운 지하철역"), ("초등학교", "가장 가까운 초등학교"), ("마트", "가장 가까운 마트")]:
+    out = {}
+    for keyword, _label in (keywords or LOCATION_KEYWORDS):
         try:
-            place = nearby_place(subject_coord[0], subject_coord[1], keyword)
+            out[keyword] = {"place": nearby_place(subject_coord[0], subject_coord[1],
+                                                   keyword, radius_m=radius_m), "error": None}
         except RuntimeError as e:
-            print(f"{label}: 조회 실패 ({e})")
-            continue
-        if place:
-            print(f"{label}: {place['name']} ({place['distance_m']}m)")
+            out[keyword] = {"place": None, "error": str(e)}
+    return out
+
+
+def print_location_check(subject_coord: tuple[float, float]):
+    """CLAUDE.md 19절 규칙: 카카오 로컬 API로 가까운 지하철역/초등학교/마트를 찾는다."""
+    checked = compute_location_check(subject_coord)
+    print()
+    print(f"[입지 체크] (카카오 로컬 기준, 반경 {LOCATION_SEARCH_RADIUS_M / 1000:.1f}km)")
+    for keyword, label in LOCATION_KEYWORDS:
+        got = checked.get(keyword) or {}
+        if got.get("error"):
+            print(f"{label}: 조회 실패 ({got['error']})")
+        elif got.get("place"):
+            print(f"{label}: {got['place']['name']} ({got['place']['distance_m']}m)")
         else:
-            print(f"{label}: 1km 이내 없음")
+            print(f"{label}: {LOCATION_SEARCH_RADIUS_M / 1000:.1f}km 이내 없음")
+    return checked
 
 
 def compute_terrain_check(subject_coord: tuple[float, float]) -> dict:
@@ -2086,8 +2157,9 @@ def main():
     print(f"[참고] 이 지역 네이버부동산 매물(빌라·매매) 바로 보기: {naver_url}")
     print()
 
+    location_check = None
     if not args.no_location:
-        print_location_check(subject_coord)
+        location_check = print_location_check(subject_coord)
         print_terrain_check(subject_coord)
 
     if not args.no_brokers:
@@ -2186,7 +2258,7 @@ def main():
         confidence=confidence, liquidity=liquidity, building=building_info,
         inspection_bad=args.inspection_bad,
         inspection_clean=args.inspection_clean and not args.inspection_bad,
-        apt_gap=apt_gap))
+        apt_gap=apt_gap, location=location_check))
 
     tiers = compute_price_tiers(filtered)
     print("[가격 구간별 매도 전략] (비교거래 분포 안에서의 위치 기반 참고 라벨 — 실제 매도 소요일수 데이터는 아님)")

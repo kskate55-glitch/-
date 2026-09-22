@@ -918,5 +918,45 @@ class TestAptGap(unittest.TestCase):
         self.assertEqual(keys[:2], ["price_position", "apt_gap"])
 
 
+class TestTransitSchoolItem(unittest.TestCase):
+    """CLAUDE.md 45절 — 역세권·학세권 판정. 19절 입지 체크가 이미 구해둔
+    거리를 판정으로만 옮기므로 추가 API 호출은 없다."""
+
+    def _loc(self, station_m=None, school_m=None, error=None):
+        def cell(d):
+            return {"place": ({"name": "테스트", "distance_m": d} if d is not None else None),
+                    "error": error}
+        return {"지하철역": cell(station_m), "초등학교": cell(school_m)}
+
+    def _verdict(self, **kw):
+        r = ep.build_marketability_report(floor=3, location=self._loc(**kw))
+        return next(i for i in r["items"] if i["key"] == "transit_school")
+
+    def test_both_close_is_good(self):
+        self.assertEqual(self._verdict(station_m=350, school_m=280)["verdict"], "good")
+
+    def test_one_close_one_far_is_ok(self):
+        # 역 700m(2점) + 초등학교 없음(0점) = 2점 → 보통
+        self.assertEqual(self._verdict(station_m=700)["verdict"], "ok")
+
+    def test_both_far_is_warn(self):
+        self.assertEqual(self._verdict(station_m=1400, school_m=1400)["verdict"], "warn")
+        self.assertEqual(self._verdict()["verdict"], "warn")
+
+    def test_boundary_distances(self):
+        self.assertEqual(self._verdict(station_m=ep.STATION_NEAR_M, school_m=ep.SCHOOL_NEAR_M)["verdict"], "good")
+        # 역 801m(1점) + 초 501m(1점) = 2점 → 보통
+        self.assertEqual(self._verdict(station_m=ep.STATION_NEAR_M + 1,
+                                        school_m=ep.SCHOOL_NEAR_M + 1)["verdict"], "ok")
+
+    def test_lookup_failure_is_unknown_not_a_penalty(self):
+        self.assertEqual(self._verdict(error="키 미설정")["verdict"], "unknown")
+
+    def test_item_sits_right_after_floor(self):
+        r = ep.build_marketability_report(floor=3, location=self._loc(350, 280))
+        keys = [i["key"] for i in r["items"]]
+        self.assertEqual(keys[keys.index("floor") + 1], "transit_school")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -539,6 +539,21 @@
 </div>
 {% endif %}
 
+{% if result.location %}
+<div class="card">
+  <h3>🚇 입지 체크 (카카오 로컬 기준, 반경 {{ result.location.radius_km }}km)</h3>
+  <ul class="note-lines" style="margin-top:-6px; margin-bottom:0">
+    <li>가장 가까운 지하철역:
+      {% if result.location.station %}<b>{{ result.location.station.name }}</b> ({{ result.location.station.distance_m }}m)
+      {% else %}{{ result.location.radius_km }}km 이내 없음{% endif %}</li>
+    <li>가장 가까운 초등학교:
+      {% if result.location.school %}<b>{{ result.location.school.name }}</b> ({{ result.location.school.distance_m }}m)
+      {% else %}{{ result.location.radius_km }}km 이내 없음{% endif %}</li>
+    <li>※ 이 거리는 위 환금성 진단의 "역세권·학세권" 항목 판정에 그대로 쓰입니다 — 매도가 계산에는 반영되지 않아요.</li>
+  </ul>
+</div>
+{% endif %}
+
 {% if result.terrain %}
 <div class="card">
   <h3>주변 지형 참고 (카카오 로컬 키워드 검색, 반경 1km)</h3>

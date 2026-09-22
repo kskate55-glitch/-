@@ -380,6 +380,13 @@
   <p class="muted">⚠️ 설명력(R²)이 낮아 거리 외에 다른 요인(층·연식·개별 단지 차이 등)의 영향이 더 클 수 있습니다.</p>
   {% endif %}
   <p class="muted">⚠️ 표본이 최대 15건인 단순 참고 통계입니다 — 매도가 계산에 자동 반영되지 않습니다.</p>
+  {% if result.station_premium.correction %}
+  <p style="margin:10px 0 0">→ [참고] 대상 물건은 {{ result.station_premium.keyword }}까지 {{ result.station_premium.correction.subject_distance_m }}m로
+    비교거래 평균({{ result.station_premium.correction.avg_distance_m }}m)보다
+    {{ "가깝습니다" if result.station_premium.correction.closer else "멉니다" }} — 이 회귀를 반영해 보정하면
+    현실적 체결가는 약 <strong>{{ result.station_premium.correction.corrected_realistic }}</strong> ({{ result.station_premium.correction.pct }}%)입니다.</p>
+  <p class="muted">⚠️ 표본·거리범위·설명력 조건을 모두 만족할 때만 계산되는 참고용 what-if 수치입니다 — 위 공식 매도가 값에는 반영되지 않습니다.</p>
+  {% endif %}
 </div>
 {% endif %}
 

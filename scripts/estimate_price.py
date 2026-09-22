@@ -39,6 +39,8 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
                      추정을 같이 보여준다. 순수월세면 0)
 --conversion-rate  : 전월세전환율 (연 %, 선택) — 생략하면 반경 안 실제 월세
                      거래로 역산한 실측치를 쓰고, 그것도 없으면 6.0(기본값)
+--no-time-correction : 7-2절 시계열 가격보정(오래된 거래를 이 동네 가격 추이로
+                     지금 시세 수준으로 환산)을 건너뛴다
 
 이 스크립트는 실거래가 XML 파일 텍스트만 읽는다 — 국토부 API를 직접 호출하지
 않는다 (그건 molit_rhtrade_api.py/molit_rhrent_api.py의 몫). 다만 --address를
@@ -253,7 +255,8 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
                       year_min: int, this_year: int, gu_filter: str | None,
                       amount_field: str = "dealAmount",
                       area_tolerance_pct: float = 0.15, build_year_tolerance: int = 4,
-                      this_month: int | None = None) -> list[dict]:
+                      this_month: int | None = None,
+                      monthly_trend_rate: float | None = None) -> list[dict]:
     """CLAUDE.md 5절 규칙: 실제 반경(기본 400m) 안의 유사면적 매물만 비교 대상으로
     삼고, 거리·면적·층·준공년도 종합 유사도(`similarity_score()`)와 계약
     시점 최근성(`weight_for_recency()`)으로 가중치를 준다.
@@ -277,6 +280,13 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
     area_tolerance_pct/build_year_tolerance: 면적/준공년도 허용범위(기본
     ±15%/±4년) — CLI `--area-tolerance`/`--build-year-tolerance`, 웹 폼
     "상세 옵션"으로 사용자가 직접 조정할 수 있다(5절).
+
+    monthly_trend_rate: CLAUDE.md 7-2절 시계열 가격보정 — 15절 가격 추이로
+    추정한 월평균 변동률을 주면, 오래된 거래일수록 `time_correction_factor()`로
+    "지금 시세 수준으로 보정"한 값을 `_amount_man_adjusted`에 따로 저장한다
+    (원본 `_amount_man`은 그대로 둬서 "핵심 비교거래" 목록엔 실제 체결가가
+    표시된다 — 계산에만 보정값을 쓴다). None이면(기본값) 보정을 적용하지
+    않는다.
 
     지오코딩(카카오 API 호출)이 후보 하나마다 순차 네트워크 왕복이라 후보가
     많은 구(garbage 400건대도 흔함)는 그것만으로 몇 분씩 걸려 웹 서버
@@ -384,11 +394,19 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             if distance <= SAME_BUILDING_DISTANCE_M:
                 r["_weight"] *= SAME_BUILDING_BONUS
                 r["_same_building"] = True
+            if monthly_trend_rate is not None:
+                factor = time_correction_factor(r.get("dealYear"), r.get("dealMonth"),
+                                                 this_year, this_month, monthly_trend_rate)
+                r["_amount_man_adjusted"] = amount * factor
+                r["_time_correction_factor"] = factor
             out.append(r)
 
     # 평당가(㎡당가) 기준 이상치 다운웨이트 — 같은 반경·면적대인데 가격이
     # 유독 튀는 거래(특수관계자 거래, 입력 오류 등)가 가중 중앙값을 왜곡하지
     # 않도록, median ± 3×MAD 밖인 거래는 가중치를 크게 낮춘다(제외는 아님).
+    # 시계열 보정(_amount_man_adjusted)이 적용된 경우 그 값으로 이상치를
+    # 판단한다 — 그래야 "오래돼서 싼" 거래가 "실제로 비정상적으로 싼" 거래와
+    # 헷갈리지 않는다.
     price_per_sqm = []
     for r in out:
         try:
@@ -396,7 +414,8 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
         except (TypeError, ValueError):
             continue
         if row_area > 0:
-            price_per_sqm.append((r, r["_amount_man"] / row_area))
+            amount_for_outlier_check = r.get("_amount_man_adjusted", r["_amount_man"])
+            price_per_sqm.append((r, amount_for_outlier_check / row_area))
 
     if len(price_per_sqm) >= PRICE_OUTLIER_MIN_SAMPLE:
         pps_values = [pps for _, pps in price_per_sqm]
@@ -613,10 +632,16 @@ def _weighted_amounts_sorted(filtered: list[dict]) -> list[float]:
     """find_comparables()가 채운 _amount_man/_weight로 가중 복제 리스트를
     만들어 정렬해서 돌려준다(7절 — round(가중치)만큼, 최소 1개 복제).
     compute_scenarios()의 p25/중앙값/p75와 compute_price_tiers()의 더 세분화된
-    백분위수가 이 리스트를 공유한다."""
+    백분위수가 이 리스트를 공유한다.
+
+    7-2절 시계열 보정이 적용된 행은 `_amount_man_adjusted`(보정값)를 쓰고,
+    없으면(보정 미적용) 원래 `_amount_man`(실제 체결가)으로 폴백한다 — 화면에
+    표시되는 "핵심 비교거래" 목록은 항상 실제 체결가(`_amount_man`)를 그대로
+    보여주고, 계산에만 보정값이 쓰인다."""
     amounts_weighted = []
     for r in filtered:
-        amounts_weighted.extend([r["_amount_man"]] * max(1, round(r["_weight"])))
+        amount = r.get("_amount_man_adjusted", r["_amount_man"])
+        amounts_weighted.extend([amount] * max(1, round(r["_weight"])))
     return sorted(amounts_weighted)
 
 
@@ -641,7 +666,8 @@ def _weighted_unit_prices_sorted(filtered: list[dict], subject_area: float) -> l
             continue
         if row_area <= 0:
             continue
-        unit_price = r["_amount_man"] / row_area
+        amount = r.get("_amount_man_adjusted", r["_amount_man"])  # 7-2절 시계열 보정 — 있으면 우선 사용
+        unit_price = amount / row_area
         amounts_weighted.extend([unit_price * subject_area] * max(1, round(r["_weight"])))
     return sorted(amounts_weighted)
 
@@ -973,8 +999,12 @@ def print_seasonality(season: dict):
         print("→ 뚜렷한 계절성이 보이지 않아 매도 시점보다 가격 자체에 집중하는 것을 추천합니다.")
 
 
-def compute_price_trend(all_rows: list[dict], dong: str) -> dict:
-    """CLAUDE.md 15절 규칙: 월별 평균 평당가(만원/㎡) 흐름을 시간순으로 뽑는다."""
+def _price_trend_monthly_series(all_rows: list[dict], dong: str) -> tuple[list[tuple[int, int, float]], str]:
+    """15절(가격 추이)과 7-2절(시계열 보정)이 공유하는 집계 로직 — 월별 평균
+    평당가(만원/㎡)를 (연, 월, 평균평당가) 튜플 리스트로 시간순 정렬해서 돌려준다.
+    `compute_price_trend()`(15절 텍스트/그래프용 문자열 라벨 포맷)와
+    `estimate_monthly_trend_rate()`(7-2절 월평균 변동률 추정)가 같은 집계를 두 번
+    구현하지 않도록 이 함수 하나로 합쳤다."""
     non_cancelled = [r for r in all_rows if r.get("cdealType", "").strip() != "해제"]
     dong_rows = [r for r in non_cancelled if r.get("umdNm", "").strip() == dong.strip()]
 
@@ -995,11 +1025,57 @@ def compute_price_trend(all_rows: list[dict], dong: str) -> dict:
             continue
         buckets[(y, m)].append(amount / area)
 
-    if len(buckets) < 3:
-        return {"scope_label": scope_label, "series": []}
+    series = sorted((y, m, statistics.mean(vals)) for (y, m), vals in buckets.items())
+    return series, scope_label
 
-    series = [(f"{y}.{m:02d}", statistics.mean(vals)) for (y, m), vals in sorted(buckets.items())]
-    return {"scope_label": scope_label, "series": series}
+
+def compute_price_trend(all_rows: list[dict], dong: str) -> dict:
+    """CLAUDE.md 15절 규칙: 월별 평균 평당가(만원/㎡) 흐름을 시간순으로 뽑는다."""
+    series, scope_label = _price_trend_monthly_series(all_rows, dong)
+    if len(series) < 3:
+        return {"scope_label": scope_label, "series": []}
+    return {"scope_label": scope_label, "series": [(f"{y}.{m:02d}", avg) for y, m, avg in series]}
+
+
+# 시계열 가격보정(7-2절) — 오래된 거래도 딱 이 개월수만큼만 보정하고, 그보다
+# 먼 과거는 더 외삽하지 않는다(추세가 그만큼 오래 이어졌으리라는 가정이
+# 약해지므로). 최종 보정 배율도 이 비율을 넘지 않게 clamp한다 — 5절 평당가
+# 이상치 다운웨이트와 같은 "보정은 하되 폭주는 막는다"는 원칙이다.
+TIME_CORRECTION_MAX_MONTHS = 12
+TIME_CORRECTION_MAX_PCT = 0.15
+
+
+def estimate_monthly_trend_rate(all_rows: list[dict], dong: str) -> float | None:
+    """CLAUDE.md 7-2절 — 15절과 같은 월별 평당가 시계열의 첫 점과 마지막 점으로
+    월평균 복리 변동률을 추정한다. 시계열이 3개월 미만이면(15절과 동일한 최소
+    표본 기준) None을 돌려주고, 호출부는 조용히 시계열 보정을 건너뛴다."""
+    series, _ = _price_trend_monthly_series(all_rows, dong)
+    if len(series) < 3:
+        return None
+    y0, m0, v0 = series[0]
+    y1, m1, v1 = series[-1]
+    months_span = (y1 - y0) * 12 + (m1 - m0)
+    if months_span <= 0 or v0 <= 0:
+        return None
+    return (v1 / v0) ** (1 / months_span) - 1
+
+
+def time_correction_factor(deal_year: str, deal_month: str, this_year: int, this_month: int,
+                            monthly_rate: float) -> float:
+    """CLAUDE.md 7-2절 — 비교거래 하나를 "그 가격 수준이 지금까지의 추세를 따라
+    지금 시점까지 왔다면 얼마"로 환산하는 배율. `months_ago`가 클수록 보정폭이
+    커지지만 `TIME_CORRECTION_MAX_MONTHS`를 넘는 부분은 더 키우지 않고(먼
+    과거일수록 그 추세가 그대로 이어졌으리라는 가정이 약해지므로 외삽을
+    제한한다), 최종 배율도 `TIME_CORRECTION_MAX_PCT`(±15%) 안으로 clamp한다."""
+    try:
+        y, m = int(deal_year), int(deal_month)
+    except (TypeError, ValueError):
+        return 1.0
+    months_ago = (this_year - y) * 12 + (this_month - m)
+    months_ago = max(0, min(months_ago, TIME_CORRECTION_MAX_MONTHS))
+    factor = (1 + monthly_rate) ** months_ago
+    lo, hi = 1 - TIME_CORRECTION_MAX_PCT, 1 + TIME_CORRECTION_MAX_PCT
+    return max(lo, min(hi, factor))
 
 
 def compute_profit(bid_price_man: float, sale_price_man: float, acquisition_rate: float,
@@ -1317,11 +1393,59 @@ def compute_distance_premium(filtered: list[dict], keyword: str = "지하철역"
         "pct_per_100m": (slope * 100 / mean_y * 100) if mean_y else 0,
         "r_squared": r_squared,
         "avg_price_ppyeong": mean_y,
+        "mean_distance": mean_x,
         "min_distance": min(xs), "max_distance": max(xs),
     }
 
 
-def print_distance_premium(filtered: list[dict], keyword: str = "지하철역") -> None:
+# 7-3절 역세권 회귀보정 — GPT 조언 반영. 26절 회귀는 원래 참고 정보일 뿐이었는데
+# ("매도가 계산에 자동 반영되지 않습니다"), 이 임계치를 모두 만족할 때만 "만약
+# 역세권 위치를 반영해서 보정하면" 이라는 **참고용 what-if 수치**를 하나 더
+# 보여준다 — 24절 시장동향과 같은 원칙으로, 8절 공식 매도가 값(보수적 급매가/
+# 현실적 체결가/상단 매도가/AI 기준매도가/권장 호가) 자체는 절대 건드리지
+# 않는다. GPT가 원래 제안한 건 이 회귀식으로 8절 값 자체를 보정하는 것이었지만,
+# 표본이 최대 15건뿐인 단순 선형회귀 하나로 공식 매도가를 바꾸는 건 위험 부담이
+# 크다고 판단해 "별도 참고 수치"로 낮춰 잡았다.
+STATION_REGRESSION_MIN_SAMPLE = 15  # 26절 max_sample과 동일 — 사실상 "가까운 15건을 다 구했을 때만"
+STATION_REGRESSION_MIN_DISTANCE_SPREAD_M = 300  # 표본 거리가 다 몰려 있으면 기울기를 못 믿는다
+STATION_REGRESSION_MIN_R_SQUARED = 0.3  # 26절 출력의 경고 임계치(0.2)보다 더 엄격하게 잡았다
+STATION_REGRESSION_MAX_CORRECTION_PCT = 0.05  # 보정폭은 ±5%로 제한(GPT 제안 그대로)
+
+
+def compute_distance_premium_correction(premium: dict | None, subject_distance_m: float) -> dict | None:
+    """CLAUDE.md 7-3절 — compute_distance_premium()의 회귀가 아래 조건을 모두
+    만족할 때만, 대상 물건의 실제 역까지 거리를 반영한 참고용 보정 배율을
+    계산한다. 하나라도 안 맞으면 None을 돌려주고, 호출부는 조용히 생략한다
+    (8절 매도가 계산 자체는 이 함수와 무관하게 항상 그대로 진행된다):
+    - 표본 STATION_REGRESSION_MIN_SAMPLE(15건) 이상
+    - 거리 범위(최대−최소)가 STATION_REGRESSION_MIN_DISTANCE_SPREAD_M(300m) 이상
+    - 설명력 R²가 STATION_REGRESSION_MIN_R_SQUARED(0.3) 이상
+    - 계수 방향이 상식적(역에 가까울수록 비싸짐, change_per_100m < 0)
+    """
+    if premium is None or premium["n"] < STATION_REGRESSION_MIN_SAMPLE:
+        return None
+    if premium["max_distance"] - premium["min_distance"] < STATION_REGRESSION_MIN_DISTANCE_SPREAD_M:
+        return None
+    if premium["r_squared"] < STATION_REGRESSION_MIN_R_SQUARED:
+        return None
+    if premium["change_per_100m"] >= 0:
+        return None
+
+    slope = premium["change_per_100m"] / 100  # 만원/㎡ per m
+    diff_m = subject_distance_m - premium["mean_distance"]
+    price_diff_ppyeong = slope * diff_m
+    avg_price = premium["avg_price_ppyeong"]
+    pct = (price_diff_ppyeong / avg_price) if avg_price else 0.0
+    pct = max(-STATION_REGRESSION_MAX_CORRECTION_PCT, min(STATION_REGRESSION_MAX_CORRECTION_PCT, pct))
+
+    return {
+        "factor": 1 + pct, "pct": pct * 100,
+        "subject_distance_m": subject_distance_m, "avg_distance_m": premium["mean_distance"],
+    }
+
+
+def print_distance_premium(filtered: list[dict], subject_coord: tuple[float, float] | None = None,
+                            realistic_man: float | None = None, fmt=None, keyword: str = "지하철역") -> None:
     result = compute_distance_premium(filtered, keyword)
     print()
     label = keyword
@@ -1339,6 +1463,23 @@ def print_distance_premium(filtered: list[dict], keyword: str = "지하철역") 
     if result["r_squared"] < 0.2:
         print("⚠️ 설명력(R²)이 낮아 거리 외에 다른 요인(층·연식·개별 단지 차이 등)의 영향이 더 클 수 있습니다.")
     print("⚠️ 표본이 최대 15건인 단순 참고 통계입니다 — 매도가 계산에 자동 반영되지 않습니다.")
+
+    if subject_coord is not None and realistic_man is not None and fmt is not None:
+        from geocode import nearby_place
+
+        try:
+            subject_place = nearby_place(subject_coord[0], subject_coord[1], keyword)
+        except RuntimeError:
+            subject_place = None
+        if subject_place is not None:
+            correction = compute_distance_premium_correction(result, subject_place["distance_m"])
+            if correction is not None:
+                corrected = realistic_man * correction["factor"]
+                print(f"→ [참고, 7-3절] 대상 물건은 {label}까지 {subject_place['distance_m']}m로 "
+                      f"비교거래 평균({correction['avg_distance_m']:.0f}m)보다 "
+                      f"{'가깝습니다' if subject_place['distance_m'] < correction['avg_distance_m'] else '멉니다'} — "
+                      f"이 회귀를 반영해 보정하면 현실적 체결가는 {fmt(realistic_man)} → {fmt(corrected)}"
+                      f"({correction['pct']:+.1f}%)입니다. ⚠️ 공식 매도가 값에는 반영되지 않은 참고용 수치입니다.")
 
 
 def print_jeonse_comparison(rent_dir: str, subject_coord: tuple[float, float], area: float,
@@ -1426,6 +1567,7 @@ def main():
     ap.add_argument("--no-market-trend", action="store_true", help="24절 시장 동향 참고 지표(매수우위지수 등)를 건너뛴다")
     ap.add_argument("--no-dong-compare", action="store_true", help="25절 인근 동 비교(거래활발도/가격상승률)를 건너뛴다")
     ap.add_argument("--station-premium", action="store_true", help="26절 역세권 프리미엄 참고(거리-가격 회귀)를 계산한다 — 카카오 키워드 검색을 비교거래마다 추가로 호출해서 기본은 꺼져 있다")
+    ap.add_argument("--no-time-correction", action="store_true", help="7-2절 시계열 가격보정(오래된 거래를 이 동네 가격 추이로 지금 시세 수준으로 환산)을 건너뛴다")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -1470,13 +1612,15 @@ def main():
 
     gu_filter = find_gu_in_address(args.address)
 
+    monthly_trend_rate = None if args.no_time_correction else estimate_monthly_trend_rate(rows, args.dong)
+
     area_tolerance_pct = args.area_tolerance / 100
     filtered, effective_radius, radius_expanded = find_comparables_adaptive(
         rows, subject_coord, args.area, args.floor, args.build_year,
         args.radius, year_min, this_year, gu_filter,
         area_tolerance_pct=area_tolerance_pct,
         build_year_tolerance=args.build_year_tolerance,
-        this_month=this_month)
+        this_month=this_month, monthly_trend_rate=monthly_trend_rate)
 
     if not filtered:
         print(f"[안내] 반경을 최대 {ADAPTIVE_RADIUS_STEPS_M[-1]:.0f}m까지 넓혀봤지만, 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")
@@ -1486,6 +1630,11 @@ def main():
     if radius_expanded:
         print(f"[안내] 지정한 반경({args.radius:.0f}m) 안 비교거래가 {ADAPTIVE_RADIUS_MIN_COMPARABLES}건 미만이라, "
               f"반경을 {effective_radius:.0f}m로 자동으로 넓혀서 다시 찾았습니다.")
+        print()
+
+    if monthly_trend_rate is not None and abs(monthly_trend_rate) >= 0.001:
+        print(f"[안내] 오래된 거래는 이 동네 가격 추이(월 {monthly_trend_rate*100:+.2f}%)를 반영해 "
+              f"지금 시세 수준으로 보정(최대 ±{TIME_CORRECTION_MAX_PCT*100:.0f}%)해서 계산했습니다.")
         print()
 
     scen = compute_scenarios(filtered, effective_radius, this_year, subject_area=args.area)
@@ -1550,7 +1699,7 @@ def main():
               f"(유사도 {r['_similarity_score']:.0f}점 · {note})")
 
     if args.station_premium:
-        print_distance_premium(filtered)
+        print_distance_premium(filtered, subject_coord, realistic, fmt)
 
     if args.monthly_deposit is not None:
         measured_rate = estimate_conversion_rate(args.rent_dir, subject_coord, args.area, args.floor,

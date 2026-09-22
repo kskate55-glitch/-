@@ -188,6 +188,138 @@ class UnitPriceModelBlendTests(unittest.TestCase):
         self.assertLessEqual(scen_diverging["confidence"], scen_matching["confidence"])
 
 
+class TimeSeriesPriceCorrectionTests(unittest.TestCase):
+    """CLAUDE.md 7-2절 — 15절 가격 추이 시계열로 월평균 변동률을 추정한다."""
+
+    def _rows_with_trend(self, pps_start, pps_step, months, dong="수유동"):
+        rows = []
+        for i in range(months):
+            pps = pps_start + i * pps_step
+            rows.append(_fake_row(f"빌라{i}", str(i), 60, 4, 2012, 2025, i + 1, round(pps * 60), umd=dong))
+        return rows
+
+    def test_returns_none_for_insufficient_months(self):
+        rows = self._rows_with_trend(100, 2, 2)  # 2개월치뿐 -> 15절과 같은 최소 3개월 기준 미달
+        self.assertIsNone(ep.estimate_monthly_trend_rate(rows, "수유동"))
+
+    def test_positive_trend_rate_for_rising_prices(self):
+        rows = self._rows_with_trend(100, 2, 6)  # 100 -> 110 만원/㎡, 6개월
+        rate = ep.estimate_monthly_trend_rate(rows, "수유동")
+        self.assertIsNotNone(rate)
+        self.assertGreater(rate, 0)
+
+    def test_negative_trend_rate_for_falling_prices(self):
+        rows = self._rows_with_trend(110, -2, 6)  # 110 -> 100 만원/㎡
+        rate = ep.estimate_monthly_trend_rate(rows, "수유동")
+        self.assertLess(rate, 0)
+
+
+class TimeCorrectionFactorTests(unittest.TestCase):
+    """CLAUDE.md 7-2절 — 오래된 거래를 지금 시세 수준으로 환산하는 배율.
+    외삽 상한(12개월)과 보정폭 clamp(±15%)를 검증한다."""
+
+    def test_no_correction_for_recent_deal(self):
+        self.assertEqual(ep.time_correction_factor("2026", "9", 2026, 9, 0.05), 1.0)
+
+    def test_factor_clamped_to_max_pct(self):
+        factor = ep.time_correction_factor("2020", "1", 2026, 9, 0.05)  # 매우 오래되고 변동률도 큼
+        self.assertAlmostEqual(factor, 1 + ep.TIME_CORRECTION_MAX_PCT, places=6)
+
+    def test_extrapolation_capped_at_max_months(self):
+        # 12개월 전과 24개월 전은 같은 배율이어야 한다(그 이상은 더 외삽하지 않음)
+        f12 = ep.time_correction_factor("2025", "9", 2026, 9, 0.01)
+        f24 = ep.time_correction_factor("2024", "9", 2026, 9, 0.01)
+        self.assertAlmostEqual(f12, f24, places=6)
+
+    def test_garbage_deal_date_returns_no_correction(self):
+        self.assertEqual(ep.time_correction_factor("모름", None, 2026, 9, 0.05), 1.0)
+
+
+class FindComparablesTimeCorrectionTests(unittest.TestCase):
+    """monthly_trend_rate를 주면 _amount_man_adjusted가 채워지고, 화면에 쓰이는
+    _amount_man(실제 체결가)은 그대로 남는지 확인한다."""
+
+    def test_adjusted_amount_set_when_trend_rate_given(self):
+        with patch("geocode.geocode", return_value=(37.66, 127.02)):  # 대상과 약 1.1km 거리
+            row = _fake_row("빌라", "1", 69.27, 4, 2012, 2025, 9, 35000)
+            out = ep.find_comparables(
+                [row], (37.65, 127.02), 69.27, 4, "2012", 2000, 2024, 2026, None,
+                area_tolerance_pct=0.15, this_month=9, monthly_trend_rate=0.01,
+            )
+            self.assertEqual(out[0]["_amount_man"], 35000)  # 실제 체결가는 그대로
+            expected_factor = ep.time_correction_factor("2025", "9", 2026, 9, 0.01)
+            self.assertAlmostEqual(out[0]["_amount_man_adjusted"], 35000 * expected_factor, places=4)
+
+    def test_no_adjusted_field_when_rate_omitted(self):
+        with patch("geocode.geocode", return_value=(37.66, 127.02)):
+            row = _fake_row("빌라", "1", 69.27, 4, 2012, 2025, 9, 35000)
+            out = ep.find_comparables(
+                [row], (37.65, 127.02), 69.27, 4, "2012", 2000, 2024, 2026, None,
+                area_tolerance_pct=0.15, this_month=9,
+            )
+            self.assertNotIn("_amount_man_adjusted", out[0])
+
+
+class WeightedAmountsPreferAdjustedTests(unittest.TestCase):
+    """7-1절/7-2절 계산이 공유하는 규칙 — _amount_man_adjusted가 있으면 그 값을,
+    없으면 원래 _amount_man으로 폴백해서 가중 복제 리스트를 만든다."""
+
+    def test_weighted_amounts_prefers_adjusted(self):
+        filtered = [{"_amount_man": 100.0, "_amount_man_adjusted": 150.0, "_weight": 1.0}]
+        self.assertEqual(ep._weighted_amounts_sorted(filtered), [150.0])
+
+    def test_weighted_amounts_falls_back_without_adjusted(self):
+        filtered = [{"_amount_man": 100.0, "_weight": 1.0}]
+        self.assertEqual(ep._weighted_amounts_sorted(filtered), [100.0])
+
+    def test_unit_price_model_prefers_adjusted(self):
+        filtered = [{"_amount_man": 100.0, "_amount_man_adjusted": 150.0, "_weight": 1.0, "excluUseAr": "50"}]
+        self.assertEqual(ep._weighted_unit_prices_sorted(filtered, subject_area=50), [150.0])
+
+
+class StationRegressionCorrectionTests(unittest.TestCase):
+    """CLAUDE.md 7-3절 — 26절 회귀가 조건(표본·거리범위·R²·계수 방향)을 모두
+    만족할 때만 참고용 보정 수치를 계산하고, 하나라도 안 맞으면 None이어야 한다."""
+
+    GOOD_PREMIUM = {
+        "n": 15, "min_distance": 100, "max_distance": 500, "r_squared": 0.5,
+        "change_per_100m": -5.0, "avg_price_ppyeong": 1000, "mean_distance": 300,
+    }
+
+    def test_closer_than_average_gets_positive_correction(self):
+        correction = ep.compute_distance_premium_correction(self.GOOD_PREMIUM, 100)
+        self.assertIsNotNone(correction)
+        self.assertGreater(correction["pct"], 0)
+
+    def test_farther_than_average_gets_negative_correction(self):
+        correction = ep.compute_distance_premium_correction(self.GOOD_PREMIUM, 500)
+        self.assertLess(correction["pct"], 0)
+
+    def test_none_premium_returns_none(self):
+        self.assertIsNone(ep.compute_distance_premium_correction(None, 100))
+
+    def test_insufficient_sample_returns_none(self):
+        premium = {**self.GOOD_PREMIUM, "n": 10}
+        self.assertIsNone(ep.compute_distance_premium_correction(premium, 100))
+
+    def test_narrow_distance_spread_returns_none(self):
+        premium = {**self.GOOD_PREMIUM, "max_distance": 320}
+        self.assertIsNone(ep.compute_distance_premium_correction(premium, 100))
+
+    def test_low_r_squared_returns_none(self):
+        premium = {**self.GOOD_PREMIUM, "r_squared": 0.1}
+        self.assertIsNone(ep.compute_distance_premium_correction(premium, 100))
+
+    def test_counterintuitive_direction_returns_none(self):
+        premium = {**self.GOOD_PREMIUM, "change_per_100m": 5.0}
+        self.assertIsNone(ep.compute_distance_premium_correction(premium, 100))
+
+    def test_correction_clamped_to_max_pct(self):
+        extreme_premium = {**self.GOOD_PREMIUM, "change_per_100m": -500.0}
+        correction = ep.compute_distance_premium_correction(extreme_premium, 100)
+        self.assertAlmostEqual(correction["pct"], ep.STATION_REGRESSION_MAX_CORRECTION_PCT * 100, places=6)
+
+
 class ComputePriceTiersTests(unittest.TestCase):
     def test_tiers_are_monotonically_nondecreasing(self):
         filtered = [

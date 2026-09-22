@@ -106,9 +106,12 @@ def _comparables_table_html(comparables: list[dict]) -> str:
         return '<p class="muted">비교거래가 없습니다.</p>'
     rows = []
     for r in comparables:
+        name_cell = r["name"]
+        if r.get("search_url"):
+            name_cell += f" <a href=\"{r['search_url']}\" target=\"_blank\" rel=\"noopener\" style=\"text-decoration:none;font-size:12px\" title=\"네이버에서 검색\">🔍</a>"
         rows.append(
             "<tr>"
-            f"<td>{r['name']}</td><td>{r['area']}㎡</td><td>{r['date']}</td>"
+            f"<td>{name_cell}</td><td>{r['area']}㎡</td><td>{r['date']}</td>"
             f"<td>{fmt_eok(r['amount'])}</td><td><span class='tag'>{r['label']}</span></td>"
             "</tr>"
         )

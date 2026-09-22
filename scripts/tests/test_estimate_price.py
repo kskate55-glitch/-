@@ -210,6 +210,33 @@ class DescribeComparableSimilarityTests(unittest.TestCase):
         note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
         self.assertIn("3층(-1) · 선호순위 1위", note)
 
+    def test_floor_1_and_6_are_tied_for_worst_rank(self):
+        row_1f = {"excluUseAr": "69.27", "floor": "1", "buildYear": "2012"}
+        row_6f = {"excluUseAr": "69.27", "floor": "6", "buildYear": "2012"}
+        note_1f = ep.describe_comparable_similarity(69.27, 4, "2012", row_1f)
+        note_6f = ep.describe_comparable_similarity(69.27, 4, "2012", row_6f)
+        self.assertIn("선호순위 5위", note_1f)
+        self.assertIn("선호순위 5위", note_6f)
+
+    def test_top_floor_caution_shown_for_5_and_6(self):
+        row_5f = {"excluUseAr": "69.27", "floor": "5", "buildYear": "2012"}
+        row_6f = {"excluUseAr": "69.27", "floor": "6", "buildYear": "2012"}
+        note_5f = ep.describe_comparable_similarity(69.27, 4, "2012", row_5f)
+        note_6f = ep.describe_comparable_similarity(69.27, 4, "2012", row_6f)
+        self.assertIn("탑층이면", note_5f)
+        self.assertIn("탑층이면", note_6f)
+        # 1층은 탑층 걱정이 없으니 주의 문구가 붙지 않아야 함
+        row_1f = {"excluUseAr": "69.27", "floor": "1", "buildYear": "2012"}
+        note_1f = ep.describe_comparable_similarity(69.27, 4, "2012", row_1f)
+        self.assertNotIn("탑층", note_1f)
+
+    def test_banjiha_floor_gets_price_note_not_rank(self):
+        row = {"excluUseAr": "69.27", "floor": "0", "buildYear": "2012"}
+        note = ep.describe_comparable_similarity(69.27, 0, "2012", row)
+        self.assertIn("반지하", note)
+        self.assertIn("절반", note)
+        self.assertNotIn("선호순위", note)
+
     def test_floor_preference_rank_omitted_for_unranked_floors(self):
         # 1층/7층처럼 아직 선호순위를 모르는 층은 태그를 안 붙인다(추측 금지)
         row = {"excluUseAr": "69.27", "floor": "7", "buildYear": "2012"}

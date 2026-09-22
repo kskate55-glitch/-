@@ -168,7 +168,7 @@ def estimate():
 
     subject_coord = (subject_detail["lat"], subject_detail["lon"])
 
-    from naver_link import naver_land_url
+    from naver_link import naver_land_url, naver_search_url
 
     naver_url = naver_land_url(*subject_coord)
 
@@ -451,6 +451,7 @@ def estimate():
                 "distance": f"{r['_distance_m']:.0f}m",
                 "score": round(r["_similarity_score"]),
                 "note": describe_comparable_similarity(area, floor, build_year, r),
+                "search_url": naver_search_url(f"{r.get('umdNm', '')} {r.get('mhouseNm', '')}".strip()),
             }
             for r in filtered[:8]
         ],

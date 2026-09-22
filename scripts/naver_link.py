@@ -15,6 +15,10 @@
 검증한 스펙은 아니다(21절 경기데이터드림 API와 같은 성격의 "추정" 스펙).
 실제로 열었을 때 필터·위치가 다르게 적용되면 사용자가 실제 URL/화면을
 보여주는 대로 고친다.
+27-2절 비교거래별 네이버 검색 링크도 같은 원칙으로 여기 함께 둔다 — "핵심
+비교거래" 목록의 개별 단지(예: "경원탑스빌")가 궁금할 때, 그 이름으로 네이버
+통합검색을 여는 링크만 만들어준다. 매물 데이터를 읽어오는 게 아니라 검색
+결과 화면으로 안내만 하는 것이라 스크래핑이 아니다.
 """
 
 # 거래종류(b): A1=매매, B1=전세, B2=월세
@@ -29,3 +33,12 @@ def naver_land_url(lat: float, lon: float, zoom: int = 17,
     """대상 물건 좌표를 지도 중심으로 하는 네이버부동산 딥링크.
     zoom 17이면 동 단위 정도로 좁혀서 보여준다(숫자가 클수록 확대)."""
     return f"https://new.land.naver.com/houses?ms={lat:.6f},{lon:.6f},{zoom}&a={article_type}&b={trade_type}"
+
+
+def naver_search_url(query: str) -> str:
+    """CLAUDE.md 27-2절: 단지명(+동네)으로 네이버 통합검색을 여는 링크.
+    "핵심 비교거래" 목록에서 개별 단지의 사진·정보를 더 보고 싶을 때 쓴다 —
+    검색 결과를 대신 읽어오지 않고 검색창만 채워서 열어주는 것뿐이다."""
+    import urllib.parse
+
+    return f"https://search.naver.com/search.naver?query={urllib.parse.quote(query)}"

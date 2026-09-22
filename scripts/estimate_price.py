@@ -467,11 +467,20 @@ def similarity_score(distance_m: float, radius_m: float,
 
 
 # 층 선호순위 (사용자가 실제 임장·매도 경험으로 확인해준 값 — 검증된 통계가
-# 아니라 경험적 순위다. 낮은 숫자일수록 선호도가 높다: 3층 > 2층 > 4층 > 5층.
-# 이 넷 말고 다른 층(1층/반지하 제외 상급층/6층 이상 등)은 아직 순위를 못
-# 받아서 태그를 안 붙인다 — 잘못 추측해서 알려주는 것보다 아예 안 알려주는
-# 게 낫다고 판단했다. 사용자가 나머지 순위를 알려주면 이 표에 추가한다.
-FLOOR_PREFERENCE_RANK = {3: 1, 2: 2, 4: 3, 5: 4}
+# 아니라 경험적 순위다). 낮은 숫자일수록 선호도가 높다: 3층 > 2층 > 4층 > 5층,
+# 그리고 1층·6층은 서로 동급으로 가장 선호도가 낮은 층으로 묶인다(엘리베이터
+# 없는 빌라 특성상 6층은 사실상 항상 기피 대상이고, 1층은 보안·사생활 노출
+# 문제로 기피된다는 사용자 경험). 반지하는 아래 별도로 처리한다(단순 순위가
+# 아니라 시세 자체가 크게 달라지는 문제라서).
+FLOOR_PREFERENCE_RANK = {3: 1, 2: 2, 4: 3, 5: 4, 1: 5, 6: 5}
+
+# 5층·6층은 "탑층"(건물의 맨 위층)이면 누수·더위 등으로 선호순위보다도 더
+# 나쁘게 볼 수 있다는 사용자 확인 사항이다. 다만 MOLIT 실거래가 데이터에는
+# 그 건물의 총 층수가 없어서(7절에서 엘리베이터 정보를 못 넣는 것과 같은
+# 이유 — 비교거래 하나하나마다 건축물대장을 추가로 조회해야 해서 API 호출량이
+# 급격히 늘어난다) 이 비교거래가 실제로 탑층인지는 확인할 방법이 없다. 그래서
+# 확정하지 않고 "탑층이면 더 낮게 볼 것"이라는 주의 문구만 덧붙인다.
+TOP_FLOOR_CAUTION_FLOORS = {5, 6}
 
 
 def describe_comparable_similarity(subject_area: float, subject_floor: int | None,
@@ -506,9 +515,14 @@ def describe_comparable_similarity(subject_area: float, subject_floor: int | Non
             row_floor = int(row_floor_raw)
             diff = row_floor - subject_floor
             floor_text = f"{row_floor}층" + (" 동일" if diff == 0 else f"({diff:+d})")
-            rank = FLOOR_PREFERENCE_RANK.get(row_floor)
-            if rank is not None:
-                floor_text += f" · 선호순위 {rank}위"
+            if row_floor <= 0:
+                floor_text += " · 반지하(시세가 보통 지상층의 절반 수준으로 형성됨)"
+            else:
+                rank = FLOOR_PREFERENCE_RANK.get(row_floor)
+                if rank is not None:
+                    floor_text += f" · 선호순위 {rank}위"
+                if row_floor in TOP_FLOOR_CAUTION_FLOORS:
+                    floor_text += " · 탑층이면 더 낮게 볼 것(건물 총 층수 미확인)"
             parts.append(floor_text)
         except ValueError:
             parts.append("층 정보없음")
@@ -1459,6 +1473,8 @@ def main():
     if args.html:
         from report import render_report
 
+        from naver_link import naver_search_url
+
         comparables = [
             {
                 "name": r.get("mhouseNm", "(단지명없음)"),
@@ -1466,6 +1482,7 @@ def main():
                 "date": f"{r.get('dealYear')}.{r.get('dealMonth')}",
                 "amount": r["_amount_man"],
                 "label": f"{r['_distance_m']:.0f}m",
+                "search_url": naver_search_url(f"{r.get('umdNm', '')} {r.get('mhouseNm', '')}".strip()),
             }
             for r in filtered[:8]
         ]

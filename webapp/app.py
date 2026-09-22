@@ -274,7 +274,7 @@ def estimate():
 
     from data_source import get_trade_rows
     from estimate_price import (
-        ADAPTIVE_RADIUS_MIN_COMPARABLES, compute_scenarios, dedupe, estimate_monthly_trend_rate,
+        ADAPTIVE_RADIUS_MIN_COMPARABLES, compute_scenarios, dedupe,
         find_comparables_adaptive,
     )
     from lawd_lookup import find_dong_in_address
@@ -297,14 +297,18 @@ def estimate():
     # 가져오므로 그 범위 안에서만 추세를 추정한다(그래도 최근 추세가 더
     # 중요하다는 점에서 크게 어긋나지 않는다).
     target_dong = find_dong_in_address(address)
-    monthly_trend_rate = estimate_monthly_trend_rate(rows, target_dong) if target_dong else None
 
+    # ⚠️ 7-2절 시계열 가격보정은 껐다 — 어차피 year_min 이후(보통 2년치)
+    #    데이터만 쓰는데 그 안에서 다시 "지금 시세로 환산"하는 건 얻는
+    #    것보다 헷갈리게 하는 쪽이 크다는 사용자 판단이다. 오래된 거래를
+    #    덜 반영하는 건 7절 계약 시점 가중치(최근 3개월 1.6 / 4~12개월
+    #    1.0 / 13개월 이상 0.4)가 이미 하고 있다.
     filtered, radius, radius_expanded = find_comparables_adaptive(
         rows, subject_coord, area, floor, build_year,
         radius, year_min, this_year, gu_filter=None,
         area_tolerance_pct=area_tolerance_pct,
         build_year_tolerance=build_year_tolerance,
-        this_month=this_month, monthly_trend_rate=monthly_trend_rate)
+        this_month=this_month)
     if not filtered:
         return render_template(
             "index.html",
@@ -464,13 +468,7 @@ def estimate():
         f" (지정한 반경 안 비교거래가 {ADAPTIVE_RADIUS_MIN_COMPARABLES}건 미만이라 자동으로 넓혔습니다.)"
         if radius_expanded else ""
     )
-    from estimate_price import TIME_CORRECTION_MAX_PCT
-
-    time_correction_note = (
-        f" 오래된 거래는 이 동네 가격 추이(월 {monthly_trend_rate*100:+.2f}%)를 반영해 지금 시세 "
-        f"수준으로 보정(최대 ±{TIME_CORRECTION_MAX_PCT*100:.0f}%)했습니다."
-        if monthly_trend_rate is not None and abs(monthly_trend_rate) >= 0.001 else ""
-    )
+    time_correction_note = ""  # 7-2절 시계열 보정을 끄면서 안내 문구도 비워둔다
     comparable_criteria = (
         f"반경 {radius:.0f}m 안, 전용면적 ±{area_tolerance_pct_input:.0f}%{build_year_note}인 실거래 중 "
         f"거리·면적·층·준공년도 종합 유사도(0~100점, 표의 '유사도' 열)가 높을수록, "

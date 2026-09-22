@@ -137,17 +137,15 @@ class RenderPriceDistributionStructureTests(unittest.TestCase):
         self.assertIn(pc.OUTLIER_RING_COLOR, out)
         self.assertIn('stroke-dasharray="2,2"', out)
 
-    def test_meaningful_time_correction_adds_connector_line(self):
-        rows = [_fake_row("보정빌라", 30000, 1.0, 50, adjusted=31500)]  # +5%, 임계치(0.5%) 이상
+    def test_time_correction_is_no_longer_drawn(self):
+        # 7-2절 시계열 보정은 껐다 — `_amount_man_adjusted`가 남아 있어도
+        # 연결선·빈 점·범례 어디에도 나타나지 않아야 한다(되살아나면 잡는다).
+        rows = [_fake_row("보정빌라", 30000, 1.0, 50, adjusted=31500)]
         out = pc.render_price_distribution_html(rows, {})
-        self.assertIn(f'stroke="{pc.TIME_CORRECTION_LINE_COLOR}"', out)
-
-    def test_negligible_time_correction_is_ignored(self):
-        # 범례 설명 문구에는 항상 이 색이 등장하므로(정적 텍스트), 실제 연결선
-        # <line stroke="..."> 마크업이 없는지로 확인해야 한다.
-        rows = [_fake_row("무시빌라", 30000, 1.0, 50, adjusted=30010)]  # 0.03%, 임계치 미만
-        out = pc.render_price_distribution_html(rows, {})
-        self.assertNotIn(f'stroke="{pc.TIME_CORRECTION_LINE_COLOR}"', out)
+        self.assertNotIn("시계열", out)
+        # 점 1개 = 채워진 원 + 투명 히트타깃 2개뿐. 보정 연결선이 살아있으면
+        # 끝에 붙는 흰 빈 점 때문에 3개가 된다.
+        self.assertEqual(out.count("<circle"), 2)
 
     def test_rows_beyond_emphasis_cap_are_not_interactive(self):
         # 가중치가 낮은 건 강조(max_dots) 밖으로 밀려나 클릭 불가능한 배경 점이 된다
@@ -205,7 +203,7 @@ class CompactLegendTests(unittest.TestCase):
         legend = self._legend(rows).replace("&nbsp;", " ")
         self.assertIn("동일건물 1", legend)
         self.assertIn("이상치 1", legend)
-        self.assertIn("시계열보정 1", legend)
+        self.assertNotIn("시계열", legend)  # 7-2절 보정은 껐다
 
 
 if __name__ == "__main__":

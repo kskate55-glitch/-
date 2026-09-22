@@ -15,8 +15,6 @@ JS 툴팁/클릭 상세/필터 토글)로 그린다.
 지피티와 상의해서 정리한 우선순위를 그대로 따랐다:
 - 점 모양 = 거래유형(원=중개거래, 다이아몬드=직거래)
 - 점 테두리 = 특별히 중요한 거래(동일건물=굵은 링, 평당가 이상치=점선 링)
-- 시계열 보정이 적용된 거래는 실제 체결가 점에서 보정가 위치까지 가는 얇은
-  연결선 + 끝에 빈 점을 그린다
 - 점을 클릭하면 그래프 아래 "왜 이 거래가 많이/적게 반영됐는지" 설명 카드가 뜬다
 - 40건으로 잘라내던 것을 없애고, 가중치 상위 N건만 위 네 가지를 다 갖춘
   "강조" 점으로, 나머지는 작고 옅은 배경 점으로 표시해서 전체 표본을 다 보여준다
@@ -27,7 +25,7 @@ JS 툴팁/클릭 상세/필터 토글)로 그린다.
 
 한 점에 모든 정보를 색·크기·모양·테두리·투명도로 다 우겨넣지 않는다 — 시각
 채널은 딱 세 개(크기·진하기=반영도, 모양=거래유형, 테두리=특별히 중요한
-거래)로 제한하고, 나머지(계약월·거리·시계열보정 등)는 클릭했을 때만 보여주는
+거래)로 제한하고, 나머지(계약월·거리 등)는 클릭했을 때만 보여주는
 상세 카드로 뺐다. 이전에 "핵심 비교거래" 텍스트 목록에 판단을 너무 많이
 얹었다가 "이해하기 어렵다"고 지적받은 전례(5절)를 반복하지 않기 위해서다.
 
@@ -82,14 +80,12 @@ HIGHLIGHT_EDGE = "#e08e00"
 # "진한 점=반영도 높음"과 "테두리 색=특별한 거래"가 헷갈릴 수 있어서).
 SAME_BUILDING_RING_COLOR = "#c9971e"  # 골드 — 동일건물(가장 직접적인 증거)
 OUTLIER_RING_COLOR = "#c0392b"  # 톤 다운된 레드 — 이상치(경고 성격)
-TIME_CORRECTION_LINE_COLOR = "#8a8f96"
 
 # 거래 밀집도 곡선(부드러운 밀도 영역) 채움색
 HIST_BAR_COLOR = "#c7d2e8"
 
 EMPHASIS_CAP_DEFAULT = 40  # 이 안쪽 순위(가중치 기준)까지만 모양/테두리/클릭상세 등 "강조" 처리
 MAX_TOTAL_DOTS = 150  # 그래프에 그리는 점의 안전 상한(극단적으로 큰 표본 방지, 배경 점 포함)
-TIME_CORRECTION_SHOW_THRESHOLD_PCT = 0.5  # 이보다 작은 시계열 보정은 노이즈로 보고 연결선을 안 그린다
 
 # 산출값 마커 이름 -> 고정 색(카테고리 컬러, 순서 고정 — 절대 순환/재배정하지
 # 않는다). "경매용 매도가"(히어로)는 여기 없고 render_price_distribution_html의
@@ -195,8 +191,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
                                      primary: str = PRIMARY, min_width: int = 0,
                                      this_year: int | None = None, this_month: int | None = None) -> str:
     """filtered: find_comparables()가 돌려준 비교거래 목록(거리순 정렬됨,
-    _amount_man·_weight 필요. _dealing_gbn/_same_building/_price_outlier/
-    _amount_man_adjusted가 있으면 함께 시각화한다). markers: {"보수적
+    _amount_man·_weight 필요. _dealing_gbn/_same_building/_price_outlier가
+    있으면 함께 시각화한다). markers: {"보수적
     급매가": p25, ...} — 값이 있는 것만 넘기면 된다(다 넣을 필요 없음).
     highlight: 배경으로 강조할 두 마커 이름(순서 무관, 둘 다 markers에
     있어야 함) — 기본값은 사용자가 실측으로 확인한 구간. hero_name: markers
@@ -210,10 +206,6 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     시각으로 근사)."""
     rows = [r for r in filtered if r.get("_amount_man") is not None]
     all_values = [r["_amount_man"] for r in rows] + list(markers.values())
-    for r in rows:
-        adj = r.get("_amount_man_adjusted")
-        if adj is not None:
-            all_values.append(adj)  # 시계열 보정 연결선이 잘리지 않도록 도메인 계산에도 포함
     if not all_values:
         return ""
 
@@ -239,8 +231,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     weights = [r.get("_weight") for r in rows if r.get("_weight") is not None]
     w_lo, w_hi = (min(weights), max(weights)) if weights else (1.0, 1.0)
 
-    # 가중치 내림차순 — 상위 max_dots건만 "강조"(모양·테두리·클릭상세·시계열
-    # 보정 연결선)로 그리고, 나머지는 옅은 배경 점으로만 표시한다. 예전처럼
+    # 가중치 내림차순 — 상위 max_dots건만 "강조"(모양·테두리·클릭상세)로
+    # 그리고, 나머지는 옅은 배경 점으로만 표시한다. 예전처럼
     # 표본을 하드 캡으로 잘라내지 않고 전체를 다 보여주되, 정보 우선순위를
     # 주는 방식으로 바꿨다(그래프가 몇 건짜리 표본인지 숨기지 않기 위해서).
     rows_by_weight = sorted(rows, key=lambda r: r.get("_weight") or 0, reverse=True)
@@ -304,8 +296,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
 
     # 개별 비교거래 점 — 겹치지 않게 아래에서 위로 쌓는 간단한 비스웜(beeswarm) 배치.
     # 점 크기·색 진하기는 _weight(7절 가중치 — 거리·연도·층 유사도를 곱한 값)를
-    # 반영한다. 강조 점만 모양(거래유형)·테두리(동일건물/이상치)·시계열 보정
-    # 연결선·클릭 상세 카드를 갖춘다 — 배경 점은 옅고 작은 원 하나로만 표시해서
+    # 반영한다. 강조 점만 모양(거래유형)·테두리(동일건물/이상치)·클릭 상세
+    # 카드를 갖춘다 — 배경 점은 옅고 작은 원 하나로만 표시해서
     # "표본이 이만큼 더 있다"는 것만 조용히 보여준다.
     rows_sorted = sorted(render_rows, key=lambda r: r["_amount_man"])
     row_last_x: list[float | None] = [None] * max_rows
@@ -333,11 +325,6 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         is_jikgeorae = dealing_gbn == "직거래"
         is_same_building = bool(r.get("_same_building"))
         is_outlier = bool(r.get("_price_outlier"))
-        adjusted = r.get("_amount_man_adjusted")
-        has_time_correction = (
-            adjusted is not None and r["_amount_man"]
-            and abs(adjusted - r["_amount_man"]) / r["_amount_man"] * 100 >= TIME_CORRECTION_SHOW_THRESHOLD_PCT
-        )
 
         group = []
         if is_same_building:
@@ -347,12 +334,6 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
             ring_r = dot_r + (5 if is_same_building else 2.5)
             group.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{ring_r:.1f}" fill="none" '
                          f'stroke="{OUTLIER_RING_COLOR}" stroke-width="1.5" stroke-dasharray="2,2" />')
-        if has_time_correction:
-            x_adj = x_of(adjusted)
-            group.append(f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x_adj:.1f}" y2="{y:.1f}" '
-                         f'stroke="{TIME_CORRECTION_LINE_COLOR}" stroke-width="1.3" />')
-            group.append(f'<circle cx="{x_adj:.1f}" cy="{y:.1f}" r="{max(3.0, dot_r * 0.6):.1f}" fill="#fff" '
-                         f'stroke="{dot_color}" stroke-width="1.5" />')
         if is_jikgeorae:
             group.append(f'<polygon points="{_diamond_points(x, y, dot_r)}" fill="{dot_color}" '
                          f'fill-opacity="0.92" stroke="#fff" stroke-width="2" />')
@@ -383,8 +364,6 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
             f"{name} · {area}㎡ · {_fmt_eok(r['_amount_man'])} · {facts_line} · 반영도 {_similarity_tier(t)}"
         )
 
-        if has_time_correction:
-            facts.append(f"시계열 보정 {_fmt_eok(r['_amount_man'])}→{_fmt_eok(adjusted)}")
         detail = html.escape("\n".join([
             f"{name} {_fmt_eok(r['_amount_man'])} · 반영도 {_similarity_tier(t)}",
             " · ".join(facts),
@@ -489,11 +468,6 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     jikgeorae_n = _count(lambda r: r.get("_dealing_gbn") == "직거래")
     same_building_n = _count(lambda r: r.get("_same_building"))
     outlier_n = _count(lambda r: r.get("_price_outlier"))
-    corrected_n = _count(lambda r: (
-        r.get("_amount_man_adjusted") is not None and r.get("_amount_man")
-        and abs(r["_amount_man_adjusted"] - r["_amount_man"]) / r["_amount_man"] * 100
-        >= TIME_CORRECTION_SHOW_THRESHOLD_PCT
-    ))
     has_dealing_info = any(r.get("_dealing_gbn") for r in emphasis_rows)
 
     chips = [f'<span>{sample_note}</span>']
@@ -511,8 +485,6 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         chips.append(f'<span style="color:{SAME_BUILDING_RING_COLOR}">◎&nbsp;동일건물 {same_building_n}</span>')
     if outlier_n:
         chips.append(f'<span style="color:{OUTLIER_RING_COLOR}">⚠&nbsp;이상치 {outlier_n}</span>')
-    if corrected_n:
-        chips.append(f'<span>↔&nbsp;시계열보정 {corrected_n}</span>')
     chips.append('<span>크기·진하기=반영도</span>')
 
     compact_legend = (
@@ -539,10 +511,6 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         + _legend_row(
             OUTLIER_RING_COLOR, "⚠ 점선 테두리 = 평당가가 유독 튀는 거래(이상치)",
             "특수관계자 거래·입력 오류 등을 의심해 가중치를 크게 낮춰서 참고용으로만 반영해요",
-        )
-        + _legend_row(
-            TIME_CORRECTION_LINE_COLOR, "↔ 실선+빈 점 = 오래된 거래를 지금 시세로 환산한 위치",
-            "이 동네 가격 추이를 반영해 계산에는 화살표 끝 빈 점 위치의 보정값을 써요(실제 체결가는 채워진 점)",
         )
         + _legend_row(
             primary, f"글자가 붙은 점 = {html.escape(hero_name)}",

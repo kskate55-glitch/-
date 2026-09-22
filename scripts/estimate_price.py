@@ -39,9 +39,6 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
                      추정을 같이 보여준다. 순수월세면 0)
 --conversion-rate  : 전월세전환율 (연 %, 선택) — 생략하면 반경 안 실제 월세
                      거래로 역산한 실측치를 쓰고, 그것도 없으면 6.0(기본값)
---no-time-correction : 7-2절 시계열 가격보정(오래된 거래를 이 동네 가격 추이로
-                     지금 시세 수준으로 환산)을 건너뛴다
-
 이 스크립트는 실거래가 XML 파일 텍스트만 읽는다 — 국토부 API를 직접 호출하지
 않는다 (그건 molit_rhtrade_api.py/molit_rhrent_api.py의 몫). 다만 --address를
 좌표로 바꾸기 위해 카카오 로컬 API는 직접 호출하고(geocode.py, 환경변수
@@ -2001,7 +1998,6 @@ def main():
     ap.add_argument("--no-market-trend", action="store_true", help="24절 시장 동향 참고 지표(매수우위지수 등)를 건너뛴다")
     ap.add_argument("--no-dong-compare", action="store_true", help="25절 인근 동 비교(거래활발도/가격상승률)를 건너뛴다")
     ap.add_argument("--station-premium", action="store_true", help="26절 역세권 프리미엄 참고(거리-가격 회귀)를 계산한다 — 카카오 키워드 검색을 비교거래마다 추가로 호출해서 기본은 꺼져 있다")
-    ap.add_argument("--no-time-correction", action="store_true", help="7-2절 시계열 가격보정(오래된 거래를 이 동네 가격 추이로 지금 시세 수준으로 환산)을 건너뛴다")
     ap.add_argument("--condition", choices=list(CONDITION_MULTIPLIER), default=None,
                      help="35절/38절 현재 수리상태 — 주면 상태별 매도가 3단계 사다리를 보여준다 (검증된 수치가 아닌 경험적 참고치)")
     ap.add_argument("--repair-cost-basic", type=float, default=None,
@@ -2055,15 +2051,17 @@ def main():
 
     gu_filter = find_gu_in_address(args.address)
 
-    monthly_trend_rate = None if args.no_time_correction else estimate_monthly_trend_rate(rows, args.dong)
-
+    # ⚠️ 7-2절 시계열 가격보정은 껐다 — 어차피 기준연도 이후(보통 2년치)
+    #    데이터만 쓰는데 그 안에서 다시 "지금 시세로 환산"하는 건 얻는
+    #    것보다 헷갈리게 하는 쪽이 크다는 사용자 판단이다. 오래된 거래를
+    #    덜 반영하는 건 7절 계약 시점 가중치가 이미 하고 있다.
     area_tolerance_pct = args.area_tolerance / 100
     filtered, effective_radius, radius_expanded = find_comparables_adaptive(
         rows, subject_coord, args.area, args.floor, args.build_year,
         args.radius, year_min, this_year, gu_filter,
         area_tolerance_pct=area_tolerance_pct,
         build_year_tolerance=args.build_year_tolerance,
-        this_month=this_month, monthly_trend_rate=monthly_trend_rate)
+        this_month=this_month)
 
     if not filtered:
         print(f"[안내] 반경을 최대 {ADAPTIVE_RADIUS_STEPS_M[-1]:.0f}m까지 넓혀봤지만, 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")
@@ -2073,11 +2071,6 @@ def main():
     if radius_expanded:
         print(f"[안내] 지정한 반경({args.radius:.0f}m) 안 비교거래가 {ADAPTIVE_RADIUS_MIN_COMPARABLES}건 미만이라, "
               f"반경을 {effective_radius:.0f}m로 자동으로 넓혀서 다시 찾았습니다.")
-        print()
-
-    if monthly_trend_rate is not None and abs(monthly_trend_rate) >= 0.001:
-        print(f"[안내] 오래된 거래는 이 동네 가격 추이(월 {monthly_trend_rate*100:+.2f}%)를 반영해 "
-              f"지금 시세 수준으로 보정(최대 ±{TIME_CORRECTION_MAX_PCT*100:.0f}%)해서 계산했습니다.")
         print()
 
     scen = compute_scenarios(filtered, effective_radius, this_year, subject_area=args.area)

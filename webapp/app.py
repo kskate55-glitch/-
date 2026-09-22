@@ -22,9 +22,9 @@ CLI 버전과 다른 점은, 사용자가 국토부 API를 직접 실행해 data
    실측 전월세전환율(전월세 실거래 데이터를 아직 실시간으로 안 받아온다)도
    아직 웹 버전에 없다 — CLI(estimate_price.py)에는 이미 있다.
 
-SITE_PASSWORD 환경변수를 설정하면 비밀번호를 아는 사람만 쓸 수 있다 (공개
-URL로 배포했을 때 낯선 방문자가 국토부/카카오 API 일일 할당량을 소진시키는
-것을 막기 위함). 설정하지 않으면 누구나 바로 쓸 수 있다.
+⚠️ 비밀번호 보호는 사용자 요청으로 제거했다 — 주소를 아는 사람은 누구나
+바로 쓸 수 있다. 되살리려면 커밋 aa236d1의 `_password_required`/`login`
+라우트와 `webapp/templates/login.html`을 꺼내 쓰면 된다(CLAUDE.md 22절).
 
 KAKAO_JS_KEY 환경변수(선택)를 설정하면 27절 결과 페이지에 대상 물건 위치를
 보여주는 카카오맵 미리보기가 뜬다. KAKAO_REST_API_KEY와는 다른 키이고,
@@ -36,14 +36,12 @@ KAKAO_JS_KEY 환경변수(선택)를 설정하면 27절 결과 페이지에 대�
 import os
 import sys
 from datetime import datetime
-from functools import wraps
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 sys.path.insert(0, os.path.dirname(__file__))
 
-from flask import Flask, redirect, render_template, request, session, url_for  # noqa: E402
+from flask import Flask, render_template, request  # noqa: E402
 
-SITE_PASSWORD = os.environ.get("SITE_PASSWORD")
 # 27절 지도 미리보기용 카카오맵 JS SDK 키. KAKAO_REST_API_KEY(서버에서만
 # 쓰는 비밀키)와는 완전히 다른 키다 — 카카오맵 JS SDK는 브라우저에서 직접
 # 불러써야 하는 구조라 애초에 프론트엔드 노출을 전제로 설계됐고, 대신
@@ -53,43 +51,18 @@ SITE_PASSWORD = os.environ.get("SITE_PASSWORD")
 KAKAO_JS_KEY = os.environ.get("KAKAO_JS_KEY")
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 
 
 def _fmt_eok(man: float) -> str:
     return f"{man / 10000:.2f}억"
 
 
-def _password_required(view):
-    @wraps(view)
-    def wrapped(*args, **kwargs):
-        if SITE_PASSWORD and not session.get("authed"):
-            return redirect(url_for("login"))
-        return view(*args, **kwargs)
-    return wrapped
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if not SITE_PASSWORD:
-        return redirect(url_for("index"))
-    error = None
-    if request.method == "POST":
-        if request.form.get("password") == SITE_PASSWORD:
-            session["authed"] = True
-            return redirect(url_for("index"))
-        error = "비밀번호가 틀렸습니다."
-    return render_template("login.html", error=error)
-
-
 @app.route("/", methods=["GET"])
-@_password_required
 def index():
     return render_template("index.html", last_year=datetime.now().year - 1)
 
 
 @app.route("/estimate", methods=["POST"])
-@_password_required
 def estimate():
     form = request.form
     address = form.get("address", "").strip()

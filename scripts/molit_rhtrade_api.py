@@ -84,7 +84,8 @@ def _get_service_key() -> str:
 
 
 def fetch_rhtrade(lawd_cd: str, deal_ymd: str, page_no: int = 1,
-                   num_of_rows: int = 100, retries: int = 3, timeout: int = 10) -> list[dict]:
+                   num_of_rows: int = 100, retries: int = 3, timeout: int = 10,
+                   base_url: str | None = None) -> list[dict]:
     """
     연립다세대 매매 실거래가 조회
 
@@ -100,9 +101,15 @@ def fetch_rhtrade(lawd_cd: str, deal_ymd: str, page_no: int = 1,
         각 거래 건을 dict로 담은 list. (totalCount로 페이지네이션 필요 여부 판단 가능)
     """
     service_key = _get_service_key()
+    # ⚠️ 전역 BASE_URL을 직접 읽지 않고 인자로 받은 값을 쓴다 — 예전엔
+    #    아파트 조회(40절)가 이 전역을 바꿔치기했다가 되돌리는 방식이라,
+    #    병렬 조회(22절 FETCH_WORKERS=8)에서 **빌라 요청이 아파트
+    #    엔드포인트로 새어 나갔다**(실측 재현: 20건 중 20건). 자세한 건
+    #    CLAUDE.md 48-4절.
+    base = base_url or BASE_URL
     # serviceKey는 이미 URL 인코딩된 값을 그대로 쓴다 (이중 인코딩 금지)
     url = (
-        f"{BASE_URL}?serviceKey={service_key}"
+        f"{base}?serviceKey={service_key}"
         f"&LAWD_CD={lawd_cd}&DEAL_YMD={deal_ymd}"
         f"&pageNo={page_no}&numOfRows={num_of_rows}"
     )
@@ -146,12 +153,17 @@ def _parse_response(raw_bytes: bytes) -> list[dict]:
     return items
 
 
-def fetch_all_pages(lawd_cd: str, deal_ymd: str, page_size: int = 1000) -> list[dict]:
-    """totalCount를 보고 필요한 만큼 자동 페이지네이션."""
+def fetch_all_pages(lawd_cd: str, deal_ymd: str, page_size: int = 1000,
+                    base_url: str | None = None) -> list[dict]:
+    """totalCount를 보고 필요한 만큼 자동 페이지네이션.
+
+    `base_url`을 주면 그 엔드포인트로 보낸다 — 40절 아파트 조회가 이 로직을
+    그대로 재사용하되 **전역을 건드리지 않게** 하기 위한 인자다(48-4절)."""
     all_rows = []
     page_no = 1
     while True:
-        rows = fetch_rhtrade(lawd_cd, deal_ymd, page_no=page_no, num_of_rows=page_size)
+        rows = fetch_rhtrade(lawd_cd, deal_ymd, page_no=page_no, num_of_rows=page_size,
+                             base_url=base_url)
         if not rows:
             break
         all_rows.extend(rows)

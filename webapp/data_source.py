@@ -49,23 +49,48 @@ def _month_range(year_min: int, this_year: int, this_month: int) -> list[str]:
     return months
 
 
+# ⚠️ 48-4절 — 아파트 데이터가 빌라 캐시에 섞여 들어간 사고가 있어서 폴더
+# 이름에 버전을 붙였다. 서버에 남아 있을지 모르는 오염된 캐시를 **읽지 않고
+# 그냥 새로 받게** 하는 가장 단순하고 확실한 방법이다(Render 무료 티어는
+# 재배포 때 캐시가 날아가지만 "날아간다는 보장"은 없다).
+TRADE_CACHE_DIR = "trade-v2"
+
+
+def looks_like_apartment_rows(rows: list[dict]) -> bool:
+    """빌라(연립다세대) 응답에 아파트 행이 섞였는지 — 카나리아.
+
+    두 API는 단지명 필드가 다르다(빌라 `mhouseNm` · 아파트 `aptNm`). 빌라
+    응답에 `aptNm`이 있으면 **엔드포인트를 잘못 탄 것**이므로, 조용히 쓰는
+    대신 시끄럽게 실패시킨다 — 48-4절 사고가 몇 달이고 안 드러났던 이유가
+    "틀린 데이터가 그럴듯해 보였다"는 것이라서다.
+    """
+    return any("aptNm" in r for r in rows)
+
+
 def get_trade_rows(lawd_cd: str, year_min: int) -> list[dict]:
     from molit_rhtrade_api import fetch_all_pages
 
     now = datetime.now()
     this_ym = f"{now.year}{now.month:02d}"
-    cache_dir = os.path.join(CACHE_DIR, "trade", lawd_cd)
+    cache_dir = os.path.join(CACHE_DIR, TRADE_CACHE_DIR, lawd_cd)
+
+    def _checked(rows):
+        if looks_like_apartment_rows(rows):
+            raise RuntimeError(
+                "빌라 실거래 조회에 아파트 데이터가 섞여 들어왔습니다 "
+                "(엔드포인트 오염 — CLAUDE.md 48-4절). 계산을 중단합니다.")
+        return rows
 
     def one_month(ym):
         if ym == this_ym:
-            return fetch_all_pages(lawd_cd, ym)  # 이번 달은 신고가 계속 들어와 캐시 안 함
+            return _checked(fetch_all_pages(lawd_cd, ym))  # 이번 달은 신고가 계속 들어와 캐시 안 함
 
         cache_path = os.path.join(cache_dir, f"{ym}.json")
         if os.path.exists(cache_path):
             with open(cache_path, encoding="utf-8") as f:
-                return json.load(f)
+                return _checked(json.load(f))
 
-        rows = fetch_all_pages(lawd_cd, ym)
+        rows = _checked(fetch_all_pages(lawd_cd, ym))
         os.makedirs(cache_dir, exist_ok=True)
         with open(cache_path, "w", encoding="utf-8") as f:
             json.dump(rows, f, ensure_ascii=False)

@@ -1357,10 +1357,13 @@ class TestSaleCalibration(unittest.TestCase):
             self.assertLess(cal[key], plain[key])
             self.assertAlmostEqual(cal[key] / plain[key], 0.97, delta=0.005)
 
-    def test_factor_lowers_the_estimate(self):
-        """사용자 요청은 '3% 낮게'였다 — 부호가 뒤집히면 바로 잡아야 한다."""
-        self.assertLess(ep.SALE_CALIBRATION_FACTOR, 1.0)
+    def test_factor_is_in_a_sane_range(self):
+        """⛔ 한때 `< 1.0`(3% 낮게)을 고정했는데, 그 근거였던 표본이 빌라가
+        아니라 아파트였던 게 드러나(48-4절) 1.0으로 되돌렸다. 이제 방향을
+        고정하지 않고 **오타 방지 범위만** 지킨다 — 깨끗한 빌라 표본으로
+        다시 재면 위로든 아래로든 갈 수 있다."""
         self.assertGreater(ep.SALE_CALIBRATION_FACTOR, 0.8)   # 오타로 0.097 같은 값 방지
+        self.assertLess(ep.SALE_CALIBRATION_FACTOR, 1.2)
 
     def test_jeonse_path_does_not_get_sale_calibration(self):
         """16절 전세 계산부(`compute_scenarios`를 인자 없이 부르는 곳)가
@@ -1371,3 +1374,68 @@ class TestSaleCalibration(unittest.TestCase):
         for line in source.splitlines():
             if "compute_scenarios(jeonse_filtered" in line:
                 self.assertNotIn("calibration", line)
+
+
+class TestBasementSymmetry(unittest.TestCase):
+    """CLAUDE.md 48-4절 — 반지하↔지상층은 **양방향으로** 안 섞여야 한다.
+
+    ⚠️ 실제로 터졌던 버그의 회귀 테스트다. 예전 조건은
+    `row_is_basement and not subject_is_basement`라 한쪽만 걸렸다 —
+    대상이 지상층이면 반지하를 빼줬지만, **대상이 반지하일 때 지상층
+    거래가 그대로 섞여** 매도가가 두 배 가까이 부풀었다(실측: 반지하
+    4건 평균 오차 42.6%, 최악 +94.8%).
+    """
+
+    def setUp(self):
+        import geocode as geo
+        self._orig = geo.geocode
+        self.coords = {}
+
+        def fake(addr):
+            return self.coords.get(addr)
+
+        geo.geocode = fake
+        self._geo = geo
+
+        import lawd_lookup
+        self._orig_addr = lawd_lookup.full_address
+        lawd_lookup.full_address = lambda r: r["_addr"]
+
+    def tearDown(self):
+        self._geo.geocode = self._orig
+        import lawd_lookup
+        lawd_lookup.full_address = self._orig_addr
+
+    def _row(self, addr, floor, amount, lat):
+        self.coords[addr] = (lat, 127.0)
+        return {"_addr": addr, "umdNm": "동", "jibun": addr, "mhouseNm": addr,
+                "sggCd": "11305", "excluUseAr": "40.0", "floor": str(floor),
+                "buildYear": "2015", "dealYear": "2026", "dealMonth": "5",
+                "dealDay": "10", "dealAmount": f"{amount:,}"}
+
+    def _run(self, subject_floor):
+        self.coords["SUBJ"] = (37.6, 127.0)
+        rows = [self._row(f"지상{i}", 3, 30000, 37.6 + i * 0.0003) for i in range(5)]
+        rows += [self._row(f"반지하{i}", -1, 15000, 37.6 + (5 + i) * 0.0003) for i in range(5)]
+        return ep.find_comparables(rows, (37.6, 127.0), 40.0, subject_floor, "2015", 400,
+                                   year_min=2025, this_year=2026, this_month=9,
+                                   gu_filter=None)
+
+    def test_ground_subject_excludes_basement(self):
+        floors = [int(r["floor"]) for r in self._run(3)]
+        self.assertTrue(floors, "표본이 비면 테스트가 의미 없다")
+        self.assertTrue(all(f > 0 for f in floors), "지상층 대상에 반지하가 섞였다")
+
+    def test_basement_subject_excludes_ground(self):
+        """⚠️ 이게 예전에 안 걸리던 방향이다."""
+        floors = [int(r["floor"]) for r in self._run(-1)]
+        self.assertTrue(floors, "표본이 비면 테스트가 의미 없다")
+        self.assertTrue(all(f <= 0 for f in floors),
+                        "반지하 대상에 지상층이 섞였다 — 매도가가 두 배로 부풀어 오른다")
+
+    def test_basement_subject_estimate_stays_near_basement_prices(self):
+        """실제 산출값까지 확인 — 반지하 시세(1.5억) 근처여야 한다."""
+        filtered = self._run(-1)
+        scen = ep.compute_scenarios(filtered, 400, 2026, subject_area=40.0)
+        self.assertLess(scen["median"], 20000,
+                        "반지하 대상인데 지상층 시세(3억)로 끌려 올라갔다")

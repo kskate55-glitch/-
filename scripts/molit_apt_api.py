@@ -66,16 +66,17 @@ REQUIRED_FIELDS = ("umdNm", "excluUseAr", "dealAmount", "dealYear", "dealMonth")
 
 def fetch_apt_trade(lawd_cd: str, deal_ymd: str, page_no: int = 1,
                      num_of_rows: int = 1000, retries: int = 3, timeout: int = 10) -> list[dict]:
-    """아파트 매매 실거래가 조회. 파라미터·반환 형태는 연립다세대와 동일하다."""
-    import molit_rhtrade_api as rh
+    """아파트 매매 실거래가 조회. 파라미터·반환 형태는 연립다세대와 동일하다.
 
-    saved = rh.BASE_URL
-    rh.BASE_URL = BASE_URL  # 같은 요청 로직을 엔드포인트만 바꿔 재사용
-    try:
-        return _fetch_generic(lawd_cd, deal_ymd, page_no=page_no,
-                              num_of_rows=num_of_rows, retries=retries, timeout=timeout)
-    finally:
-        rh.BASE_URL = saved
+    ⚠️ **전역을 바꿔치기하지 않는다.** 예전엔 `rh.BASE_URL`을 아파트
+    엔드포인트로 갈았다가 `finally`로 되돌리는 방식이었는데, 22절 병렬
+    조회(`FETCH_WORKERS`=8)에서 스레드가 겹치면 **빌라 요청이 아파트
+    엔드포인트로 새어 나가고**, 심하면 전역이 아파트로 고착돼 그 워커
+    프로세스의 모든 빌라 조회가 아파트를 받아왔다(실측 재현 — 48-4절).
+    지금은 엔드포인트를 인자로 넘긴다."""
+    return _fetch_generic(lawd_cd, deal_ymd, page_no=page_no,
+                          num_of_rows=num_of_rows, retries=retries, timeout=timeout,
+                          base_url=BASE_URL)
 
 
 def fetch_all_pages(lawd_cd: str, deal_ymd: str, page_size: int = 1000) -> list[dict]:

@@ -213,16 +213,37 @@
   footer { margin-top: 28px; color: var(--muted-2); font-size: 11.5px; line-height: 1.7; padding: 0 4px; }
 
   #loading-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(242, 244, 246, 0.94);
-    z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    display: none; position: fixed; inset: 0; background: rgba(242, 244, 246, 0.96);
+    z-index: 100; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: 20px 16px; overflow-y: auto;
   }
   #loading-overlay.active { display: flex; }
   .spinner {
     width: 40px; height: 40px; border: 4px solid var(--primary-tint); border-top-color: var(--primary);
-    border-radius: 50%; animation: spin 0.8s linear infinite;
+    border-radius: 50%; animation: spin 0.8s linear infinite; flex: none;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  #loading-overlay p { color: #444; font-size: 14px; margin: 0; }
+  #loading-overlay p { color: #444; font-size: 14px; margin: 0; text-align: center; max-width: 520px; }
+
+  /* 로딩 중 보여주는 강의 자료 카드 — 대기 시간이 길어져도 그냥 버리는 시간이
+     되지 않게, 사용자가 들은 평공쌤 강의의 지역 분석 표를 같이 돌려 보여준다 */
+  #loading-figure {
+    display: none; margin: 0; max-width: 640px; width: 100%; text-align: center;
+    animation: tipfade 0.45s ease;
+  }
+  #loading-figure.on { display: block; }
+  @keyframes tipfade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  /* 표가 세로로 길어서(가로:세로 ≈ 1:1.4) 높이가 먼저 걸린다 — width:100%로
+     늘리면 object-fit 때문에 좌우 여백만 생기고 표는 더 작아져서, 폭·높이
+     둘 중 더 빡빡한 쪽에 자연스럽게 맞도록 max-만 걸어둔다 */
+  #loading-figure img {
+    max-width: 100%; max-height: 68vh; width: auto; height: auto;
+    border-radius: var(--radius-md); border: 1px solid var(--border);
+    background: #fff; box-shadow: var(--shadow); cursor: zoom-in;
+  }
+  #loading-figure figcaption {
+    margin-top: 7px; font-size: 11.5px; color: var(--muted-2); line-height: 1.6;
+  }
 
   @media (max-width: 420px) {
     .hero-price { font-size: 32px; }
@@ -241,6 +262,10 @@
 <div id="loading-overlay">
   <div class="spinner"></div>
   <p id="loading-text">실거래가 조회 중이에요, 처음 보는 지역이면 최대 1~2분 정도 걸릴 수 있어요…</p>
+  <figure id="loading-figure">
+    <img id="loading-img" alt="" />
+    <figcaption id="loading-caption"></figcaption>
+  </figure>
 </div>
 <script>
   // 로딩이 길어질 때(특히 처음 조회하는 지역 — 비교거래마다 카카오 지오코딩을
@@ -254,20 +279,86 @@
     "반경 안 비교거래를 찾는 중이에요…",
     "매도가를 계산하는 중이에요…",
   ];
+  // 팁은 두 종류다 — 글자만 있는 짧은 팁과, 사용자가 들은 평공쌤(텐엑스
+  // 재테크 아카데미) 강의의 지역 분석 표를 같이 보여주는 팁. 표가 있는 팁은
+  // 읽는 데 시간이 걸리니 더 오래(9초) 띄우고, 글자 팁은 3.5초만 띄운다.
+  var TIP_BASE = "{{ url_for('static', filename='tips/') }}";
   var LOADING_TIPS = [
-    "💡 경매 낙찰 후 빠르게 팔려면 보통 \"30일 목표가\" 근처가 적당해요",
-    "💡 반지하는 보통 지상층 시세의 절반 수준으로 형성돼요",
-    "💡 3층이 가장 인기 있고, 1층·6층은 상대적으로 덜 선호되는 편이에요",
-    "💡 매도 전엔 네이버부동산에서 주변 경쟁 매물을 꼭 확인해보세요",
-    "💡 처음 조회하는 지역은 지오코딩 때문에 조금 더 걸릴 수 있어요",
+    { text: "💡 경매 낙찰 후 빠르게 팔려면 보통 \"30일 목표가\" 근처가 적당해요" },
+    { text: "💡 빌라는 아파트의 대체재예요 — 인근 아파트보다 비싸지면 잘 안 팔립니다" },
+    { text: "💡 반지하는 보통 지상층 시세의 절반 수준으로 형성돼요" },
+    {
+      text: "📊 경기도 규제지역 빌라 낙찰·단타 추천 TOP 10",
+      img: "gyeonggi_regulated_top10.png",
+      caption: "광명 광명동(342건)·성남 은행동(227건)·금광동(116건) 순으로 실거래가 많아요 · 출처: 텐엑스 재테크 아카데미 평공쌤 정리",
+    },
+    { text: "💡 3층이 가장 인기 있고, 1층·6층은 상대적으로 덜 선호되는 편이에요" },
+    {
+      text: "📊 경기 비규제지역 소·중형 빌라(전용 35~66㎡) 거래량 TOP 20",
+      img: "gyeonggi_small_top20.png",
+      caption: "안양 안양동 294건 · 수원 세류동 199건 · 부천 원종동 198건 — 1~2억대가 주력 구간 · 출처: 평공쌤 정리",
+    },
+    { text: "💡 채광·엘리베이터·주차·누수·악취·소음·관리상태·경사는 임장 때 꼭 확인하세요" },
+    {
+      text: "📊 경기 비규제지역 중대형 빌라(전용 66~85㎡) 거래량 TOP 20",
+      img: "gyeonggi_large_top20.png",
+      caption: "안산 본오동 179건 · 사동 138건 · 부곡동 103건 — 안산 상록구에 중대형 거래가 몰려 있어요 · 출처: 평공쌤 정리",
+    },
+    { text: "💡 매도 전엔 네이버부동산에서 주변 경쟁 매물을 꼭 확인해보세요" },
+    {
+      text: "📊 준공연도별 거래량 — 2010년 이전 구옥 vs 이후 준신축",
+      img: "gyeonggi_buildyear_top20.png",
+      caption: "구옥은 정비·저가단타 타겟, 준신축은 실수요 타겟으로 접근 구간이 달라요 · 출처: 평공쌤 정리",
+    },
+    { text: "💡 같은 건물이라도 수리 상태(올수리/기본/노후)에 따라 매도가능가격이 달라져요" },
+    {
+      text: "📊 정비구역 영향권 vs 순수 비정비구역 거래량 TOP 20",
+      img: "gyeonggi_redevelop_top20.png",
+      caption: "정비구역은 재개발·몸테크 엑시트, 비정비구역은 실거주 급매 엑시트로 출구 전략이 갈려요 · 출처: 평공쌤 정리",
+    },
+    { text: "💡 처음 조회하는 지역은 지오코딩 때문에 조금 더 걸릴 수 있어요" },
   ];
+  var TIP_MS_TEXT = 3500;
+  var TIP_MS_IMAGE = 9000;
+
   document.querySelectorAll("form").forEach(function (form) {
     form.addEventListener("submit", function () {
       var btn = form.querySelector("button[type=submit]");
       if (btn) btn.disabled = true;
       document.getElementById("loading-overlay").classList.add("active");
 
+      // 표 이미지는 로딩이 시작된 뒤에만 미리 받는다 — 첫 화면 로딩까지
+      // 무겁게 만들지 않으면서, 첫 표 팁이 뜨는 시점(10초쯤 뒤)에는 이미
+      // 받아져 있어서 빈 칸이 보이지 않는다.
+      LOADING_TIPS.forEach(function (t) {
+        if (t.img) { var pre = new Image(); pre.src = TIP_BASE + t.img; }
+      });
+
       var textEl = document.getElementById("loading-text");
+      var figEl = document.getElementById("loading-figure");
+      var imgEl = document.getElementById("loading-img");
+      var capEl = document.getElementById("loading-caption");
+      imgEl.addEventListener("click", function () {
+        if (imgEl.src) window.open(imgEl.src, "_blank", "noopener");
+      });
+
+      function showTip(i) {
+        var tip = LOADING_TIPS[i];
+        textEl.textContent = tip.text;
+        if (tip.img) {
+          imgEl.src = TIP_BASE + tip.img;
+          imgEl.alt = tip.text;
+          capEl.textContent = (tip.caption || "") + " · 눌러서 크게 보기";
+          figEl.classList.add("on");
+        } else {
+          figEl.classList.remove("on");
+          imgEl.removeAttribute("src");
+        }
+        setTimeout(function () {
+          showTip((i + 1) % LOADING_TIPS.length);
+        }, tip.img ? TIP_MS_IMAGE : TIP_MS_TEXT);
+      }
+
       var stepIdx = 0;
       textEl.textContent = LOADING_STEPS[0];
       var stepTimer = setInterval(function () {
@@ -277,12 +368,7 @@
           return;
         }
         clearInterval(stepTimer);
-        var tipIdx = 0;
-        textEl.textContent = LOADING_TIPS[0];
-        setInterval(function () {
-          tipIdx = (tipIdx + 1) % LOADING_TIPS.length;
-          textEl.textContent = LOADING_TIPS[tipIdx];
-        }, 3500);
+        showTip(0);
       }, 2200);
     });
   });

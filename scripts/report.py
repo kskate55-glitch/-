@@ -107,6 +107,8 @@ def _comparables_table_html(comparables: list[dict]) -> str:
     rows = []
     for r in comparables:
         name_cell = r["name"]
+        if r.get("map_url"):
+            name_cell += f" <a href=\"{r['map_url']}\" target=\"_blank\" rel=\"noopener\" style=\"text-decoration:none;font-size:12px\" title=\"네이버부동산 지도에서 위치 보기\">🗺️</a>"
         if r.get("search_url"):
             name_cell += f" <a href=\"{r['search_url']}\" target=\"_blank\" rel=\"noopener\" style=\"text-decoration:none;font-size:12px\" title=\"네이버에서 검색\">🔍</a>"
         rows.append(

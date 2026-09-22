@@ -526,6 +526,7 @@ def estimate():
                 "score": round(r["_similarity_score"]),
                 "note": describe_comparable_similarity(area, floor, build_year, r),
                 "search_url": naver_search_url(f"{r.get('umdNm', '')} {r.get('mhouseNm', '')}".strip()),
+                "map_url": naver_land_url(r["_lat"], r["_lon"], zoom=19) if r.get("_lat") is not None else None,
             }
             for r in filtered[:8]
         ],

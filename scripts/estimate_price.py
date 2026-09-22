@@ -1820,7 +1820,7 @@ def main():
     if args.html:
         from report import render_report
 
-        from naver_link import naver_search_url
+        from naver_link import naver_land_url, naver_search_url
 
         comparables = [
             {
@@ -1830,6 +1830,7 @@ def main():
                 "amount": r["_amount_man"],
                 "label": f"{r['_distance_m']:.0f}m",
                 "search_url": naver_search_url(f"{r.get('umdNm', '')} {r.get('mhouseNm', '')}".strip()),
+                "map_url": naver_land_url(r["_lat"], r["_lon"], zoom=19) if r.get("_lat") is not None else None,
             }
             for r in filtered[:8]
         ]

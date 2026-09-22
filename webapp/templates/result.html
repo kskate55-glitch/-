@@ -165,6 +165,7 @@
     <tr>
       <td>
         {{ c.name }}
+        {% if c.map_url %}<a href="{{ c.map_url }}" target="_blank" rel="noopener" class="comp-search-link" title="네이버부동산 지도에서 &quot;{{ c.name }}&quot; 위치 보기">🗺️</a>{% endif %}
         {% if c.search_url %}<a href="{{ c.search_url }}" target="_blank" rel="noopener" class="comp-search-link" title="네이버에서 &quot;{{ c.name }}&quot; 검색">🔍</a>{% endif %}
         <br><span class="muted" style="font-size:11px">{{ c.note }}</span>
       </td>

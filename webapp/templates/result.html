@@ -428,12 +428,33 @@
 
 {% if result.inspection_checklist %}
 <div class="card">
-  <h3>임장 체크리스트 (참고용)</h3>
-  <ul class="note-lines">
+  <h3>🔎 임장 체크리스트</h3>
+  <ul class="note-lines" style="margin-bottom:12px">
     <li>아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있어요.</li>
-    <li>임장(현장답사) 때 직접 확인하세요 — 매도가 계산에는 반영되지 않습니다.</li>
+    <li>임장(현장답사) 다녀오신 뒤 <b>걸리는 항목을 체크</b>하면 위 환금성 점수에 바로 반영됩니다.</li>
+    <li>매도가(위 금액)는 이 체크와 무관하게 그대로예요 — 바뀌는 건 환금성 진단뿐입니다.</li>
   </ul>
-  <p style="margin-top:8px">{{ result.inspection_checklist | join(' · ') }}</p>
+  <form method="post" action="/estimate">
+    {% for k, v in result.resubmit_fields_no_inspection.items() %}
+    <input type="hidden" name="{{ k }}" value="{{ v }}">
+    {% endfor %}
+    <div class="insp-grid">
+      {% for key, label in result.inspection_fields %}
+      <label class="insp-box{{ ' on' if label in result.inspection_bad else '' }}">
+        <input type="checkbox" name="insp_{{ key }}" value="1"{{ ' checked' if label in result.inspection_bad else '' }}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    <label class="insp-clean{{ ' on' if result.inspection_clean else '' }}">
+      <input type="checkbox" name="insp_clean" value="1"{{ ' checked' if result.inspection_clean else '' }}>
+      <span>👍 다 확인했고 걸리는 항목이 없어요</span>
+    </label>
+    <button type="submit" style="width:100%; margin-top:10px; padding:11px; border:0; border-radius:var(--radius-md);
+            background:var(--primary); color:#fff; font-weight:800; font-size:14px; cursor:pointer">
+      체크한 내용으로 환금성 다시 계산하기
+    </button>
+  </form>
 </div>
 {% endif %}
 

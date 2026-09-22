@@ -281,6 +281,18 @@ CONDITION_CURRENT_LABELS = {
 # 이 정보가 없어 계산에는 전혀 반영하지 않는다 — 임장(현장답사) 때 사용자가
 # 직접 확인하라는 순수 참고용 체크리스트다.
 INSPECTION_CHECKLIST = ["채광", "엘리베이터", "주차", "누수", "악취", "소음", "관리상태", "경사"]
+# 위 8가지를 폼 필드 이름(ASCII)과 짝지어 둔다 — 임장에서 "이 항목이 나쁘다"고
+# 체크한 것을 41절 환금성 점수에 실제로 반영하기 위해서다(43절). 값이 화면
+# 라벨이라 순서를 바꾸면 안 되고, 항목을 늘리면 키도 같이 늘린다.
+INSPECTION_FIELDS = [
+    ("light", "채광"), ("elevator", "엘리베이터"), ("parking", "주차"),
+    ("leak", "누수"), ("smell", "악취"), ("noise", "소음"),
+    ("management", "관리상태"), ("slope", "경사"),
+]
+# 체크된 "나쁜 항목" 개수별 판정 — 강의가 "이 요소가 나쁘면 값을 낮춰도
+# 안 팔린다"고 못박은 항목들이라, 두 개 이상이면 바로 주의로 본다.
+# ⚠️ 경계값(1개/2개)은 검증된 기준이 아니라 경험적으로 끊은 값이다.
+INSPECTION_WARN_COUNT = 2
 
 
 def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area: float,
@@ -1066,7 +1078,7 @@ MARKETABILITY_VERDICT_LABELS = {
 #   5) 시세 판단 근거 — "개별성이 강해 실거래 하나로 정하면 안 된다"(4절).
 #   6) 연식 — "연식별 거래량을 따로 보라"(6절 4번). 판정이 아닌 참고.
 MARKETABILITY_ORDER = [
-    "price_position", "floor", "volume", "competition", "confidence", "build_year",
+    "price_position", "floor", "inspection", "volume", "competition", "confidence", "build_year",
 ]
 
 
@@ -1074,7 +1086,9 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
                                 this_year: int | None = None, confidence: int | None = None,
                                 liquidity: dict | None = None, sale_pressure: dict | None = None,
                                 listing_summary: dict | None = None,
-                                building: dict | None = None) -> dict:
+                                building: dict | None = None,
+                                inspection_bad: list[str] | None = None,
+                                inspection_clean: bool = False) -> dict:
     """CLAUDE.md 41절: "이 빌라가 실제로 잘 팔릴 물건인가"를 강의
     (`data/lecture_notes_villa.md`)가 짚은 기준으로 항목별 진단한다.
 
@@ -1152,6 +1166,27 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
                 t += " (승강기는 없습니다)"
         items.append({"key": "floor", "label": "층·승강기 (팔기 어려운 요소)", "verdict": v, "text": t,
                        "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사가 나쁘면 값을 낮춰도 잘 안 팔립니다"})
+
+    # ⑤ 임장 체크 — 36절 목록을 "직접 보고 온 결과"로 받아 점수에 반영한다.
+    #    데이터로는 절대 알 수 없는 항목이라, 사용자가 채워주기 전까지는
+    #    감점도 가점도 하지 않는다(`unknown`).
+    if inspection_bad:
+        n_bad = len(inspection_bad)
+        joined = " · ".join(inspection_bad)
+        if n_bad >= INSPECTION_WARN_COUNT:
+            v, t = "warn", f"임장에서 걸린다고 하신 항목 {n_bad}가지 — {joined}. 이런 항목은 값을 낮춰도 매수자가 잘 안 붙습니다."
+        else:
+            v, t = "ok", f"임장에서 걸린다고 하신 항목 — {joined}. 한 가지 정도면 가격으로 상쇄해볼 만합니다."
+        items.append({"key": "inspection", "label": "임장 체크 (직접 보고 온 결과)", "verdict": v, "text": t,
+                       "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사는 데이터로 알 수 없어 직접 봐야 합니다"})
+    elif inspection_clean:
+        items.append({"key": "inspection", "label": "임장 체크 (직접 보고 온 결과)", "verdict": "good",
+                       "text": "임장에서 8가지 항목 중 걸리는 게 없다고 하셨어요 — 가격만 맞추면 되는 조건입니다.",
+                       "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사는 데이터로 알 수 없어 직접 봐야 합니다"})
+    else:
+        items.append({"key": "inspection", "label": "임장 체크 (직접 보고 온 결과)", "verdict": "unknown",
+                       "text": "임장에서 확인한 내용을 아래 체크리스트에 체크하면 이 점수에 바로 반영해 드려요.",
+                       "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사는 데이터로 알 수 없어 직접 봐야 합니다"})
 
     # ⑤ 판단 근거의 두께 — 강의가 "빌라는 개별성이 강하다"고 짚은 부분.
     if confidence is not None:
@@ -2004,6 +2039,11 @@ def main():
                      help="38절 기본 정리(청소·도배·장판 등) 예상 공사비(만원) — 주면 '고쳐서 남는지'까지 계산한다")
     ap.add_argument("--repair-cost-full", type=float, default=None,
                      help="38절 올수리(전체 리모델링) 예상 공사비(만원)")
+    ap.add_argument("--inspection-bad", nargs="*", choices=INSPECTION_CHECKLIST, default=None,
+                     metavar="항목",
+                     help="43절 임장에서 걸린다고 본 항목 (예: --inspection-bad 누수 경사) — 41절 환금성 점수에 반영된다")
+    ap.add_argument("--inspection-clean", action="store_true",
+                     help="43절 임장에서 8가지 항목 중 걸리는 게 없었음 — 41절 환금성 점수에 가점으로 반영된다")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -2123,7 +2163,9 @@ def main():
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
     print_marketability_report(build_marketability_report(
         floor=args.floor, build_year=args.build_year, this_year=this_year,
-        confidence=confidence, liquidity=liquidity, building=building_info))
+        confidence=confidence, liquidity=liquidity, building=building_info,
+        inspection_bad=args.inspection_bad,
+        inspection_clean=args.inspection_clean and not args.inspection_bad))
 
     tiers = compute_price_tiers(filtered)
     print("[가격 구간별 매도 전략] (비교거래 분포 안에서의 위치 기반 참고 라벨 — 실제 매도 소요일수 데이터는 아님)")

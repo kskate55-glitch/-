@@ -805,12 +805,12 @@ class TestMarketabilityOrdering(unittest.TestCase):
 
     def test_items_follow_the_lecture_priority_order(self):
         keys = [i["key"] for i in self._report()["items"]]
-        self.assertEqual(keys, ["price_position", "floor", "volume",
+        self.assertEqual(keys, ["price_position", "floor", "inspection", "volume",
                                  "competition", "confidence", "build_year"])
 
     def test_ranks_are_sequential_and_skip_info_items(self):
         items = self._report()["items"]
-        self.assertEqual([i["rank"] for i in items[:5]], [1, 2, 3, 4, 5])
+        self.assertEqual([i["rank"] for i in items[:6]], [1, 2, 3, 4, 5, 6])
         self.assertIsNone(items[-1]["rank"])  # 연식(info)은 번호 없음
 
     def test_every_item_carries_a_korean_verdict_label(self):
@@ -823,8 +823,46 @@ class TestMarketabilityOrdering(unittest.TestCase):
         r = ep.build_marketability_report(floor=3, confidence=80,
                                            liquidity={"counts": {(500, 3): 9}})
         keys = [i["key"] for i in r["items"]]
-        self.assertEqual(keys, ["floor", "volume", "competition", "confidence"])
-        self.assertEqual([i["rank"] for i in r["items"]], [1, 2, 3, 4])
+        self.assertEqual(keys, ["floor", "inspection", "volume", "competition", "confidence"])
+        self.assertEqual([i["rank"] for i in r["items"]], [1, 2, 3, 4, 5])
+
+
+class TestInspectionScoring(unittest.TestCase):
+    """CLAUDE.md 43절 — 임장에서 체크한 항목이 41절 환금성 점수에 반영된다."""
+
+    def _item(self, **kw):
+        r = ep.build_marketability_report(floor=3, confidence=80,
+                                           liquidity={"counts": {(500, 3): 9}}, **kw)
+        return next(i for i in r["items"] if i["key"] == "inspection"), r
+
+    def test_nothing_entered_is_unknown_and_does_not_score(self):
+        item, r = self._item()
+        clean_item, clean = self._item(inspection_clean=True)
+        self.assertEqual(item["verdict"], "unknown")
+        # unknown은 점수에서 빠지므로, 전부 good인 표본에서는 둘이 같은 점수여야 한다
+        self.assertEqual(r["score"], clean["score"])
+
+    def test_clean_inspection_counts_as_good(self):
+        item, _ = self._item(inspection_clean=True)
+        self.assertEqual(item["verdict"], "good")
+
+    def test_one_bad_item_is_ok_two_or_more_is_warn(self):
+        self.assertEqual(self._item(inspection_bad=["누수"])[0]["verdict"], "ok")
+        self.assertEqual(self._item(inspection_bad=["누수", "경사"])[0]["verdict"], "warn")
+
+    def test_bad_items_lower_the_score_and_show_up_as_a_weakness(self):
+        _, clean = self._item(inspection_clean=True)
+        item, bad = self._item(inspection_bad=["누수", "경사", "주차"])
+        self.assertLess(bad["score"], clean["score"])
+        self.assertIn("임장 체크", bad["weaknesses"])
+        for label in ("누수", "경사", "주차"):
+            self.assertIn(label, item["text"])
+
+    def test_clean_flag_is_ignored_when_bad_items_are_also_given(self):
+        # 폼에서 "문제 없음"과 개별 항목이 같이 체크되는 모순 상황 — 개별
+        # 항목(더 구체적인 정보)을 따른다.
+        item, _ = self._item(inspection_bad=["누수"], inspection_clean=True)
+        self.assertEqual(item["verdict"], "ok")
 
 
 if __name__ == "__main__":

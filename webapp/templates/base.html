@@ -125,6 +125,20 @@
      페이지 전체에 가로 스크롤이 생긴다 — 표만 따로 스크롤되게 감싼다. */
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
+  /* 43절 임장 체크 — 결과 페이지에서 바로 체크하고 재계산하는 칩형 체크박스 */
+  .insp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+  .insp-box, .insp-clean {
+    display: flex; align-items: center; gap: 7px; cursor: pointer;
+    padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-md);
+    background: #fff; font-size: 13.5px; font-weight: 600; color: var(--ink);
+    transition: border-color .12s ease, background .12s ease;
+  }
+  .insp-clean { margin-top: 8px; }
+  .insp-box input, .insp-clean input { width: 16px; height: 16px; accent-color: #e0475a; flex-shrink: 0; }
+  .insp-clean input { accent-color: var(--primary); }
+  .insp-box.on { border-color: #e0475a; background: #fff5f5; color: #c0293c; }
+  .insp-clean.on { border-color: var(--primary); background: var(--primary-tint); color: var(--primary-dark); }
+
   /* 41절 환금성·경쟁 진단 — 중요한 순서대로 번호를 달고,
      판정(좋음/보통/주의)을 왼쪽 색 띠와 오른쪽 배지 두 군데로 드러낸다.
      예전엔 이모지 하나 + 줄글이라 "뭐가 문제인지" 훑어보기 어려웠다. */

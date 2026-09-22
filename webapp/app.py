@@ -196,9 +196,16 @@ def estimate():
     except RuntimeError:
         building = None  # 건축물대장 조회는 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
 
-    from estimate_price import CONDITION_LABELS, CONDITION_MULTIPLIER, INSPECTION_CHECKLIST
+    from estimate_price import (CONDITION_LABELS, CONDITION_MULTIPLIER,
+                                 INSPECTION_CHECKLIST, INSPECTION_FIELDS)
 
     inspection_checklist = INSPECTION_CHECKLIST
+    # 43절 — 임장에서 "이 항목이 나쁘다"고 체크한 것을 41절 환금성 점수에
+    # 반영한다. `inspection_clean`(문제 없음)을 따로 두는 이유: 체크가 0개인
+    # 상태만으로는 "가봤는데 멀쩡하다"와 "아직 안 가봤다"를 구분할 수 없어서다.
+    inspection_bad = [label for key, label in INSPECTION_FIELDS
+                      if form.get(f"insp_{key}")]
+    inspection_clean = bool(form.get("insp_clean")) and not inspection_bad
 
     terrain = None
     try:
@@ -505,6 +512,12 @@ def estimate():
     # 페이지에 있어서, 링크 열고 복사한 뒤 "뒤로가기"로 폼을 다시 채워야
     # 했다. 이제 결과 페이지 자체에 작은 재제출 폼을 둬서 그 왕복을 없앤다.
     resubmit_fields = {k: v for k, v in form.items() if k != "listings_text"}
+    # 43절 — 임장 체크는 결과를 보고 현장에 다녀온 뒤에 채우는 게 자연스러워서,
+    # 결과 페이지에서 바로 체크하고 재계산할 수 있는 폼을 하나 더 뒀다. 그
+    # 폼에는 임장 필드를 숨은 값으로 넣으면 안 되므로(체크박스가 그 자리를
+    # 대신한다) 따로 걸러낸 세트를 만든다.
+    _insp_keys = {f"insp_{key}" for key, _ in INSPECTION_FIELDS} | {"insp_clean"}
+    resubmit_fields_no_inspection = {k: v for k, v in form.items() if k not in _insp_keys}
 
     result = {
         "address": address,
@@ -512,6 +525,10 @@ def estimate():
         "building": building,
         "terrain": terrain,
         "inspection_checklist": inspection_checklist,
+        "inspection_fields": INSPECTION_FIELDS,
+        "inspection_bad": inspection_bad,
+        "inspection_clean": inspection_clean,
+        "resubmit_fields_no_inspection": resubmit_fields_no_inspection,
         "condition_adjustment": condition_display,
         "villa_market_trend": villa_market_trend,
         "dong_compare": dong_compare,
@@ -628,7 +645,8 @@ def estimate():
     marketability = build_marketability_report(
         floor=floor, build_year=int(build_year), this_year=this_year,
         confidence=scen["confidence"], liquidity=liquidity, sale_pressure=pressure,
-        listing_summary=listing_price_summary, building=building)
+        listing_summary=listing_price_summary, building=building,
+        inspection_bad=inspection_bad, inspection_clean=inspection_clean)
     for item in marketability["items"]:
         item["icon"] = MARKETABILITY_ICONS.get(item["verdict"], "·")
     result["marketability"] = marketability

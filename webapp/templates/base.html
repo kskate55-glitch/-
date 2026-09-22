@@ -583,6 +583,72 @@
   ];
   var TIP_MS_TEXT = 3500;
 
+  // ⚠️⚠️ **아이폰 사파리에서 로딩 문구·팁이 안 바뀌던 원인과 해법.**
+  // iOS Safari는 화면 전환(내비게이션)이 시작되면 떠나는 페이지를 **더 이상
+  // 다시 그리지 않는다.** rAF로 첫 프레임은 억지로 그려낼 수 있어서 스피너는
+  // 뜨지만, 그 뒤 setInterval로 문구를 바꿔봐야 화면에는 영영 반영되지
+  // 않는다(DOM만 바뀌고 페인트가 없다). 로딩 단계 문구도, 37절 팁 순환도
+  // 모바일에서 통째로 죽어 있던 이유가 이것이다.
+  //
+  // 그래서 **아예 화면을 넘기지 않는다** — 폼을 fetch로 직접 POST해서 지금
+  // 페이지를 살려두고(타이머·애니메이션이 계속 돈다), 응답이 오면 그때
+  // 문서를 통째로 갈아끼운다.
+  //
+  // ⚠️ `document.open()/write()/close()`를 쓰는 이유: 결과 페이지에는 인라인
+  //    <script>(가격 분포 그래프 툴팁, 카카오맵, 북마클릿)가 들어 있는데
+  //    `innerHTML`로 넣으면 **스크립트가 실행되지 않는다**. write는 구식이지만
+  //    이 용도에는 확실하다.
+  // ⚠️ 본문을 URLSearchParams로 만들어 보내므로 서버가 받는 형식은 평소
+  //    폼 전송(application/x-www-form-urlencoded)과 **완전히 같다** —
+  //    webapp/app.py는 손댈 게 없다.
+  // ⚠️ URL은 그대로 "/"에 둔다(replaceState 안 함). 새로고침하면 POST가
+  //    다시 날아가는 대신 빈 입력 폼이 떠서 오히려 안전하고, 결과 페이지의
+  //    "← 다시 계산하기"(href="/")도 그대로 동작한다.
+  // 문서를 갈아끼우기 전에 멈춰야 할 로딩 연출 타이머들.
+  var loadingTimers = [];
+  function clearLoadingTimers() {
+    loadingTimers.forEach(function (id) { clearTimeout(id); clearInterval(id); });
+    loadingTimers = [];
+  }
+
+  function submitWithoutLeaving(form) {
+    var action = form.getAttribute("action") || window.location.href;
+
+    // fetch/FormData가 없는 아주 구형 브라우저는 평소대로 전송한다
+    // (그런 기기에서는 팁이 안 도는 대신 계산은 정상적으로 된다).
+    if (!window.fetch || !window.FormData || !window.URLSearchParams) {
+      form.submit();
+      return;
+    }
+
+    var body;
+    try {
+      body = new URLSearchParams();
+      new FormData(form).forEach(function (value, key) { body.append(key, value); });
+    } catch (err) {
+      form.submit();
+      return;
+    }
+
+    fetch(action, {
+      method: "POST",
+      body: body,
+      credentials: "same-origin",
+      headers: { "X-Requested-With": "fetch" }
+    }).then(function (res) {
+      return res.text();
+    }).then(function (html) {
+      clearLoadingTimers();   // 새 문서로 갈아끼우기 전에 연출 타이머를 정리
+      document.open();
+      document.write(html);
+      document.close();
+      window.scrollTo(0, 0);
+    }).catch(function () {
+      // 네트워크 오류 등 — 평소 방식으로 한 번 더 시도한다.
+      form.submit();
+    });
+  }
+
   // 뒤로가기로 돌아왔을 때(BFCache) 오버레이가 켜진 채로 복원되면 멀쩡한
   // 페이지 위에 스피너만 계속 돌아간다 — 복원 시 무조건 끈다.
   window.addEventListener("pageshow", function () {
@@ -617,7 +683,7 @@
       function send() {
         if (sent) { return; }
         sent = true;
-        form.submit();
+        submitWithoutLeaving(form);
       }
 
       try {
@@ -657,9 +723,9 @@
 
       function showTip(i) {
         textEl.textContent = LOADING_TIPS[i].text;
-        setTimeout(function () {
+        loadingTimers.push(setTimeout(function () {
           showTip((i + 1) % LOADING_TIPS.length);
-        }, TIP_MS_TEXT);
+        }, TIP_MS_TEXT));
       }
 
       var stepIdx = 0;
@@ -673,6 +739,7 @@
         clearInterval(stepTimer);
         showTip(0);
       }, 2200);
+      loadingTimers.push(stepTimer);
     });
   });
 </script>

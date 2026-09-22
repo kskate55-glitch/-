@@ -78,8 +78,9 @@
 
 {% macro inspection_ui() %}
 <ul class="note-lines" style="margin-bottom:12px">
-    <li>아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있어요.</li>
-    <li>임장(현장답사) 다녀오신 뒤 <b>걸리는 항목을 체크</b>하면 위 환금성 점수에 바로 반영됩니다.</li>
+    <li>아래는 전부 <b>나쁜 상태</b>를 적어 둔 항목이에요 — 임장에서 <b>실제로 해당되는 것만 체크</b>하세요.</li>
+    <li>체크한 항목이 많을수록 환금성 점수가 내려갑니다. 가격을 낮춰도 잘 안 팔리게 만드는 요소들이라서예요.</li>
+    <li>승강기는 건축물대장으로 이미 자동 확인돼서(위 층·승강기 항목) 여기서는 빠져 있어요.</li>
     <li>매도가(위 금액)는 이 체크와 무관하게 그대로예요 — 바뀌는 건 환금성 진단뿐입니다.</li>
   </ul>
   <form method="post" action="/estimate">
@@ -316,7 +317,13 @@
       <span class="mk-sub">{{ item.label.split(' (')[1].rstrip(')') if ' (' in item.label else '' }}</span>
       <span class="mk-pill">{{ item.icon }} {{ item.verdict_label }}</span>
     </div>
+    {% if item.facts %}<p class="mk-facts"><span class="mk-facts-tag">건축물대장</span>{% for f in item.facts %}<span class="mk-fact">{{ f }}</span>{% endfor %}</p>{% endif %}
     <p class="mk-text">{{ item.text }}</p>
+    {% if item.notes %}
+    <ul class="note-lines mk-notes">
+      {% for note in item.notes %}<li>{{ note }}</li>{% endfor %}
+    </ul>
+    {% endif %}
     <p class="mk-lecture">{{ item.why }}</p>
     {% if item.key == 'apt_gap' and result.apt_gap %}
     <details class="paste-fold">
@@ -533,24 +540,8 @@
 </div>
 {% endif %}
 
-{% if result.building or result.terrain or result.villa_market_trend or result.dong_compare or result.station_premium %}
+{% if result.terrain or result.villa_market_trend or result.dong_compare or result.station_premium %}
 <div class="section-divider">참고 정보</div>
-{% endif %}
-
-{% if result.building %}
-<div class="card">
-  <h3>건물 정보 (건축물대장 기준)</h3>
-  <p class="muted">
-    승강기: {{ result.building.elevator }}
-    {% if result.building.household_count %} · 세대수: {{ result.building.household_count }}세대{% endif %}
-    {% if result.building.approval_date %} · 사용승인일: {{ result.building.approval_date }}{% endif %}
-    {% if result.building.ground_floors %} · 지상층수: {{ result.building.ground_floors }}층{% endif %}
-  </p>
-  <ul class="note-lines" style="margin-top:10px">
-    <li>⚠️ <b>위반건축물 딱지(불법 증축·용도변경 등)는 이 조회로 확인할 수 없어요</b> — 표제부 조회 응답에 해당 항목이 없습니다.</li>
-    <li>낙찰 전에 <b>정부24 "건축물대장 열람"</b>에서 직접 확인하세요 — 위반건축물이면 대출·매도 양쪽에서 크게 불리해집니다.</li>
-  </ul>
-</div>
 {% endif %}
 
 {% if result.location %}

@@ -834,10 +834,10 @@ class TestFloorAndElevator(unittest.TestCase):
     (1) 승강기 유무를 항상 문장에 쓴다, (2) 4층과 5층 이상을 가른다,
     (3) 건축물대장 지상층수로 탑층을 실제 확인한다."""
 
-    def _item(self, floor, has_elevator=None, ground_floors=None):
+    def _item(self, floor, has_elevator=None, ground_floors=None, **extra):
         building = None
         if has_elevator is not None or ground_floors is not None:
-            building = {"has_elevator": has_elevator, "ground_floors": ground_floors}
+            building = {"has_elevator": has_elevator, "ground_floors": ground_floors, **extra}
         r = ep.build_marketability_report(floor=floor, building=building)
         return next(i for i in r["items"] if i["key"] == "floor")
 
@@ -862,10 +862,34 @@ class TestFloorAndElevator(unittest.TestCase):
     def test_top_floor_is_detected_from_the_register(self):
         item = self._item(5, True, ground_floors=5)
         self.assertIn("탑층", item["text"])
+        self.assertIn("옥상", item["text"])  # 무엇을 보고 와야 하는지까지 말해준다
         self.assertEqual(item["verdict"], "ok")  # good에서 한 단계 내려온다
 
-    def test_not_top_floor_says_nothing_about_it(self):
-        self.assertNotIn("탑층", self._item(3, True, ground_floors=5)["text"])
+    def test_not_top_floor_is_stated_explicitly(self):
+        """탑층이 아니면 조용히 넘어가지 않고 '탑층은 아니다'라고 밝힌다 —
+        건축물대장을 봤다는 사실 자체가 정보이기 때문."""
+        item = self._item(3, True, ground_floors=5)
+        self.assertIn("탑층은 아니", item["text"])
+        self.assertEqual(item["verdict"], "good")  # 판정은 그대로다
+
+    def test_register_facts_ride_along_with_the_floor_item(self):
+        """건축물대장 사실(승강기·층수·세대수·사용승인일)이 층·승강기 항목
+        안에 함께 실린다 — 예전엔 페이지 맨 아래 별도 카드였다."""
+        item = self._item(4, False, ground_floors=5,
+                          household_count="8", approval_date="20141112")
+        facts = " · ".join(item["facts"])
+        self.assertIn("승강기 없음", facts)
+        self.assertIn("지상 5층 건물의 4층", facts)
+        self.assertIn("8세대", facts)
+        self.assertIn("사용승인 2014.11.12", facts)
+        self.assertTrue(any("위반건축물" in n for n in item["notes"]))
+
+    def test_no_register_means_no_facts(self):
+        """건축물대장 조회에 실패하면 사실 줄도 위반건축물 안내도 안 붙인다."""
+        item = ep.build_marketability_report(floor=4, building=None)["items"][0]
+        self.assertEqual(item["key"], "floor")
+        self.assertIsNone(item["facts"])
+        self.assertIsNone(item["notes"])
 
     def test_single_storey_building_is_not_called_a_top_floor(self):
         """지상 1층짜리 건물에 1층이면 '탑층'이라는 말 자체가 의미 없다."""
@@ -1215,3 +1239,46 @@ class TestTransitSchoolItem(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestInspectionChecklistLabels(unittest.TestCase):
+    """43절 — 체크리스트 항목명이 '나쁜 상태'를 서술하는지, 승강기가 빠졌는지."""
+
+    def test_elevator_is_not_in_the_checklist(self):
+        """승강기는 20절 건축물대장으로 자동 판정되므로 임장 체크에서 뺐다 —
+        남겨두면 한 요소로 두 번 감점된다."""
+        self.assertNotIn("엘리베이터", ep.INSPECTION_CHECKLIST)
+        self.assertNotIn("elevator", [k for k, _ in ep.INSPECTION_FIELDS])
+
+    def test_labels_describe_the_bad_state(self):
+        """'채광'처럼 중립적인 명사면 좋아서 체크하는 건지 나빠서 체크하는
+        건지 알 수 없다 — 라벨 자체가 나쁜 상태를 말해야 한다."""
+        bad_words = ("나쁨", "부족", "있음", "심함", "열악")
+        for label in ep.INSPECTION_CHECKLIST:
+            self.assertTrue(any(w in label for w in bad_words), label)
+
+    def test_fields_and_checklist_stay_in_sync(self):
+        self.assertEqual([label for _, label in ep.INSPECTION_FIELDS], ep.INSPECTION_CHECKLIST)
+
+
+class TestBuildYearNotes(unittest.TestCase):
+    """41절 연식 항목 — 오래된 물건이면 임장 포인트·인테리어 비용까지 짚어준다."""
+
+    def _item(self, build_year):
+        report = ep.build_marketability_report(build_year=build_year, this_year=2026)
+        return next(i for i in report["items"] if i["key"] == "build_year")
+
+    def test_old_building_warns_about_leaks_and_repair_cost(self):
+        item = self._item(1990)
+        self.assertEqual(item["verdict"], "warn")
+        notes = " ".join(item["notes"])
+        self.assertIn("누수", notes)
+        self.assertIn("인테리어", notes)
+
+    def test_middle_aged_building_gets_a_lighter_note(self):
+        item = self._item(2005)
+        self.assertEqual(item["verdict"], "ok")
+        self.assertEqual(len(item["notes"]), 1)
+
+    def test_new_building_has_no_note(self):
+        self.assertIsNone(self._item(2020).get("notes"))

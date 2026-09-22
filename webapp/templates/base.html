@@ -134,7 +134,9 @@
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
   /* 43절 임장 체크 — 결과 페이지에서 바로 체크하고 재계산하는 칩형 체크박스 */
-  .insp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+  /* 항목명이 "건물 관리상태 열악"처럼 길어져서(나쁜 상태를 서술하도록 바꿨다)
+     최소 폭을 넓혔다 — 좁으면 한 칩 안에서 두 줄로 접힌다. */
+  .insp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; }
   .insp-box, .insp-clean {
     display: flex; align-items: center; gap: 7px; cursor: pointer;
     padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-md);
@@ -320,6 +322,21 @@
     margin: 7px 0 0; padding-left: 9px; border-left: 2px solid var(--border);
     font-size: 13px; line-height: 1.7; color: var(--muted);
   }
+  /* 건축물대장에서 확인한 사실을 판정 문장 바로 위에 칩으로 붙인다 —
+     "무엇을 근거로 이 판정이 나왔는지"가 같은 자리에서 보이게 하려는 것. */
+  .mk-facts {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    margin: 0 0 7px; font-size: 13px;
+  }
+  .mk-facts-tag {
+    padding: 2px 8px; border-radius: 999px; background: var(--primary); color: #fff;
+    font-size: 11.5px; font-weight: 800; letter-spacing: -0.2px;
+  }
+  .mk-fact {
+    padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border);
+    background: #fafbfc; color: #2b3035; font-weight: 700;
+  }
+  .mk-notes { margin: 8px 0 0; }
   .mk-good { border-left-color: #2f9e44; }
   .mk-good .mk-pill { background: #e6f4ea; color: #1e7a34; }
   .mk-good .mk-rank { background: #2f9e44; }

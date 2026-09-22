@@ -283,18 +283,29 @@ CONDITION_CURRENT_LABELS = {
     "올수리": "현재 상태 (올수리 완료)",
 }
 
-# CLAUDE.md 36절: 임장 체크리스트 — 같은 강의에서 "이 요소들이 나쁘면 가격을
-# 낮춰도 잘 안 팔린다"고 짚은 8가지. 국토부 실거래가·카카오 API 어디에도
-# 이 정보가 없어 계산에는 전혀 반영하지 않는다 — 임장(현장답사) 때 사용자가
-# 직접 확인하라는 순수 참고용 체크리스트다.
-INSPECTION_CHECKLIST = ["채광", "엘리베이터", "주차", "누수", "악취", "소음", "관리상태", "경사"]
-# 위 8가지를 폼 필드 이름(ASCII)과 짝지어 둔다 — 임장에서 "이 항목이 나쁘다"고
+# CLAUDE.md 36절: 임장 체크리스트 — "이 요소가 나쁘면 가격을 낮춰도 잘 안
+# 팔린다"고 짚은 항목들. 국토부 실거래가·카카오 API 어디에도 이 정보가 없어
+# 임장(현장답사) 때 사용자가 직접 확인해서 체크해야 한다(43절).
+#
+# ⚠️ 사용자 지적으로 두 가지를 고쳤다:
+# (1) **"엘리베이터"를 뺐다.** 20절 건축물대장 조회로 승강기 유무가 이미
+#     자동으로 확인되고 41절 층·승강기 항목이 그걸로 판정까지 한다 — 같은
+#     걸 임장에서 또 체크하게 하면 중복이고, 한 요소로 두 번 감점된다.
+# (2) **항목명을 "나쁜 상태"로 못박았다.** 예전엔 "채광"·"주차"처럼 중립적인
+#     명사라 "좋으면 체크하는 건지 나쁘면 체크하는 건지" 알 수 없었다
+#     (사용자가 실제로 헷갈린다고 지적). 지금은 라벨 자체가 나쁜 상태를
+#     서술해서, 읽는 즉시 "해당되면 체크"임이 드러난다.
+INSPECTION_CHECKLIST = [
+    "채광 나쁨", "주차공간 부족", "누수 흔적 있음", "악취 심함",
+    "소음 있음", "건물 관리상태 열악", "경사 심함",
+]
+# 위 항목을 폼 필드 이름(ASCII)과 짝지어 둔다 — 임장에서 "이 항목이 나쁘다"고
 # 체크한 것을 41절 환금성 점수에 실제로 반영하기 위해서다(43절). 값이 화면
 # 라벨이라 순서를 바꾸면 안 되고, 항목을 늘리면 키도 같이 늘린다.
 INSPECTION_FIELDS = [
-    ("light", "채광"), ("elevator", "엘리베이터"), ("parking", "주차"),
-    ("leak", "누수"), ("smell", "악취"), ("noise", "소음"),
-    ("management", "관리상태"), ("slope", "경사"),
+    ("light", "채광 나쁨"), ("parking", "주차공간 부족"),
+    ("leak", "누수 흔적 있음"), ("smell", "악취 심함"), ("noise", "소음 있음"),
+    ("management", "건물 관리상태 열악"), ("slope", "경사 심함"),
 ]
 # 체크된 "나쁜 항목" 개수별 판정 — 강의가 "이 요소가 나쁘면 값을 낮춰도
 # 안 팔린다"고 못박은 항목들이라, 두 개 이상이면 바로 주의로 본다.
@@ -1131,6 +1142,56 @@ SCHOOL_NEAR_M = 500     # 이내면 초품아급 도보 통학권
 SCHOOL_OK_M = 1000      # 이내면 통학 가능권
 
 
+# 20절 건축물대장 조회로는 위반건축물 딱지를 알 수 없다 — 그 사실을 41절
+# 층·승강기 항목 안에서 함께 밝힌다(예전엔 별도 "건물 정보" 카드에 있었다).
+BUILDING_PERMIT_NOTES = [
+    "⚠️ 위반건축물 딱지(불법 증축·용도변경 등)는 이 조회로 확인할 수 없어요 — 건축물대장 표제부 응답에 해당 항목이 없습니다.",
+    "낙찰 전에 정부24 \"건축물대장 열람\"에서 직접 확인하세요 — 위반건축물이면 대출·매도 양쪽에서 크게 불리해집니다.",
+]
+
+
+def _building_facts(building: dict | None, floor: int | None, is_top_floor: bool) -> list[str] | None:
+    """20절 건축물대장에서 받아온 사실을 41절 층·승강기 항목 안에 함께 보여줄
+    짧은 문구 목록으로 만든다.
+
+    ⚠️ 예전엔 이 값들이 결과 페이지 맨 아래 "건물 정보" 카드에 따로 떠 있어서,
+    "승강기 없음 / 지상 5층"이라는 **사실**과 "그래서 팔기 불리하다"는 **판정**이
+    화면상 멀리 떨어져 있었다 — 사용자가 "건축물대장 정보는 환금성 진단의
+    층·승강기와 묶어서 더 자세히 설명해야 한다"고 지적해서 이 항목 안으로
+    옮겼다(40절 인근 아파트 대비를 진단 항목 안 접이식으로 합친 것과 같은
+    원칙). 조회에 실패했으면 None을 돌려줘서 아무것도 안 붙인다."""
+    if not building:
+        return None
+    facts = []
+
+    elevator = building.get("elevator")  # 웹은 "있음 (1대)"/"없음" 문자열을 미리 만들어 둔다
+    if not elevator:
+        count = _as_int(building.get("elevator_count"))
+        has = building.get("has_elevator")
+        elevator = (f"있음 ({count}대)" if count else "있음") if has else ("없음" if has is False else None)
+    if elevator:
+        facts.append(f"승강기 {elevator}")
+
+    ground_floors = _as_int(building.get("ground_floors"))
+    if ground_floors:
+        where = f"지상 {ground_floors}층 건물"
+        if floor is not None and floor > 0:
+            where += f"의 {floor}층" + (" (탑층)" if is_top_floor else "")
+        facts.append(where)
+
+    households = _as_int(building.get("household_count"))
+    if households:
+        facts.append(f"{households}세대")
+
+    approval = str(building.get("approval_date") or "").strip()
+    if len(approval) == 8 and approval.isdigit():
+        facts.append(f"사용승인 {approval[:4]}.{approval[4:6]}.{approval[6:]}")
+    elif approval:
+        facts.append(f"사용승인 {approval}")
+
+    return facts or None
+
+
 def build_marketability_report(floor: int | None = None, build_year: int | None = None,
                                 this_year: int | None = None, confidence: int | None = None,
                                 liquidity: dict | None = None, sale_pressure: dict | None = None,
@@ -1254,13 +1315,19 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         if is_top_floor:
             # 탑층은 누수·단열·여름 더위 때문에 같은 건물 안에서도 선호도가
             # 떨어진다 — 좋게 나온 판정은 한 단계 내리고 문장으로도 밝힌다.
-            t += (f" 건축물대장상 지상 {ground_floors}층 건물이라 이 집이 탑층이에요 — "
-                  f"누수·단열·여름 더위 때문에 같은 건물 안에서도 선호도가 떨어지는 편이라 "
-                  f"임장 때 옥상 방수 상태를 꼭 확인하세요.")
+            t += (f" 건축물대장상 지상 {ground_floors}층 건물이니 이 집이 바로 탑층이에요 — "
+                  f"탑층에서 가장 흔한 하자가 옥상에서 내려오는 누수라, 임장 때 옥상에 직접 올라가 "
+                  f"방수층이 깨지거나 물이 고인 곳은 없는지, 집 안에서는 천장·벽 모서리에 "
+                  f"물 자국이나 곰팡이가 없는지 꼭 보세요. 여름 더위·단열에도 불리해서 "
+                  f"같은 건물 안에서도 선호도가 떨어지는 층입니다.")
             if v == "good":
                 v = "ok"
+        elif ground_floors and ground_floors > 1:
+            t += f" 건축물대장상 지상 {ground_floors}층 건물이라 탑층은 아니에요 — 옥상 누수 위험은 그만큼 덜합니다."
         items.append({"key": "floor", "label": "층·승강기 (팔기 어려운 요소)", "verdict": v, "text": t,
-                       "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사가 나쁘면 값을 낮춰도 잘 안 팔립니다"})
+                       "facts": _building_facts(building, floor, is_top_floor),
+                       "notes": BUILDING_PERMIT_NOTES if building else None,
+                       "why": "층수·승강기·탑층 여부는 값을 낮춰도 덮이지 않는 대표적인 팔기 어려운 요소입니다"})
 
     # 역세권·초품아 — 45절. 19절 입지 체크(`compute_location_check()`)가 이미
     #   구해둔 거리를 판정으로만 옮긴다(추가 API 호출 없음).
@@ -1306,15 +1373,15 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         else:
             v, t = "ok", f"임장에서 걸린다고 하신 항목 — {joined}. 한 가지 정도면 가격으로 상쇄해볼 만합니다."
         items.append({"key": "inspection", "label": "임장 체크 (직접 보고 온 결과)", "verdict": v, "text": t,
-                       "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사는 데이터로 알 수 없어 직접 봐야 합니다"})
+                       "why": "채광·주차·누수·악취·소음·관리상태·경사는 어떤 데이터에도 없어 직접 보고 와야 알 수 있습니다"})
     elif inspection_clean:
         items.append({"key": "inspection", "label": "임장 체크 (직접 보고 온 결과)", "verdict": "good",
-                       "text": "임장에서 8가지 항목 중 걸리는 게 없다고 하셨어요 — 가격만 맞추면 되는 조건입니다.",
-                       "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사는 데이터로 알 수 없어 직접 봐야 합니다"})
+                       "text": f"임장에서 {len(INSPECTION_CHECKLIST)}가지 항목 중 걸리는 게 없다고 하셨어요 — 가격만 맞추면 되는 조건입니다.",
+                       "why": "채광·주차·누수·악취·소음·관리상태·경사는 어떤 데이터에도 없어 직접 보고 와야 알 수 있습니다"})
     else:
         items.append({"key": "inspection", "label": "임장 체크 (직접 보고 온 결과)", "verdict": "unknown",
                        "text": "임장에서 확인한 내용을 아래 체크리스트에 체크하면 이 점수에 바로 반영해 드려요.",
-                       "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사는 데이터로 알 수 없어 직접 봐야 합니다"})
+                       "why": "채광·주차·누수·악취·소음·관리상태·경사는 어떤 데이터에도 없어 직접 보고 와야 알 수 있습니다"})
 
     # ⑤ 판단 근거의 두께 — 강의가 "빌라는 개별성이 강하다"고 짚은 부분.
     if confidence is not None:
@@ -1341,8 +1408,20 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
             v, t = "warn", (f"{build_year}년식(약 {age}년차) 완전 구축이라 실거주 매수층이 확 좁아집니다 "
                              f"— 대출·보수비 부담까지 겹쳐 같은 값이면 더 새 물건으로 넘어가요. "
                              f"정비구역 기대감이 붙는 자리가 아니면 가격을 확실히 낮춰야 팔립니다.")
-        items.append({"key": "build_year", "label": "연식 (오래될수록 매수층이 좁아짐)", "verdict": v, "text": t,
-                       "why": "연식별로 거래량과 매수층이 다르니 따로 떼서 봐야 합니다"})
+        item = {"key": "build_year", "label": "연식 (오래될수록 매수층이 좁아짐)", "verdict": v, "text": t,
+                "why": "연식별로 거래량과 매수층이 다르니 따로 떼서 봐야 합니다"}
+        # 연식이 오래되면 "매수층이 좁다"로 끝낼 게 아니라, 임장에서 뭘 보고
+        # 비용을 어떻게 잡아야 하는지까지 알려준다(사용자 요청).
+        if age > BUILD_AGE_OK_MAX:
+            item["notes"] = [
+                "🔎 임장에서 누수·노후도를 특히 유심히 보세요 — 천장·벽 모서리 물 자국, 창틀 결로·곰팡이, 배관에서 나오는 녹물, 외벽 균열, 옥상 방수 상태. 오래된 건물일수록 여기서 하자가 나옵니다.",
+                f"💰 인테리어 비용을 넉넉히 잡으세요 — {age}년차면 도배·장판만으로 끝나지 않고 배관·창호·보일러까지 손봐야 하는 경우가 흔합니다. 위 인테리어 칸 공사비를 넉넉하게 넣고 다시 계산해 보세요.",
+            ]
+        elif age > BUILD_AGE_NEW_MAX:
+            item["notes"] = [
+                f"🔎 {age}년차면 배관·보일러·창호가 한 번 손볼 시기에 들어섭니다 — 임장 때 누수 자국과 수압을 같이 확인하고, 인테리어 비용을 도배·장판보다 여유 있게 잡으세요.",
+            ]
+        items.append(item)
 
     # 강의가 중요하다고 짚은 순서로 정렬하고(위 MARKETABILITY_ORDER), 판정이
     # 매겨진 항목에는 1부터 순번을 붙인다 — "무엇부터 봐야 하는지"가 화면에서
@@ -1406,7 +1485,11 @@ def print_marketability_report(report: dict):
         icon = MARKETABILITY_ICONS.get(item["verdict"], "·")
         head = f"{item['rank']}. " if item.get("rank") else "참고. "
         print(f"{head}{icon} {item['label']} — {item['verdict_label']}")
+        if item.get("facts"):
+            print(f"   [건축물대장] {' · '.join(item['facts'])}")
         print(f"   {item['text']}")
+        for note in item.get("notes") or []:
+            print(f"   {note}")
         print(f"   └ {item['why']}")
     for line in report["summary_lines"]:
         print(f"→ {line}" if line is report["summary_lines"][0] else f"  {line}")

@@ -72,6 +72,26 @@ class DiamondPointsTests(unittest.TestCase):
             float(y)
 
 
+class SmoothAreaPathTests(unittest.TestCase):
+    """거래 밀집도 곡선(부드러운 밀도 영역)에 쓰는 중점-베지어 스무딩 헬퍼."""
+
+    def test_empty_or_single_point_returns_empty_string(self):
+        self.assertEqual(pc._smooth_area_path([]), "")
+        self.assertEqual(pc._smooth_area_path([(0, 0)]), "")
+
+    def test_starts_with_moveto_first_point(self):
+        d = pc._smooth_area_path([(0, 10), (5, 0), (10, 10)])
+        self.assertTrue(d.startswith("M 0.0,10.0"))
+
+    def test_ends_at_last_point(self):
+        d = pc._smooth_area_path([(0, 10), (5, 0), (10, 10)])
+        self.assertTrue(d.endswith("L 10.0,10.0"))
+
+    def test_uses_quadratic_curves_between_points(self):
+        d = pc._smooth_area_path([(0, 10), (5, 0), (10, 10)])
+        self.assertEqual(d.count("Q"), 2)  # 점 3개 -> 구간 2개
+
+
 def _fake_row(name, amount, weight, distance, deal_year="2026", deal_month="9",
               dealing_gbn=None, same_building=False, outlier=False, adjusted=None):
     row = {

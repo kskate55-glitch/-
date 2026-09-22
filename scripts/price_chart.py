@@ -64,9 +64,10 @@ MUTED = "#7c8288"
 MUTED_2 = "#a4a9ae"
 BORDER = "#e7e9ec"
 
-# 유사도(가중치) 낮음 -> 높음 색 램프 (연한 회색 -> 짙은 잉크색), sequential 인코딩
-DOT_COLOR_LOW = (0xcd, 0xd1, 0xd5)
-DOT_COLOR_HIGH = (0x3a, 0x3d, 0x42)
+# 유사도(가중치) 낮음 -> 높음 색 램프 (연한 블루그레이 -> 짙은 네이비), sequential
+# 인코딩 — 사용자가 참고로 보내준 목업의 파란 계열 톤에 맞춰 회색조에서 바꿨다.
+DOT_COLOR_LOW = (0xd8, 0xe3, 0xf3)
+DOT_COLOR_HIGH = (0x14, 0x2b, 0x52)
 DOT_R_MIN, DOT_R_MAX = 4.0, 7.5
 DIAMOND_SCALE = 1.15  # 다이아몬드(직거래)가 원과 비슷한 면적으로 보이도록 살짝 키운다
 
@@ -83,9 +84,8 @@ SAME_BUILDING_RING_COLOR = "#c9971e"  # 골드 — 동일건물(가장 직접적
 OUTLIER_RING_COLOR = "#c0392b"  # 톤 다운된 레드 — 이상치(경고 성격)
 TIME_CORRECTION_LINE_COLOR = "#8a8f96"
 
-# 거래 밀집도 히스토그램 막대 색
-HIST_BAR_COLOR = "#d7dade"
-HIST_BAR_COLOR_STRONG = "#9aa0a6"  # 가장 거래가 몰린 구간만 살짝 진하게
+# 거래 밀집도 곡선(부드러운 밀도 영역) 채움색
+HIST_BAR_COLOR = "#c7d2e8"
 
 EMPHASIS_CAP_DEFAULT = 40  # 이 안쪽 순위(가중치 기준)까지만 모양/테두리/클릭상세 등 "강조" 처리
 MAX_TOTAL_DOTS = 150  # 그래프에 그리는 점의 안전 상한(극단적으로 큰 표본 방지, 배경 점 포함)
@@ -153,6 +153,24 @@ def _months_ago(deal_year, deal_month, this_year: int | None = None, this_month:
 def _diamond_points(cx: float, cy: float, r: float) -> str:
     r *= DIAMOND_SCALE
     return f"{cx:.1f},{cy - r:.1f} {cx + r:.1f},{cy:.1f} {cx:.1f},{cy + r:.1f} {cx - r:.1f},{cy:.1f}"
+
+
+def _smooth_area_path(points: list[tuple[float, float]]) -> str:
+    """points(이미 x 오름차순으로 정렬된 좌표)를 인접한 두 점의 중점을 지나는
+    2차 베지어 곡선으로 매끈하게 이어서 SVG path의 "d" 속성을 만든다 —
+    Catmull-Rom 스플라인 없이도 외부 라이브러리 없이 SVG만으로 부드러운
+    곡선을 그릴 수 있는 가벼운 기법(중점-베지어 스무딩)이다. 거래 밀집도를
+    막대그래프 대신 부드러운 언덕 모양으로 보여주는 데 쓴다(참고 목업 반영)."""
+    if len(points) < 2:
+        return ""
+    d = [f"M {points[0][0]:.1f},{points[0][1]:.1f}"]
+    for i in range(1, len(points)):
+        x0, y0 = points[i - 1]
+        x1, y1 = points[i]
+        mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+        d.append(f"Q {x0:.1f},{y0:.1f} {mx:.1f},{my:.1f}")
+    d.append(f"L {points[-1][0]:.1f},{points[-1][1]:.1f}")
+    return " ".join(d)
 
 
 def _histogram_counts(amounts: list[float], domain_lo: float, domain_hi: float, n_bins: int) -> list[int]:
@@ -327,20 +345,26 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         name = html.escape(str(r.get("mhouseNm", "단지명없음")))
         area = html.escape(str(r.get("excluUseAr", "?")))
         deal_y, deal_m = r.get("dealYear"), r.get("dealMonth")
-        deal = html.escape(f"{deal_y}.{deal_m}")
         dist = r.get("_distance_m", 0)
-        tip = html.escape(
-            f"{name} · {area}㎡ · {_fmt_eok(r['_amount_man'])} · {deal} 계약 · {dist:.0f}m · "
-            f"반영도 {_similarity_tier(t)}"
-        )
 
         months_ago = _months_ago(deal_y, deal_m, this_year, this_month)
-        facts = [f"{dist:.0f}m 거리"]
+        facts = [f"{dist:.0f}m"]
         if months_ago is not None:
             facts.append(f"{months_ago}개월 전")
         facts.append("동일건물" if is_same_building else ("직거래" if is_jikgeorae else "중개거래"))
         if is_outlier:
             facts.append("평당가 이상치")
+        facts_line = " · ".join(facts)
+
+        # 호버/탭 시 뜨는 미니 카드 — 굵은 제목(단지명·금액) + 연한 부제(거리·
+        # 개월수·거래유형 등) 두 줄 구성. 사용자가 참고로 보내준 목업의 카드형
+        # 툴팁 스타일을 반영했다.
+        tip_title = html.escape(f"{name} · {_fmt_eok(r['_amount_man'])}")
+        tip_sub = html.escape(facts_line)
+        aria_label = html.escape(
+            f"{name} · {area}㎡ · {_fmt_eok(r['_amount_man'])} · {facts_line} · 반영도 {_similarity_tier(t)}"
+        )
+
         if has_time_correction:
             facts.append(f"시계열 보정 {_fmt_eok(r['_amount_man'])}→{_fmt_eok(adjusted)}")
         detail = html.escape("\n".join([
@@ -351,7 +375,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
 
         group.append(
             f'<circle class="pd-dot" cx="{x:.1f}" cy="{y:.1f}" r="{hit_r}" fill="transparent" '
-            f'tabindex="0" role="button" aria-label="{tip}" data-tip="{tip}" data-detail="{detail}" '
+            f'tabindex="0" role="button" aria-label="{aria_label}" '
+            f'data-tip-title="{tip_title}" data-tip-sub="{tip_sub}" data-detail="{detail}" '
             f'style="cursor:pointer" />'
         )
         months_attr = months_ago if months_ago is not None else ""
@@ -388,28 +413,26 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
                 f'font-size="11" font-weight="700" fill="{color}">{html.escape(name)}</text>'
             )
 
-    # 거래 밀집도 히스토그램 — 강조/배경 구분 없이 표본 전체(rows)의 가격이
-    # 어디에 몰려 있는지 얇은 막대로 보여준다. 배경 점만으로는 "점이 많아서
-    # 잘라냈나?" 싶을 수 있어서, 전체 분포를 한 번 더 눈에 띄게 보여주는 용도.
+    # 거래 밀집도 — 강조/배경 구분 없이 표본 전체(rows)의 가격이 어디에 몰려
+    # 있는지 부드러운 언덕 모양(밀도 곡선)으로 보여준다. 배경 점만으로는
+    # "점이 많아서 잘라냈나?" 싶을 수 있어서, 전체 분포를 한 번 더 눈에 띄게
+    # 보여주는 용도. 막대그래프 대신 매끈한 곡선을 쓴 건 사용자가 참고로
+    # 보내준 목업 스타일을 반영한 것 — `_smooth_area_path()`가 그린다.
     hist_y0 = axis_y + 46
-    hist_h = 22
-    n_bins = min(18, max(6, len(rows) // 2))
+    hist_h = 26
+    n_bins = min(28, max(8, len(rows) // 2))
     counts = _histogram_counts([r["_amount_man"] for r in rows], lo, hi, n_bins)
     max_count = max(counts) if counts else 0
     if max_count > 0:
         bin_w = plot_w / n_bins
-        for i, c in enumerate(counts):
-            if c == 0:
-                continue
-            bar_h = c / max_count * hist_h
-            bx = margin_l + i * bin_w
-            strong = c == max_count
-            svg.append(
-                f'<rect x="{bx:.1f}" y="{hist_y0 + hist_h - bar_h:.1f}" width="{max(bin_w - 1, 1):.1f}" '
-                f'height="{bar_h:.1f}" fill="{HIST_BAR_COLOR_STRONG if strong else HIST_BAR_COLOR}" rx="1" />'
-            )
+        baseline = hist_y0 + hist_h
+        curve_pts = [(margin_l + (i + 0.5) * bin_w, baseline - (c / max_count * hist_h))
+                     for i, c in enumerate(counts)]
+        closed_pts = [(margin_l, baseline)] + curve_pts + [(margin_l + plot_w, baseline)]
+        area_d = _smooth_area_path(closed_pts)
+        svg.append(f'<path d="{area_d} Z" fill="{HIST_BAR_COLOR}" fill-opacity="0.9" stroke="none" />')
         svg.append(
-            f'<text x="{margin_l}" y="{hist_y0 + hist_h + 13}" font-size="10" fill="{MUTED}">거래 밀집도</text>'
+            f'<text x="{margin_l}" y="{baseline + 13:.1f}" font-size="10" fill="{MUTED}">거래 밀집도</text>'
         )
 
     svg.append("</svg>")
@@ -479,17 +502,24 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
             "사용자가 실제 낙찰 후 매도 사례와 대조해 확인한 구간 — 통계적으로 확정된 값이 아닌 참고용입니다",
         )
         + _legend_row(
-            MUTED, "아래 막대(거래 밀집도) = 표본 전체 가격이 어디에 몰려 있는지",
+            MUTED, "아래 곡선(거래 밀집도) = 표본 전체 가격이 어디에 몰려 있는지",
             "강조되지 않은 점까지 포함한 전체 분포입니다",
         )
         + '</div></details>'
     )
 
+    # 호버/탭 시 뜨는 카드 — 굵은 제목 줄(단지명·금액) + 연한 부제 줄(거리·
+    # 개월수·거래유형 등) 두 줄짜리 흰 카드다. 예전엔 검정 배경 한 줄짜리
+    # 말풍선이었는데, 사용자가 참고로 보내준 목업의 카드형 툴팁을 반영해
+    # 흰 배경+그림자+두 줄 구성으로 바꿨다.
     tooltip_box = (
         f'<div class="pd-tip" style="position:absolute; display:none; z-index:5; '
-        f'background:{INK}; color:#fff; font-size:12px; font-weight:600; padding:6px 10px; '
-        f'border-radius:8px; white-space:nowrap; pointer-events:none; '
-        f'box-shadow:0 4px 10px rgba(0,0,0,0.18); transform:translate(-50%,-100%)"></div>'
+        f'background:#fff; padding:7px 11px; border-radius:10px; white-space:nowrap; '
+        f'pointer-events:none; box-shadow:0 6px 16px rgba(28,30,33,0.16); '
+        f'transform:translate(-50%,-100%)">'
+        f'<div class="pd-tip-title" style="font-size:12.5px; font-weight:700; color:{INK}"></div>'
+        f'<div class="pd-tip-sub" style="font-size:11px; color:{MUTED}; margin-top:1px"></div>'
+        f'</div>'
     )
     detail_box = (
         f'<div class="pd-detail" style="display:none; margin-top:8px; padding:10px 12px; '
@@ -514,11 +544,13 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
   var root = document.getElementById("{chart_id}");
   if (!root) return;
   var tip = root.querySelector(".pd-tip");
+  var tipTitle = tip.querySelector(".pd-tip-title");
+  var tipSub = tip.querySelector(".pd-tip-sub");
   var detailBox = root.querySelector(".pd-detail");
   var active = null;
   function showTip(dot) {{
-    var text = dot.getAttribute("data-tip");
-    tip.textContent = text;
+    tipTitle.textContent = dot.getAttribute("data-tip-title");
+    tipSub.textContent = dot.getAttribute("data-tip-sub");
     tip.style.display = "block";
     var rootRect = root.getBoundingClientRect();
     var dotRect = dot.getBoundingClientRect();

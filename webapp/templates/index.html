@@ -5,6 +5,33 @@
 
 {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
+<details class="adv" id="tankauction-fill">
+  <summary>🏛️ 탱크옥션에서 복사한 내용 붙여넣기 <span class="muted">(선택 — 주소·면적·층·준공년도 자동 채우기)</span></summary>
+  <div class="adv-body">
+    <p class="hint" style="margin-top:0">탱크옥션 물건 상세 페이지에서 Ctrl+A(전체 선택) → Ctrl+C(복사)한 내용을 아래에
+      붙여넣고 "자동 채우기"를 누르면 위 지번 주소·전용면적·층·준공년도 칸을 채워드려요.</p>
+    <textarea id="tankauction-paste" rows="6" placeholder="탱크옥션 물건 상세 페이지 내용을 여기에 붙여넣으세요"
+              style="width:100%; padding:11px 12px; border:1.5px solid var(--border); border-radius:var(--radius-md);
+                     font-size:14px; font-family:inherit; resize:vertical; background:#fafbfc"></textarea>
+    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap">
+      <button type="button" id="tankauction-clipboard-btn"
+              style="flex:1; min-width:150px; padding:11px; border:1.5px solid var(--border); border-radius:var(--radius-md);
+                     background:#fff; color:var(--ink); font-weight:700; font-size:14px; cursor:pointer">
+        📋 클립보드에서 붙여넣기
+      </button>
+      <button type="button" id="tankauction-fill-btn"
+              style="flex:1; min-width:150px; padding:11px; border:none; border-radius:var(--radius-md);
+                     background:var(--primary); color:#fff; font-weight:700; font-size:14px; cursor:pointer">
+        ✨ 자동 채우기
+      </button>
+    </div>
+    <p id="tankauction-status" class="hint" style="display:none"></p>
+    <p class="hint" style="margin-top:8px">⚠️ 실제 탱크옥션 페이지 구조를 확인할 방법이 없어 "추정 스펙"으로 만든 자동
+      인식이에요(21절 경기데이터드림·27절 네이버 딥링크와 같은 성격) — 완벽하지 않을 수 있으니 채워진 값이 맞는지
+      꼭 확인해 주세요. 인식이 잘 안 되면 실제 붙여넣은 내용을 알려주시면 고칠게요.</p>
+  </div>
+</details>
+
 {% set adv_filled = form and (form.monthly_deposit or form.conversion_rate or form.station_premium or form.year_min
    or (form.radius and form.radius != '400') or (form.area_tolerance and form.area_tolerance != '15')
    or (form.build_year_tolerance and form.build_year_tolerance != '4') or form.listings_text) %}
@@ -83,4 +110,138 @@
   <button type="submit">매도가 계산하기</button>
 </form>
 <p class="hint">⚠️ 국토교통부 실거래가를 그때그때 조회해서, 처음 보는 지역이면 계산에 시간이 좀 걸릴 수 있어요(최대 1~2분 정도). 같은 지역을 다시 조회하면 더 빨라집니다.</p>
+
+<script>
+(function () {
+  // 탱크옥션에서 통째로 복사해 붙여넣은 텍스트에서 지번 주소·전용면적·층·준공년도를
+  // 정규식으로 추출한다. 실제 탱크옥션 페이지 구조를 확인할 방법이 없어(로그인
+  // 필요/유료 사이트) 일반적인 경매 물건 정보 표기 관행을 근거로 만든 "추정
+  // 스펙"이다 — 21절 경기데이터드림, 27절 네이버 딥링크와 같은 성격. 라벨 문구가
+  // 실제와 다르면 인식이 안 될 수 있고, 그때는 실제 붙여넣은 텍스트를 받아서 고친다.
+  // 11절/28절과 같은 원칙으로 스크래핑이 아니다 — 사용자가 직접 복사해서 붙여넣은
+  // 텍스트만 읽는다.
+
+  function extractAddress(text) {
+    var labelPatterns = [
+      /소재지\s*\(지번\)\s*[:：]?\s*([^\n]+)/,
+      /소재지\s*\(등기\)\s*[:：]?\s*([^\n]+)/,
+      /소재지\s*[:：]?\s*([^\n]+)/,
+      /지번\s*주소\s*[:：]?\s*([^\n]+)/,
+      /주\s*소\s*[:：]?\s*([^\n]+)/,
+    ];
+    var candidate = null;
+    for (var i = 0; i < labelPatterns.length; i++) {
+      var m = text.match(labelPatterns[i]);
+      if (m) { candidate = m[1]; break; }
+    }
+    if (!candidate) {
+      // 라벨을 못 찾으면 "OO시/도 + OO시/군/구 + OO동/읍/면 + 번지" 패턴의
+      // 텍스트를 통째로 찾아본다.
+      var m2 = text.match(/[가-힣]+(?:특별시|광역시|특별자치시|특별자치도|도)\s+[가-힣0-9]+(?:시|군|구)(?:\s+[가-힣0-9]+구)?\s+[가-힣0-9]+(?:동|읍|면|가)\s+(?:산\s*)?\d+(?:-\d+)?/);
+      if (m2) candidate = m2[0];
+    }
+    if (!candidate) return null;
+    // 건물명·층·호수 등 뒤에 붙는 글자는 잘라내고 "동/읍/면/가 + 번지"까지만 남긴다
+    var trimmed = candidate.match(/^(.*?[가-힣0-9]+(?:동|읍|면|가)\s+(?:산\s*)?\d+(?:-\d+)?)/);
+    return (trimmed ? trimmed[1] : candidate).trim();
+  }
+
+  function extractArea(text) {
+    var m = text.match(/전용면적\s*[:：]?\s*([\d,]+\.?\d*)\s*(?:㎡|m²|m2)/i);
+    return m ? m[1].replace(/,/g, "") : null;
+  }
+
+  function extractFloor(text) {
+    var patterns = [
+      /(?:소재층|층\s*수?)\s*[:：]?\s*총\s*\d+\s*층\s*중\s*(-?\d+)\s*층/,
+      /총\s*\d+\s*층\s*중\s*(-?\d+)\s*층/,
+      /(-?\d+)\s*층\s*\/\s*\d+\s*층/,
+      /(?:소재층|충별\s*위치)\s*[:：]?\s*(-?\d+)\s*층/,
+    ];
+    for (var i = 0; i < patterns.length; i++) {
+      var m = text.match(patterns[i]);
+      if (m) return m[1];
+    }
+    return null;
+  }
+
+  function extractBuildYear(text) {
+    // "사용승인일"/"사용승인일자"/"사용승인" 등 라벨 뒤에 한글이 더 붙는 변형까지
+    // 받아주려고 [가-힣]*로 느슨하게 잡는다(숫자는 안 먹으므로 날짜 앞에서 멈춘다).
+    var m = text.match(/(?:사용승인[가-힣]*|보존등기[가-힣]*)\s*[:：]?\s*(\d{4})[.\-\/년]/);
+    if (m) return m[1];
+    m = text.match(/(?:사용승인[가-힣]*|보존등기[가-힣]*)\s*[:：]?\s*(\d{4})\d{2}\d{2}/);
+    return m ? m[1] : null;
+  }
+
+  function highlightFilled(el) {
+    if (!el) return;
+    el.style.transition = "background-color 0.3s";
+    el.style.backgroundColor = "#fff6d8";
+    setTimeout(function () { el.style.backgroundColor = ""; }, 1600);
+  }
+
+  var fillBtn = document.getElementById("tankauction-fill-btn");
+  var clipBtn = document.getElementById("tankauction-clipboard-btn");
+  var textarea = document.getElementById("tankauction-paste");
+  var statusEl = document.getElementById("tankauction-status");
+  if (!fillBtn || !textarea) return;
+
+  clipBtn.addEventListener("click", function () {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      statusEl.textContent = "이 브라우저에서는 자동으로 못 가져와요 — 직접 Ctrl+V로 붙여넣어 주세요.";
+      statusEl.style.display = "block";
+      return;
+    }
+    navigator.clipboard.readText().then(function (text) {
+      if (!text || !text.trim()) {
+        statusEl.textContent = "클립보드가 비어 있어요 — 탱크옥션 페이지에서 먼저 전체 복사(Ctrl+A → Ctrl+C)해 주세요.";
+        statusEl.style.display = "block";
+        return;
+      }
+      textarea.value = text;
+      statusEl.textContent = "클립보드 내용을 붙여넣었어요 (" + text.length + "자). [자동 채우기]를 눌러주세요.";
+      statusEl.style.display = "block";
+    }).catch(function () {
+      statusEl.textContent = "클립보드 접근 권한이 없어요 — 브라우저 권한을 허용하거나 직접 Ctrl+V로 붙여넣어 주세요.";
+      statusEl.style.display = "block";
+    });
+  });
+
+  fillBtn.addEventListener("click", function () {
+    var text = textarea.value;
+    if (!text || !text.trim()) {
+      statusEl.textContent = "먼저 텍스트를 붙여넣어 주세요.";
+      statusEl.style.display = "block";
+      return;
+    }
+    var filled = [];
+    var missed = [];
+
+    var fields = [
+      ["address", extractAddress, "주소"],
+      ["area", extractArea, "전용면적"],
+      ["floor", extractFloor, "층"],
+      ["build_year", extractBuildYear, "준공년도"],
+    ];
+    fields.forEach(function (f) {
+      var value = f[1](text);
+      var input = document.querySelector('input[name="' + f[0] + '"]');
+      if (value && input) {
+        input.value = value;
+        highlightFilled(input);
+        filled.push(f[2]);
+      } else {
+        missed.push(f[2]);
+      }
+    });
+
+    var msg = "";
+    if (filled.length) msg += filled.join("·") + " 채웠어요 — 맞는지 꼭 확인하세요. ";
+    if (missed.length) msg += missed.join("·") + "은(는) 자동으로 못 찾았어요, 직접 입력해 주세요.";
+    statusEl.textContent = msg || "인식된 항목이 없어요 — 형식이 다를 수 있어요.";
+    statusEl.style.display = "block";
+  });
+})();
+</script>
 {% endblock %}

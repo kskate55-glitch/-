@@ -359,6 +359,41 @@
 </div>
 {% endif %}
 
+{% if result.location %}
+<div class="card">
+  <h3>🚇 입지 체크 (카카오 로컬 기준)</h3>
+  <ul class="note-lines" style="margin-top:-4px">
+    <li>위 환금성 진단 <b>"역세권·학세권"</b> 항목이 어디서 나온 숫자인지 보여주는 칸이에요.</li>
+    <li><b>★ 표시(지하철역·초등학교)만</b> 그 판정에 쓰입니다 — 나머지는 참고 정보예요.</li>
+  </ul>
+  <div class="loc-groups" style="margin-top:12px">
+    {% for g in result.location.groups %}
+    <div class="loc-group">
+      <div class="loc-group-name">{{ g.icon }} {{ g.name }}{% if g.experimental %}<span class="loc-exp" title="키워드 검색 기반이라 정확도가 완벽하지 않아요">실험적</span>{% endif %}</div>
+      {% for p in g.places %}
+      <div class="loc-row{{ ' loc-none' if not p.place else '' }}">
+        <span class="loc-label">{{ p.label }}{% if p.scored %}<span class="loc-star" title="환금성 진단 판정에 쓰이는 항목">★</span>{% endif %}</span>
+        {% if p.place %}
+        <span class="loc-place">{{ p.place.name }}</span>
+        <span class="loc-dist">{{ p.place.distance_m }}m</span>
+        {% else %}
+        <span class="loc-place">{{ p.none_text }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <ul class="note-lines" style="margin-top:12px; margin-bottom:0">
+    <li>편의점이 200m냐 400m냐가 매도 속도를 가르지는 않아서 ★ 외에는 점수에 넣지 않았습니다.</li>
+    <li>매도가 계산에는 어느 항목도 반영되지 않습니다.</li>
+    {% if result.location.has_terrain %}
+    <li>⚠️ <b>"자연"은 실험적입니다</b> — 산·강은 전용 장소 분류가 없어 이름으로 걸러낸 결과라 엉뚱한 곳이 잡힐 수 있어요. 이상하면 실제 지도로 확인하세요. (검색 반경도 다른 갈래 {{ result.location.radius_km }}km가 아니라 1km입니다.)</li>
+    {% endif %}
+  </ul>
+</div>
+{% endif %}
+
 {% if result.condition_adjustment %}
 <div class="card">
   <h3>🔧 상태별 매도가 3단계 ({{ result.condition_adjustment.base_label }} 기준)</h3>
@@ -540,45 +575,8 @@
 </div>
 {% endif %}
 
-{% if result.terrain or result.villa_market_trend or result.dong_compare or result.station_premium %}
+{% if result.villa_market_trend or result.dong_compare or result.station_premium %}
 <div class="section-divider">참고 정보</div>
-{% endif %}
-
-{% if result.location %}
-<div class="card">
-  <h3>🚇 입지 체크 (카카오 로컬 기준, 반경 {{ result.location.radius_km }}km)</h3>
-  <div class="loc-groups">
-    {% for g in result.location.groups %}
-    <div class="loc-group">
-      <div class="loc-group-name">{{ g.icon }} {{ g.name }}</div>
-      {% for p in g.places %}
-      <div class="loc-row{{ ' loc-none' if not p.place else '' }}">
-        <span class="loc-label">{{ p.label }}{% if p.scored %}<span class="loc-star" title="환금성 진단 판정에 쓰이는 항목">★</span>{% endif %}</span>
-        {% if p.place %}
-        <span class="loc-place">{{ p.place.name }}</span>
-        <span class="loc-dist">{{ p.place.distance_m }}m</span>
-        {% else %}
-        <span class="loc-place">{{ result.location.radius_km }}km 안에 없음</span>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-    {% endfor %}
-  </div>
-  <ul class="note-lines" style="margin-top:12px; margin-bottom:0">
-    <li><b>★ 표시(지하철역·초등학교)만</b> 위 환금성 진단의 "역세권·학세권" 항목 판정에 쓰입니다.</li>
-    <li>나머지는 참고 정보예요 — 편의점이 200m냐 400m냐가 매도 속도를 가르지는 않아서 점수에는 넣지 않았습니다.</li>
-    <li>매도가 계산에는 어느 항목도 반영되지 않습니다.</li>
-  </ul>
-</div>
-{% endif %}
-
-{% if result.terrain %}
-<div class="card">
-  <h3>주변 지형 참고 (카카오 로컬 키워드 검색, 반경 1km)</h3>
-  <p class="muted">가장 가까운 산: {{ result.terrain.mountain }} · 가장 가까운 하천/강: {{ result.terrain.river }}</p>
-  <p class="muted" style="margin-top:6px">⚠️ 실험적 기능입니다 — 키워드 검색 기반이라 정확도가 완벽하지 않을 수 있어요. 결과가 이상하면 실제 지도로 다시 확인하세요.</p>
-</div>
 {% endif %}
 
 {% if result.villa_market_trend %}

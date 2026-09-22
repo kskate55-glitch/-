@@ -1822,6 +1822,13 @@ def print_inspection_checklist():
 # 자르면 둘 다 "없음"으로 뭉개진다.
 LOCATION_SEARCH_RADIUS_M = 1500
 
+# 34절 주변 지형(산·하천) 검색 반경. 입지 체크(1.5km)와 **일부러 다르게**
+# 1km로 둔다 — 45절 판정 때문에 넓힌 게 아니라 순수 참고 정보라, 너무
+# 넓히면 "1.4km 떨어진 산"처럼 체감과 무관한 결과만 늘어난다. 웹에서는
+# 두 결과가 한 카드에 같이 나오므로(19절 입지 체크의 "자연" 갈래) 반경이
+# 다르다는 사실이 항목별 "N km 안에 없음" 문구로 드러난다.
+TERRAIN_SEARCH_RADIUS_M = 1000
+
 # 사용자가 "편의점이나 병원, 중학교 고등학교 등등 더 자세히 만들 수 있냐"고
 # 물어서 세 개(지하철역·초등학교·마트)에서 열 개로 늘리고, 읽기 쉽게 네 갈래로
 # 묶었다. 각 항목은 (키워드, 화면 라벨).
@@ -1909,7 +1916,8 @@ def compute_terrain_check(subject_coord: tuple[float, float]) -> dict:
     result = {"mountain": None, "mountain_error": None, "river": None, "river_error": None}
 
     try:
-        result["mountain"] = nearby_place(subject_coord[0], subject_coord[1], "산", name_suffix="산")
+        result["mountain"] = nearby_place(subject_coord[0], subject_coord[1], "산",
+                                           radius_m=TERRAIN_SEARCH_RADIUS_M, name_suffix="산")
     except RuntimeError as e:
         result["mountain_error"] = str(e)
 
@@ -1917,7 +1925,8 @@ def compute_terrain_check(subject_coord: tuple[float, float]) -> dict:
     river_error = None
     for keyword, suffix in [("강", "강"), ("천", "천")]:
         try:
-            r = nearby_place(subject_coord[0], subject_coord[1], keyword, name_suffix=suffix)
+            r = nearby_place(subject_coord[0], subject_coord[1], keyword,
+                             radius_m=TERRAIN_SEARCH_RADIUS_M, name_suffix=suffix)
         except RuntimeError as e:
             river_error = str(e)
             continue

@@ -245,6 +245,14 @@
   .loc-place { flex: 1; font-weight: 700; }
   .loc-dist { flex: 0 0 auto; font-weight: 800; color: var(--primary-dark); }
   .loc-none .loc-place { font-weight: 500; color: var(--muted-2); }
+  /* 34절 주변 지형을 이 카드의 다섯 번째 갈래로 합치면서, 그 갈래만
+     신뢰도가 다르다는 걸 제목 옆에 작게 달아 둔다(산·강은 전용 장소
+     분류가 없어 이름으로 걸러낸 결과다). */
+  .loc-exp {
+    margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+    background: #fff4e6; color: #b35309; font-size: 10.5px; font-weight: 800;
+    vertical-align: middle;
+  }
   .loc-star { color: #e8920a; margin-left: 3px; font-size: 12px; }
 
   /* 아이콘 타일 + 입력칸 한 줄 */

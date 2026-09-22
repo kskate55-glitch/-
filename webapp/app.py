@@ -172,7 +172,8 @@ def estimate():
     from estimate_price import (CONDITION_LABELS, CONDITION_MULTIPLIER,
                                  INSPECTION_CHECKLIST, INSPECTION_FIELDS,
                                  LOCATION_GROUPS, LOCATION_KEYWORDS,
-                                 LOCATION_SCORED, LOCATION_SEARCH_RADIUS_M)
+                                 LOCATION_SCORED, LOCATION_SEARCH_RADIUS_M,
+                                 TERRAIN_SEARCH_RADIUS_M)
 
     inspection_checklist = INSPECTION_CHECKLIST
     # 43절 — 임장에서 "이 항목이 나쁘다"고 체크한 것을 41절 환금성 점수에
@@ -195,18 +196,22 @@ def estimate():
     except Exception:
         location = None
 
-    terrain = None
+    # 34절 주변 지형 — 예전엔 별도 카드였는데 지금은 위 입지 체크 카드의
+    # 다섯 번째 갈래("🌳 자연")로 합쳐 들어간다(아래 location_card 참고).
+    # 그래서 여기서는 갈래 안에 그대로 넣을 수 있는 항목 목록으로 만든다.
+    terrain_places = []
     try:
         from estimate_price import compute_terrain_check
 
         t = compute_terrain_check(subject_coord)
         if t["mountain"] or t["river"]:
-            terrain = {
-                "mountain": f"{t['mountain']['name']} ({t['mountain']['distance_m']}m)" if t["mountain"] else "1km 이내 없음",
-                "river": f"{t['river']['name']} ({t['river']['distance_m']}m)" if t["river"] else "1km 이내 없음",
-            }
+            terrain_none = f"{TERRAIN_SEARCH_RADIUS_M / 1000:.0f}km 안에 없음"
+            terrain_places = [
+                {"label": "산", "place": t["mountain"], "scored": False, "none_text": terrain_none},
+                {"label": "하천/강", "place": t["river"], "scored": False, "none_text": terrain_none},
+            ]
     except RuntimeError:
-        terrain = None  # 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
+        terrain_places = []  # 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
 
     def _direction(delta, unit="p"):
         if delta is None:
@@ -504,24 +509,40 @@ def estimate():
     _insp_keys = {f"insp_{key}" for key, _ in INSPECTION_FIELDS} | {"insp_clean"}
     resubmit_fields_no_inspection = {k: v for k, v in form.items() if k not in _insp_keys}
 
+    # 19절 입지 체크 + 34절 주변 지형을 카드 하나로 합친다 — 사용자가
+    # "두 개를 합쳐도 괜찮을 것 같은데? 교통·교육·생활·의료 다음에 자연이라는
+    # 파트로"라고 해서, 지형을 다섯 번째 갈래로 붙였다. 둘 다 카카오 로컬
+    # 키워드 검색이라 데이터 성격도 같다.
+    # ⚠️ 검색 반경이 다르다 — 입지는 1.5km(45절 때문에 넓혔다), 지형은
+    #    nearby_place() 기본값인 1km다. 그래서 "없음" 문구를 갈래가 아니라
+    #    항목마다 따로 들고 다닌다(`none_text`).
+    location_card = None
+    if location and any((location.get(k) or {}).get("place") for k, _ in LOCATION_KEYWORDS):
+        loc_none = f"{LOCATION_SEARCH_RADIUS_M / 1000:.1f}km 안에 없음"
+        groups = [
+            {"name": name, "icon": icon,
+             "places": [{"label": label,
+                         "place": (location.get(kw) or {}).get("place"),
+                         "scored": kw in LOCATION_SCORED,
+                         "none_text": loc_none}
+                        for kw, label in items]}
+            for name, icon, items in LOCATION_GROUPS
+        ]
+        if terrain_places:
+            groups.append({"name": "자연", "icon": "🌳", "places": terrain_places,
+                            "experimental": True})
+        # 한 갈래 안에서 하나도 못 찾았으면 그 갈래는 통째로 뺀다.
+        location_card = {
+            "groups": [g for g in groups if any(p["place"] for p in g["places"])],
+            "radius_km": f"{LOCATION_SEARCH_RADIUS_M / 1000:.1f}",
+            "has_terrain": bool(terrain_places),
+        }
+
     result = {
         "address": address,
         "period": f"{year_min}.01 ~ {this_year}.12",
         "building": building,
-        "terrain": terrain,
-        "location": ({
-            # 갈래별로 묶어서 보여준다 — 열 개를 한 줄로 늘어놓으면 안 읽힌다.
-            # 한 갈래 안에서 하나도 못 찾았으면 그 갈래는 통째로 뺀다.
-            "groups": [g for g in (
-                {"name": name, "icon": icon,
-                 "places": [{"label": label,
-                             "place": (location.get(kw) or {}).get("place"),
-                             "scored": kw in LOCATION_SCORED}
-                            for kw, label in items]}
-                for name, icon, items in LOCATION_GROUPS
-            ) if any(p["place"] for p in g["places"])],
-            "radius_km": f"{LOCATION_SEARCH_RADIUS_M / 1000:.1f}",
-        } if location and any((location.get(k) or {}).get("place") for k, _ in LOCATION_KEYWORDS) else None),
+        "location": location_card,
         "inspection_checklist": inspection_checklist,
         "inspection_fields": INSPECTION_FIELDS,
         "inspection_bad": inspection_bad,

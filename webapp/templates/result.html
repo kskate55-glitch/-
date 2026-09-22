@@ -378,7 +378,8 @@
   </div>
   <p style="margin:12px 0 0; font-size:14px; line-height:1.75"><b>갭 {{ g.gap_pct }}%</b> — {{ g.sentence }}</p>
   <ul class="note-lines" style="margin-top:10px">
-    <li>※ {{ g.dong }} 아파트 실거래 {{ g.n }}건(전용 ±30%)의 ㎡당가 중앙값과 비교한 값이에요.</li>
+    <li>※ {{ g.dong }} 아파트 실거래 {{ g.n }}건(전용 ±30%)의 ㎡당가 중앙값과 비교한 값이에요.{% if g.widened %}
+        <b>같은 동에 아파트 표본이 적어 구 전체로 넓혔습니다.</b>{% endif %}</li>
     <li>빌라와 아파트는 평형 구성이 달라 면적 허용범위를 8절(±15%)보다 넓게 잡았습니다.</li>
     <li>매도가 계산에는 반영되지 않는 참고 수치입니다.</li>
   </ul>

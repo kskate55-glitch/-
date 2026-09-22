@@ -2402,7 +2402,8 @@ APT_GAP_MIN_SAMPLE = 5    # 이보다 적으면 비율을 못 믿으므로 계�
 
 def compute_apt_gap(apt_rows: list[dict], dong: str, area: float, villa_price_man: float,
                     this_year: int, year_min: int,
-                    area_tolerance_pct: float = 0.30) -> dict | None:
+                    area_tolerance_pct: float = 0.30,
+                    lawd_cd: str | None = None) -> dict | None:
     """같은 동(`umdNm`) 아파트 실거래의 ㎡당가 중앙값과 대상 빌라를 비교한다.
 
     - **지오코딩을 하지 않는다.** 5절처럼 반경으로 자르려면 아파트 거래마다
@@ -2420,22 +2421,41 @@ def compute_apt_gap(apt_rows: list[dict], dong: str, area: float, villa_price_ma
         return None
 
     lo, hi = area * (1 - area_tolerance_pct), area * (1 + area_tolerance_pct)
-    unit_prices = []
-    for r in apt_rows:
-        if (r.get("cdealType") or "").strip() == "해제":
-            continue
-        if (r.get("umdNm") or "").strip() != dong.strip():
-            continue
-        try:
-            if int(r["dealYear"]) < year_min:
+
+    def _unit_prices(rows) -> list[float]:
+        out = []
+        for r in rows:
+            if (r.get("cdealType") or "").strip() == "해제":
                 continue
-            a = float(r["excluUseAr"])
-            amount = to_amount_man(r["dealAmount"])
-        except (KeyError, ValueError, TypeError):
-            continue
-        if not a or amount is None or not (lo <= a <= hi):
-            continue
-        unit_prices.append(amount / a)
+            try:
+                if int(r["dealYear"]) < year_min:
+                    continue
+                a = float(r["excluUseAr"])
+                amount = to_amount_man(r["dealAmount"])
+            except (KeyError, ValueError, TypeError):
+                continue
+            if not a or amount is None or not (lo <= a <= hi):
+                continue
+            out.append(amount / a)
+        return out
+
+    dong_rows = [r for r in apt_rows if (r.get("umdNm") or "").strip() == dong.strip()]
+    unit_prices = _unit_prices(dong_rows)
+    scope, scope_label = "dong", dong
+
+    # 같은 동에 아파트가 거의 없는 동네(빌라만 빼곡한 구도심 등)가 실제로
+    # 있다 — 그럴 때 카드를 통째로 없애기보다 같은 구로 한 단계 넓혀서
+    # 보여주고, "구 기준"이라는 사실을 화면에 밝힌다(5절 적응형 반경이
+    # 넓힌 사실을 항상 알리는 것과 같은 원칙).
+    if len(unit_prices) < APT_GAP_MIN_SAMPLE:
+        gu_code = (lawd_cd or "").strip()
+        if not gu_code and dong_rows:
+            gu_code = (dong_rows[0].get("sggCd") or "").strip()
+        if gu_code:
+            gu_rows = [r for r in apt_rows if (r.get("sggCd") or "").strip() == gu_code]
+            widened = _unit_prices(gu_rows)
+            if len(widened) >= APT_GAP_MIN_SAMPLE:
+                unit_prices, scope, scope_label = widened, "gu", f"{dong} 일대(구 전체)"
 
     if len(unit_prices) < APT_GAP_MIN_SAMPLE:
         return None
@@ -2459,7 +2479,9 @@ def compute_apt_gap(apt_rows: list[dict], dong: str, area: float, villa_price_ma
         "apt_unit_price": round(apt_unit),
         "villa_unit_price": round(villa_unit),
         "n": len(unit_prices),
-        "dong": dong,
+        "dong": scope_label,
+        "scope": scope,
+        "widened": scope == "gu",
         "verdict": verdict,
     })
 
@@ -2473,7 +2495,8 @@ def print_apt_gap(gap: dict | None, fmt=None):
     """40절 결과를 CLI 텍스트로 출력한다."""
     if not gap:
         return
-    print(f"[인근 아파트 대비] ({gap['dong']} 아파트 실거래 {gap['n']}건, 유사면적 ±30% ㎡당가 중앙값 기준)")
+    widened = " — 같은 동 표본이 적어 구 전체로 넓혔습니다" if gap.get("widened") else ""
+    print(f"[인근 아파트 대비] ({gap['dong']} 아파트 실거래 {gap['n']}건, 유사면적 ±30% ㎡당가 중앙값 기준{widened})")
     print(f"아파트 {gap['apt_unit_price']:,}만원/㎡ vs 이 빌라 {gap['villa_unit_price']:,}만원/㎡ "
           f"→ 아파트의 {gap['ratio_pct']}% 수준 (갭 {gap['gap_pct']}%)")
     print(f"→ {_apt_gap_sentence(gap)}")

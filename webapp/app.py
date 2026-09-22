@@ -699,7 +699,7 @@ def estimate():
 
             apt_rows = get_apt_rows(lawd_cd, year_min)
             apt_gap = compute_apt_gap(apt_rows, target_dong, area, auction_price,
-                                       this_year, year_min)
+                                       this_year, year_min, lawd_cd=lawd_cd)
         except Exception:
             apt_gap = None
     result["apt_gap"] = apt_gap

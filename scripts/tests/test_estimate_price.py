@@ -910,6 +910,27 @@ class TestAptGap(unittest.TestCase):
         self.assertIsNone(ep.compute_apt_gap(self._apt(), "수유동", 69.27, 22500,
                                               2026, 2025, area_tolerance_pct=0.15))
 
+    def test_falls_back_to_the_whole_gu_when_the_dong_has_few_apartments(self):
+        rows = self._apt(n=2) + [dict(r, umdNm="미아동") for r in self._apt(n=10)]
+        rows = [dict(r, sggCd="11305") for r in rows]
+        g = ep.compute_apt_gap(rows, "수유동", 69.27, 22500, 2026, 2025)
+        self.assertTrue(g["widened"])
+        self.assertEqual(g["n"], 12)
+        self.assertIn("구 전체", g["dong"])
+
+    def test_no_fallback_when_the_dong_already_has_enough(self):
+        rows = [dict(r, sggCd="11305") for r in self._apt(n=8)]
+        rows += [dict(r, umdNm="미아동", sggCd="11305") for r in self._apt(n=10)]
+        g = ep.compute_apt_gap(rows, "수유동", 69.27, 22500, 2026, 2025)
+        self.assertFalse(g["widened"])
+        self.assertEqual(g["n"], 8)
+
+    def test_fallback_stays_inside_the_target_gu(self):
+        # 다른 구(11380) 아파트가 아무리 많아도 폴백 표본에 섞이면 안 된다
+        rows = [dict(r, sggCd="11305") for r in self._apt(n=2)]
+        rows += [dict(r, umdNm="역촌동", sggCd="11380") for r in self._apt(n=30)]
+        self.assertIsNone(ep.compute_apt_gap(rows, "수유동", 69.27, 22500, 2026, 2025))
+
     def test_report_places_apt_gap_right_after_price_position(self):
         g = ep.compute_apt_gap(self._apt(), "수유동", 69.27, 22500, 2026, 2025)
         r = ep.build_marketability_report(floor=3, confidence=80, apt_gap=g,

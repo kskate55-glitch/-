@@ -266,15 +266,72 @@ class WeightedAmountsPreferAdjustedTests(unittest.TestCase):
 
     def test_weighted_amounts_prefers_adjusted(self):
         filtered = [{"_amount_man": 100.0, "_amount_man_adjusted": 150.0, "_weight": 1.0}]
-        self.assertEqual(ep._weighted_amounts_sorted(filtered), [150.0])
+        self.assertEqual(set(ep._weighted_amounts_sorted(filtered)), {150.0})
 
     def test_weighted_amounts_falls_back_without_adjusted(self):
         filtered = [{"_amount_man": 100.0, "_weight": 1.0}]
-        self.assertEqual(ep._weighted_amounts_sorted(filtered), [100.0])
+        self.assertEqual(set(ep._weighted_amounts_sorted(filtered)), {100.0})
 
     def test_unit_price_model_prefers_adjusted(self):
         filtered = [{"_amount_man": 100.0, "_amount_man_adjusted": 150.0, "_weight": 1.0, "excluUseAr": "50"}]
-        self.assertEqual(ep._weighted_unit_prices_sorted(filtered, subject_area=50), [150.0])
+        self.assertEqual(set(ep._weighted_unit_prices_sorted(filtered, subject_area=50)), {150.0})
+
+
+class WeightReplicationScaleTests(unittest.TestCase):
+    """7절 — 가중치가 복제 개수에 실제로 반영되는지.
+
+    ⚠️ 이 클래스 전체가 실제로 겪은 버그의 회귀 테스트다. 예전 구현
+    `max(1, round(weight))`은 실제 가중치 범위(대부분 0.05~1.6)에서 1.5 미만을
+    전부 1개로 뭉개버려서, 유사도·최근성·직거래 다운웨이트·평당가 이상치
+    다운웨이트·동일건물 보너스가 **전부 계산에 반영되지 않고 있었다**."""
+
+    def test_higher_weight_gets_more_copies(self):
+        strong = ep._replication_count(1.166)   # 유사도 90점 + 최근 3개월
+        weak = ep._replication_count(0.216)     # 유사도 60점 + 4~12개월
+        self.assertGreater(strong, weak * 4)
+
+    def test_outlier_weight_is_actually_downweighted(self):
+        base = 0.512
+        self.assertGreater(
+            ep._replication_count(base),
+            ep._replication_count(base * ep.PRICE_OUTLIER_WEIGHT) * 10,
+        )
+
+    def test_direct_deal_downweight_survives_rounding(self):
+        base = 0.512
+        self.assertLess(
+            ep._replication_count(base * ep.DEALING_TYPE_WEIGHT["직거래"]),
+            ep._replication_count(base),
+        )
+
+    def test_same_building_bonus_survives_rounding(self):
+        base = 0.343
+        self.assertGreater(
+            ep._replication_count(base * ep.SAME_BUILDING_BONUS),
+            ep._replication_count(base),
+        )
+
+    def test_never_drops_below_one_copy(self):
+        self.assertEqual(ep._replication_count(0.0), 1)
+        self.assertEqual(ep._replication_count(0.0001), 1)
+
+    def test_outliers_barely_move_the_median(self):
+        """정상 7건 + 고가 이상치 4건이면 중앙값이 정상 구간 안에 있어야 한다.
+        고치기 전에는 이상치가 정상 거래와 똑같이 1표씩 들어가 중앙값이
+        위로 끌려 올라갔다."""
+        def row(amount, outlier):
+            weight = ep.SIMILARITY_EMPHASIS_CURVE(80)
+            if outlier:
+                weight *= ep.PRICE_OUTLIER_WEIGHT
+            return {"_amount_man": float(amount), "_weight": weight, "excluUseAr": "45",
+                    "_distance_m": 100.0, "dealYear": "2026", "dealMonth": "5"}
+
+        normal = [15500, 16200, 16800, 17000, 17500, 18200, 19500]
+        filtered = [row(a, False) for a in normal]
+        filtered += [row(a, True) for a in (27400, 29500, 32000, 37300)]
+        result = ep.compute_scenarios(filtered, 400, 2026, subject_area=45.0)
+        self.assertLessEqual(result["median"], 17500)
+        self.assertLessEqual(result["p75"], 19500)
 
 
 class StationRegressionCorrectionTests(unittest.TestCase):

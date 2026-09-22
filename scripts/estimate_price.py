@@ -230,8 +230,15 @@ DEALING_TYPE_WEIGHT_DEFAULT = 1.0
 # 스케일 보정(×1.4826) 없이 그대로 쓴다 — 통계적으로 검증된 값이 아니라 경험적
 # 임계치라는 점은 동일하다.
 PRICE_OUTLIER_MAD_MULTIPLIER = 3
-PRICE_OUTLIER_WEIGHT = 0.1
+PRICE_OUTLIER_WEIGHT = 0.05
 PRICE_OUTLIER_MIN_SAMPLE = 5  # 이보다 표본이 적으면 이상치 판단 자체가 무의미해서 건너뜀
+
+# 가중 중앙값을 낼 때 각 거래를 몇 개로 복제할지 정하는 배율(7절).
+# ⚠️ 이게 없으면(=1) 가중치 체계 전체가 무력해진다 — 실제 가중치는 대부분
+#    0.05~1.6 범위라 round()를 바로 걸면 1.5 미만이 전부 1개로 뭉개져서,
+#    유사도 90점 최근 거래(1.166)와 이상치(0.05)가 **똑같이 1개**로 반영됐다.
+#    100을 곱한 뒤 반올림하면 각각 117개 / 5개가 되어 배율이 그대로 살아난다.
+WEIGHT_REPLICATION_SCALE = 100
 
 # 동일건물 보너스 — 좌표가 거의 겹치는(=사실상 같은 건물) 거래는 "바로 이
 # 건물이 실제로 얼마에 팔렸는지" 보여주는 가장 직접적인 증거라 가중치를 한 번
@@ -757,6 +764,20 @@ def describe_comparable_similarity(subject_area: float, subject_floor: int | Non
     return " · ".join(parts)
 
 
+def _replication_count(weight: float) -> int:
+    """가중치 → 가중 중앙값 리스트에 복제할 개수(7절).
+
+    ⚠️ 예전엔 `max(1, round(weight))`였는데, 실제 가중치가 대부분 0.05~1.6
+    범위라 **1.5 미만이 전부 1개로 뭉개졌다** — 유사도 90점 최근 거래도,
+    가중치를 1/10로 깎은 평당가 이상치도, 직거래 다운웨이트도 화면에만
+    반영되고 계산에는 똑같이 1표씩 들어갔다(실측 확인: 유사도 50~100점 ×
+    최근성 0.4~1.6 조합 18가지 중 2개가 되는 건 1.6 하나뿐). 그래서
+    `WEIGHT_REPLICATION_SCALE`을 곱한 뒤 반올림해서 배율을 그대로 살린다.
+    최소 1개는 유지한다 — 아주 낮은 가중치라도 "그런 거래가 있었다"는 사실
+    자체는 남기는 게 5절의 "제외가 아니라 다운웨이트" 원칙에 맞다."""
+    return max(1, round(weight * WEIGHT_REPLICATION_SCALE))
+
+
 def _weighted_amounts_sorted(filtered: list[dict]) -> list[float]:
     """find_comparables()가 채운 _amount_man/_weight로 가중 복제 리스트를
     만들어 정렬해서 돌려준다(7절 — round(가중치)만큼, 최소 1개 복제).
@@ -770,7 +791,7 @@ def _weighted_amounts_sorted(filtered: list[dict]) -> list[float]:
     amounts_weighted = []
     for r in filtered:
         amount = r.get("_amount_man_adjusted", r["_amount_man"])
-        amounts_weighted.extend([amount] * max(1, round(r["_weight"])))
+        amounts_weighted.extend([amount] * _replication_count(r["_weight"]))
     return sorted(amounts_weighted)
 
 
@@ -797,7 +818,7 @@ def _weighted_unit_prices_sorted(filtered: list[dict], subject_area: float) -> l
             continue
         amount = r.get("_amount_man_adjusted", r["_amount_man"])  # 7-2절 시계열 보정 — 있으면 우선 사용
         unit_price = amount / row_area
-        amounts_weighted.extend([unit_price * subject_area] * max(1, round(r["_weight"])))
+        amounts_weighted.extend([unit_price * subject_area] * _replication_count(r["_weight"]))
     return sorted(amounts_weighted)
 
 

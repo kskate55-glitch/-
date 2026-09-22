@@ -182,6 +182,19 @@ def estimate():
     except RuntimeError:
         building = None  # 건축물대장 조회는 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
 
+    terrain = None
+    try:
+        from estimate_price import compute_terrain_check
+
+        t = compute_terrain_check(subject_coord)
+        if t["mountain"] or t["river"]:
+            terrain = {
+                "mountain": f"{t['mountain']['name']} ({t['mountain']['distance_m']}m)" if t["mountain"] else "1km 이내 없음",
+                "river": f"{t['river']['name']} ({t['river']['distance_m']}m)" if t["river"] else "1km 이내 없음",
+            }
+    except RuntimeError:
+        terrain = None  # 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
+
     def _direction(delta, unit="p"):
         if delta is None:
             return "추세 판단 불가"
@@ -395,6 +408,7 @@ def estimate():
         "address": address,
         "period": f"{year_min}.01 ~ {this_year}.12",
         "building": building,
+        "terrain": terrain,
         "villa_market_trend": villa_market_trend,
         "dong_compare": dong_compare,
         "station_premium": station_premium,

@@ -155,14 +155,23 @@ NEARBY_CACHE_PATH = os.path.join(_DATA_DIR, "nearby_place_cache.json")
 _nearby_cache_lock = threading.Lock()
 
 
-def nearby_place(lat: float, lon: float, keyword: str, radius_m: int = 1000) -> dict | None:
+def nearby_place(lat: float, lon: float, keyword: str, radius_m: int = 1000,
+                  name_suffix: str | None = None) -> dict | None:
     """좌표 기준 반경 안에서 키워드로 가장 가까운 장소를 찾는다 (CLAUDE.md 19절,
-    26절 역세권 프리미엄에서도 재사용). 결과 없거나 호출 실패 시 None.
+    26절 역세권 프리미엄, 34절 주변 지형 참고에서도 재사용). 결과 없거나 호출
+    실패 시 None.
+
+    name_suffix: 결과 중 장소명이 이 문자열로 끝나는 것만 남긴다 — 34절에서
+    "산"/"강"/"천" 키워드로 검색할 때, 카카오 키워드 검색은 장소명에 그
+    글자가 포함되기만 해도 걸리는 단순 텍스트 매칭이라(예: "산" 검색 시
+    "OO부동산"까지 걸림) 이름이 실제로 그 글자로 끝나는 것만 골라 노이즈를
+    줄이는 용도다. 완벽한 필터는 아니다("강남부동산"도 "산"으로 끝나진
+    않지만 "OO부동산중개"류는 여전히 걸러지지 않을 수 있다).
 
     좌표를 소수점 5자리(약 1m 오차)로 반올림해서 캐시한다 — 26절처럼 반경 안
     비교거래 수십 건마다 이 함수를 호출하는 경우, 같은 동네를 반복 조회하면
     거의 같은 좌표가 계속 나오므로(같은 건물/인접 건물) 캐시 이득이 크다."""
-    cache_key = f"{round(lat, 5)},{round(lon, 5)}|{keyword}|{radius_m}"
+    cache_key = f"{round(lat, 5)},{round(lon, 5)}|{keyword}|{radius_m}|{name_suffix or ''}"
     with _nearby_cache_lock:
         cache = _load_cache_file(NEARBY_CACHE_PATH)
         if cache_key in cache:
@@ -183,6 +192,8 @@ def nearby_place(lat: float, lon: float, keyword: str, radius_m: int = 1000) -> 
         return None
 
     docs = data.get("documents", [])
+    if name_suffix:
+        docs = [d for d in docs if d.get("place_name", "").endswith(name_suffix)]
     result = {"name": docs[0]["place_name"], "distance_m": int(docs[0]["distance"])} if docs else None
 
     with _nearby_cache_lock:

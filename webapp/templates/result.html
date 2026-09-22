@@ -223,7 +223,7 @@
 </div>
 {% endif %}
 
-{% if result.building or result.villa_market_trend or result.dong_compare or result.station_premium %}
+{% if result.building or result.terrain or result.villa_market_trend or result.dong_compare or result.station_premium %}
 <div class="section-divider">참고 정보</div>
 {% endif %}
 
@@ -236,6 +236,14 @@
     {% if result.building.approval_date %} · 사용승인일: {{ result.building.approval_date }}{% endif %}
     {% if result.building.ground_floors %} · 지상층수: {{ result.building.ground_floors }}층{% endif %}
   </p>
+</div>
+{% endif %}
+
+{% if result.terrain %}
+<div class="card">
+  <h3>주변 지형 참고 (카카오 로컬 키워드 검색, 반경 1km)</h3>
+  <p class="muted">가장 가까운 산: {{ result.terrain.mountain }} · 가장 가까운 하천/강: {{ result.terrain.river }}</p>
+  <p class="muted" style="margin-top:6px">⚠️ 실험적 기능입니다 — 키워드 검색 기반이라 정확도가 완벽하지 않을 수 있어요. 결과가 이상하면 실제 지도로 다시 확인하세요.</p>
 </div>
 {% endif %}
 

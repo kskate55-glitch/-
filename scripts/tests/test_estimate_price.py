@@ -276,5 +276,37 @@ class FindComparablesFilteringTests(unittest.TestCase):
             self.assertEqual(out, [])
 
 
+class ComputeTerrainCheckTests(unittest.TestCase):
+    """34절 — 산/하천 근접 참고(실험적)."""
+
+    def test_finds_mountain_and_nearer_of_river_or_stream(self):
+        def fake_nearby(lat, lon, keyword, radius_m=1000, name_suffix=None):
+            if keyword == "산":
+                return {"name": "북한산", "distance_m": 850}
+            if keyword == "강":
+                return {"name": "한강", "distance_m": 620}
+            if keyword == "천":
+                return {"name": "청계천", "distance_m": 400}
+            return None
+
+        with patch("geocode.nearby_place", side_effect=fake_nearby):
+            t = ep.compute_terrain_check((37.65, 127.02))
+            self.assertEqual(t["mountain"]["name"], "북한산")
+            self.assertEqual(t["river"]["name"], "청계천")  # 강(620m)보다 천(400m)이 더 가까움
+
+    def test_nothing_within_radius_returns_none_without_error(self):
+        with patch("geocode.nearby_place", return_value=None):
+            t = ep.compute_terrain_check((37.65, 127.02))
+            self.assertIsNone(t["mountain"])
+            self.assertIsNone(t["river"])
+            self.assertIsNone(t["mountain_error"])
+
+    def test_api_failure_is_reported_but_does_not_raise(self):
+        with patch("geocode.nearby_place", side_effect=RuntimeError("키 미설정")):
+            t = ep.compute_terrain_check((37.65, 127.02))  # 예외가 여기서 안 터져야 함
+            self.assertIsNone(t["mountain"])
+            self.assertIn("키 미설정", t["mountain_error"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -30,7 +30,7 @@ CLAUDE.md 8절 포맷으로 계산하고, 12절 규칙에 따른 월별 계절�
                      규제지역이면 최대 13%까지 올라가니 본인 상황에 맞게 조정 필요)
 --sale-rate        : 매도 중개수수료율 (기본 0.5%)
 --extra-cost       : 명도비·수리비 등 추가비용 (만원 단위, 기본 0)
---no-location      : 입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다
+--no-location      : 입지 체크(지하철역/초등학교/마트 거리)와 34절 주변 지형 참고(산/하천)를 건너뛴다
 --brokers-csv      : 서울 인근 중개업소 조회용 CSV (기본 data/brokers_seoul.csv,
                      서울 열린데이터광장에서 받은 공인중개사사무소 정보)
 --broker-radius    : 인근 중개업소 조회 반경(미터), 기본 1000m
@@ -902,6 +902,64 @@ def print_location_check(subject_coord: tuple[float, float]):
             print(f"{label}: 1km 이내 없음")
 
 
+def compute_terrain_check(subject_coord: tuple[float, float]) -> dict:
+    """CLAUDE.md 34절: 산/하천이 가까이 있는지를 카카오 키워드 검색으로 참고
+    확인한다. CLI(`print_terrain_check`)와 웹 버전(`webapp/app.py`) 양쪽에서
+    이 함수를 재사용한다.
+
+    ⚠️ 실험적 기능이다 — 카카오 키워드 검색은 장소명에 그 글자가 포함되기만
+    해도 걸리는 단순 텍스트 매칭이라(19절/26절의 지하철역·학교·마트 검색과
+    달리 "산"·"강"·"천"은 카카오의 표준 장소 카테고리가 아니라 자연 지형이라
+    전용 카테고리 코드도 없다), `geocode.nearby_place()`의 `name_suffix`
+    필터로 "실제로 그 글자로 끝나는 이름"만 골라 노이즈를 줄였지만 완벽하지
+    않다. 결과를 항상 참고용으로만 취급한다."""
+    from geocode import nearby_place
+
+    result = {"mountain": None, "mountain_error": None, "river": None, "river_error": None}
+
+    try:
+        result["mountain"] = nearby_place(subject_coord[0], subject_coord[1], "산", name_suffix="산")
+    except RuntimeError as e:
+        result["mountain_error"] = str(e)
+
+    river_candidates = []
+    river_error = None
+    for keyword, suffix in [("강", "강"), ("천", "천")]:
+        try:
+            r = nearby_place(subject_coord[0], subject_coord[1], keyword, name_suffix=suffix)
+        except RuntimeError as e:
+            river_error = str(e)
+            continue
+        if r:
+            river_candidates.append(r)
+    if river_candidates:
+        result["river"] = min(river_candidates, key=lambda r: r["distance_m"])
+    elif river_error and not river_candidates:
+        result["river_error"] = river_error
+
+    return result
+
+
+def print_terrain_check(subject_coord: tuple[float, float]) -> None:
+    terrain = compute_terrain_check(subject_coord)
+    print()
+    print("[주변 지형 참고] (카카오 로컬 키워드 검색, 반경 1km — 실험적, 참고용)")
+    if terrain["mountain_error"]:
+        print(f"가장 가까운 산: 조회 실패 ({terrain['mountain_error']})")
+    elif terrain["mountain"]:
+        print(f"가장 가까운 산: {terrain['mountain']['name']} ({terrain['mountain']['distance_m']}m)")
+    else:
+        print("가장 가까운 산: 1km 이내 없음")
+
+    if terrain["river_error"]:
+        print(f"가장 가까운 하천/강: 조회 실패 ({terrain['river_error']})")
+    elif terrain["river"]:
+        print(f"가장 가까운 하천/강: {terrain['river']['name']} ({terrain['river']['distance_m']}m)")
+    else:
+        print("가장 가까운 하천/강: 1km 이내 없음")
+    print("⚠️ 키워드 검색 기반 참고용 정보라 정확도가 완벽하지 않을 수 있습니다 — 결과가 이상하면 실제 지도로 확인하세요.")
+
+
 def print_broker_check(address: str, subject_coord: tuple[float, float], dong: str,
                         brokers_csv: str, radius_m: float):
     """CLAUDE.md 21절 규칙: 임장 시 바로 전화해볼 수 있는 인근 중개업소를 찾는다.
@@ -1197,7 +1255,7 @@ def main():
     ap.add_argument("--acquisition-rate", type=float, default=0.011, help="취득 부대비용률 (취득세+법무비 등 합산, 기본 1.1%% — 1주택/무주택 실수요 기준) — 다주택/규제지역이면 최대 13%%까지 올라가니 조정 필요")
     ap.add_argument("--sale-rate", type=float, default=0.005, help="매도 중개수수료율 (기본 0.5%%)")
     ap.add_argument("--extra-cost", type=float, default=0, help="명도비·수리비 등 추가비용 (만원 단위, 기본 0)")
-    ap.add_argument("--no-location", action="store_true", help="입지 체크(지하철역/초등학교/마트 거리)를 건너뛴다")
+    ap.add_argument("--no-location", action="store_true", help="입지 체크(지하철역/초등학교/마트 거리)와 34절 주변 지형 참고(산/하천)를 건너뛴다")
     ap.add_argument("--no-building-info", action="store_true", help="건축물대장 조회(승강기/세대수/사용승인일)를 건너뛴다")
     ap.add_argument("--brokers-csv", default="data/brokers_seoul.csv", help="서울 인근 중개업소 조회용 CSV 경로 (서울 열린데이터광장에서 받은 공인중개사사무소 정보)")
     ap.add_argument("--broker-radius", type=float, default=1000, help="인근 중개업소 조회 반경(미터), 기본 1000m")
@@ -1238,6 +1296,7 @@ def main():
 
     if not args.no_location:
         print_location_check(subject_coord)
+        print_terrain_check(subject_coord)
 
     if not args.no_brokers:
         print_broker_check(args.address, subject_coord, args.dong, args.brokers_csv, args.broker_radius)

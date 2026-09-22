@@ -11,8 +11,8 @@
     --primary-dark: #02a94d;
     --primary-tint: #e6f9ee;
     --ink: #1c1e21;
-    --muted: #7c8288;
-    --muted-2: #a4a9ae;
+    --muted: #555b61;
+    --muted-2: #6e757b;
     --bg: #f2f4f6;
     --card: #ffffff;
     --border: #e7e9ec;
@@ -45,7 +45,7 @@
     body { max-width: 1180px; }
   }
   h1 { font-size: 21px; font-weight: 800; margin: 4px 0 2px; letter-spacing: -0.3px; }
-  h3 { font-size: 15px; font-weight: 700; margin: 0 0 12px; color: var(--ink); }
+  h3 { font-size: 16.5px; font-weight: 800; margin: 0 0 12px; color: var(--ink); }
   a { color: var(--primary-dark); }
 
   form {
@@ -80,7 +80,7 @@
     content: "▸"; color: var(--muted-2); font-size: 11px; transition: transform .15s ease;
   }
   details.adv[open] summary::before { transform: rotate(90deg); }
-  details.adv summary .muted { font-size: 12.5px; font-weight: 500; }
+  details.adv summary .muted { font-size: 13px; font-weight: 500; }
   details.adv .adv-body {
     padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 14px;
     border-top: 1px solid var(--border);
@@ -102,7 +102,7 @@
     background: var(--danger-bg); color: var(--danger); padding: 12px 14px;
     border-radius: var(--radius-md); margin-bottom: 12px; font-size: 14px; font-weight: 600;
   }
-  .hint { color: var(--muted); font-size: 12.5px; line-height: 1.7; margin: 6px 2px 0; }
+  .hint { color: var(--muted); font-size: 13.5px; line-height: 1.75; margin: 6px 2px 0; }
 
   .card {
     background: var(--card); padding: 20px 22px; border-radius: var(--radius-lg);
@@ -155,13 +155,13 @@
      칠해서, 갭이 얼마나 벌어져 있는지 길이로 바로 보이게 한다. */
   .gap-bars { display: flex; flex-direction: column; gap: 9px; }
   .gap-row { display: flex; align-items: center; gap: 10px; }
-  .gap-label { flex: 0 0 96px; font-size: 13px; font-weight: 700; color: var(--muted); }
+  .gap-label { flex: 0 0 118px; font-size: 13.5px; font-weight: 700; color: var(--muted); }
   .gap-track { flex: 1; height: 16px; border-radius: 999px; background: #eceef1; overflow: hidden; }
   .gap-fill { display: block; height: 100%; border-radius: 999px; }
   .gap-val { flex: 0 0 auto; font-size: 13px; font-weight: 700; white-space: nowrap; }
   @media (max-width: 520px) {
-    .gap-label { flex-basis: 70px; font-size: 12px; }
-    .gap-val { font-size: 12px; }
+    .gap-label { flex-basis: 88px; font-size: 12.5px; }
+    .gap-val { font-size: 12.5px; }
   }
   /* ── 입력 화면(46절) — 첫 화면은 "뭘 넣어야 하는지"만 빠르게 읽혀야 한다.
      라벨이 전부 같은 무게라 눈이 미끄러지던 걸, 필드마다 아이콘 타일을 붙여
@@ -194,7 +194,7 @@
   .form-section::before {
     content: ""; width: 4px; height: 17px; border-radius: 2px; background: var(--primary);
   }
-  .form-section .form-section-hint { font-size: 12.5px; font-weight: 600; color: var(--muted-2); }
+  .form-section .form-section-hint { font-size: 13px; font-weight: 600; color: var(--muted-2); }
 
   /* 아이콘 타일 + 입력칸 한 줄 */
   .field { display: flex; align-items: center; gap: 11px; }
@@ -228,7 +228,7 @@
     display: flex; gap: 9px; align-items: flex-start;
     padding: 11px 13px; border-radius: var(--radius-md);
     background: #fafbfc; border: 1px solid var(--border);
-    font-size: 12.5px; line-height: 1.7; color: var(--muted); margin-top: 9px;
+    font-size: 13.5px; line-height: 1.75; color: var(--muted); margin-top: 9px;
   }
   .home-note b { color: #4a5358; }
 
@@ -258,8 +258,8 @@
     width: 21px; height: 21px; border-radius: 50%; flex-shrink: 0;
     background: var(--ink); color: #fff; font-size: 12px; font-weight: 800;
   }
-  .mk-title { font-size: 14.5px; font-weight: 700; color: var(--ink); }
-  .mk-sub { font-size: 12px; color: var(--muted-2); font-weight: 600; }
+  .mk-title { font-size: 15.5px; font-weight: 800; color: var(--ink); }
+  .mk-sub { font-size: 13px; color: var(--muted-2); font-weight: 600; }
   .mk-pill {
     margin-left: auto; padding: 3px 11px; border-radius: 999px;
     font-size: 12px; font-weight: 800; white-space: nowrap;
@@ -267,7 +267,7 @@
   .mk-text { font-size: 13.5px; line-height: 1.75; color: #3f454b; margin: 0; }
   .mk-lecture {
     margin: 7px 0 0; padding-left: 9px; border-left: 2px solid var(--border);
-    font-size: 11.5px; line-height: 1.6; color: var(--muted-2);
+    font-size: 13px; line-height: 1.7; color: var(--muted);
   }
   .mk-good { border-left-color: #2f9e44; }
   .mk-good .mk-pill { background: #e6f4ea; color: #1e7a34; }
@@ -298,7 +298,7 @@
   ul.note-lines { margin: 6px 0 0; padding: 0; list-style: none; }
   ul.note-lines li {
     position: relative; padding-left: 12px; margin-bottom: 5px;
-    color: var(--muted); font-size: 13px; line-height: 1.75;
+    color: var(--muted); font-size: 14px; line-height: 1.8;
   }
   ul.note-lines li:last-child { margin-bottom: 0; }
   ul.note-lines li::before {
@@ -367,7 +367,7 @@
   }
   .hero-label { font-size: 13px; font-weight: 700; color: var(--primary-dark); }
   .hero-price { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin: 4px 0 2px; color: var(--ink); }
-  .hero-range { font-size: 13.5px; color: var(--muted); margin-bottom: 14px; }
+  .hero-range { font-size: 14.5px; color: var(--muted); margin-bottom: 14px; }
   .hero-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
   .badge {
     display: inline-flex; align-items: center; gap: 4px;
@@ -381,23 +381,23 @@
   .price-item {
     padding: 11px 12px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md);
   }
-  .price-item .label { font-size: 12px; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .price-item .label { font-size: 13px; color: var(--muted); font-weight: 700; display: flex; align-items: center; gap: 5px; }
   .price-item .value { font-size: 17.5px; font-weight: 800; margin-top: 2px; }
   .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
   .section-divider {
     display: flex; align-items: center; gap: 10px;
-    margin: 26px 4px 12px; color: var(--muted-2); font-size: 12.5px; font-weight: 700;
+    margin: 26px 4px 12px; color: var(--muted-2); font-size: 13.5px; font-weight: 800;
   }
   .section-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
   th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 700; font-size: 12px; }
+  th { color: var(--muted); font-weight: 700; font-size: 13px; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fafbfc; }
 
-  .muted { color: var(--muted); font-size: 13px; line-height: 1.75; }
+  .muted { color: var(--muted); font-size: 14px; line-height: 1.8; }
   ul.ref-list { margin: 4px 0 0 0; padding: 0; list-style: none; }
   ul.ref-list li {
     padding: 6px 0; font-size: 13.5px; color: #4a4f54;
@@ -411,7 +411,7 @@
   }
   a.back:hover { text-decoration: underline; }
 
-  footer { margin-top: 28px; color: var(--muted-2); font-size: 11.5px; line-height: 1.7; padding: 0 4px; }
+  footer { margin-top: 28px; color: var(--muted-2); font-size: 13px; line-height: 1.75; padding: 0 4px; }
 
   #loading-overlay {
     display: none; position: fixed; inset: 0; background: rgba(242, 244, 246, 0.96);

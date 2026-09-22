@@ -970,12 +970,28 @@ class TestAptGap(unittest.TestCase):
             self.assertIsNone(ep.compute_apt_gap(rows, "수유동", 69.27, 22500, 2026, 2025,
                                                   subject_coord=self._COORDS["수유동"]))
 
-    def test_report_places_apt_gap_right_after_price_position(self):
+    def test_report_places_apt_gap_last_among_scored_items(self):
+        """사용자 지적 반영 — 인근 아파트 대비는 "경매 단타용으로는 그렇게까지
+        중한 게 아닌 참고치"라 판정 항목 중 **맨 뒤**로 내렸다. 판정 없는
+        참고 항목(연식)보다는 앞이다."""
         g = ep.compute_apt_gap(self._apt(), "수유동", 69.27, 22500, 2026, 2025)
-        r = ep.build_marketability_report(floor=3, confidence=80, apt_gap=g,
+        r = ep.build_marketability_report(floor=3, confidence=80, apt_gap=g, build_year=2012,
+                                           this_year=2026,
                                            listing_summary={"percentile": 20, "n": 5})
         keys = [i["key"] for i in r["items"]]
-        self.assertEqual(keys[:2], ["price_position", "apt_gap"])
+        self.assertEqual(keys[0], "price_position")
+        scored = [i for i in r["items"] if i["verdict"] != "info"]
+        self.assertEqual(scored[-1]["key"], "apt_gap")
+        self.assertEqual(keys[-1], "build_year")
+
+    def test_apt_gap_text_flags_it_as_a_long_hold_signal(self):
+        """갭이 크다는 건 "지금 당장 빨리 팔린다"가 아니라 "수요층이 두껍고
+        키 맞추기 여력이 남았다"는 뜻이라, 중·장기 신호라는 걸 문장에 밝힌다."""
+        g = ep.compute_apt_gap(self._apt(), "수유동", 69.27, 22500, 2026, 2025)
+        r = ep.build_marketability_report(apt_gap=g)
+        item = next(i for i in r["items"] if i["key"] == "apt_gap")
+        self.assertIn("중·장기", item["text"])
+        self.assertIn("중·장기", item["label"])
 
 
 class TestTransitSchoolItem(unittest.TestCase):

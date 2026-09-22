@@ -1078,8 +1078,8 @@ MARKETABILITY_VERDICT_LABELS = {
 #   5) 시세 판단 근거 — "개별성이 강해 실거래 하나로 정하면 안 된다"(4절).
 #   6) 연식 — "연식별 거래량을 따로 보라"(6절 4번). 판정이 아닌 참고.
 MARKETABILITY_ORDER = [
-    "price_position", "apt_gap", "floor", "transit_school", "inspection",
-    "volume", "competition", "confidence", "build_year",
+    "price_position", "floor", "transit_school", "inspection",
+    "volume", "competition", "confidence", "apt_gap", "build_year",
 ]
 
 # CLAUDE.md 45절 — 역세권·초품아 판정 거리. 사용자가 "층·승강기 다음으로
@@ -1159,13 +1159,18 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
                        "why": "빌라는 아파트의 대체재라, 인근 아파트보다 비싸지면 잘 안 팔립니다"})
 
     # 인근 아파트 대비 — 40절. "빌라는 아파트의 대체재"라는 명제를 숫자로
-    #   옮긴 항목이라 가격 위치 바로 뒤에 둔다.
+    #   옮긴 항목이다. ⚠️ 판정 항목 중 **맨 뒤**에 둔다 — 사용자가 "경매
+    #   단타용으로는 그렇게까지 중한 게 아니라 참고치로 보는 것"이라고
+    #   지적했다. 갭이 크면 "지금 당장 빨리 팔린다"기보다 "수요층이 두껍고
+    #   키 맞추기 상승 여력이 남아 있다"는 뜻이라, 단기 매도보다 중·장기
+    #   보유에서 더 크게 작용한다.
     if apt_gap:
         v = apt_gap["verdict"]
         t = (f"{apt_gap['dong']} 아파트 {apt_gap['n']}건의 ㎡당가 중앙값 {apt_gap['apt_unit_price']:,}만원 대비, "
              f"이 빌라는 {apt_gap['villa_unit_price']:,}만원으로 아파트의 {apt_gap['ratio_pct']}% 수준이에요"
              f" (갭 {apt_gap['gap_pct']}%). " + _apt_gap_sentence(apt_gap))
-        items.append({"key": "apt_gap", "label": "인근 아파트 대비 (대체재 경쟁력)", "verdict": v, "text": t,
+        t += " 다만 이건 단기 매도(단타)보다 중·장기 보유에서 더 크게 작용하는 신호라 참고치로 보세요."
+        items.append({"key": "apt_gap", "label": "인근 아파트 대비 (참고 — 중·장기 신호)", "verdict": v, "text": t,
                        "why": "아파트와 값 차이가 클수록 예산이 모자라 내려오는 수요가 두껍고, 키 맞추기 상승 여력도 남습니다"})
 
     # ④ 층·엘리베이터 — 강의 "팔기 어려운 요소" 중 이 계산기가 데이터로

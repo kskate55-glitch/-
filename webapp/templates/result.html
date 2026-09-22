@@ -48,6 +48,64 @@
   </details>
 {% endmacro %}
 
+{% macro apt_gap_detail() %}
+{% set g = result.apt_gap %}
+{% set gc = '#2f9e44' if g.verdict == 'good' else ('#e8920a' if g.verdict == 'ok' else '#e0475a') %}
+<ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
+    <li>빌라는 아파트의 <b>대체재</b>라, 아파트와 값 차이가 클수록 예산이 모자라 내려오는 수요가 두껍습니다.</li>
+    <li>빌라 값은 결국 아파트와 <b>키 맞추기</b>를 하려는 경향이 있어 상승 여력도 그만큼 남아요.</li>
+  </ul>
+  <div class="gap-bars">
+    <div class="gap-row">
+      <span class="gap-label">{{ g.dong }} 아파트 평균</span>
+      <span class="gap-track"><span class="gap-fill" style="width:100%; background:#9fb4d4"></span></span>
+      <span class="gap-val">{{ "{:,}".format(g.apt_unit_price) }}만원/㎡</span>
+    </div>
+    <div class="gap-row">
+      <span class="gap-label">이 빌라 평균</span>
+      <span class="gap-track"><span class="gap-fill" style="width:{{ g.ratio_pct if g.ratio_pct < 100 else 100 }}%; background:{{ gc }}"></span></span>
+      <span class="gap-val" style="color:{{ gc }}; font-weight:800">{{ "{:,}".format(g.villa_unit_price) }}만원/㎡</span>
+    </div>
+  </div>
+  <p style="margin:12px 0 0; font-size:14px; line-height:1.75"><b>갭 {{ g.gap_pct }}%</b> — {{ g.sentence }}</p>
+  <ul class="note-lines" style="margin-top:10px">
+    <li>※ {{ g.dong }} 아파트 실거래 {{ g.n }}건(전용 ±30%)의 ㎡당가 중앙값과 비교한 값이에요.{% if g.widened %}
+        <b>같은 동에 아파트 표본이 적어 바로 인접한 동({{ g.nearby_dongs | join(' · ') }})까지 넓혔습니다.</b>{% endif %}</li>
+    <li>빌라와 아파트는 평형 구성이 달라 면적 허용범위를 8절(±15%)보다 넓게 잡았습니다.</li>
+    <li>매도가 계산에는 반영되지 않는 참고 수치입니다.</li>
+  </ul>
+{% endmacro %}
+
+{% macro inspection_ui() %}
+<ul class="note-lines" style="margin-bottom:12px">
+    <li>아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있어요.</li>
+    <li>임장(현장답사) 다녀오신 뒤 <b>걸리는 항목을 체크</b>하면 위 환금성 점수에 바로 반영됩니다.</li>
+    <li>매도가(위 금액)는 이 체크와 무관하게 그대로예요 — 바뀌는 건 환금성 진단뿐입니다.</li>
+  </ul>
+  <form method="post" action="/estimate">
+    {% for k, v in result.resubmit_fields_no_inspection.items() %}
+    <input type="hidden" name="{{ k }}" value="{{ v }}">
+    {% endfor %}
+    <div class="insp-grid">
+      {% for key, label in result.inspection_fields %}
+      <label class="insp-box{{ ' on' if label in result.inspection_bad else '' }}">
+        <input type="checkbox" name="insp_{{ key }}" value="1"{{ ' checked' if label in result.inspection_bad else '' }}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    <label class="insp-clean{{ ' on' if result.inspection_clean else '' }}">
+      <input type="checkbox" name="insp_clean" value="1"{{ ' checked' if result.inspection_clean else '' }}>
+      <span>👍 다 확인했고 걸리는 항목이 없어요</span>
+    </label>
+    <button type="submit" style="width:100%; margin-top:10px; padding:11px; border:0; border-radius:var(--radius-md);
+            background:var(--primary); color:#fff; font-weight:800; font-size:14px; cursor:pointer">
+      체크한 내용으로 환금성 다시 계산하기
+    </button>
+  </form>
+{% endmacro %}
+
+
 <h1>🏠 빌라 매매가 계산기 — 결과</h1>
 <p class="muted">{{ result.address }} · 분석기간 {{ result.period }}</p>
 {% if result.naver_land_url %}
@@ -237,6 +295,7 @@
   <ul class="note-lines" style="margin-top:0; margin-bottom:12px">
     <li>"얼마에 팔리나"(위 매도가)와 별개로, <b>"얼마나 잘 팔리나"</b>를 본 것이에요.</li>
     <li><b>중요한 순서대로</b> 번호를 매겼습니다 — 1번부터 보세요.</li>
+    <li>뒷번호로 갈수록 당장의 매도 속도보다 <b>중·장기 참고치</b>에 가깝습니다.</li>
   </ul>
 
   {% if result.marketability.score is not none %}
@@ -259,6 +318,18 @@
     </div>
     <p class="mk-text">{{ item.text }}</p>
     <p class="mk-lecture">{{ item.why }}</p>
+    {% if item.key == 'apt_gap' and result.apt_gap %}
+    <details class="paste-fold">
+      <summary>🏢 인근 아파트와 얼마나 차이 나는지 자세히 보기 — 누르면 열려요</summary>
+      <div class="paste-fold-body">{{ apt_gap_detail() }}</div>
+    </details>
+    {% endif %}
+    {% if item.key == 'inspection' and result.inspection_checklist %}
+    <details class="paste-fold"{{ ' open' if not result.inspection_bad and not result.inspection_clean else '' }}>
+      <summary>🔎 임장 체크리스트 — {% if result.inspection_bad or result.inspection_clean %}다시 체크하기{% else %}누르면 열려요{% endif %}</summary>
+      <div class="paste-fold-body">{{ inspection_ui() }}</div>
+    </details>
+    {% endif %}
     {% if item.key == 'competition' %}
     <details class="paste-fold"{{ ' open' if result.similar_listings and not result.similar_listings.rows else '' }}>
       <summary>📋 네이버부동산 매물 목록 붙여넣기 {% if result.similar_listings and result.similar_listings.rows %}(다시 붙여넣기){% else %}— 누르면 열려요{% endif %}</summary>
@@ -276,7 +347,7 @@
   <ul class="note-lines" style="margin-top:10px">
     <li>⚠️ 이미 계산된 지표(거래량·경쟁매물·가격위치·신뢰도·건축물대장)를 경험칙에 맞춰 등급만 매긴 <b>규칙 기반 판정</b>입니다.</li>
     <li>통계로 검증한 기준이 아니에요.</li>
-    <li>채광·누수·악취·소음·관리상태처럼 데이터로 알 수 없는 항목은 아래 임장 체크리스트로 직접 확인하셔야 합니다.</li>
+    <li>채광·누수·악취·소음·관리상태처럼 데이터로 알 수 없는 항목은 위 <b>임장 체크</b> 항목을 펼쳐서 직접 체크해 주세요.</li>
   </ul>
 </div>
 {% endif %}
@@ -351,37 +422,6 @@
   <ul class="note-lines" style="margin-top:10px">
     <li>※ 층·준공년도 조건은 빼고, <b>유사면적만</b> 기준으로 센 거래 빈도입니다.</li>
     <li>조건을 너무 좁히면 표본이 줄어 동네 유동성 자체를 가늠하기 어려워지기 때문이에요.</li>
-  </ul>
-</div>
-{% endif %}
-
-{% if result.apt_gap %}
-{% set g = result.apt_gap %}
-{% set gc = '#2f9e44' if g.verdict == 'good' else ('#e8920a' if g.verdict == 'ok' else '#e0475a') %}
-<div class="card">
-  <h3>🏢 인근 아파트 대비 — 아파트의 <span style="color:{{ gc }}">{{ g.ratio_pct }}%</span> 수준</h3>
-  <ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
-    <li>빌라는 아파트의 <b>대체재</b>라, 아파트와 값 차이가 클수록 예산이 모자라 내려오는 수요가 두껍습니다.</li>
-    <li>빌라 값은 결국 아파트와 <b>키 맞추기</b>를 하려는 경향이 있어 상승 여력도 그만큼 남아요.</li>
-  </ul>
-  <div class="gap-bars">
-    <div class="gap-row">
-      <span class="gap-label">{{ g.dong }} 아파트</span>
-      <span class="gap-track"><span class="gap-fill" style="width:100%; background:#9fb4d4"></span></span>
-      <span class="gap-val">{{ "{:,}".format(g.apt_unit_price) }}만원/㎡</span>
-    </div>
-    <div class="gap-row">
-      <span class="gap-label">이 빌라</span>
-      <span class="gap-track"><span class="gap-fill" style="width:{{ g.ratio_pct if g.ratio_pct < 100 else 100 }}%; background:{{ gc }}"></span></span>
-      <span class="gap-val" style="color:{{ gc }}; font-weight:800">{{ "{:,}".format(g.villa_unit_price) }}만원/㎡</span>
-    </div>
-  </div>
-  <p style="margin:12px 0 0; font-size:14px; line-height:1.75"><b>갭 {{ g.gap_pct }}%</b> — {{ g.sentence }}</p>
-  <ul class="note-lines" style="margin-top:10px">
-    <li>※ {{ g.dong }} 아파트 실거래 {{ g.n }}건(전용 ±30%)의 ㎡당가 중앙값과 비교한 값이에요.{% if g.widened %}
-        <b>같은 동에 아파트 표본이 적어 바로 인접한 동({{ g.nearby_dongs | join(' · ') }})까지 넓혔습니다.</b>{% endif %}</li>
-    <li>빌라와 아파트는 평형 구성이 달라 면적 허용범위를 8절(±15%)보다 넓게 잡았습니다.</li>
-    <li>매도가 계산에는 반영되지 않는 참고 수치입니다.</li>
   </ul>
 </div>
 {% endif %}
@@ -492,40 +532,8 @@
 </div>
 {% endif %}
 
-{% if result.building or result.terrain or result.villa_market_trend or result.dong_compare or result.station_premium or result.inspection_checklist %}
+{% if result.building or result.terrain or result.villa_market_trend or result.dong_compare or result.station_premium %}
 <div class="section-divider">참고 정보</div>
-{% endif %}
-
-{% if result.inspection_checklist %}
-<div class="card">
-  <h3>🔎 임장 체크리스트</h3>
-  <ul class="note-lines" style="margin-bottom:12px">
-    <li>아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있어요.</li>
-    <li>임장(현장답사) 다녀오신 뒤 <b>걸리는 항목을 체크</b>하면 위 환금성 점수에 바로 반영됩니다.</li>
-    <li>매도가(위 금액)는 이 체크와 무관하게 그대로예요 — 바뀌는 건 환금성 진단뿐입니다.</li>
-  </ul>
-  <form method="post" action="/estimate">
-    {% for k, v in result.resubmit_fields_no_inspection.items() %}
-    <input type="hidden" name="{{ k }}" value="{{ v }}">
-    {% endfor %}
-    <div class="insp-grid">
-      {% for key, label in result.inspection_fields %}
-      <label class="insp-box{{ ' on' if label in result.inspection_bad else '' }}">
-        <input type="checkbox" name="insp_{{ key }}" value="1"{{ ' checked' if label in result.inspection_bad else '' }}>
-        <span>{{ label }}</span>
-      </label>
-      {% endfor %}
-    </div>
-    <label class="insp-clean{{ ' on' if result.inspection_clean else '' }}">
-      <input type="checkbox" name="insp_clean" value="1"{{ ' checked' if result.inspection_clean else '' }}>
-      <span>👍 다 확인했고 걸리는 항목이 없어요</span>
-    </label>
-    <button type="submit" style="width:100%; margin-top:10px; padding:11px; border:0; border-radius:var(--radius-md);
-            background:var(--primary); color:#fff; font-weight:800; font-size:14px; cursor:pointer">
-      체크한 내용으로 환금성 다시 계산하기
-    </button>
-  </form>
-</div>
 {% endif %}
 
 {% if result.building %}

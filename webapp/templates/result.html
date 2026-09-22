@@ -42,20 +42,39 @@
   <p class="muted" style="margin-top:-6px; margin-bottom:12px">비교거래 분포 안에서의 가격 위치를 기준으로 한 참고 라벨입니다 — "30일/60일"은 실제 매도 소요일수를 측정한 값이 아니라, 낮은 가격일수록 빨리 팔릴 가능성이 높다는 참고용 목표입니다.</p>
   <div class="tier-table-wrap">
   <table>
+    {% set tier_colors = {"urgent": "#e0475a", "d30": "#f5a623", "d60": "#2f9e44", "normal": "#3b82c4", "test": "#8b5fbf"} %}
     <tr><th>구간</th><th>가격</th>{% if result.similar_listings %}<th>현재 매물 대비</th><th>예상 소진 속도</th>{% endif %}</tr>
     {% for t in result.price_tiers.rows %}
-    <tr>
-      <td>{{ t.label }}</td><td>{{ t.price }}</td>
+    <tr class="{{ 'tier-highlight' if t.key == 'd30' else '' }}">
+      <td>
+        <div style="display:flex; flex-direction:column; align-items:flex-start; gap:4px">
+          <span class="tier-name">
+            <span class="tier-dot" style="background:{{ tier_colors[t.key] }}"></span>{{ t.label }}
+          </span>
+          {% if t.key == 'd30' %}<span class="tier-badge-target">🎯 가장 많이 찾는 목표가</span>{% endif %}
+        </div>
+      </td>
+      <td class="tier-price">{{ t.price }}</td>
       {% if result.similar_listings %}
       <td>{{ "상위 " ~ t.percentile ~ "%" if t.percentile is not none else "—" }}</td>
-      <td>{{ t.speed or "—" }}</td>
+      <td>
+        {% if t.speed %}
+        <span class="speed-pill {{
+          'speed-vfast' if t.speed == '빠른 소진 가능성 매우 높음' else
+          'speed-fast' if t.speed == '빠른 소진 가능성 높음' else
+          'speed-normal' if t.speed == '정상 매도 구간' else
+          'speed-slow' if t.speed == '다소 느릴 수 있음' else
+          'speed-vslow' }}">{{ t.speed }}</span>
+        {% else %}—{% endif %}
+      </td>
       {% endif %}
     </tr>
     {% endfor %}
   </table>
   </div>
+  <p class="muted" style="margin-top:10px">🎯 표시된 <b>30일 목표가</b>는 경매 낙찰 후 빠르게 정리하려는 분들이 가장 많이 참고하는 구간이라 강조했습니다 — 위 "경매용 매도가"와 함께 비교해 보세요.</p>
   {% if result.price_tiers.competitive_note %}
-  <p class="muted" style="margin-top:10px">{{ result.price_tiers.competitive_note }}</p>
+  <p class="muted" style="margin-top:6px">{{ result.price_tiers.competitive_note }}</p>
   {% endif %}
   {% if result.similar_listings %}
   <p class="muted" style="margin-top:6px">

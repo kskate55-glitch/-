@@ -15,6 +15,7 @@ CLAUDE.md 33절 — scripts/estimate_price.py의 핵심 계산 함수(7~8절 가
 """
 
 import os
+import re
 import sys
 import unittest
 from unittest.mock import patch
@@ -1282,3 +1283,33 @@ class TestBuildYearNotes(unittest.TestCase):
 
     def test_new_building_has_no_note(self):
         self.assertIsNone(self._item(2020).get("notes"))
+
+
+class TestAdaptiveRadiusIsOff(unittest.TestCase):
+    """5절 적응형 반경은 사용자 요청으로 꺼져 있다 — 지정한 반경이 곧 계산
+    범위여야 한다. 함수 자체는 되살릴 수 있게 남겨 뒀으므로(7-2절 시계열
+    보정과 같은 처리), "남아는 있지만 아무도 안 부른다"를 여기서 고정한다."""
+
+    def _source(self, *path_parts):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        with open(os.path.join(root, *path_parts), encoding="utf-8") as f:
+            return f.read()
+
+    def _calls(self, source):
+        """주석·독스트링을 뺀 실제 호출만 센다 — 되살리는 방법을 적어 둔
+        설명 문장까지 "호출"로 세면 이 테스트가 의미 없어진다."""
+        return re.findall(r"^[^#\n]*\bfind_comparables_adaptive\(", source, re.MULTILINE)
+
+    def test_cli_does_not_widen_the_radius(self):
+        source = self._source("scripts", "estimate_price.py")
+        # 정의 한 줄(def ...)만 남고 호출은 없어야 한다
+        calls = [c for c in self._calls(source) if "def " not in c]
+        self.assertEqual(calls, [], f"CLI가 아직 적응형 반경을 호출합니다: {calls}")
+
+    def test_web_does_not_widen_the_radius(self):
+        calls = self._calls(self._source("webapp", "app.py"))
+        self.assertEqual(calls, [], f"웹이 아직 적응형 반경을 호출합니다: {calls}")
+
+    def test_the_function_itself_still_works(self):
+        """되살릴 수 있게 남겨 둔 것이므로 함수는 계속 동작해야 한다."""
+        self.assertTrue(callable(ep.find_comparables_adaptive))

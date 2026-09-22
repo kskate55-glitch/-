@@ -268,10 +268,7 @@ def estimate():
         }
 
     from data_source import get_trade_rows
-    from estimate_price import (
-        ADAPTIVE_RADIUS_MIN_COMPARABLES, compute_scenarios, dedupe,
-        find_comparables_adaptive,
-    )
+    from estimate_price import compute_scenarios, dedupe, find_comparables
     from lawd_lookup import find_dong_in_address
 
     try:
@@ -298,7 +295,9 @@ def estimate():
     #    것보다 헷갈리게 하는 쪽이 크다는 사용자 판단이다. 오래된 거래를
     #    덜 반영하는 건 7절 계약 시점 가중치(최근 3개월 1.6 / 4~12개월
     #    1.0 / 13개월 이상 0.4)가 이미 하고 있다.
-    filtered, radius, radius_expanded = find_comparables_adaptive(
+    # ⛔ 5절 적응형 반경은 껐다(사용자 요청) — 입력한 반경이 곧 계산 범위다.
+    #    자세한 이유는 estimate_price.find_comparables_adaptive() 독스트링 참고.
+    filtered = find_comparables(
         rows, subject_coord, area, floor, build_year,
         radius, year_min, this_year, gu_filter=None,
         area_tolerance_pct=area_tolerance_pct,
@@ -307,7 +306,8 @@ def estimate():
     if not filtered:
         return render_template(
             "index.html",
-            error="반경을 최대한 넓혀봤지만 유사면적 조건에 맞는 비교거래를 찾지 못했습니다. 면적 허용범위를 넓혀서 다시 시도해 보세요.",
+            error=(f"반경 {radius:.0f}m 안에서 유사면적 조건에 맞는 비교거래를 찾지 못했습니다. "
+                   f"상세 옵션에서 반경이나 면적 허용범위를 넓혀서 다시 시도해 보세요."),
             form=form, last_year=this_year - 1,
         )
 
@@ -459,10 +459,7 @@ def estimate():
     top_floor_map = estimate_building_top_floors(rows)
 
     build_year_note = f", 준공년도 ±{build_year_tolerance}년 이내" if build_year is not None else ""
-    expanded_note = (
-        f" (지정한 반경 안 비교거래가 {ADAPTIVE_RADIUS_MIN_COMPARABLES}건 미만이라 자동으로 넓혔습니다.)"
-        if radius_expanded else ""
-    )
+    expanded_note = ""  # 5절 적응형 반경을 끄면서 "자동으로 넓혔습니다" 안내도 비워둔다
     time_correction_note = ""  # 7-2절 시계열 보정을 끄면서 안내 문구도 비워둔다
     comparable_criteria = (
         f"반경 {radius:.0f}m 안, 전용면적 ±{area_tolerance_pct_input:.0f}%{build_year_note}인 실거래 중 "

@@ -506,7 +506,20 @@ def find_comparables_adaptive(rows: list[dict], subject_coord: tuple[float, floa
                                floor: int | None, build_year: str | None, base_radius_m: float,
                                year_min: int, this_year: int, gu_filter: str | None,
                                **kwargs) -> tuple[list[dict], float, bool]:
-    """CLAUDE.md 5절 확장 — 고정 반경 하나만 보면 동네마다 표본 편차가 크다
+    """⛔ **지금은 어디서도 호출하지 않는다(사용자 요청으로 껐다).** CLI·웹
+    둘 다 지정한 반경 그대로 `find_comparables()`를 부른다 — "400m로 잡았으면
+    400m 안에서만 보고 싶다"는 판단이다. 반경이 조용히 600·800m로 바뀌면
+    화면의 "반경 Nm"와 머릿속 기준이 어긋나고, 멀리 있는 다른 생활권 거래가
+    표본에 섞여 들어온다(가중치가 낮아질 뿐 빠지지는 않는다). 표본이 부족하면
+    사용자가 직접 `--radius`(웹은 상세 옵션)를 올리면 된다.
+
+    7-2절 시계열 보정과 같은 처리로 함수와 단위 테스트는 그대로 남겨 뒀다 —
+    되살리려면 호출부를 이 함수로 바꾸고 `radius_expanded` 안내 문구를 다시
+    붙이면 된다.
+
+    ── 아래는 껐을 당시의 동작 설명이다(되살릴 때 참고) ──
+
+    CLAUDE.md 5절 확장 — 고정 반경 하나만 보면 동네마다 표본 편차가 크다
     (어떤 동네는 400m 안에 15건, 어떤 동네는 2건뿐). 그래서 사용자가 지정한
     반경에서 먼저 찾아보고, `ADAPTIVE_RADIUS_MIN_COMPARABLES`(기본 7)건보다
     적으면 `ADAPTIVE_RADIUS_STEPS_M`을 따라 그보다 넓은 단계로만 다시 찾는다.
@@ -2380,7 +2393,10 @@ def main():
     #    것보다 헷갈리게 하는 쪽이 크다는 사용자 판단이다. 오래된 거래를
     #    덜 반영하는 건 7절 계약 시점 가중치가 이미 하고 있다.
     area_tolerance_pct = args.area_tolerance / 100
-    filtered, effective_radius, radius_expanded = find_comparables_adaptive(
+    # ⛔ 5절 적응형 반경도 껐다(사용자 요청) — 지정한 반경이 곧 계산 범위다.
+    #    자세한 이유는 find_comparables_adaptive() 독스트링 참고.
+    effective_radius = args.radius
+    filtered = find_comparables(
         rows, subject_coord, args.area, args.floor, args.build_year,
         args.radius, year_min, this_year, gu_filter,
         area_tolerance_pct=area_tolerance_pct,
@@ -2388,14 +2404,10 @@ def main():
         this_month=this_month)
 
     if not filtered:
-        print(f"[안내] 반경을 최대 {ADAPTIVE_RADIUS_STEPS_M[-1]:.0f}m까지 넓혀봤지만, 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")
-        print("       면적 허용범위를 넓히거나(--area-tolerance), data/raw에 더 많은 지역/기간 데이터를 추가해 보세요.")
+        print(f"[안내] 반경 {args.radius:.0f}m 안에서 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")
+        print("       반경을 넓히거나(--radius), 면적 허용범위를 넓히거나(--area-tolerance), "
+              "data/raw에 더 많은 지역/기간 데이터를 추가해 보세요.")
         return
-
-    if radius_expanded:
-        print(f"[안내] 지정한 반경({args.radius:.0f}m) 안 비교거래가 {ADAPTIVE_RADIUS_MIN_COMPARABLES}건 미만이라, "
-              f"반경을 {effective_radius:.0f}m로 자동으로 넓혀서 다시 찾았습니다.")
-        print()
 
     scen = compute_scenarios(filtered, effective_radius, this_year, subject_area=args.area)
     n_total, n_close, n_2026, confidence = scen["n_total"], scen["n_close"], scen["n_this_year"], scen["confidence"]

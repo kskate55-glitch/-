@@ -3,12 +3,54 @@
 <h1>🏠 빌라 매매가 계산기 — 결과</h1>
 <p class="muted">{{ result.address }} · 분석기간 {{ result.period }}</p>
 {% if result.naver_land_url %}
-<a href="{{ result.naver_land_url }}" target="_blank" rel="noopener"
-   style="display:flex; align-items:center; justify-content:center; gap:8px; margin:2px 0 14px;
-          padding:14px; background:#fff; border:1.5px solid var(--border); border-radius:var(--radius-lg);
-          text-decoration:none; color:var(--ink); font-weight:700; font-size:15px; box-shadow:var(--shadow)">
-  🗺️ 이 지역 네이버부동산 매물 보기 (빌라·매매) ↗
+<a href="{{ result.naver_land_url }}" target="_blank" rel="noopener" class="naver-cta">
+  <span class="naver-cta-icon">🗺️</span>
+  <span class="naver-cta-text">
+    <span class="naver-cta-title">지금 나와 있는 경쟁 매물, 얼마에 몇 개인지 보세요</span>
+    <span class="naver-cta-sub">매도 전 이 동네 비슷한 조건 매물의 호가를 직접 확인하면 가격을 정할 때 큰 도움이 됩니다.</span>
+  </span>
+  <span class="naver-cta-arrow">네이버부동산 매물 보기 ↗</span>
 </a>
+{% endif %}
+
+{% if result.kakao_js_key %}
+<div class="card" style="margin-top:2px">
+  <h3 style="margin-bottom:8px">📍 대상 물건 위치</h3>
+  <div id="subject-map" style="width:100%; height:260px; border-radius:var(--radius-md); overflow:hidden; background:#eef1f3"></div>
+  <p class="muted" style="margin-top:8px">
+    <span class="dot" style="background:#03c75a"></span>
+    빨간 마커가 대상 물건 위치, 초록 원이 비교거래를 찾은 반경({{ "%.0f"|format(result.search_radius_m) }}m)입니다.
+    위 버튼으로 네이버부동산을 열면 이 위치 주변 매물을 바로 볼 수 있어요.
+  </p>
+</div>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ result.kakao_js_key }}&autoload=false"></script>
+<script>
+(function() {
+  try {
+    if (typeof kakao === "undefined" || !kakao.maps) return;
+    kakao.maps.load(function() {
+      var lat = {{ result.subject_lat }}, lon = {{ result.subject_lon }};
+      var radiusM = {{ result.search_radius_m }};
+      var container = document.getElementById("subject-map");
+      if (!container) return;
+      var center = new kakao.maps.LatLng(lat, lon);
+      // 반경(m)이 클수록 넓게 보이도록 레벨을 대략 맞춘다 — 카카오맵 레벨↔실제
+      // 거리 정확한 환산표를 확신할 수 없어 근사값이다(27절 네이버 딥링크와
+      // 같은 성격의 "추정" 값 — 실제로 잘 안 맞으면 조정한다).
+      var level = radiusM <= 300 ? 4 : radiusM <= 600 ? 5 : radiusM <= 1000 ? 6 : 7;
+      var map = new kakao.maps.Map(container, { center: center, level: level });
+      new kakao.maps.Marker({ position: center, map: map });
+      new kakao.maps.Circle({
+        map: map, center: center, radius: radiusM,
+        strokeWeight: 2, strokeColor: "#03c75a", strokeOpacity: 0.85, strokeStyle: "solid",
+        fillColor: "#03c75a", fillOpacity: 0.12
+      });
+    });
+  } catch (e) {
+    console.error("카카오맵 로드 실패:", e);
+  }
+})();
+</script>
 {% endif %}
 
 <div class="hero-row{% if result.price_tiers %} two-col{% endif %}">

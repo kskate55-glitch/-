@@ -25,6 +25,12 @@ CLI 버전과 다른 점은, 사용자가 국토부 API를 직접 실행해 data
 SITE_PASSWORD 환경변수를 설정하면 비밀번호를 아는 사람만 쓸 수 있다 (공개
 URL로 배포했을 때 낯선 방문자가 국토부/카카오 API 일일 할당량을 소진시키는
 것을 막기 위함). 설정하지 않으면 누구나 바로 쓸 수 있다.
+
+KAKAO_JS_KEY 환경변수(선택)를 설정하면 27절 결과 페이지에 대상 물건 위치를
+보여주는 카카오맵 미리보기가 뜬다. KAKAO_REST_API_KEY와는 다른 키이고,
+카카오 개발자 콘솔에서 실제 배포 도메인을 등록해야 그 도메인에서 동작한다
+(자세한 건 CLAUDE.md 27절 참고). 설정 안 하면 지도만 생략되고 나머지는
+그대로 동작한다.
 """
 
 import os
@@ -38,6 +44,13 @@ sys.path.insert(0, os.path.dirname(__file__))
 from flask import Flask, redirect, render_template, request, session, url_for  # noqa: E402
 
 SITE_PASSWORD = os.environ.get("SITE_PASSWORD")
+# 27절 지도 미리보기용 카카오맵 JS SDK 키. KAKAO_REST_API_KEY(서버에서만
+# 쓰는 비밀키)와는 완전히 다른 키다 — 카카오맵 JS SDK는 브라우저에서 직접
+# 불러써야 하는 구조라 애초에 프론트엔드 노출을 전제로 설계됐고, 대신
+# 카카오 개발자 콘솔에서 이 키를 쓸 도메인(배포한 실제 주소)을 등록해야
+# 그 도메인에서만 동작한다. 설정 안 해도(또는 도메인 미등록이어도) 지도만
+# 조용히 생략되고 나머지 계산은 그대로 된다.
+KAKAO_JS_KEY = os.environ.get("KAKAO_JS_KEY")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
@@ -415,6 +428,10 @@ def estimate():
         "price_chart_html": price_chart_html,
         "marker_colors": marker_colors,
         "naver_land_url": naver_url,
+        "kakao_js_key": KAKAO_JS_KEY,
+        "subject_lat": subject_coord[0],
+        "subject_lon": subject_coord[1],
+        "search_radius_m": radius,
         "price_tiers": price_tiers_display,
         "liquidity": liquidity_display,
         "resubmit_fields": resubmit_fields,

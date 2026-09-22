@@ -40,7 +40,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 sys.path.insert(0, os.path.dirname(__file__))
 
-from flask import Flask, render_template, request  # noqa: E402
+from flask import Flask, jsonify, render_template, request  # noqa: E402
 
 # 27절 지도 미리보기용 카카오맵 JS SDK 키. KAKAO_REST_API_KEY(서버에서만
 # 쓰는 비밀키)와는 완전히 다른 키다 — 카카오맵 JS SDK는 브라우저에서 직접
@@ -73,6 +73,9 @@ def index():
 #    주소가 겹쳐 캐시가 차므로 두 번째 건부터는 훨씬 빠르다.
 BACKTEST_MAX_CASES = 20
 BACKTEST_DEFAULT_CASES = 10
+# 48-3절 전체순회 기본 건수 — 67개 구를 도는 동안 구당 시간을 줄이려고
+# 단건 기본값(10)보다 낮게 잡았다. 구가 많아 총 표본은 오히려 훨씬 크다.
+BACKTEST_SWEEP_CASES = 6
 
 
 def _backtest_regions() -> list[dict]:
@@ -85,28 +88,14 @@ def _backtest_regions() -> list[dict]:
     return items
 
 
-@app.route("/backtest", methods=["GET", "POST"])
-def backtest_page():
+def _run_region_backtest(lawd_cd: str, n_cases: int, months: int) -> dict:
+    """구 하나를 백테스트한다. HTML 화면과 48-3절 전체순회 JSON이 **같은 함수**를
+    쓴다 — 두 경로가 갈리면 "화면 숫자와 순회 숫자가 다른" 문제가 생긴다.
+
+    실패는 예외로 던지지 않고 `error` 키에 담아 돌려준다. 전체순회는 구 하나가
+    실패해도 나머지를 계속 돌려야 해서다.
+    """
     from datetime import datetime as _dt
-
-    regions = _backtest_regions()
-    form = request.form if request.method == "POST" else {}
-    lawd_cd = (form.get("lawd_cd") or "").strip()
-    try:
-        n_cases = min(int(form.get("n_cases") or BACKTEST_DEFAULT_CASES), BACKTEST_MAX_CASES)
-    except ValueError:
-        n_cases = BACKTEST_DEFAULT_CASES
-    months = 1
-    try:
-        months = max(1, min(int(form.get("months") or 1), 6))
-    except ValueError:
-        pass
-
-    base = {"regions": regions, "lawd_cd": lawd_cd, "n_cases": n_cases,
-            "months": months, "max_cases": BACKTEST_MAX_CASES}
-
-    if request.method == "GET" or not lawd_cd:
-        return render_template("backtest.html", **base)
 
     import backtest as bt
     from data_source import get_trade_rows
@@ -118,18 +107,18 @@ def backtest_page():
     try:
         rows = dedupe(get_trade_rows(lawd_cd, this_year - 2))
     except RuntimeError as e:
-        return render_template("backtest.html", error=f"국토부 조회 중 문제가 생겼어요: {e}", **base)
+        return {"error": f"국토부 조회 중 문제가 생겼어요: {e}", "gu": gu}
+    except Exception as e:                      # 전체순회 도중 한 구가 죽지 않게
+        return {"error": f"조회 실패: {e}", "gu": gu}
 
     if not rows:
-        return render_template(
-            "backtest.html",
-            error="이 지역의 실거래 데이터를 찾지 못했어요. 다른 지역을 골라보세요.", **base)
+        return {"error": "이 지역의 실거래 데이터를 찾지 못했어요. 다른 지역을 골라보세요.",
+                "gu": gu}
 
     targets, pool = bt.pick_targets(rows, months=months, n=n_cases, gu=None, seed=42)
     if not targets:
-        return render_template(
-            "backtest.html",
-            error=f"최근 {months}개월 안에 검증할 거래가 없어요. 기간을 늘려보세요.", **base)
+        return {"error": f"최근 {months}개월 안에 검증할 거래가 없어요. 기간을 늘려보세요.",
+                "gu": gu}
 
     results, skipped = [], {}
     for target in targets:
@@ -152,14 +141,13 @@ def backtest_page():
         out["p75_eok"] = _fmt_eok(out["p75"])
         d = str(out["ymd"])
         out["date_label"] = f"{d[2:4]}.{d[4:6]}.{d[6:8]}"
+        out["gu"] = gu
         results.append(out)
 
     if not results:
-        return render_template(
-            "backtest.html",
-            error="검증할 수 있는 건이 하나도 없었어요 — " +
-                  " · ".join(f"{k} {v}건" for k, v in skipped.items()),
-            **base)
+        return {"error": "검증할 수 있는 건이 하나도 없었어요 — " +
+                         " · ".join(f"{k} {v}건" for k, v in skipped.items()),
+                "gu": gu, "skipped": skipped, "pool": pool}
 
     results.sort(key=lambda r: abs(r["error_pct"]))
     summary = bt.summarize(results)
@@ -172,9 +160,87 @@ def backtest_page():
             bands.append({"label": label, "n": len(group),
                           "mape": sum(group) / len(group)})
 
+    return {"error": None, "gu": gu, "results": results, "summary": summary,
+            "bands": bands, "skipped": skipped, "pool": pool}
+
+
+@app.route("/backtest", methods=["GET", "POST"])
+def backtest_page():
+    regions = _backtest_regions()
+    form = request.form if request.method == "POST" else {}
+    lawd_cd = (form.get("lawd_cd") or "").strip()
+    try:
+        n_cases = min(int(form.get("n_cases") or BACKTEST_DEFAULT_CASES), BACKTEST_MAX_CASES)
+    except ValueError:
+        n_cases = BACKTEST_DEFAULT_CASES
+    months = 1
+    try:
+        months = max(1, min(int(form.get("months") or 1), 6))
+    except ValueError:
+        pass
+
+    base = {"regions": regions, "lawd_cd": lawd_cd, "n_cases": n_cases,
+            "months": months, "max_cases": BACKTEST_MAX_CASES,
+            "sweep_cases": BACKTEST_SWEEP_CASES}
+
+    if request.method == "GET" or not lawd_cd:
+        return render_template("backtest.html", **base)
+
+    out = _run_region_backtest(lawd_cd, n_cases, months)
+    if out.get("error"):
+        return render_template("backtest.html", error=out["error"], **base)
+
     return render_template(
-        "backtest.html", results=results, summary=summary, bands=bands,
-        skipped=skipped, pool=pool, gu=gu, **base)
+        "backtest.html", results=out["results"], summary=out["summary"],
+        bands=out["bands"], skipped=out["skipped"], pool=out["pool"],
+        gu=out["gu"], **base)
+
+
+@app.route("/backtest/one", methods=["POST"])
+def backtest_one():
+    """48-3절 — 구 **하나**만 돌려 JSON으로 돌려준다.
+
+    ⚠️ 전체 순회를 서버에서 for문으로 돌리지 않는 이유: Render 무료 티어
+    gunicorn 타임아웃이 120초라 67개 구를 한 요청에 담으면 무조건 끊긴다.
+    대신 브라우저가 구를 하나씩 던지고(요청당 한 구 → 타임아웃 안 걸림)
+    결과를 쌓아 전체 통계를 낸다.
+
+    ⚠️ 건별 기록을 통째로 돌려주는 이유: 전체 평균을 구마다의 평균을 또
+    평균내서 구하면(구별 건수가 달라) 틀린다. 브라우저가 **건 단위로** 모아
+    계산해야 맞다. 크게 튄 건을 전 지역에서 뽑아 보여주는 데도 필요하다.
+    """
+    lawd_cd = (request.form.get("lawd_cd") or "").strip()
+    if not lawd_cd:
+        return jsonify({"ok": False, "error": "지역 코드가 없습니다."}), 400
+    try:
+        n_cases = min(int(request.form.get("n_cases") or BACKTEST_SWEEP_CASES),
+                      BACKTEST_MAX_CASES)
+    except ValueError:
+        n_cases = BACKTEST_SWEEP_CASES
+    try:
+        months = max(1, min(int(request.form.get("months") or 1), 6))
+    except ValueError:
+        months = 1
+
+    out = _run_region_backtest(lawd_cd, n_cases, months)
+    if out.get("error"):
+        return jsonify({"ok": False, "lawd_cd": lawd_cd, "gu": out.get("gu"),
+                        "error": out["error"]})
+
+    cases = [{
+        "gu": out["gu"], "name": r["name"], "date": r["date_label"],
+        "area": round(r["area"], 1), "floor": r["floor"],
+        "build_year": r.get("build_year"),
+        "actual": r["actual"], "median": r["median"],
+        "err": round(r["error_pct"], 2), "conf": r["confidence"],
+        "n": r["n_comparables"], "in_band": bool(r["in_band"]),
+        "divergence": (round(r["divergence"], 1)
+                       if r.get("divergence") is not None else None),
+    } for r in out["results"]]
+
+    return jsonify({"ok": True, "lawd_cd": lawd_cd, "gu": out["gu"],
+                    "pool": out["pool"], "skipped": out["skipped"],
+                    "cases": cases})
 
 
 @app.route("/estimate", methods=["POST"])

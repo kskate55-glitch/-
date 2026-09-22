@@ -172,6 +172,10 @@ def estimate_as_of(rows: list[dict], target: dict, radius_m: float,
         "median": scen["median"],
         "p75": scen["p75"],
         "confidence": scen["confidence"],
+        # 7-1절 모델 합의도. 면적 쏠림 같은 "표본이 대상과 어긋난" 상태는
+        # 가격 편향이 아니라 **이 값**으로 드러난다(50:50 블렌딩이 편향 자체는
+        # 상쇄해서다) — 크게 튄 건의 원인을 가리는 데 꼭 필요해서 같이 싣는다.
+        "divergence": scen.get("model_divergence_pct"),
         "n_comparables": len(filtered),
         "skipped": None,
     }
@@ -323,7 +327,7 @@ def main() -> None:
         os.makedirs(os.path.dirname(os.path.abspath(args.csv)), exist_ok=True)
         cols = ["ymd", "name", "address", "area", "floor", "build_year",
                 "actual", "p25", "median", "p75", "error_pct",
-                "n_comparables", "confidence"]
+                "n_comparables", "confidence", "divergence"]
         with open(args.csv, "w", newline="", encoding="utf-8-sig") as f:
             w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
             w.writeheader()

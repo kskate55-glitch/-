@@ -12,8 +12,54 @@
   </ul>
 </div>
 
+<div class="card" style="border-color:var(--primary)">
+  <div class="form-section">🚀 전체 지역 한 번에 돌리기</div>
+  <ul class="note-lines" style="margin:0 0 12px">
+    <li>표에 등록된 <b>모든 구</b>를 하나씩 자동으로 테스트합니다 — 누를 건 시작 버튼 하나뿐이에요.</li>
+    <li>브라우저가 구를 <b>한 개씩 순서대로</b> 보냅니다. 서버가 한 번에 다 하면 시간 초과로 끊기거든요.</li>
+    <li><b>이 탭을 닫지 마세요.</b> 다른 탭에서 딴 일 하는 건 괜찮습니다.</li>
+  </ul>
+
+  <div class="row">
+    <div class="field">
+      <div class="field-icon">🗺️</div>
+      <div style="flex:1">
+        <label for="sweep_scope">어디까지 돌릴까요</label>
+        <select id="sweep_scope"></select>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-icon">🔢</div>
+      <div style="flex:1">
+        <label for="sweep_n">구마다 몇 건씩</label>
+        <input type="number" id="sweep_n" min="3" max="{{ max_cases }}" value="{{ sweep_cases }}">
+      </div>
+    </div>
+  </div>
+
+  <ul class="note-lines" style="margin:0 0 10px">
+    <li>⏱️ <b>구당 1~2분</b> 걸립니다 — 전체를 고르면 <b>1시간 넘게</b> 돌 수 있어요. 서울만 먼저 돌려보시길 권합니다.</li>
+    <li>⚠️ 국토부 <b>일일 트래픽 한도</b>와 카카오 무료 할당량에 걸릴 수 있습니다. 한도를 넘으면 그 뒤 구들이 줄줄이 실패로 뜨는데, 그때는 <b>다음 날 이어서</b> 돌리세요.</li>
+  </ul>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap">
+    <button type="button" id="sweep_start" class="cta-submit" style="flex:1; min-width:200px">▶ 전체 테스트 시작</button>
+    <button type="button" id="sweep_stop" class="cta-submit"
+            style="flex:0 0 auto; background:#888; display:none">■ 중지</button>
+  </div>
+
+  <div id="sweep_progress" hidden style="margin-top:14px">
+    <div style="height:10px; background:#eceff1; border-radius:6px; overflow:hidden">
+      <div id="sweep_bar" style="height:100%; width:0%; background:var(--primary); transition:width .3s"></div>
+    </div>
+    <p class="muted" id="sweep_status" style="margin:8px 0 0"></p>
+  </div>
+
+  <div id="sweep_out"></div>
+</div>
+
 <form method="post" action="/backtest">
-  <div class="form-section">지역과 건수를 고르세요</div>
+  <div class="form-section">한 지역만 테스트하기</div>
 
   <div class="field">
     <div class="field-icon">📍</div>
@@ -162,6 +208,257 @@
   </ul>
 </div>
 {% endif %}
+
+<script id="region-data" type="application/json">{{ regions | tojson }}</script>
+<script>
+(function () {
+  var REGIONS = JSON.parse(document.getElementById('region-data').textContent);
+  var scopeSel = document.getElementById('sweep_scope');
+  var startBtn = document.getElementById('sweep_start');
+  var stopBtn  = document.getElementById('sweep_stop');
+  var progress = document.getElementById('sweep_progress');
+  var bar      = document.getElementById('sweep_bar');
+  var status   = document.getElementById('sweep_status');
+  var out      = document.getElementById('sweep_out');
+
+  // 시/도 목록을 지역 데이터에서 직접 뽑는다 — 표에 새 지역이 늘어도 그대로 따라온다.
+  var sidos = [];
+  REGIONS.forEach(function (r) { if (sidos.indexOf(r.sido) < 0) sidos.push(r.sido); });
+  scopeSel.innerHTML = '<option value="*">전체 (' + REGIONS.length + '개 구)</option>' +
+    sidos.map(function (sd) {
+      var n = REGIONS.filter(function (r) { return r.sido === sd; }).length;
+      return '<option value="' + sd + '">' + sd + '만 (' + n + '개 구)</option>';
+    }).join('');
+  if (sidos.length) scopeSel.value = sidos[0];   // 기본은 첫 시/도 — 전체는 일부러 기본이 아니다
+
+  var running = false, cases = [], regionRows = [], startedAt = 0;
+
+  function eok(man) { return (man / 10000).toFixed(2) + '억'; }
+  function mean(a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }
+  function pct(a) { return a.length ? (a.filter(Boolean).length / a.length * 100).toFixed(0) : '—'; }
+  function esc(t) {
+    return String(t == null ? '' : t)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function elapsed() {
+    var s = Math.round((Date.now() - startedAt) / 1000);
+    return s < 60 ? s + '초' : Math.floor(s / 60) + '분 ' + (s % 60) + '초';
+  }
+
+  // 구간별로 묶어 오차를 보는 공용 함수 — 신뢰도·비교거래수·면적·괴리율에 같이 쓴다.
+  function bandTable(title, note, getter, bands) {
+    var rows = bands.map(function (b) {
+      var g = cases.filter(function (c) {
+        var v = getter(c);
+        return v != null && v >= b.lo && v < b.hi;
+      });
+      if (!g.length) return '';
+      var errs = g.map(function (c) { return c.err; });
+      return '<tr><td>' + esc(b.label) + '</td><td>' + g.length + '건</td><td>' +
+             mean(errs.map(Math.abs)).toFixed(1) + '%</td><td>' +
+             (mean(errs) >= 0 ? '+' : '') + mean(errs).toFixed(1) + '%</td><td>' +
+             pct(g.map(function (c) { return c.in_band; })) + '%</td></tr>';
+    }).join('');
+    if (!rows) return '';
+    return '<div class="card"><h3>' + esc(title) + '</h3>' +
+      '<p class="muted" style="margin-top:-4px">' + esc(note) + '</p>' +
+      '<div class="table-scroll"><table>' +
+      '<tr><th>구간</th><th>건수</th><th>평균 오차</th><th>편향</th><th>구간 적중</th></tr>' +
+      rows + '</table></div></div>';
+  }
+
+  function render() {
+    if (!cases.length) { out.innerHTML = ''; return; }
+    var errs = cases.map(function (c) { return c.err; });
+    var absErrs = errs.map(Math.abs);
+    var bias = mean(errs);
+
+    var head = '<div class="section-divider">전체 결과 — ' + cases.length + '건 · ' +
+      regionRows.filter(function (r) { return r.ok; }).length + '개 구</div>' +
+      '<div class="card"><h3>한눈에 보기</h3><div class="price-grid">' +
+      '<div class="price-item"><span class="label">평균 오차</span><span class="value">' +
+        mean(absErrs).toFixed(1) + '%</span></div>' +
+      '<div class="price-item"><span class="label">±10% 안에 맞힌 비율</span><span class="value">' +
+        pct(absErrs.map(function (e) { return e <= 10; })) + '%</span></div>' +
+      '<div class="price-item"><span class="label">예상 구간 안에 들어온 비율</span><span class="value">' +
+        pct(cases.map(function (c) { return c.in_band; })) + '%</span></div>' +
+      '<div class="price-item"><span class="label">높게/낮게 부르는 정도</span><span class="value">' +
+        (bias >= 0 ? '+' : '') + bias.toFixed(1) + '%</span></div>' +
+      '</div><ul class="note-lines" style="margin-top:14px"><li>' +
+      (bias > 1 ? '계산기가 평균적으로 <b>실제보다 높게</b> 부르고 있어요 — 보정 계수를 더 낮출 여지가 있습니다.'
+       : bias < -1 ? '계산기가 평균적으로 <b>실제보다 낮게</b> 부르고 있어요 — 보정을 너무 세게 걸었을 수 있습니다.'
+       : '한쪽으로 치우치지 않았습니다. 지금 보정 계수가 맞게 잡혀 있다는 뜻이에요.') +
+      '</li><li>한 지역 10건보다 <b>훨씬 믿을 만한 숫자</b>입니다 — 지역이 섞여 있어 우연이 상쇄되거든요.</li></ul></div>';
+
+    // ★ 소표본 가설 검증용 — 비교거래가 적을수록 오차가 큰지 바로 보인다.
+    var byN = bandTable('비교거래가 적으면 정말 더 틀리나?',
+      '비교거래 건수별로 묶어봤습니다. 적은 쪽 오차가 훨씬 크면, 최소 비교거래 기준을 올리는 게 답입니다.',
+      function (c) { return c.n; },
+      [{label: '3~4건 (아주 적음)', lo: 3, hi: 5},
+       {label: '5~9건', lo: 5, hi: 10},
+       {label: '10~19건', lo: 10, hi: 20},
+       {label: '20건 이상 (넉넉)', lo: 20, hi: 1e9}]);
+
+    var byConf = bandTable('시세 신뢰도 점수가 진짜 의미가 있나?',
+      '신뢰도가 높은 쪽이 실제로 더 정확해야 그 점수가 제 역할을 하는 겁니다.',
+      function (c) { return c.conf; },
+      [{label: '70점 이상', lo: 70, hi: 101},
+       {label: '40~69점', lo: 40, hi: 70},
+       {label: '40점 미만', lo: 0, hi: 40}]);
+
+    var byArea = bandTable('평형대별로 다르게 틀리나?',
+      '특정 평형대만 한쪽으로 쏠려 있으면, 전체에 같은 보정을 거는 게 아니라 평형대별로 나눠야 합니다.',
+      function (c) { return c.area; },
+      [{label: '40㎡ 미만 (소형)', lo: 0, hi: 40},
+       {label: '40~60㎡', lo: 40, hi: 60},
+       {label: '60~85㎡', lo: 60, hi: 85},
+       {label: '85㎡ 이상 (대형)', lo: 85, hi: 1e9}]);
+
+    var byDiv = bandTable('두 계산 방식이 엇갈릴수록 더 틀리나?',
+      '총액 기준과 ㎡당가 기준이 서로 다른 답을 낼수록 실제로 부정확한지 봅니다.',
+      function (c) { return c.divergence; },
+      [{label: '괴리율 3% 미만 (잘 맞음)', lo: 0, hi: 3},
+       {label: '3~8%', lo: 3, hi: 8},
+       {label: '8% 이상 (엇갈림)', lo: 8, hi: 1e9}]);
+
+    // 크게 튄 건 — 원인을 눈으로 보라고 비교거래 수·신뢰도·괴리율을 같이 깐다.
+    var worst = cases.slice().sort(function (a, b) { return Math.abs(b.err) - Math.abs(a.err); }).slice(0, 15);
+    var worstTbl = '<div class="card"><h3>가장 크게 빗나간 15건</h3>' +
+      '<p class="muted" style="margin-top:-4px">비교거래 수·신뢰도·모델 괴리율을 같이 봤을 때 공통점이 보이면 그게 원인입니다.</p>' +
+      '<div class="table-scroll"><table><tr><th>지역</th><th>단지명</th><th>계약</th><th>면적</th><th>층</th>' +
+      '<th>실제</th><th>예상</th><th>오차</th><th>비교거래</th><th>신뢰도</th><th>괴리율</th></tr>' +
+      worst.map(function (c) {
+        return '<tr><td>' + esc(c.gu) + '</td><td>' + esc(c.name) + '</td><td>' + esc(c.date) +
+          '</td><td>' + c.area + '㎡</td><td>' + esc(c.floor) + '층</td><td><b>' + eok(c.actual) +
+          '</b></td><td>' + eok(c.median) + '</td><td style="color:#d33232;font-weight:700">' +
+          (c.err >= 0 ? '+' : '') + c.err.toFixed(1) + '%</td><td' +
+          (c.n < 5 ? ' style="color:#d33232;font-weight:700"' : '') + '>' + c.n +
+          '</td><td>' + c.conf + '</td><td>' +
+          (c.divergence == null ? '—' : c.divergence.toFixed(1) + '%') + '</td></tr>';
+      }).join('') + '</table></div></div>';
+
+    // 지역별 — 편향이 큰 순으로. 지역마다 방향이 다르면 전역 보정은 답이 아니다.
+    var done = regionRows.filter(function (r) { return r.ok; })
+                         .sort(function (a, b) { return Math.abs(b.bias) - Math.abs(a.bias); });
+    var failed = regionRows.filter(function (r) { return !r.ok; });
+    var regionTbl = '<div class="card"><h3>지역별 결과</h3>' +
+      '<p class="muted" style="margin-top:-4px">편향이 큰 순입니다. 지역마다 방향이 제각각이면 전체에 같은 보정을 거는 건 답이 아니에요.</p>' +
+      '<div class="table-scroll"><table><tr><th>지역</th><th>건수</th><th>평균 오차</th><th>편향</th><th>구간 적중</th></tr>' +
+      done.map(function (r) {
+        return '<tr><td>' + esc(r.gu) + '</td><td>' + r.n + '건</td><td>' + r.mape.toFixed(1) +
+          '%</td><td style="font-weight:700;color:' + (Math.abs(r.bias) > 5 ? '#d33232' : '#2f9e44') +
+          '">' + (r.bias >= 0 ? '+' : '') + r.bias.toFixed(1) + '%</td><td>' + r.in_band.toFixed(0) + '%</td></tr>';
+      }).join('') + '</table></div>' +
+      (failed.length ? '<ul class="note-lines" style="margin-top:10px"><li>돌리지 못한 지역 ' +
+        failed.length + '곳: ' + failed.map(function (r) {
+          return esc(r.gu) + '(' + esc(r.why) + ')'; }).join(' · ') + '</li></ul>' : '') +
+      '</div>';
+
+    out.innerHTML = head + byN + byConf + byArea + byDiv + worstTbl + regionTbl +
+      '<div class="card"><h3>결과 내려받기</h3>' +
+      '<p class="muted" style="margin-top:-4px">엑셀로 열어 직접 뜯어볼 수 있는 파일입니다.</p>' +
+      '<button type="button" id="sweep_csv" class="cta-submit">⬇ CSV로 저장</button></div>';
+
+    var csvBtn = document.getElementById('sweep_csv');
+    if (csvBtn) csvBtn.addEventListener('click', downloadCsv);
+  }
+
+  function downloadCsv() {
+    var cols = ['gu', 'name', 'date', 'area', 'floor', 'build_year',
+                'actual', 'median', 'err', 'n', 'conf', 'divergence', 'in_band'];
+    var lines = [cols.join(',')].concat(cases.map(function (c) {
+      return cols.map(function (k) {
+        var v = c[k];
+        if (v == null) return '';
+        v = String(v);
+        return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+      }).join(',');
+    }));
+    // BOM을 붙여야 엑셀에서 한글이 안 깨진다.
+    var blob = new Blob(['\ufeff' + lines.join('\n')], {type: 'text/csv;charset=utf-8'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'backtest_all.csv';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  function finish(msg) {
+    running = false;
+    startBtn.disabled = false;
+    startBtn.textContent = '▶ 전체 테스트 시작';
+    stopBtn.style.display = 'none';
+    status.innerHTML = msg;
+  }
+
+  startBtn.addEventListener('click', function () {
+    if (running) return;
+    var scope = scopeSel.value;
+    var list = REGIONS.filter(function (r) { return scope === '*' || r.sido === scope; });
+    if (!list.length) return;
+
+    var n = parseInt(document.getElementById('sweep_n').value, 10) || {{ sweep_cases }};
+    running = true; cases = []; regionRows = []; startedAt = Date.now();
+    startBtn.disabled = true;
+    startBtn.textContent = '돌리는 중…';
+    stopBtn.style.display = '';
+    progress.hidden = false;
+    out.innerHTML = '';
+
+    var i = 0;
+    function step() {
+      if (!running) { finish('중지했습니다 — 여기까지 모은 ' + cases.length + '건은 아래에 그대로 남아 있어요.'); return; }
+      if (i >= list.length) {
+        bar.style.width = '100%';
+        finish('✅ 전부 끝났습니다 — ' + list.length + '개 구 · ' + cases.length + '건 · ' + elapsed() + ' 걸렸어요.');
+        render();
+        return;
+      }
+      var r = list[i];
+      bar.style.width = (i / list.length * 100).toFixed(1) + '%';
+      status.innerHTML = '<b>' + (i + 1) + ' / ' + list.length + '</b> · ' + esc(r.sido) + ' ' +
+        esc(r.gu) + ' 돌리는 중… (모은 건수 ' + cases.length + ' · 경과 ' + elapsed() + ')';
+
+      var body = new URLSearchParams();
+      body.append('lawd_cd', r.code);
+      body.append('n_cases', n);
+      body.append('months', document.getElementById('months').value || 1);
+
+      fetch('/backtest/one', {method: 'POST', body: body})
+        .then(function (res) { return res.json(); })
+        .then(function (d) {
+          if (d.ok && d.cases && d.cases.length) {
+            cases = cases.concat(d.cases);
+            var errs = d.cases.map(function (c) { return c.err; });
+            regionRows.push({
+              ok: true, gu: r.sido + ' ' + r.gu, n: d.cases.length,
+              mape: mean(errs.map(Math.abs)), bias: mean(errs),
+              in_band: d.cases.filter(function (c) { return c.in_band; }).length / d.cases.length * 100
+            });
+          } else {
+            regionRows.push({ok: false, gu: r.sido + ' ' + r.gu,
+                             why: (d.error || '결과 없음').slice(0, 40)});
+          }
+        })
+        .catch(function (e) {
+          regionRows.push({ok: false, gu: r.sido + ' ' + r.gu, why: '통신 실패'});
+        })
+        .then(function () {
+          i++;
+          if (cases.length) render();       // 도는 동안에도 중간 결과를 계속 갱신
+          setTimeout(step, 300);            // 카카오 초당 호출 제한을 감안한 짧은 숨고르기
+        });
+    }
+    step();
+  });
+
+  stopBtn.addEventListener('click', function () {
+    running = false;
+    stopBtn.style.display = 'none';
+    status.innerHTML = '중지하는 중… 지금 돌고 있는 구가 끝나면 멈춥니다.';
+  });
+})();
+</script>
 
 <a class="back" href="/">← 매도가 계산기로 돌아가기</a>
 {% endblock %}

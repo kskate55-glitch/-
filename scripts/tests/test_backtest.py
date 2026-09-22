@@ -182,3 +182,50 @@ class TestSummarize(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDivergenceIsCarried(unittest.TestCase):
+    """48-3절 — 7-1절 모델 괴리율이 건별 결과에 실려 나오는지.
+
+    면적 쏠림 같은 "표본이 대상과 어긋난" 상태는 **가격 편향으로는 안 드러난다**
+    (총액·㎡당가 50:50 블렌딩이 상쇄해서다) — 괴리율로만 드러나므로, 크게 튄
+    건의 원인을 가리려면 이 값이 반드시 결과에 실려 있어야 한다.
+    """
+
+    def setUp(self):
+        self._orig_geo_geocode = geo.geocode
+        self._orig_geocode = bt.geocode
+        self._orig_cache = lawd_lookup._get_cache
+        lawd_lookup._get_cache = lambda: {"11305": ("서울특별시", "강북구")}
+        coords = {}
+
+        def fake(addr):
+            if addr not in coords:
+                coords[addr] = (37.6 + len(coords) * 0.0004, 127.0)
+            return coords[addr]
+
+        geo.geocode = fake
+        bt.geocode = fake
+
+    def tearDown(self):
+        geo.geocode = self._orig_geo_geocode
+        bt.geocode = self._orig_geocode
+        lawd_lookup._get_cache = self._orig_cache
+
+    def test_result_includes_divergence(self):
+        rows = [_row(f"{i}-1", 2026, 5, 10 + i, 30000 + i * 400, area=44.0 + i)
+                for i in range(8)]
+        target = _row("99-1", 2026, 9, 1, 31000, area=48.0)
+        out = bt.estimate_as_of(rows + [target], target, 400, 2, 0.15, 4)
+        self.assertIsNotNone(out)
+        self.assertIsNone(out.get("skipped"), "표본이 충분해야 이 테스트가 의미 있다")
+        self.assertIn("divergence", out)
+        self.assertIsInstance(out["divergence"], float)
+
+    def test_divergence_is_in_csv_columns(self):
+        """CSV로 뽑아야 지역·평형대별 원인 분석이 가능하다."""
+        import inspect
+        src = inspect.getsource(bt.main)
+        self.assertIn('"divergence"', src)
+
+

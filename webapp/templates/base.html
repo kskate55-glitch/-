@@ -125,6 +125,60 @@
      페이지 전체에 가로 스크롤이 생긴다 — 표만 따로 스크롤되게 감싼다. */
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
+  /* 41절 환금성·경쟁 진단 — 강의가 중요하다고 짚은 순서대로 번호를 달고,
+     판정(좋음/보통/주의)을 왼쪽 색 띠와 오른쪽 배지 두 군데로 드러낸다.
+     예전엔 이모지 하나 + 줄글이라 "뭐가 문제인지" 훑어보기 어려웠다. */
+  .mk-score { display: flex; align-items: center; gap: 12px; margin: 2px 0 14px; }
+  .mk-score-num { font-size: 30px; font-weight: 800; line-height: 1; white-space: nowrap; }
+  .mk-score-bar { flex: 1; height: 9px; border-radius: 999px; background: #eceef1; overflow: hidden; }
+  .mk-score-fill { display: block; height: 100%; border-radius: 999px; }
+  .mk-grade { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+
+  .mk-item {
+    border-left: 4px solid var(--border); background: #fbfcfd;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding: 11px 14px; margin-bottom: 9px;
+  }
+  .mk-item:last-child { margin-bottom: 0; }
+  .mk-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 5px; }
+  .mk-rank {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 21px; height: 21px; border-radius: 50%; flex-shrink: 0;
+    background: var(--ink); color: #fff; font-size: 12px; font-weight: 800;
+  }
+  .mk-title { font-size: 14.5px; font-weight: 700; color: var(--ink); }
+  .mk-sub { font-size: 12px; color: var(--muted-2); font-weight: 600; }
+  .mk-pill {
+    margin-left: auto; padding: 3px 11px; border-radius: 999px;
+    font-size: 12px; font-weight: 800; white-space: nowrap;
+  }
+  .mk-text { font-size: 13.5px; line-height: 1.75; color: #3f454b; margin: 0; }
+  .mk-lecture {
+    margin: 7px 0 0; padding-left: 9px; border-left: 2px solid var(--border);
+    font-size: 11.5px; line-height: 1.6; color: var(--muted-2);
+  }
+  .mk-good { border-left-color: #2f9e44; }
+  .mk-good .mk-pill { background: #e6f4ea; color: #1e7a34; }
+  .mk-good .mk-rank { background: #2f9e44; }
+  .mk-ok { border-left-color: #9aa1a8; }
+  .mk-ok .mk-pill { background: #eef0f2; color: #5c636a; }
+  .mk-ok .mk-rank { background: #7c8288; }
+  .mk-warn { border-left-color: #e0475a; background: #fff8f8; }
+  .mk-warn .mk-pill { background: #fdecec; color: #c0293c; }
+  .mk-warn .mk-rank { background: #e0475a; }
+  .mk-info { border-left-color: #3b82c4; background: #f8fbfe; }
+  .mk-info .mk-pill { background: #eaf2fa; color: #2c6ba3; }
+  .mk-unknown { border-left-color: #d6dade; background: #fcfcfd; }
+  .mk-unknown .mk-pill { background: #f1f2f4; color: #8b9197; }
+  .mk-unknown .mk-rank { background: #b6bbc1; }
+  /* 좁은 화면에서는 점수 막대가 등급 문구에 밀려 너무 짧아진다 — 등급을
+     아랫줄로 내리고 막대에 최소 폭을 준다. */
+  @media (max-width: 560px) {
+    .mk-score { flex-wrap: wrap; }
+    .mk-score-bar { min-width: 110px; }
+    .mk-grade { order: 3; flex-basis: 100%; margin-top: 2px; }
+  }
+
   /* 설명 문단을 한 덩어리로 흘려보내지 않고 문장 단위로 끊어 보여준다 —
      결과 페이지에 긴 안내 문장이 많아서, 줄글로 두면 눈이 어디를 읽고
      있는지 놓치기 쉽다는 지적을 반영했다. 각 줄 앞에 옅은 점을 찍어

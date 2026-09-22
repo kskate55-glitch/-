@@ -185,31 +185,41 @@
 
 {% if result.marketability and result.marketability['items'] %}
 <div class="card">
-  <h3 style="margin-bottom:6px">
-    🧭 환금성·경쟁 진단
-    {% if result.marketability.score is not none %}
-    <span class="badge {{ 'warn' if result.marketability.score < 50 else '' }}" style="margin-left:6px">{{ result.marketability.score }}/100 · {{ result.marketability.grade }}</span>
-    {% endif %}
-  </h3>
+  <h3 style="margin-bottom:8px">🧭 환금성·경쟁 진단</h3>
   <ul class="note-lines" style="margin-top:0; margin-bottom:12px">
     <li>"얼마에 팔리나"(위 매도가)와 별개로, <b>"얼마나 잘 팔리나"</b>를 본 것이에요.</li>
-    <li>빌라 강의가 짚은 기준으로 항목마다 등급을 매겼습니다.</li>
+    <li>빌라 강의가 <b>중요하다고 짚은 순서대로</b> 번호를 매겼습니다 — 1번부터 보세요.</li>
   </ul>
-  <ul class="ref-list" style="margin-top:4px">
-    {% for item in result.marketability['items'] %}
-    <li style="margin-bottom:10px">
-      <b>{{ item.icon }} {{ item.label }}</b><br>
-      <span style="font-size:13.5px; line-height:1.65">{{ item.text }}</span><br>
-      <span class="muted" style="font-size:11.5px">└ {{ item.lecture }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-  <div style="margin-top:12px">
+
+  {% if result.marketability.score is not none %}
+  {% set sc = result.marketability.score %}
+  {% set sc_color = '#2f9e44' if sc >= 75 else ('#e8920a' if sc >= 50 else '#e0475a') %}
+  <div class="mk-score">
+    <span class="mk-score-num" style="color:{{ sc_color }}">{{ sc }}<span style="font-size:15px; font-weight:700; color:var(--muted-2)">/100</span></span>
+    <span class="mk-score-bar"><span class="mk-score-fill" style="width:{{ sc }}%; background:{{ sc_color }}"></span></span>
+    <span class="mk-grade" style="color:{{ sc_color }}">{{ result.marketability.grade }}</span>
+  </div>
+  {% endif %}
+
+  {% for item in result.marketability['items'] %}
+  <div class="mk-item mk-{{ item.verdict }}">
+    <div class="mk-head">
+      {% if item.rank %}<span class="mk-rank">{{ item.rank }}</span>{% else %}<span class="mk-sub">참고</span>{% endif %}
+      <span class="mk-title">{{ item.label.split(' (')[0] }}</span>
+      <span class="mk-sub">{{ item.label.split(' (')[1].rstrip(')') if ' (' in item.label else '' }}</span>
+      <span class="mk-pill">{{ item.icon }} {{ item.verdict_label }}</span>
+    </div>
+    <p class="mk-text">{{ item.text }}</p>
+    <p class="mk-lecture">{{ item.lecture }}</p>
+  </div>
+  {% endfor %}
+
+  <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border)">
     {% for line in result.marketability.summary_lines %}
     <p style="margin:0 0 5px; font-size:14px; line-height:1.75"><b>{% if loop.first %}→ {% endif %}{{ line }}</b></p>
     {% endfor %}
   </div>
-  <ul class="note-lines" style="margin-top:8px">
+  <ul class="note-lines" style="margin-top:10px">
     <li>⚠️ 이미 계산된 지표(거래량·경쟁매물·가격위치·신뢰도·건축물대장)를 강의 경험칙에 맞춰 등급만 매긴 <b>규칙 기반 판정</b>입니다.</li>
     <li>통계로 검증한 기준이 아니에요.</li>
     <li>채광·누수·악취·소음·관리상태처럼 데이터로 알 수 없는 항목은 아래 임장 체크리스트로 직접 확인하셔야 합니다.</li>

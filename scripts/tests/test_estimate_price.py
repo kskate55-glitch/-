@@ -791,5 +791,41 @@ class TestNormalizeDealingGbn(unittest.TestCase):
             self.assertIsNone(ep.normalize_dealing_gbn(v))
 
 
+class TestMarketabilityOrdering(unittest.TestCase):
+    """41절 — 항목은 강의가 중요하다고 짚은 순서로 나오고, 판정 항목에만
+    1부터 순번이 붙는다(참고 항목인 연식은 번호 없이 맨 뒤)."""
+
+    def _report(self):
+        return ep.build_marketability_report(
+            floor=5, build_year=2012, this_year=2026, confidence=78,
+            liquidity={"counts": {(500, 3): 2}}, building={"has_elevator": False},
+            sale_pressure={"n_listings": 14, "monthly_deal_avg": 0.7,
+                            "months_of_supply": 21.0, "level": "높음", "desc": ""},
+            listing_summary={"percentile": 72, "n": 11})
+
+    def test_items_follow_the_lecture_priority_order(self):
+        keys = [i["key"] for i in self._report()["items"]]
+        self.assertEqual(keys, ["price_position", "floor", "volume",
+                                 "competition", "confidence", "build_year"])
+
+    def test_ranks_are_sequential_and_skip_info_items(self):
+        items = self._report()["items"]
+        self.assertEqual([i["rank"] for i in items[:5]], [1, 2, 3, 4, 5])
+        self.assertIsNone(items[-1]["rank"])  # 연식(info)은 번호 없음
+
+    def test_every_item_carries_a_korean_verdict_label(self):
+        for item in self._report()["items"]:
+            self.assertIn(item["verdict_label"], ep.MARKETABILITY_VERDICT_LABELS.values())
+
+    def test_order_holds_even_when_some_items_are_missing(self):
+        # 매물을 안 붙여넣으면 가격 위치 항목이 빠지는데, 남은 항목의 순서와
+        # 번호는 그대로 1부터 이어져야 한다.
+        r = ep.build_marketability_report(floor=3, confidence=80,
+                                           liquidity={"counts": {(500, 3): 9}})
+        keys = [i["key"] for i in r["items"]]
+        self.assertEqual(keys, ["floor", "volume", "competition", "confidence"])
+        self.assertEqual([i["rank"] for i in r["items"]], [1, 2, 3, 4])
+
+
 if __name__ == "__main__":
     unittest.main()

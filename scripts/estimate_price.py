@@ -1051,6 +1051,26 @@ def build_verdict(*args, **kwargs) -> str:
 # CLAUDE.md 41절: 환금성·경쟁 진단(강의 관점) — 판정 등급별 가점.
 MARKETABILITY_SCORES = {"good": 100, "ok": 60, "warn": 25}
 MARKETABILITY_ICONS = {"good": "👍", "ok": "➖", "warn": "⚠️", "info": "ℹ️", "unknown": "❔"}
+MARKETABILITY_VERDICT_LABELS = {
+    "good": "좋음", "ok": "보통", "warn": "주의", "info": "참고", "unknown": "정보 없음",
+}
+# 항목을 보여주는 순서 — **강의가 중요하다고 짚은 순서 그대로**다
+# (`data/lecture_notes_villa.md`). 계산에는 영향이 없고 화면 배치만
+# 바뀐다. 사용자가 "강의 내용 중 중요한 순서대로 차례대로 보여달라"고
+# 요청해서 정했다:
+#   1) 가격 위치 — "빌라는 아파트의 대체재라 싸야 팔린다"(강의 3절),
+#      "싸게 사는 것보다 팔릴 가격을 먼저 계산"(17절 6번). 강의 전체를
+#      관통하는 1순위 명제다.
+#   2) 층·승강기 — "금액이 싸면 팔리긴 팔리는 빌라를 골라야 한다,
+#      팔기 어려운 요소를 제거하라"(5절 1번). 가격으로도 못 덮는 요소.
+#   3) 거래량 — "필요한 데이터" 목록의 맨 앞(6절 1번). 가격이 맞아도
+#      거래 자체가 없으면 못 판다.
+#   4) 경쟁 매물 — "실제 매물·실거래·주변 경쟁물건을 함께 확인"(7절).
+#   5) 시세 판단 근거 — "개별성이 강해 실거래 하나로 정하면 안 된다"(4절).
+#   6) 연식 — "연식별 거래량을 따로 보라"(6절 4번). 판정이 아닌 참고.
+MARKETABILITY_ORDER = [
+    "price_position", "floor", "volume", "competition", "confidence", "build_year",
+]
 
 
 def build_marketability_report(floor: int | None = None, build_year: int | None = None,
@@ -1156,6 +1176,21 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         items.append({"key": "build_year", "label": "연식 (매수층이 갈리는 지점)", "verdict": "info", "text": t,
                        "lecture": "강의: 연식별 거래량을 따로 뽑아서 보라"})
 
+    # 강의가 중요하다고 짚은 순서로 정렬하고(위 MARKETABILITY_ORDER), 판정이
+    # 매겨진 항목에는 1부터 순번을 붙인다 — "무엇부터 봐야 하는지"가 화면에서
+    # 바로 드러나게 하려는 것이다. 판정 없는 참고 항목(연식)은 번호 없이
+    # 맨 뒤에 둔다.
+    items.sort(key=lambda i: MARKETABILITY_ORDER.index(i["key"])
+               if i["key"] in MARKETABILITY_ORDER else len(MARKETABILITY_ORDER))
+    rank = 0
+    for item in items:
+        item["verdict_label"] = MARKETABILITY_VERDICT_LABELS.get(item["verdict"], "")
+        if item["verdict"] == "info":
+            item["rank"] = None
+        else:
+            rank += 1
+            item["rank"] = rank
+
     scored = [i for i in items if i["verdict"] in MARKETABILITY_SCORES]
     if scored:
         score = round(sum(MARKETABILITY_SCORES[i["verdict"]] for i in scored) / len(scored))
@@ -1198,9 +1233,12 @@ def print_marketability_report(report: dict):
         return
     head = f"{report['score']}/100 — {report['grade']}" if report["score"] is not None else report["grade"]
     print(f"[환금성·경쟁 진단] (강의 기준 규칙 판정, 참고용) {head}")
+    print("(강의가 중요하다고 짚은 순서대로 — 1번부터 보세요)")
     for item in report["items"]:
         icon = MARKETABILITY_ICONS.get(item["verdict"], "·")
-        print(f"{icon} {item['label']}: {item['text']}")
+        head = f"{item['rank']}. " if item.get("rank") else "참고. "
+        print(f"{head}{icon} {item['label']} — {item['verdict_label']}")
+        print(f"   {item['text']}")
         print(f"   └ {item['lecture']}")
     for line in report["summary_lines"]:
         print(f"→ {line}" if line is report["summary_lines"][0] else f"  {line}")

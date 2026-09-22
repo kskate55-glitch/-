@@ -910,26 +910,65 @@ class TestAptGap(unittest.TestCase):
         self.assertIsNone(ep.compute_apt_gap(self._apt(), "수유동", 69.27, 22500,
                                               2026, 2025, area_tolerance_pct=0.15))
 
-    def test_falls_back_to_the_whole_gu_when_the_dong_has_few_apartments(self):
-        rows = self._apt(n=2) + [dict(r, umdNm="미아동") for r in self._apt(n=10)]
-        rows = [dict(r, sggCd="11305") for r in rows]
-        g = ep.compute_apt_gap(rows, "수유동", 69.27, 22500, 2026, 2025)
+    # ── 인접 동 폴백 (구 전체가 아니다) ──────────────────────────────
+    _COORDS = {"수유동": (37.638, 127.025),   # 대상 동
+               "미아동": (37.628, 127.030),   # 약 1.2km — 인접
+               "번동": (37.500, 127.200)}     # 아주 멀다
+
+    def _with_geocode(self):
+        from unittest.mock import patch
+        return (patch("geocode.geocode", side_effect=lambda a: self._COORDS.get(a.split()[-1])),
+                patch("lawd_lookup.sido_name", return_value="서울특별시"),
+                patch("lawd_lookup.gu_name", return_value="강북구"))
+
+    def _mixed_rows(self):
+        rows = [dict(r, sggCd="11305") for r in self._apt(n=2)]
+        rows += [dict(r, umdNm="미아동", sggCd="11305") for r in self._apt(n=10)]
+        rows += [dict(r, umdNm="번동", sggCd="11305") for r in self._apt(n=30)]
+        return rows
+
+    def test_falls_back_to_adjacent_dongs_only_not_the_whole_gu(self):
+        g1, g2, g3 = self._with_geocode()
+        with g1, g2, g3:
+            g = ep.compute_apt_gap(self._mixed_rows(), "수유동", 69.27, 22500, 2026, 2025,
+                                    subject_coord=self._COORDS["수유동"])
         self.assertTrue(g["widened"])
-        self.assertEqual(g["n"], 12)
-        self.assertIn("구 전체", g["dong"])
+        self.assertEqual(g["nearby_dongs"], ["미아동"])   # 먼 번동은 빠진다
+        self.assertEqual(g["n"], 12)                       # 수유 2 + 미아 10
+        self.assertIn("인접", g["dong"])
+
+    def test_no_fallback_without_subject_coordinates(self):
+        # 좌표가 없으면 인접 여부를 알 수 없으므로 넓히지 않는다(구 전체로도 안 간다)
+        self.assertIsNone(ep.compute_apt_gap(self._mixed_rows(), "수유동", 69.27,
+                                              22500, 2026, 2025))
 
     def test_no_fallback_when_the_dong_already_has_enough(self):
         rows = [dict(r, sggCd="11305") for r in self._apt(n=8)]
         rows += [dict(r, umdNm="미아동", sggCd="11305") for r in self._apt(n=10)]
-        g = ep.compute_apt_gap(rows, "수유동", 69.27, 22500, 2026, 2025)
+        g1, g2, g3 = self._with_geocode()
+        with g1, g2, g3:
+            g = ep.compute_apt_gap(rows, "수유동", 69.27, 22500, 2026, 2025,
+                                    subject_coord=self._COORDS["수유동"])
         self.assertFalse(g["widened"])
         self.assertEqual(g["n"], 8)
 
     def test_fallback_stays_inside_the_target_gu(self):
-        # 다른 구(11380) 아파트가 아무리 많아도 폴백 표본에 섞이면 안 된다
+        # 다른 구 아파트는 좌표가 가까워도 섞이면 안 된다(행정구역이 다르다)
         rows = [dict(r, sggCd="11305") for r in self._apt(n=2)]
-        rows += [dict(r, umdNm="역촌동", sggCd="11380") for r in self._apt(n=30)]
-        self.assertIsNone(ep.compute_apt_gap(rows, "수유동", 69.27, 22500, 2026, 2025))
+        rows += [dict(r, umdNm="미아동", sggCd="11380") for r in self._apt(n=30)]
+        g1, g2, g3 = self._with_geocode()
+        with g1, g2, g3:
+            self.assertIsNone(ep.compute_apt_gap(rows, "수유동", 69.27, 22500, 2026, 2025,
+                                                  subject_coord=self._COORDS["수유동"]))
+
+    def test_geocode_failure_on_a_dong_skips_it_quietly(self):
+        from unittest.mock import patch
+        rows = self._mixed_rows()
+        with patch("geocode.geocode", return_value=None), \
+             patch("lawd_lookup.sido_name", return_value="서울특별시"), \
+             patch("lawd_lookup.gu_name", return_value="강북구"):
+            self.assertIsNone(ep.compute_apt_gap(rows, "수유동", 69.27, 22500, 2026, 2025,
+                                                  subject_coord=self._COORDS["수유동"]))
 
     def test_report_places_apt_gap_right_after_price_position(self):
         g = ep.compute_apt_gap(self._apt(), "수유동", 69.27, 22500, 2026, 2025)

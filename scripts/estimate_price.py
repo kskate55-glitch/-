@@ -2249,7 +2249,8 @@ def main():
     apt_gap = None
     if os.path.isdir(args.apt_dir):
         apt_gap = compute_apt_gap(dedupe(load_transactions(args.apt_dir)), args.dong,
-                                   args.area, auction_price, this_year, year_min)
+                                   args.area, auction_price, this_year, year_min,
+                                   subject_coord=subject_coord)
         print_apt_gap(apt_gap)
 
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
@@ -2398,12 +2399,57 @@ if __name__ == "__main__":
 APT_GAP_GOOD_MAX = 0.60   # 이하: 갭이 넉넉함
 APT_GAP_OK_MAX = 0.80     # 이하: 보통, 초과: 빌라 매력 약함
 APT_GAP_MIN_SAMPLE = 5    # 이보다 적으면 비율을 못 믿으므로 계산 자체를 건너뛴다
+# 같은 동에 아파트가 거의 없을 때 넓힐 범위 — **구 전체가 아니라 인접 동까지만**.
+# 같은 구라도 반대편 끝 동네는 시세가 전혀 달라 기준선으로 쓸 수 없어서다.
+# 동 경계 데이터는 없으므로 **동 중심 좌표 사이 거리**로 근사한다(2km 이내면
+# 사실상 맞닿은 동네로 본다). ⚠️ 경계값은 경험적으로 끊은 참고치다.
+APT_GAP_NEARBY_RADIUS_M = 2000
+
+
+def _nearby_dong_names(apt_rows: list[dict], dong: str, gu_code: str,
+                        subject_coord: tuple[float, float], radius_m: int) -> list[str]:
+    """같은 구 안에서 대상 동과 **맞닿은 동네**의 이름만 고른다.
+
+    동 경계 데이터가 없으므로 **동 중심 좌표 사이 거리**로 근사한다 — 각
+    동을 "시도 시군구 동" 주소로 한 번씩만 지오코딩하면 되므로(한 구에
+    보통 10~25개, `data/geocode_cache.json`에 캐시) 아파트 거래 수백 건을
+    통째로 지오코딩하는 것과는 비용이 비교가 안 된다.
+
+    지오코딩에 실패한 동은 조용히 건너뛴다 — 인접 여부를 모르는 동을
+    "가깝다"고 넣는 것보다 빼는 쪽이 안전하다."""
+    from geocode import geocode, haversine_m
+    from lawd_lookup import gu_name, sido_name
+
+    sido, gu = sido_name(gu_code), gu_name(gu_code)
+    if not sido or not gu:
+        return []
+
+    candidates = {
+        (r.get("umdNm") or "").strip()
+        for r in apt_rows
+        if (r.get("sggCd") or "").strip() == gu_code and (r.get("umdNm") or "").strip()
+    }
+    candidates.discard(dong.strip())
+
+    near = []
+    for name in sorted(candidates):
+        try:
+            coord = geocode(f"{sido} {gu} {name}")
+        except Exception:
+            continue
+        if not coord:
+            continue
+        if haversine_m(subject_coord[0], subject_coord[1], coord[0], coord[1]) <= radius_m:
+            near.append(name)
+    return near
 
 
 def compute_apt_gap(apt_rows: list[dict], dong: str, area: float, villa_price_man: float,
                     this_year: int, year_min: int,
                     area_tolerance_pct: float = 0.30,
-                    lawd_cd: str | None = None) -> dict | None:
+                    lawd_cd: str | None = None,
+                    subject_coord: tuple[float, float] | None = None,
+                    nearby_radius_m: int = APT_GAP_NEARBY_RADIUS_M) -> dict | None:
     """같은 동(`umdNm`) 아파트 실거래의 ㎡당가 중앙값과 대상 빌라를 비교한다.
 
     - **지오코딩을 하지 않는다.** 5절처럼 반경으로 자르려면 아파트 거래마다
@@ -2444,18 +2490,28 @@ def compute_apt_gap(apt_rows: list[dict], dong: str, area: float, villa_price_ma
     scope, scope_label = "dong", dong
 
     # 같은 동에 아파트가 거의 없는 동네(빌라만 빼곡한 구도심 등)가 실제로
-    # 있다 — 그럴 때 카드를 통째로 없애기보다 같은 구로 한 단계 넓혀서
-    # 보여주고, "구 기준"이라는 사실을 화면에 밝힌다(5절 적응형 반경이
-    # 넓힌 사실을 항상 알리는 것과 같은 원칙).
-    if len(unit_prices) < APT_GAP_MIN_SAMPLE:
+    # 있다 — 그럴 때 카드를 통째로 없애기보다 **바로 인접한 동까지만** 넓혀서
+    # 보여주고, 어느 동을 끌어왔는지 화면에 밝힌다(5절 적응형 반경이 넓힌
+    # 사실을 항상 알리는 것과 같은 원칙).
+    # ⚠️ 구 전체로 넓히지 않는다 — 같은 구라도 반대편 끝 동네는 시세가 전혀
+    #    달라 기준선으로 쓸 수 없다.
+    nearby_dongs: list[str] = []
+    if len(unit_prices) < APT_GAP_MIN_SAMPLE and subject_coord:
         gu_code = (lawd_cd or "").strip()
         if not gu_code and dong_rows:
             gu_code = (dong_rows[0].get("sggCd") or "").strip()
         if gu_code:
-            gu_rows = [r for r in apt_rows if (r.get("sggCd") or "").strip() == gu_code]
-            widened = _unit_prices(gu_rows)
-            if len(widened) >= APT_GAP_MIN_SAMPLE:
-                unit_prices, scope, scope_label = widened, "gu", f"{dong} 일대(구 전체)"
+            nearby_dongs = _nearby_dong_names(apt_rows, dong, gu_code, subject_coord,
+                                               nearby_radius_m)
+            if nearby_dongs:
+                scope_names = {dong.strip(), *nearby_dongs}
+                near_rows = [r for r in apt_rows
+                             if (r.get("sggCd") or "").strip() == gu_code
+                             and (r.get("umdNm") or "").strip() in scope_names]
+                widened = _unit_prices(near_rows)
+                if len(widened) >= APT_GAP_MIN_SAMPLE:
+                    unit_prices, scope = widened, "nearby"
+                    scope_label = f"{dong}+인접 {len(nearby_dongs)}개 동"
 
     if len(unit_prices) < APT_GAP_MIN_SAMPLE:
         return None
@@ -2481,7 +2537,8 @@ def compute_apt_gap(apt_rows: list[dict], dong: str, area: float, villa_price_ma
         "n": len(unit_prices),
         "dong": scope_label,
         "scope": scope,
-        "widened": scope == "gu",
+        "widened": scope == "nearby",
+        "nearby_dongs": nearby_dongs if scope == "nearby" else [],
         "verdict": verdict,
     })
 
@@ -2495,7 +2552,8 @@ def print_apt_gap(gap: dict | None, fmt=None):
     """40절 결과를 CLI 텍스트로 출력한다."""
     if not gap:
         return
-    widened = " — 같은 동 표본이 적어 구 전체로 넓혔습니다" if gap.get("widened") else ""
+    widened = (f" — 같은 동 표본이 적어 인접 동({', '.join(gap['nearby_dongs'])})까지 넓혔습니다"
+               if gap.get("widened") else "")
     print(f"[인근 아파트 대비] ({gap['dong']} 아파트 실거래 {gap['n']}건, 유사면적 ±30% ㎡당가 중앙값 기준{widened})")
     print(f"아파트 {gap['apt_unit_price']:,}만원/㎡ vs 이 빌라 {gap['villa_unit_price']:,}만원/㎡ "
           f"→ 아파트의 {gap['ratio_pct']}% 수준 (갭 {gap['gap_pct']}%)")

@@ -163,6 +163,75 @@
     .gap-label { flex-basis: 70px; font-size: 12px; }
     .gap-val { font-size: 12px; }
   }
+  /* ── 입력 화면(46절) — 첫 화면은 "뭘 넣어야 하는지"만 빠르게 읽혀야 한다.
+     라벨이 전부 같은 무게라 눈이 미끄러지던 걸, 필드마다 아이콘 타일을 붙여
+     구분했다. 일러스트는 이미지 파일 대신 CSS 그라데이션+이모지로 만든다 —
+     37절에서 이미지를 걷어내며 static 폴더를 없앴고, 다시 넣으면 용량·로딩·
+     라이선스 부담이 따라온다. */
+  .home-hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #eafaf0 0%, #f4fbff 58%, #fdf6ea 100%);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 24px 26px; margin-bottom: 14px;
+  }
+  .home-hero::after {
+    content: "🏙️"; position: absolute; right: 18px; bottom: -10px;
+    font-size: 86px; opacity: .18; line-height: 1; pointer-events: none;
+  }
+  .home-hero h1 { margin: 0 0 6px; font-size: 25px; }
+  .home-hero .home-sub { font-size: 13.5px; color: #4a5358; line-height: 1.7; margin: 0; max-width: 620px; }
+  .home-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .home-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 11px; border-radius: 999px; background: rgba(255, 255, 255, .85);
+    border: 1px solid var(--border); font-size: 12px; font-weight: 700; color: var(--primary-dark);
+  }
+
+  .form-section {
+    display: flex; align-items: center; gap: 8px;
+    margin: 4px 0 12px; font-size: 15.5px; font-weight: 800; color: var(--ink);
+  }
+  .form-section::before {
+    content: ""; width: 4px; height: 17px; border-radius: 2px; background: var(--primary);
+  }
+  .form-section .form-section-hint { font-size: 12.5px; font-weight: 600; color: var(--muted-2); }
+
+  /* 아이콘 타일 + 입력칸 한 줄 */
+  .field { display: flex; align-items: center; gap: 11px; }
+  .field-icon {
+    flex: 0 0 42px; height: 42px; border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; background: var(--primary-tint); border: 1px solid var(--border);
+  }
+  .field-body { flex: 1; min-width: 0; }
+  .field-body label { display: block; }
+  @media (max-width: 420px) {
+    .field-icon { flex-basis: 36px; height: 36px; font-size: 16px; }
+    .home-hero { padding: 20px 18px; }
+    .home-hero h1 { font-size: 21px; }
+  }
+
+  /* 큼직한 제출 버튼 */
+  .cta-submit {
+    width: 100%; margin-top: 16px; padding: 17px 20px; border: 0;
+    border-radius: var(--radius-lg); cursor: pointer;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff; font-size: 17px; font-weight: 800; letter-spacing: -0.2px;
+    box-shadow: 0 4px 14px rgba(3, 199, 90, .28);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .cta-submit:hover { transform: translateY(-1px); box-shadow: 0 7px 20px rgba(3, 199, 90, .34); }
+  .cta-submit:disabled { opacity: .6; cursor: default; transform: none; }
+
+  /* 하단 안내 줄 */
+  .home-note {
+    display: flex; gap: 9px; align-items: flex-start;
+    padding: 11px 13px; border-radius: var(--radius-md);
+    background: #fafbfc; border: 1px solid var(--border);
+    font-size: 12.5px; line-height: 1.7; color: var(--muted); margin-top: 9px;
+  }
+  .home-note b { color: #4a5358; }
+
   .paste-fold-body {
     margin-top: 10px; padding: 14px; background: #fff;
     border: 1px solid var(--border); border-radius: var(--radius-md);
@@ -365,11 +434,13 @@
 </head>
 <body>
 {% block content %}{% endblock %}
+{% block footer %}
 <footer>
   ⚠️ 이 결과는 국토교통부 실거래가 데이터를 통계적으로 가공한 참고용 추정치이며,
   실제 매도가를 보장하지 않습니다. 최종 판단은 공인중개사·감정평가사 등
   전문가 확인을 거치세요.
 </footer>
+{% endblock %}
 
 <div id="loading-overlay">
   <div class="spinner"></div>

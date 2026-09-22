@@ -1,7 +1,20 @@
 {% extends "base.html" %}
+{% block footer %}{% endblock %}
+
 {% block content %}
-<h1>🏠 빌라 매매가 계산기</h1>
-<p class="hint">빌라·연립다세대 물건의 예상 매매가를 국토교통부 실거래가 기반으로 반경 400m 안 유사매물과 비교해 추정하고, 한국부동산원 매매수급동향지수로 시장 동향까지 함께 보여줍니다.</p>
+<div class="home-hero">
+  <h1>🏠 빌라 매매가 계산기</h1>
+  <p class="home-sub">
+    빌라·연립다세대 물건의 예상 매도가를 국토교통부 실거래가로 산정하고,
+    주변 시세·경쟁 매물과 비교해 <b>얼마에 얼마나 잘 팔릴지</b>까지 같이 보여드려요.
+  </p>
+  <div class="home-chips">
+    <span class="home-chip">📊 실거래가 기반</span>
+    <span class="home-chip">🧭 환금성 진단</span>
+    <span class="home-chip">🏢 인근 아파트 대비</span>
+    <span class="home-chip">📈 가격 추이</span>
+  </div>
+</div>
 
 {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
@@ -37,27 +50,42 @@
    or (form.build_year_tolerance and form.build_year_tolerance != '4') or form.listings_text or form.condition
    or form.repair_cost_basic or form.repair_cost_full) %}
 <form method="post" action="/estimate">
-  <div>
-    <label>지번 주소</label>
-    <input type="text" name="address" placeholder="서울특별시 강북구 수유동 468-202"
-           value="{{ form.address if form else '' }}" required>
+  <div class="form-section">기본 정보 입력
+    <span class="form-section-hint">정확할수록 결과가 정확해져요</span>
+  </div>
+  <div class="field">
+    <span class="field-icon" aria-hidden="true">📍</span>
+    <div class="field-body">
+      <label>지번 주소</label>
+      <input type="text" name="address" placeholder="서울특별시 강북구 수유동 468-202"
+             value="{{ form.address if form else '' }}" required>
+    </div>
   </div>
   <div class="row">
-    <div>
-      <label>전용면적(㎡)</label>
-      <input type="number" step="0.01" name="area" placeholder="69.27"
-             value="{{ form.area if form else '' }}" required>
+    <div class="field">
+      <span class="field-icon" aria-hidden="true">📐</span>
+      <div class="field-body">
+        <label>전용면적(㎡)</label>
+        <input type="number" step="0.01" name="area" placeholder="69.27"
+               value="{{ form.area if form else '' }}" required>
+      </div>
     </div>
-    <div>
-      <label>층</label>
-      <input type="number" name="floor" placeholder="5" value="{{ form.floor if form else '' }}" required>
+    <div class="field">
+      <span class="field-icon" aria-hidden="true">🏢</span>
+      <div class="field-body">
+        <label>층</label>
+        <input type="number" name="floor" placeholder="5" value="{{ form.floor if form else '' }}" required>
+      </div>
     </div>
   </div>
-  <div>
-    <label>준공년도</label>
-    <input type="number" name="build_year" placeholder="2012" value="{{ form.build_year if form else '' }}" required>
+  <div class="field">
+    <span class="field-icon" aria-hidden="true">📅</span>
+    <div class="field-body">
+      <label>준공년도</label>
+      <input type="number" name="build_year" placeholder="2012" value="{{ form.build_year if form else '' }}" required>
+    </div>
   </div>
-  <p class="hint" style="margin-top:-6px">※ 층·전용면적·준공년도는 유사층·유사연식 비교에 꼭 필요해서 필수 입력입니다 — 빠지면 엉뚱한 매물과 비교돼 매도가가 부정확해질 수 있어요.</p>
+  <p class="hint" style="margin-top:-2px">※ 층·전용면적·준공년도는 <b>유사층·유사연식 비교에 꼭 필요</b>해서 필수 입력입니다 — 빠지면 엉뚱한 매물과 비교돼 매도가가 부정확해질 수 있어요.</p>
 
   <details class="adv" {{ "open" if adv_filled else "" }}>
     <summary>상세 옵션 펼치기 <span class="muted">(비교 반경·면적/연식 허용범위·월세 등)</span></summary>
@@ -131,9 +159,18 @@
     </div>
   </details>
 
-  <button type="submit">매도가 계산하기</button>
+  <button type="submit" class="cta-submit">🧮 매도가 계산하기 →</button>
 </form>
-<p class="hint">⚠️ 국토교통부 실거래가를 그때그때 조회해서, 처음 보는 지역이면 계산에 시간이 좀 걸릴 수 있어요(최대 1~2분 정도). 같은 지역을 다시 조회하면 더 빨라집니다.</p>
+<div class="home-note">
+  <span aria-hidden="true">⏱️</span>
+  <span><b>국토교통부 실거래가를 그때그때 조회</b>해서, 처음 보는 지역이면 계산에 1~2분 걸릴 수 있어요.
+    같은 지역을 다시 조회하면 훨씬 빨라집니다.</span>
+</div>
+<div class="home-note">
+  <span aria-hidden="true">ℹ️</span>
+  <span>이 결과는 실거래가를 통계적으로 가공한 <b>참고용 추정치</b>이며 실제 매도가를 보장하지 않습니다 —
+    최종 판단은 공인중개사·감정평가사 등 전문가 확인을 거치세요.</span>
+</div>
 
 <script>
 (function () {

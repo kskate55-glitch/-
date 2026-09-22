@@ -1107,7 +1107,7 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         else:
             v, t = "warn", f"반경 500m 유사면적 거래가 최근 3개월 월평균 {monthly:.1f}건뿐이라 거래 자체가 뜸합니다 — 매도 기간을 넉넉히 잡으세요."
         items.append({"key": "volume", "label": "거래량 (이 동네가 원래 잘 도나)", "verdict": v, "text": t,
-                       "lecture": "강의: 거래량·거래시기·면적별·연식별 거래량을 가격과 함께 봐야 한다"})
+                       "why": "거래량·거래시기·면적별·연식별 거래량을 가격과 함께 봐야 합니다"})
 
     # ② 경쟁 매물 압력 — 39절. 같은 물건이 이미 몇 개나 줄 서 있는지.
     if sale_pressure is not None and sale_pressure.get("months_of_supply") is not None:
@@ -1116,11 +1116,11 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         t = (f"지금 나와 있는 유사면적 경쟁 매물 {sale_pressure['n_listings']}건은 이 동네 거래 속도로 "
              f"약 {sale_pressure['months_of_supply']}개월치 물량이에요 (매도 압력 {level}).")
         items.append({"key": "competition", "label": "경쟁 매물 (내 앞에 몇 개나 줄 서 있나)", "verdict": v, "text": t,
-                       "lecture": "강의: 경매 물건만 보지 말고 실제 매물·실거래·주변 경쟁물건을 함께 확인하라"})
+                       "why": "경매 물건만 보지 말고 실제 매물·실거래·주변 경쟁물건을 함께 확인해야 합니다"})
     else:
         items.append({"key": "competition", "label": "경쟁 매물 (내 앞에 몇 개나 줄 서 있나)", "verdict": "unknown",
                        "text": "네이버부동산 매물 목록을 붙여넣으면 경쟁 매물이 몇 개월치 물량인지 계산해 드려요.",
-                       "lecture": "강의: 경매 물건만 보지 말고 실제 매물·실거래·주변 경쟁물건을 함께 확인하라"})
+                       "why": "경매 물건만 보지 말고 실제 매물·실거래·주변 경쟁물건을 함께 확인해야 합니다"})
 
     # ③ 가격 위치 — 31절. "싸야 팔린다"는 강의 명제를 지금 경쟁 매물 기준으로 본다.
     if listing_summary is not None:
@@ -1133,7 +1133,7 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
             v, t = "warn", (f"일반 매도가가 붙여넣은 유사면적 매물 {listing_summary['n']}건 중 상위 {pct}%로 비싼 편이에요 "
                              f"— 빌라는 싸야 팔리는 물건이라 이 위치면 오래 걸릴 수 있습니다.")
         items.append({"key": "price_position", "label": "가격 위치 (경쟁 매물 대비)", "verdict": v, "text": t,
-                       "lecture": "강의: 빌라는 아파트의 대체재 — 인근 아파트보다 비싸면 잘 안 팔린다"})
+                       "why": "빌라는 아파트의 대체재라, 인근 아파트보다 비싸지면 잘 안 팔립니다"})
 
     # ④ 층·엘리베이터 — 강의 "팔기 어려운 요소" 중 이 계산기가 데이터로
     #    확인할 수 있는 두 가지(나머지는 36절 임장 체크리스트로 넘긴다).
@@ -1144,7 +1144,7 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         elif floor == 1:
             v, t = "ok", "1층은 사생활·채광 때문에 선호도가 낮은 편이지만, 노인·유아 가구에는 오히려 장점이 되기도 해요."
         elif floor >= 4 and has_elevator is False:
-            v, t = "warn", f"{floor}층인데 건축물대장상 승강기가 없어요 — 고층+엘리베이터 없음은 강의가 꼽은 대표적인 '팔기 어려운 요소'입니다."
+            v, t = "warn", f"{floor}층인데 건축물대장상 승강기가 없어요 — 고층인데 승강기가 없는 건 대표적인 '팔기 어려운 요소'예요."
         elif floor >= 4 and has_elevator:
             v, t = "good", f"{floor}층이지만 승강기가 있어 고층의 불리함이 크게 줄어듭니다."
         elif floor in (2, 3):
@@ -1154,7 +1154,7 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
             if has_elevator is False:
                 t += " (승강기는 없습니다)"
         items.append({"key": "floor", "label": "층·승강기 (팔기 어려운 요소)", "verdict": v, "text": t,
-                       "lecture": "강의: 채광·엘리베이터·주차·누수·악취·소음·관리상태·경사가 나쁘면 값을 낮춰도 안 팔린다"})
+                       "why": "채광·엘리베이터·주차·누수·악취·소음·관리상태·경사가 나쁘면 값을 낮춰도 잘 안 팔립니다"})
 
     # ⑤ 판단 근거의 두께 — 강의가 "빌라는 개별성이 강하다"고 짚은 부분.
     if confidence is not None:
@@ -1165,7 +1165,7 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         else:
             v, t = "warn", f"시세 신뢰도가 {confidence}/100로 낮아요 — 비슷한 물건이 워낙 안 팔리는 동네라는 뜻일 수 있습니다."
         items.append({"key": "confidence", "label": "시세 판단 근거 (개별성 극복 정도)", "verdict": v, "text": t,
-                       "lecture": "강의: 빌라는 개별성이 강해 실거래 하나만 보고 가격을 정하면 안 된다"})
+                       "why": "빌라는 개별성이 강해서 실거래 하나만 보고 가격을 정하면 안 됩니다"})
 
     # ⑥ 연식 — 판정이 아니라 접근 방향 안내(구옥/준신축은 타겟 자체가 다르다).
     if build_year and this_year:
@@ -1174,7 +1174,7 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
                    if build_year < 2010 else "2010년 이후 준신축이라 실거주 수요가")
         t = f"{build_year}년식(약 {age}년차)이에요. {target} 상대적으로 더 붙는 편이라 매수층 자체가 다릅니다."
         items.append({"key": "build_year", "label": "연식 (매수층이 갈리는 지점)", "verdict": "info", "text": t,
-                       "lecture": "강의: 연식별 거래량을 따로 뽑아서 보라"})
+                       "why": "연식별로 거래량과 매수층이 다르니 따로 떼서 봐야 합니다"})
 
     # 강의가 중요하다고 짚은 순서로 정렬하고(위 MARKETABILITY_ORDER), 판정이
     # 매겨진 항목에는 1부터 순번을 붙인다 — "무엇부터 봐야 하는지"가 화면에서
@@ -1215,7 +1215,7 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         summary_lines = [
             f"환금성 {score}/100 — {grade}.",
             f"약점은 {' · '.join(weaknesses)}입니다.",
-            "강의 표현대로 '금액이 싸면 팔리긴 팔리는 빌라'가 되려면 이 항목들을 가격으로 상쇄해야 해요.",
+            "'값만 맞으면 팔리긴 팔리는 빌라'가 되려면 이 항목들을 가격으로 상쇄해야 해요.",
         ]
     else:
         summary_lines = [
@@ -1232,17 +1232,17 @@ def print_marketability_report(report: dict):
     if not report["items"]:
         return
     head = f"{report['score']}/100 — {report['grade']}" if report["score"] is not None else report["grade"]
-    print(f"[환금성·경쟁 진단] (강의 기준 규칙 판정, 참고용) {head}")
-    print("(강의가 중요하다고 짚은 순서대로 — 1번부터 보세요)")
+    print(f"[환금성·경쟁 진단] (규칙 기반 판정, 참고용) {head}")
+    print("(중요한 순서대로 정렬했습니다 — 1번부터 보세요)")
     for item in report["items"]:
         icon = MARKETABILITY_ICONS.get(item["verdict"], "·")
         head = f"{item['rank']}. " if item.get("rank") else "참고. "
         print(f"{head}{icon} {item['label']} — {item['verdict_label']}")
         print(f"   {item['text']}")
-        print(f"   └ {item['lecture']}")
+        print(f"   └ {item['why']}")
     for line in report["summary_lines"]:
         print(f"→ {line}" if line is report["summary_lines"][0] else f"  {line}")
-    print("⚠️ 이미 계산된 지표를 강의 경험칙에 맞춰 등급만 매긴 규칙 기반 판정입니다 — 통계로 검증한 기준이 아닙니다.")
+    print("⚠️ 이미 계산된 지표를 경험칙에 맞춰 등급만 매긴 규칙 기반 판정입니다 — 통계로 검증한 기준이 아닙니다.")
     print()
 
 
@@ -1501,8 +1501,8 @@ def print_condition_ladder(rows: list[dict], base_label: str, fmt):
     """38절 사다리를 CLI 텍스트로 출력한다."""
     if not rows:
         return
-    print(f"[상태별 매도가 3단계] ({base_label} 기준 — 수리 상태에 따라 매도가능가격이 달라진다는 경매 강의 인사이트 반영)")
-    print("⚠️ 국토부 실거래가에는 수리상태 정보가 없어 검증된 수치가 아닙니다 — 강의/경험에서 나온 참고 배율(노후 0.90 · 기본 1.00 · 올수리 1.08)일 뿐입니다.")
+    print(f"[상태별 매도가 3단계] ({base_label} 기준 — 같은 집이라도 수리 상태에 따라 매도가능가격이 달라집니다)")
+    print("⚠️ 국토부 실거래가에는 수리상태 정보가 없어 검증된 수치가 아닙니다 — 현장 경험에서 나온 참고 배율(노후 0.90 · 기본 1.00 · 올수리 1.08)일 뿐입니다.")
     for row in rows:
         line = f"- {row['label']}: {fmt(row['price_man'])}"
         if not row["is_current"]:
@@ -1539,7 +1539,7 @@ def print_condition_adjustment(scenarios: dict, condition: str, fmt):
     multiplier = CONDITION_MULTIPLIER[condition]
     sign = "+" if multiplier >= 1 else ""
     print(f"[수리상태 참고 배율] ({CONDITION_LABELS[condition]}, {sign}{(multiplier - 1) * 100:.0f}% 참고용)")
-    print("⚠️ 국토부 실거래가에는 수리상태 정보가 없어 검증된 수치가 아닙니다 — 경매 강의/경험에서 나온 참고 배율일 뿐입니다.")
+    print("⚠️ 국토부 실거래가에는 수리상태 정보가 없어 검증된 수치가 아닙니다 — 현장 경험에서 나온 참고 배율일 뿐입니다.")
     for key, label in labels.items():
         print(f"{label}: {fmt(scenarios[key])} → {fmt(adjusted[key])}")
     print()
@@ -1548,7 +1548,7 @@ def print_condition_adjustment(scenarios: dict, condition: str, fmt):
 def print_inspection_checklist():
     print()
     print("[임장 체크리스트] (참고용 — 매도가 계산에는 반영되지 않습니다)")
-    print("아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있다고 합니다 — 임장(현장답사) 때 직접 확인하세요:")
+    print("아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있어요 — 임장(현장답사) 때 직접 확인하세요:")
     print(", ".join(INSPECTION_CHECKLIST))
     print()
 

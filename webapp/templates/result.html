@@ -188,7 +188,7 @@
   <h3 style="margin-bottom:8px">🧭 환금성·경쟁 진단</h3>
   <ul class="note-lines" style="margin-top:0; margin-bottom:12px">
     <li>"얼마에 팔리나"(위 매도가)와 별개로, <b>"얼마나 잘 팔리나"</b>를 본 것이에요.</li>
-    <li>빌라 강의가 <b>중요하다고 짚은 순서대로</b> 번호를 매겼습니다 — 1번부터 보세요.</li>
+    <li><b>중요한 순서대로</b> 번호를 매겼습니다 — 1번부터 보세요.</li>
   </ul>
 
   {% if result.marketability.score is not none %}
@@ -210,7 +210,7 @@
       <span class="mk-pill">{{ item.icon }} {{ item.verdict_label }}</span>
     </div>
     <p class="mk-text">{{ item.text }}</p>
-    <p class="mk-lecture">{{ item.lecture }}</p>
+    <p class="mk-lecture">{{ item.why }}</p>
   </div>
   {% endfor %}
 
@@ -220,7 +220,7 @@
     {% endfor %}
   </div>
   <ul class="note-lines" style="margin-top:10px">
-    <li>⚠️ 이미 계산된 지표(거래량·경쟁매물·가격위치·신뢰도·건축물대장)를 강의 경험칙에 맞춰 등급만 매긴 <b>규칙 기반 판정</b>입니다.</li>
+    <li>⚠️ 이미 계산된 지표(거래량·경쟁매물·가격위치·신뢰도·건축물대장)를 경험칙에 맞춰 등급만 매긴 <b>규칙 기반 판정</b>입니다.</li>
     <li>통계로 검증한 기준이 아니에요.</li>
     <li>채광·누수·악취·소음·관리상태처럼 데이터로 알 수 없는 항목은 아래 임장 체크리스트로 직접 확인하셔야 합니다.</li>
   </ul>
@@ -252,7 +252,7 @@
   </div>
   <ul class="note-lines" style="margin-top:10px">
     <li>⚠️ 국토부 실거래가에는 수리상태 정보가 없어 <b>검증된 수치가 아닙니다</b>.</li>
-    <li>경매 강의·경험에서 나온 참고 배율(노후 0.90 · 기본 1.00 · 올수리 1.08)을 곱한 값일 뿐이에요.</li>
+    <li>현장 경험에서 나온 참고 배율(노후 0.90 · 기본 1.00 · 올수리 1.08)을 곱한 값일 뿐이에요.</li>
     {% if not result.condition_adjustment.has_cost %}<li>상세 옵션에서 예상 공사비를 넣으면 "고쳐서 남는지"까지 계산해 드립니다.</li>{% endif %}
   </ul>
 </div>
@@ -430,7 +430,7 @@
 <div class="card">
   <h3>임장 체크리스트 (참고용)</h3>
   <ul class="note-lines">
-    <li>아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있다고 해요.</li>
+    <li>아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있어요.</li>
     <li>임장(현장답사) 때 직접 확인하세요 — 매도가 계산에는 반영되지 않습니다.</li>
   </ul>
   <p style="margin-top:8px">{{ result.inspection_checklist | join(' · ') }}</p>

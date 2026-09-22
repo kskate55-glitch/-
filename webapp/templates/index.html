@@ -110,19 +110,23 @@
     <div class="field">
       <span class="field-icon" aria-hidden="true">🧹</span>
       <div class="field-body">
-        <label>기본 정리 공사비(만원)</label>
+        <label>기본 정리까지 공사비(만원) <span class="field-tag">보통 여기까지</span></label>
         <input type="number" name="repair_cost_basic" placeholder="450" value="{{ form.repair_cost_basic if form else '' }}">
       </div>
     </div>
     <div class="field">
       <span class="field-icon" aria-hidden="true">🛠️</span>
       <div class="field-body">
-        <label>올수리 공사비(만원)</label>
+        <label>올수리까지 공사비(만원) <span class="field-tag field-tag-rare">드묾</span></label>
         <input type="number" name="repair_cost_full" placeholder="1200" value="{{ form.repair_cost_full if form else '' }}">
       </div>
     </div>
   </div>
-  <p class="hint" style="margin-top:-2px">※ 공사비를 넣으면 "고쳐서 얼마나 더 받는지 − 공사비 = <b>순증</b>"까지 계산해 드려요.</p>
+  <ul class="note-lines" style="margin-top:2px">
+    <li>경매 단타에서는 보통 <b>청소·도배·장판 정도(기본 정리)</b>까지만 하고 팝니다 — 전체 리모델링은 드물어요.</li>
+    <li>두 칸 모두 <b>지금 상태 기준 총액</b>이에요 — 올수리 칸은 "기본 정리에 더할 금액"이 아니라 처음부터 끝까지 드는 돈입니다.</li>
+    <li>넣으면 "고쳐서 얼마나 더 받는지 − 공사비 = <b>순증</b>"까지 계산해서, 손볼 값어치가 있는지 보여드려요.</li>
+  </ul>
 
   <details class="adv" {{ "open" if adv_filled else "" }}>
     <summary>상세 옵션 펼치기 <span class="muted">(비교 반경·면적/연식 허용범위·월세 등)</span></summary>

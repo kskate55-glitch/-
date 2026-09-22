@@ -763,11 +763,46 @@ class TestMarketabilityReport(unittest.TestCase):
         self.assertEqual(comp["verdict"], "unknown")
         self.assertIn("붙여넣으면", comp["text"])
 
-    def test_info_items_do_not_affect_the_score(self):
-        base = ep.build_marketability_report(floor=3, confidence=85)
-        with_year = ep.build_marketability_report(floor=3, confidence=85,
-                                                   build_year=1995, this_year=2026)
-        self.assertEqual(base["score"], with_year["score"])
+    def test_unknown_items_do_not_affect_the_score(self):
+        """정보가 없어서 `unknown`인 항목은 감점도 가점도 아니다 —
+        매물을 안 붙여넣었다고 점수가 깎이면 안 된다."""
+        r = ep.build_marketability_report(floor=3, confidence=85)
+        comp = next(i for i in r["items"] if i["key"] == "competition")
+        self.assertEqual(comp["verdict"], "unknown")
+        self.assertEqual(r["score"], 100)  # 층 good + 신뢰도 good만 반영
+
+
+class TestBuildYearScoring(unittest.TestCase):
+    """41절 — 사용자 요청으로 연식이 참고 안내(`info`)에서 실제 감점
+    항목으로 바뀌었다: "완전 구축이면 그것도 디버프 요소로 넣어줘"."""
+
+    def _verdict(self, build_year, this_year=2026):
+        r = ep.build_marketability_report(build_year=build_year, this_year=this_year)
+        return next(i for i in r["items"] if i["key"] == "build_year")["verdict"]
+
+    def test_recent_build_is_good(self):
+        self.assertEqual(self._verdict(2026 - ep.BUILD_AGE_NEW_MAX), "good")
+
+    def test_middle_aged_is_ok(self):
+        self.assertEqual(self._verdict(2026 - ep.BUILD_AGE_NEW_MAX - 1), "ok")
+        self.assertEqual(self._verdict(2026 - ep.BUILD_AGE_OK_MAX), "ok")
+
+    def test_very_old_is_a_penalty(self):
+        self.assertEqual(self._verdict(2026 - ep.BUILD_AGE_OK_MAX - 1), "warn")
+        item_text = next(
+            i for i in ep.build_marketability_report(build_year=1985, this_year=2026)["items"]
+            if i["key"] == "build_year")["text"]
+        self.assertIn("완전 구축", item_text)
+
+    def test_old_build_actually_lowers_the_score(self):
+        new = ep.build_marketability_report(floor=3, confidence=85, build_year=2020, this_year=2026)
+        old = ep.build_marketability_report(floor=3, confidence=85, build_year=1985, this_year=2026)
+        self.assertLess(old["score"], new["score"])
+        self.assertIn("연식", " · ".join(old["weaknesses"]))
+
+    def test_unknown_build_year_is_skipped_entirely(self):
+        r = ep.build_marketability_report(floor=3, confidence=85)
+        self.assertNotIn("build_year", [i["key"] for i in r["items"]])
 
     def test_no_inputs_yields_no_score(self):
         r = ep.build_marketability_report()
@@ -792,8 +827,8 @@ class TestNormalizeDealingGbn(unittest.TestCase):
 
 
 class TestMarketabilityOrdering(unittest.TestCase):
-    """41절 — 항목은 강의가 중요하다고 짚은 순서로 나오고, 판정 항목에만
-    1부터 순번이 붙는다(참고 항목인 연식은 번호 없이 맨 뒤)."""
+    """41절 — 항목은 중요한 순서로 나오고 1부터 순번이 붙는다.
+    앞쪽이 물건 자체 속성(가격·층·입지·임장·연식), 뒤쪽이 시장 지표다."""
 
     def _report(self):
         return ep.build_marketability_report(
@@ -805,13 +840,12 @@ class TestMarketabilityOrdering(unittest.TestCase):
 
     def test_items_follow_the_lecture_priority_order(self):
         keys = [i["key"] for i in self._report()["items"]]
-        self.assertEqual(keys, ["price_position", "floor", "inspection", "volume",
-                                 "competition", "confidence", "build_year"])
+        self.assertEqual(keys, ["price_position", "floor", "inspection", "build_year",
+                                 "volume", "competition", "confidence"])
 
-    def test_ranks_are_sequential_and_skip_info_items(self):
+    def test_ranks_are_sequential(self):
         items = self._report()["items"]
-        self.assertEqual([i["rank"] for i in items[:6]], [1, 2, 3, 4, 5, 6])
-        self.assertIsNone(items[-1]["rank"])  # 연식(info)은 번호 없음
+        self.assertEqual([i["rank"] for i in items], [1, 2, 3, 4, 5, 6, 7])
 
     def test_every_item_carries_a_korean_verdict_label(self):
         for item in self._report()["items"]:
@@ -825,6 +859,13 @@ class TestMarketabilityOrdering(unittest.TestCase):
         keys = [i["key"] for i in r["items"]]
         self.assertEqual(keys, ["floor", "inspection", "volume", "competition", "confidence"])
         self.assertEqual([i["rank"] for i in r["items"]], [1, 2, 3, 4, 5])
+
+    def test_unknown_items_still_get_a_number(self):
+        """`unknown`(매물 미입력 시 경쟁 항목)은 점수에서만 빠지고 번호는 받는다."""
+        items = ep.build_marketability_report(floor=3, confidence=80)["items"]
+        comp = next(i for i in items if i["key"] == "competition")
+        self.assertEqual(comp["verdict"], "unknown")
+        self.assertIsNotNone(comp["rank"])
 
 
 class TestInspectionScoring(unittest.TestCase):
@@ -980,9 +1021,7 @@ class TestAptGap(unittest.TestCase):
                                            listing_summary={"percentile": 20, "n": 5})
         keys = [i["key"] for i in r["items"]]
         self.assertEqual(keys[0], "price_position")
-        scored = [i for i in r["items"] if i["verdict"] != "info"]
-        self.assertEqual(scored[-1]["key"], "apt_gap")
-        self.assertEqual(keys[-1], "build_year")
+        self.assertEqual(keys[-1], "apt_gap")
 
     def test_apt_gap_text_flags_it_as_a_long_hold_signal(self):
         """갭이 크다는 건 "지금 당장 빨리 팔린다"가 아니라 "수요층이 두껍고

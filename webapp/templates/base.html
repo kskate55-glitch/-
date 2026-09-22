@@ -213,6 +213,13 @@
     content: ""; width: 4px; height: 17px; border-radius: 2px; background: var(--primary);
   }
   .form-section .form-section-hint { font-size: 13px; font-weight: 600; color: var(--muted-2); }
+  /* 라벨 옆 작은 배지 — "둘 중 보통 쓰는 쪽이 어디인지"를 한눈에 알리는 용도 */
+  .field-tag {
+    display: inline-block; margin-left: 5px; padding: 1px 7px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 700; vertical-align: 1px;
+    background: var(--primary-tint); color: var(--primary-dark);
+  }
+  .field-tag-rare { background: #f1f2f4; color: var(--muted); }
 
   /* 아이콘 타일 + 입력칸 한 줄 */
   .field { display: flex; align-items: center; gap: 11px; }

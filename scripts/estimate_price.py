@@ -1077,15 +1077,24 @@ MARKETABILITY_VERDICT_LABELS = {
 #   4) 경쟁 매물 — "실제 매물·실거래·주변 경쟁물건을 함께 확인"(7절).
 #   5) 시세 판단 근거 — "개별성이 강해 실거래 하나로 정하면 안 된다"(4절).
 #   6) 연식 — "연식별 거래량을 따로 보라"(6절 4번). 판정이 아닌 참고.
+# 앞쪽 = 물건 자체 속성(가격·층·입지·임장·연식), 뒤쪽 = 시장 지표.
+# 연식은 판정 항목이 되면서 물건 속성 묶음 맨 뒤로 들어왔다.
 MARKETABILITY_ORDER = [
-    "price_position", "floor", "transit_school", "inspection",
-    "volume", "competition", "confidence", "apt_gap", "build_year",
+    "price_position", "floor", "transit_school", "inspection", "build_year",
+    "volume", "competition", "confidence", "apt_gap",
 ]
 
 # CLAUDE.md 45절 — 역세권·초품아 판정 거리. 사용자가 "층·승강기 다음으로
 # 중요한 요소"라고 짚어서 41절 진단에 넣었다.
 # ⚠️ 경계값은 통상 쓰이는 기준(역까지 도보 10분 ≈ 800m, 초등학교 도보
 # 통학권 ≈ 500m)을 옮긴 참고값이지 데이터로 검증한 수치가 아니다.
+# CLAUDE.md 41절 — 연식 판정. 원래는 판정 없이 "2010년 전후로 매수층이
+# 갈린다"는 안내(`info`)만 했는데, 사용자가 "완전 구축이면 그것도 디버프
+# 요소로 넣어달라"고 해서 실제 감점 항목으로 바꿨다.
+# ⚠️ 경계값은 경험적으로 끊은 참고값이지 데이터로 검증한 수치가 아니다.
+BUILD_AGE_NEW_MAX = 15   # 이내면 준신축 — 실거주 매수층이 가장 두껍다
+BUILD_AGE_OK_MAX = 30    # 이내면 무난 / 넘으면 "완전 구축"
+
 STATION_NEAR_M = 800    # 이내면 역세권
 STATION_OK_M = 1200     # 이내면 걸어갈 만함
 SCHOOL_NEAR_M = 500     # 이내면 초품아급 도보 통학권
@@ -1259,13 +1268,21 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
         items.append({"key": "confidence", "label": "시세 판단 근거 (개별성 극복 정도)", "verdict": v, "text": t,
                        "why": "빌라는 개별성이 강해서 실거래 하나만 보고 가격을 정하면 안 됩니다"})
 
-    # ⑥ 연식 — 판정이 아니라 접근 방향 안내(구옥/준신축은 타겟 자체가 다르다).
+    # ⑥ 연식 — 예전엔 판정 없는 안내(`info`)였는데, 사용자가 "완전 구축이면
+    #    그것도 디버프 요소로 넣어달라"고 해서 실제 감점 항목으로 바꿨다.
     if build_year and this_year:
         age = this_year - build_year
-        target = ("2010년 이전 구옥이라 정비구역·저가 단타 쪽 수요가"
-                   if build_year < 2010 else "2010년 이후 준신축이라 실거주 수요가")
-        t = f"{build_year}년식(약 {age}년차)이에요. {target} 상대적으로 더 붙는 편이라 매수층 자체가 다릅니다."
-        items.append({"key": "build_year", "label": "연식 (매수층이 갈리는 지점)", "verdict": "info", "text": t,
+        if age <= BUILD_AGE_NEW_MAX:
+            v, t = "good", (f"{build_year}년식(약 {age}년차) 준신축이라 실거주 매수층이 가장 두꺼운 구간이에요 "
+                             f"— 연식만으로 걸러지는 일이 거의 없습니다.")
+        elif age <= BUILD_AGE_OK_MAX:
+            v, t = "ok", (f"{build_year}년식(약 {age}년차)이에요. 아주 불리하진 않지만 "
+                           f"{BUILD_AGE_NEW_MAX}년 이내 물건과 나란히 놓이면 밀리는 편이라 가격으로 상쇄해야 합니다.")
+        else:
+            v, t = "warn", (f"{build_year}년식(약 {age}년차) 완전 구축이라 실거주 매수층이 확 좁아집니다 "
+                             f"— 대출·보수비 부담까지 겹쳐 같은 값이면 더 새 물건으로 넘어가요. "
+                             f"정비구역 기대감이 붙는 자리가 아니면 가격을 확실히 낮춰야 팔립니다.")
+        items.append({"key": "build_year", "label": "연식 (오래될수록 매수층이 좁아짐)", "verdict": v, "text": t,
                        "why": "연식별로 거래량과 매수층이 다르니 따로 떼서 봐야 합니다"})
 
     # 강의가 중요하다고 짚은 순서로 정렬하고(위 MARKETABILITY_ORDER), 판정이

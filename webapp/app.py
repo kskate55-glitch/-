@@ -62,6 +62,121 @@ def index():
     return render_template("index.html", last_year=datetime.now().year - 1)
 
 
+# ── 48절 정확도 백테스트 (웹) ────────────────────────────────────────────
+# CLI(`scripts/backtest.py`)와 **같은 함수를 그대로 부른다** — 누출 차단
+# 로직(`estimate_as_of`)이 한 곳에만 있어야 웹과 CLI 결과가 갈리지 않는다.
+#
+# ⚠️ 사용자가 "왕초보라 터미널을 못 쓴다"고 해서 만든 화면이다. 터미널·파이썬
+#    설치·키 입력이 전부 필요 없고, 이미 배포된 사이트에서 버튼만 누르면 된다.
+# ⚠️ 건수 상한이 낮은 이유는 Render 무료 티어 gunicorn 타임아웃(120초) 때문이다.
+#    첫 건은 비교거래를 수백 개 지오코딩해야 해서 느리지만, 같은 구 안에서는
+#    주소가 겹쳐 캐시가 차므로 두 번째 건부터는 훨씬 빠르다.
+BACKTEST_MAX_CASES = 20
+BACKTEST_DEFAULT_CASES = 10
+
+
+def _backtest_regions() -> list[dict]:
+    """`data/lawd_codes.md` 표를 드롭다운용 목록으로. 시도 → 구 순으로 정렬."""
+    from lawd_lookup import _get_cache
+
+    items = [{"code": code, "sido": sido, "gu": gu}
+             for code, (sido, gu) in _get_cache().items()]
+    items.sort(key=lambda r: (r["sido"], r["gu"]))
+    return items
+
+
+@app.route("/backtest", methods=["GET", "POST"])
+def backtest_page():
+    from datetime import datetime as _dt
+
+    regions = _backtest_regions()
+    form = request.form if request.method == "POST" else {}
+    lawd_cd = (form.get("lawd_cd") or "").strip()
+    try:
+        n_cases = min(int(form.get("n_cases") or BACKTEST_DEFAULT_CASES), BACKTEST_MAX_CASES)
+    except ValueError:
+        n_cases = BACKTEST_DEFAULT_CASES
+    months = 1
+    try:
+        months = max(1, min(int(form.get("months") or 1), 6))
+    except ValueError:
+        pass
+
+    base = {"regions": regions, "lawd_cd": lawd_cd, "n_cases": n_cases,
+            "months": months, "max_cases": BACKTEST_MAX_CASES}
+
+    if request.method == "GET" or not lawd_cd:
+        return render_template("backtest.html", **base)
+
+    import backtest as bt
+    from data_source import get_trade_rows
+    from estimate_price import dedupe
+    from lawd_lookup import gu_name
+
+    gu = gu_name(lawd_cd)
+    this_year = _dt.now().year
+    try:
+        rows = dedupe(get_trade_rows(lawd_cd, this_year - 2))
+    except RuntimeError as e:
+        return render_template("backtest.html", error=f"국토부 조회 중 문제가 생겼어요: {e}", **base)
+
+    if not rows:
+        return render_template(
+            "backtest.html",
+            error="이 지역의 실거래 데이터를 찾지 못했어요. 다른 지역을 골라보세요.", **base)
+
+    targets, pool = bt.pick_targets(rows, months=months, n=n_cases, gu=None, seed=42)
+    if not targets:
+        return render_template(
+            "backtest.html",
+            error=f"최근 {months}개월 안에 검증할 거래가 없어요. 기간을 늘려보세요.", **base)
+
+    results, skipped = [], {}
+    for target in targets:
+        try:
+            out = bt.estimate_as_of(rows, target, 400, 2, 0.15, 4)
+        except Exception:
+            skipped["오류"] = skipped.get("오류", 0) + 1
+            continue
+        if out is None:
+            skipped["주소 인식 실패"] = skipped.get("주소 인식 실패", 0) + 1
+            continue
+        if out.get("skipped"):
+            skipped["비슷한 거래가 너무 적음"] = skipped.get("비슷한 거래가 너무 적음", 0) + 1
+            continue
+        out["error_pct"] = (out["median"] - out["actual"]) / out["actual"] * 100
+        out["in_band"] = out["p25"] <= out["actual"] <= out["p75"]
+        out["actual_eok"] = _fmt_eok(out["actual"])
+        out["median_eok"] = _fmt_eok(out["median"])
+        out["p25_eok"] = _fmt_eok(out["p25"])
+        out["p75_eok"] = _fmt_eok(out["p75"])
+        d = str(out["ymd"])
+        out["date_label"] = f"{d[2:4]}.{d[4:6]}.{d[6:8]}"
+        results.append(out)
+
+    if not results:
+        return render_template(
+            "backtest.html",
+            error="검증할 수 있는 건이 하나도 없었어요 — " +
+                  " · ".join(f"{k} {v}건" for k, v in skipped.items()),
+            **base)
+
+    results.sort(key=lambda r: abs(r["error_pct"]))
+    summary = bt.summarize(results)
+
+    # 7절 시세 신뢰도가 실제로 정확도를 예측하는지 — 이 페이지의 숨은 핵심 지표
+    bands = []
+    for label, lo, hi in (("70점 이상", 70, 101), ("40~69점", 40, 70), ("40점 미만", 0, 40)):
+        group = [abs(r["error_pct"]) for r in results if lo <= r["confidence"] < hi]
+        if group:
+            bands.append({"label": label, "n": len(group),
+                          "mape": sum(group) / len(group)})
+
+    return render_template(
+        "backtest.html", results=results, summary=summary, bands=bands,
+        skipped=skipped, pool=pool, gu=gu, **base)
+
+
 @app.route("/estimate", methods=["POST"])
 def estimate():
     form = request.form

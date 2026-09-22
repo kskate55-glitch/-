@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>🎯 계산기 정확도 테스트</h1>
+
+<div class="card" style="background:var(--primary-tint); border-color:var(--primary)">
+  <h3 style="margin-bottom:8px">이게 뭔가요?</h3>
+  <ul class="note-lines" style="margin:0">
+    <li><b>이미 팔린 집</b>을 무작위로 골라서, 계산기가 그 가격을 맞히는지 확인해요.</li>
+    <li>공정하게 하려고 <b>그 집이 팔리기 전날로 시계를 되돌려서</b> 계산합니다 —
+      그 거래 자체를 보고 맞히면 반칙이니까요.</li>
+    <li>지역만 고르고 버튼을 누르면 됩니다. 설치할 것도, 입력할 것도 없어요.</li>
+  </ul>
+</div>
+
+<form method="post" action="/backtest">
+  <div class="form-section">지역과 건수를 고르세요</div>
+
+  <div class="field">
+    <div class="field-icon">📍</div>
+    <div style="flex:1">
+      <label for="lawd_cd">지역 (구 단위)</label>
+      <select id="lawd_cd" name="lawd_cd" required>
+        <option value="">— 고르세요 —</option>
+        {% for r in regions %}
+        <option value="{{ r.code }}"{{ ' selected' if r.code == lawd_cd else '' }}>{{ r.sido }} {{ r.gu }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <div class="field-icon">🔢</div>
+      <div style="flex:1">
+        <label for="n_cases">몇 건 테스트할까요</label>
+        <input type="number" id="n_cases" name="n_cases" min="3" max="{{ max_cases }}"
+               value="{{ n_cases }}">
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-icon">🗓️</div>
+      <div style="flex:1">
+        <label for="months">최근 몇 개월 거래로</label>
+        <input type="number" id="months" name="months" min="1" max="6" value="{{ months }}">
+      </div>
+    </div>
+  </div>
+
+  <ul class="note-lines" style="margin:0 0 4px">
+    <li>처음 돌리는 지역은 <b>1~2분쯤 걸려요</b> — 집집마다 위치를 찾아야 해서 그렇습니다.</li>
+    <li>같은 지역을 다시 돌리면 훨씬 빨라집니다. 건수는 <b>{{ max_cases }}건까지</b>예요.</li>
+  </ul>
+
+  <button type="submit" class="cta-submit">🎯 정확도 테스트 시작 →</button>
+</form>
+
+{% if error %}
+<div class="error" style="margin-top:14px">{{ error }}</div>
+{% endif %}
+
+{% if summary %}
+<div class="section-divider">테스트 결과{% if gu %} — {{ gu }}{% endif %}</div>
+
+<div class="card">
+  <h3>한눈에 보기</h3>
+  <div class="price-grid">
+    <div class="price-item">
+      <span class="label">평균 오차</span>
+      <span class="value">{{ '%.1f'|format(summary.mape) }}%</span>
+    </div>
+    <div class="price-item">
+      <span class="label">±10% 안에 맞힌 비율</span>
+      <span class="value">{{ '%.0f'|format(summary.within_10) }}%</span>
+    </div>
+    <div class="price-item">
+      <span class="label">예상 구간 안에 들어온 비율</span>
+      <span class="value">{{ '%.0f'|format(summary.in_band) }}%</span>
+    </div>
+    <div class="price-item">
+      <span class="label">높게/낮게 부르는 정도</span>
+      <span class="value">{{ '%+.1f'|format(summary.bias) }}%</span>
+    </div>
+  </div>
+
+  <ul class="note-lines" style="margin-top:14px">
+    <li><b>평균 오차</b> — 실제 팔린 가격과 평균 몇 % 차이 났는지예요. 낮을수록 좋습니다.</li>
+    <li><b>예상 구간 안에 들어온 비율</b> — 이 계산기는 숫자 하나가 아니라
+      <b>'급매가~상단 매도가' 구간</b>을 알려주죠. 실제 가격이 그 구간 안에 들어온 비율이라,
+      <b>사실 이게 제일 중요한 점수</b>예요.</li>
+    <li><b>높게/낮게 부르는 정도</b> —
+      {% if summary.bias > 1 %}<b>+{{ '%.1f'|format(summary.bias) }}%</b>니까 계산기가 평균적으로
+        <b>실제보다 높게</b> 부르고 있어요.
+      {% elif summary.bias < -1 %}<b>{{ '%.1f'|format(summary.bias) }}%</b>니까 계산기가 평균적으로
+        <b>실제보다 낮게</b> 부르고 있어요.
+      {% else %}거의 0에 가까워서 한쪽으로 치우치지 않았어요. 좋은 신호입니다.
+      {% endif %}
+      한쪽으로 크게 쏠려 있으면 계산기를 조정해서 고칠 수 있습니다.</li>
+  </ul>
+</div>
+
+{% if bands %}
+<div class="card">
+  <h3>'시세 신뢰도' 점수가 진짜 의미가 있나?</h3>
+  <p class="muted" style="margin-top:-4px">
+    계산기는 결과마다 신뢰도 점수를 같이 보여주죠. 그 점수가 높을 때 실제로 더 정확한지 확인한 겁니다.</p>
+  <div class="table-scroll">
+    <table>
+      <tr><th>신뢰도</th><th>건수</th><th>평균 오차</th></tr>
+      {% for b in bands %}
+      <tr><td>{{ b.label }}</td><td>{{ b.n }}건</td><td>{{ '%.1f'|format(b.mape) }}%</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <ul class="note-lines" style="margin-top:10px">
+    {% if bands|length > 1 %}
+      {% if bands[0].mape < bands[-1].mape %}
+      <li>✅ <b>신뢰도가 높을수록 실제로 더 정확합니다.</b> 점수가 제 역할을 하고 있어요.</li>
+      {% else %}
+      <li>⚠️ <b>신뢰도가 높은 쪽이 더 정확하지 않네요.</b> 점수 계산 방식을 손봐야 할 신호예요.</li>
+      {% endif %}
+    {% else %}
+      <li>이번 표본은 신뢰도가 한 구간에 몰려 있어서 비교가 안 됩니다 — 건수를 늘려보세요.</li>
+    {% endif %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>건별 결과 ({{ results|length }}건)</h3>
+  <p class="muted" style="margin-top:-4px">오차가 적은 순입니다. 초록 체크는 예상 구간 안에 들어온 거예요.</p>
+  <div class="table-scroll">
+    <table>
+      <tr>
+        <th>단지명</th><th>계약일</th><th>면적</th><th>층</th>
+        <th>실제 가격</th><th>계산기 예상</th><th>오차</th><th>구간</th><th>비교거래</th><th>신뢰도</th>
+      </tr>
+      {% for r in results %}
+      <tr>
+        <td>{{ r.name }}</td>
+        <td>{{ r.date_label }}</td>
+        <td>{{ '%.1f'|format(r.area) }}㎡</td>
+        <td>{{ r.floor }}층</td>
+        <td><b>{{ r.actual_eok }}</b></td>
+        <td>{{ r.median_eok }}</td>
+        <td style="color:{{ '#2f9e44' if r.error_pct|abs <= 10 else '#d33232' }}; font-weight:700">
+          {{ '%+.1f'|format(r.error_pct) }}%</td>
+        <td>{{ '✅' if r.in_band else '—' }}</td>
+        <td>{{ r.n_comparables }}</td>
+        <td>{{ r.confidence }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <ul class="note-lines" style="margin-top:12px">
+    <li>후보 {{ pool }}건 중 {{ results|length }}건을 검증했어요{% if skipped %}
+      (제외: {% for k, v in skipped.items() %}{{ k }} {{ v }}건{{ ' · ' if not loop.last }}{% endfor %}).{% else %}.{% endif %}</li>
+    <li>비교 기준은 <b>'현실적 체결가'</b>입니다 — 여기 나오는 건 전부 일반 매매라
+      '경매용 매도가'와 비교하면 안 돼요(그건 원래 더 낮게 나오는 값이라서요).</li>
+    <li>비슷한 거래가 3건도 없으면 그 건은 건너뜁니다 — 데이터가 없어서 못 맞힌 걸
+      계산기 탓으로 돌리면 안 되니까요.</li>
+  </ul>
+</div>
+{% endif %}
+
+<a class="back" href="/">← 매도가 계산기로 돌아가기</a>
+{% endblock %}

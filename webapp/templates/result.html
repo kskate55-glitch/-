@@ -165,6 +165,34 @@
 </div>
 {% endif %}
 
+{% if result.marketability and result.marketability['items'] %}
+<div class="card">
+  <h3 style="margin-bottom:6px">
+    🧭 환금성·경쟁 진단
+    {% if result.marketability.score is not none %}
+    <span class="badge {{ 'warn' if result.marketability.score < 50 else '' }}" style="margin-left:6px">{{ result.marketability.score }}/100 · {{ result.marketability.grade }}</span>
+    {% endif %}
+  </h3>
+  <p class="muted" style="margin-top:0; margin-bottom:12px">
+    "얼마에 팔리나"(위 매도가)와 별개로 <b>"얼마나 잘 팔리나"</b>를 빌라 강의 기준으로 항목별로 본 것이에요.
+  </p>
+  <ul class="ref-list" style="margin-top:4px">
+    {% for item in result.marketability['items'] %}
+    <li style="margin-bottom:10px">
+      <b>{{ item.icon }} {{ item.label }}</b><br>
+      <span style="font-size:13.5px; line-height:1.65">{{ item.text }}</span><br>
+      <span class="muted" style="font-size:11.5px">└ {{ item.lecture }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <p style="margin:12px 0 0; font-size:14px; line-height:1.7"><b>→ {{ result.marketability.summary }}</b></p>
+  <p class="muted" style="margin-top:8px">
+    ⚠️ 이미 계산된 지표(거래량·경쟁매물·가격위치·신뢰도·건축물대장)를 강의 경험칙에 맞춰 등급만 매긴 <b>규칙 기반 판정</b>입니다 —
+    통계로 검증한 기준이 아니고, 채광·누수·악취·소음·관리상태처럼 데이터로 알 수 없는 항목은 아래 임장 체크리스트로 직접 확인하셔야 해요.
+  </p>
+</div>
+{% endif %}
+
 {% if result.condition_adjustment %}
 <div class="card">
   <h3>🔧 상태별 매도가 3단계 ({{ result.condition_adjustment.base_label }} 기준)</h3>

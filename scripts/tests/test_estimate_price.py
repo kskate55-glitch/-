@@ -724,5 +724,56 @@ class TestSalePressureVerdict(unittest.TestCase):
         self.assertNotIn("개월치", v)
 
 
+class TestMarketabilityReport(unittest.TestCase):
+    """CLAUDE.md 41절 — 환금성·경쟁 진단(강의 기준 규칙 판정)."""
+
+    def test_good_conditions_score_high(self):
+        r = ep.build_marketability_report(
+            floor=3, build_year=2018, this_year=2026, confidence=85,
+            liquidity={"counts": {(500, 3): 12}}, building={"has_elevator": True})
+        self.assertGreaterEqual(r["score"], 75)
+        self.assertEqual(r["grade"], "환금성 좋은 편")
+        self.assertEqual(r["weaknesses"], [])
+
+    def test_bad_conditions_score_low_and_list_weaknesses(self):
+        r = ep.build_marketability_report(
+            floor=5, build_year=2012, this_year=2026, confidence=30,
+            liquidity={"counts": {(500, 3): 1}}, building={"has_elevator": False},
+            sale_pressure={"n_listings": 14, "monthly_deal_avg": 0.3,
+                            "months_of_supply": 42.0, "level": "높음", "desc": ""},
+            listing_summary={"percentile": 80, "n": 11})
+        self.assertLess(r["score"], 50)
+        self.assertIn("거래량", r["weaknesses"])
+        self.assertIn("층·승강기", r["weaknesses"])
+
+    def test_basement_floor_is_always_a_weakness(self):
+        r = ep.build_marketability_report(floor=0, liquidity={"counts": {(500, 3): 30}})
+        floor_item = next(i for i in r["items"] if i["key"] == "floor")
+        self.assertEqual(floor_item["verdict"], "warn")
+
+    def test_elevator_rescues_a_high_floor(self):
+        with_elv = ep.build_marketability_report(floor=5, building={"has_elevator": True})
+        without = ep.build_marketability_report(floor=5, building={"has_elevator": False})
+        self.assertEqual(next(i for i in with_elv["items"] if i["key"] == "floor")["verdict"], "good")
+        self.assertEqual(next(i for i in without["items"] if i["key"] == "floor")["verdict"], "warn")
+
+    def test_competition_item_is_unknown_without_pasted_listings(self):
+        r = ep.build_marketability_report(liquidity={"counts": {(500, 3): 9}})
+        comp = next(i for i in r["items"] if i["key"] == "competition")
+        self.assertEqual(comp["verdict"], "unknown")
+        self.assertIn("붙여넣으면", comp["text"])
+
+    def test_info_items_do_not_affect_the_score(self):
+        base = ep.build_marketability_report(floor=3, confidence=85)
+        with_year = ep.build_marketability_report(floor=3, confidence=85,
+                                                   build_year=1995, this_year=2026)
+        self.assertEqual(base["score"], with_year["score"])
+
+    def test_no_inputs_yields_no_score(self):
+        r = ep.build_marketability_report()
+        self.assertIsNone(r["score"])
+        self.assertEqual(r["grade"], "판단 보류")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -188,6 +188,7 @@ def estimate():
         if building_info:
             building = {
                 "elevator": f"있음 ({building_info['elevator_count']}대)" if building_info["has_elevator"] else "없음",
+                "has_elevator": building_info["has_elevator"],  # 41절 환금성 진단이 쓴다
                 "household_count": building_info.get("household_count"),
                 "approval_date": building_info.get("approval_date"),
                 "ground_floors": building_info.get("ground_floors"),
@@ -615,6 +616,18 @@ def estimate():
                                        listing_summary=listing_price_summary,
                                        model_divergence_pct=scen.get("model_divergence_pct"),
                                        sale_pressure=pressure)
+
+    # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
+    # 매물을 붙여넣었으면 경쟁 매물·가격 위치 항목까지 채워진다.
+    from estimate_price import MARKETABILITY_ICONS, build_marketability_report
+
+    marketability = build_marketability_report(
+        floor=floor, build_year=int(build_year), this_year=this_year,
+        confidence=scen["confidence"], liquidity=liquidity, sale_pressure=pressure,
+        listing_summary=listing_price_summary, building=building)
+    for item in marketability["items"]:
+        item["icon"] = MARKETABILITY_ICONS.get(item["verdict"], "·")
+    result["marketability"] = marketability
 
     monthly_deposit = _optional_float("monthly_deposit")
     if monthly_deposit is not None:

@@ -490,17 +490,31 @@
   footer { margin-top: 28px; color: var(--muted-2); font-size: 13px; line-height: 1.75; padding: 0 4px; }
 
   #loading-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(242, 244, 246, 0.96);
-    z-index: 100; flex-direction: column; align-items: center; justify-content: center;
+    display: none; position: fixed;
+    /* ⚠️ `inset: 0` 한 줄만 쓰면 구형 모바일 브라우저(iOS Safari 14.0 이하,
+       구형 안드로이드 웹뷰)에서 이 줄이 통째로 무시된다 — 그러면 position:
+       fixed인데 상하좌우 오프셋이 전부 auto라 요소가 **문서 맨 아래(원래
+       자기 자리)** 에 그려져서, 스크롤이 조금이라도 내려가 있으면 화면에
+       아무것도 안 보인다. 실제로 "핸드폰에서 로딩 마크가 안 뜬다"는 신고를
+       받고 찾은 원인이라, 롱핸드를 먼저 쓰고 inset은 뒤에 남겨 둔다. */
+    top: 0; right: 0; bottom: 0; left: 0; inset: 0;
+    background: rgba(242, 244, 246, 0.96);
+    z-index: 2147483000; flex-direction: column; align-items: center; justify-content: center;
     gap: 14px; padding: 20px 16px; overflow-y: auto;
   }
   #loading-overlay.active { display: flex; }
   .spinner {
     width: 40px; height: 40px; border: 4px solid var(--primary-tint); border-top-color: var(--primary);
     border-radius: 50%; animation: spin 0.8s linear infinite; flex: none;
+    -webkit-animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  #loading-overlay p { color: #444; font-size: 14px; margin: 0; text-align: center; max-width: 520px; }
+  @-webkit-keyframes spin { to { -webkit-transform: rotate(360deg); } }
+  /* flex `gap`도 iOS Safari 14.1부터라, 안 먹는 기기에서도 스피너와 문구가
+     붙어 보이지 않게 여백을 margin으로도 한 번 더 준다. */
+  #loading-overlay p {
+    color: #444; font-size: 14px; margin: 14px 0 0; text-align: center; max-width: 520px;
+  }
 
   @media (max-width: 420px) {
     .hero-price { font-size: 32px; }
@@ -566,11 +580,38 @@
   ];
   var TIP_MS_TEXT = 3500;
 
+  // 뒤로가기로 돌아왔을 때(BFCache) 오버레이가 켜진 채로 복원되면 멀쩡한
+  // 페이지 위에 스피너만 계속 돌아간다 — 복원 시 무조건 끈다.
+  window.addEventListener("pageshow", function () {
+    var el = document.getElementById("loading-overlay");
+    if (el) el.classList.remove("active");
+  });
+
   document.querySelectorAll("form").forEach(function (form) {
     form.addEventListener("submit", function () {
+      // ⚠️ 모바일에서 오버레이가 안 보인다는 신고로 고친 부분이다.
+      // (1) 입력칸에 포커스가 남아 있으면 소프트 키보드가 떠 있는데, iOS
+      //     Safari는 키보드가 뜬 동안 position:fixed 요소를 화면 밖(레이아웃
+      //     뷰포트 기준)에 그려버린다 — 포커스를 먼저 풀어 키보드를 닫는다.
+      // (2) 스크롤이 내려가 있으면(제출 버튼은 폼 맨 아래에 있으니 거의
+      //     항상 그렇다) fixed가 제대로 안 먹는 브라우저에서 오버레이가
+      //     화면 밖에 남는다 — 맨 위로 올려 확실히 보이게 한다.
+      if (document.activeElement && document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+      window.scrollTo(0, 0);
+
+      var overlay = document.getElementById("loading-overlay");
+      overlay.classList.add("active");
+      // 강제 리플로우 — 내비게이션이 시작되기 전에 오버레이가 실제로 한 번
+      // 그려지도록 한다(모바일 브라우저는 페이지를 떠나기 직전 페인트를
+      // 건너뛰는 경우가 있다).
+      void overlay.offsetHeight;
+
+      // ⚠️ 제출 이벤트 안에서 버튼을 바로 disabled로 만들면 일부 구형
+      //    WebKit이 **폼 전송 자체를 취소한다** — 다음 틱으로 미룬다.
       var btn = form.querySelector("button[type=submit]");
-      if (btn) btn.disabled = true;
-      document.getElementById("loading-overlay").classList.add("active");
+      if (btn) setTimeout(function () { btn.disabled = true; }, 0);
 
       var textEl = document.getElementById("loading-text");
 

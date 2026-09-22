@@ -250,8 +250,18 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
 
     chart_id = f"pd-{uuid.uuid4().hex[:8]}"
 
+    # width="100%" height="{height}"(고정 픽셀)로 박아두면, 컨테이너가 viewBox
+    # 폭(width)보다 넓어도 SVG가 "1:1 크기까지만" 커지고 더는 안 커진다(높이가
+    # 정확히 맞아떨어지는 순간 preserveAspectRatio가 그 이상 확대를 막는다) —
+    # 그 결과 웹의 2단 레이아웃(카드가 좁아지는 구간)이나 넓은 데스크톱
+    # 화면에서 그래프 좌우로 빈 여백만 생기고 실제로는 더 안 커지는 문제가
+    # 있었다. `height:auto`로 바꿔서 컨테이너 폭에 맞춰 높이가 비율대로 따라
+    # 커지게 하면, 카드가 넓을 때는 그만큼 그래프도 커지고(예: 카드가
+    # viewBox보다 넓으면 확대돼서 보임), 좁을 때는 비율 그대로 줄어든다 —
+    # 모바일/데스크톱 어느 쪽이든 "컨테이너 폭 = 실제 렌더링 폭"이 항상
+    # 성립한다.
     svg = [
-        f'<svg viewBox="0 0 {width} {height}" width="100%" height="{height}" '
+        f'<svg viewBox="0 0 {width} {height}" style="width:100%; height:auto; display:block" '
         f'role="img" aria-label="비교거래 가격 분포와 산출값">'
     ]
 

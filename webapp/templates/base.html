@@ -502,10 +502,19 @@
     /* 사파리가 이 레이어를 따로 합성하게 해서, 페이지를 떠나기 직전의 한
        프레임 안에 확실히 그려지도록 돕는다(아래 JS의 rAF 2회와 한 세트). */
     -webkit-transform: translateZ(0); transform: translateZ(0); will-change: opacity;
-    z-index: 2147483000; flex-direction: column; align-items: center; justify-content: center;
-    gap: 14px; padding: 20px 16px; overflow-y: auto;
+    z-index: 2147483000; flex-direction: column; align-items: center;
+    /* ⚠️ justify-content: center로 두면 내용이 화면보다 길어졌을 때(모바일
+       팁 목록) 위쪽이 잘리고 그쪽으로는 스크롤이 안 된다 — 플렉스의 알려진
+       문제다. flex-start로 두고 안쪽 박스에 margin:auto를 줘서, 짧을 땐
+       가운데 정렬되고 길어지면 정상적으로 스크롤되게 한다. */
+    justify-content: flex-start;
+    padding: 20px 16px; overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
   #loading-overlay.active { display: flex; }
+  .load-box {
+    margin: auto; display: flex; flex-direction: column; align-items: center;
+    gap: 14px; width: 100%; max-width: 520px;
+  }
   .spinner {
     width: 40px; height: 40px; border: 4px solid var(--primary-tint); border-top-color: var(--primary);
     border-radius: 50%; animation: spin 0.8s linear infinite; flex: none;
@@ -517,6 +526,29 @@
      붙어 보이지 않게 여백을 margin으로도 한 번 더 준다. */
   #loading-overlay p {
     color: #444; font-size: 14px; margin: 14px 0 0; text-align: center; max-width: 520px;
+  }
+  /* 37절 팁을 한 번에 쭉 보여주는 목록 — 좁은 화면 전용이다(JS가 켠다).
+     넓은 화면은 예전처럼 문구 한 줄이 돌아가는 방식 그대로 둔다. */
+  #loading-tips-wrap { width: 100%; margin-top: 6px; }
+  .load-tips-head {
+    font-size: 12.5px; font-weight: 800; color: var(--primary-dark);
+    text-align: center; margin-bottom: 10px; letter-spacing: -0.2px;
+  }
+  #loading-tips { list-style: none; margin: 0; padding: 0; }
+  #loading-tips li {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 11px 13px; margin-bottom: 8px;
+    font-size: 13.5px; line-height: 1.65; color: #3a4046; text-align: left;
+  }
+  .load-head { display: flex; flex-direction: column; align-items: center; width: 100%; }
+  /* 팁 목록이 길어서 스크롤하다 보면 스피너가 화면 밖으로 나가 "아직 도는
+     중인지" 알 수 없어진다 — 좁은 화면에서만 상단을 붙여 둔다. */
+  @media (max-width: 720px) {
+    .load-head {
+      position: -webkit-sticky; position: sticky; top: -20px;
+      background: #f2f4f6;   /* 뒤로 팁이 비치지 않게 불투명하게 */
+      padding: 20px 0 10px; margin-top: -20px; z-index: 1;
+    }
   }
 
   @media (max-width: 420px) {
@@ -536,8 +568,18 @@
 {% endblock %}
 
 <div id="loading-overlay">
-  <div class="spinner"></div>
-  <p id="loading-text">실거래가 조회 중이에요, 처음 보는 지역이면 최대 1~2분 정도 걸릴 수 있어요…</p>
+  <div class="load-box">
+    <div class="load-head">
+      <div class="spinner"></div>
+      <p id="loading-text">실거래가 조회 중이에요, 처음 보는 지역이면 최대 1~2분 정도 걸릴 수 있어요…</p>
+    </div>
+    <!-- 좁은 화면에서만 보이는 팁 목록(37절). 넓은 화면은 예전처럼 위
+         문구 한 줄이 돌아간다 — 아래 JS의 TIPS_AS_LIST 참고. -->
+    <div id="loading-tips-wrap" hidden>
+      <div class="load-tips-head">기다리는 동안 읽어보세요</div>
+      <ul id="loading-tips"></ul>
+    </div>
+  </div>
 </div>
 <script>
   // 로딩이 길어질 때(특히 처음 조회하는 지역 — 비교거래마다 카카오 지오코딩을
@@ -721,6 +763,25 @@
 
       var textEl = document.getElementById("loading-text");
 
+      // 좁은 화면(모바일)에서는 팁을 한 줄씩 돌리는 대신 **전부 한 번에**
+      // 목록으로 깔아준다 — 작은 화면에서 3.5초마다 한 줄씩 읽는 것보다
+      // 쭉 훑는 편이 낫다는 사용자 요청이다. 넓은 화면은 손대지 않는다.
+      var TIPS_AS_LIST = !!(window.matchMedia &&
+                            window.matchMedia("(max-width: 720px)").matches);
+
+      if (TIPS_AS_LIST) {
+        var wrap = document.getElementById("loading-tips-wrap");
+        var list = document.getElementById("loading-tips");
+        if (wrap && list && !list.childNodes.length) {
+          LOADING_TIPS.forEach(function (tip) {
+            var li = document.createElement("li");
+            li.textContent = tip.text;
+            list.appendChild(li);
+          });
+        }
+        if (wrap) wrap.hidden = false;
+      }
+
       function showTip(i) {
         textEl.textContent = LOADING_TIPS[i].text;
         loadingTimers.push(setTimeout(function () {
@@ -737,6 +798,12 @@
           return;
         }
         clearInterval(stepTimer);
+        // 목록을 이미 깔아뒀으면 같은 팁을 위에서 또 돌릴 이유가 없다 —
+        // 단계가 끝났다는 것만 알려주고 멈춘다.
+        if (TIPS_AS_LIST) {
+          textEl.textContent = "거의 다 됐어요 — 결과를 정리하는 중이에요…";
+          return;
+        }
         showTip(0);
       }, 2200);
       loadingTimers.push(stepTimer);

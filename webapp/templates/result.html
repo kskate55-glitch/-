@@ -292,8 +292,28 @@
 </div>
 {% endif %}
 
-{% if result.building or result.terrain or result.villa_market_trend or result.dong_compare or result.station_premium %}
+{% if result.building or result.terrain or result.villa_market_trend or result.dong_compare or result.station_premium or result.condition_adjustment or result.inspection_checklist %}
 <div class="section-divider">참고 정보</div>
+{% endif %}
+
+{% if result.condition_adjustment %}
+<div class="card">
+  <h3>수리상태 참고 배율 ({{ result.condition_adjustment.label }}, {{ result.condition_adjustment.sign }}{{ result.condition_adjustment.pct }}% 참고용)</h3>
+  <p class="muted">⚠️ 국토부 실거래가에는 수리상태 정보가 없어 검증된 수치가 아닙니다 — 경매 강의/경험에서 나온 참고 배율일 뿐입니다.</p>
+  <ul class="ref-list" style="margin-top:8px">
+    {% for row in result.condition_adjustment.rows %}
+    <li>{{ row.label }}: {{ row.before }} → <strong>{{ row.after }}</strong></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if result.inspection_checklist %}
+<div class="card">
+  <h3>임장 체크리스트 (참고용)</h3>
+  <p class="muted">아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있다고 해요 — 임장(현장답사) 때 직접 확인하세요. 매도가 계산에는 반영되지 않습니다.</p>
+  <p style="margin-top:8px">{{ result.inspection_checklist | join(' · ') }}</p>
+</div>
 {% endif %}
 
 {% if result.building %}

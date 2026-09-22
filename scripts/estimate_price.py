@@ -249,6 +249,25 @@ PRICE_OUTLIER_MIN_SAMPLE = 5  # 이보다 표본이 적으면 이상치 판단 �
 SAME_BUILDING_DISTANCE_M = 20  # 빌라 한 동 부지 규모를 감안한 경험적 임계치 — 검증된 값은 아니다
 SAME_BUILDING_BONUS = 2.0  # GPT 제안 범위(1.5~2.5)의 중간값 — 마찬가지로 경험적 값
 
+# CLAUDE.md 35절: 수리상태별 매도가능가격 참고 배율 — 사용자가 들은 경매 강의의
+# "험한집/깔끔한 기본집/올수리는 각각 다른 매도가능가격을 가진다"는 인사이트를
+# 반영했다. 국토부 실거래가에는 수리상태 필드가 없어(18절 방개수 보정과 같은
+# 이유) 이 배율을 데이터로 검증할 방법이 없다 — SAME_BUILDING_BONUS와 같은
+# 성격의, 강의에서 나온 경험적 참고치일 뿐이다. "기본"은 배율 1.0(보정 없음)
+# 이라 결과 화면에 따로 표시하지 않는다.
+CONDITION_MULTIPLIER = {"올수리": 1.08, "기본": 1.00, "노후": 0.90}
+CONDITION_LABELS = {
+    "올수리": "올수리 (전체 리모델링 완료)",
+    "기본": "기본 (깨끗한 상태, 별도 수리 불필요)",
+    "노후": "노후 (수리 필요)",
+}
+
+# CLAUDE.md 36절: 임장 체크리스트 — 같은 강의에서 "이 요소들이 나쁘면 가격을
+# 낮춰도 잘 안 팔린다"고 짚은 8가지. 국토부 실거래가·카카오 API 어디에도
+# 이 정보가 없어 계산에는 전혀 반영하지 않는다 — 임장(현장답사) 때 사용자가
+# 직접 확인하라는 순수 참고용 체크리스트다.
+INSPECTION_CHECKLIST = ["채광", "엘리베이터", "주차", "누수", "악취", "소음", "관리상태", "경사"]
+
 
 def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area: float,
                       floor: int | None, build_year: str | None, radius_m: float,
@@ -1120,6 +1139,43 @@ def print_profit(bid_price_man: float, scenarios: dict, acquisition_rate: float,
     print("⚠️ 명도비·수리비·대출이자 등은 --extra-cost로 직접 반영해야 합니다 (기본값 0).")
 
 
+def compute_condition_adjustment(scenarios: dict, condition: str) -> dict:
+    """CLAUDE.md 35절: 수리상태별 매도가능가격 참고 배율을 8절/8-2절 산출값에
+    곱한 참고값을 만든다. 원래 값(scenarios)은 그대로 두고 별도 dict로 반환한다
+    — 7-2절 시계열보정의 "원본은 그대로, 보정값은 별도 필드" 원칙과 같다."""
+    multiplier = CONDITION_MULTIPLIER[condition]
+    return {key: round(value * multiplier, -1) for key, value in scenarios.items()}
+
+
+def print_condition_adjustment(scenarios: dict, condition: str, fmt):
+    if condition not in CONDITION_MULTIPLIER or condition == "기본":
+        return
+    adjusted = compute_condition_adjustment(scenarios, condition)
+    labels = {
+        "conservative": "보수적 급매가",
+        "realistic": "현실적 체결가",
+        "auction_price": "경매용 매도가",
+        "upper": "상단 매도가",
+        "ai_base": "AI 기준매도가",
+        "listing": "권장 최초 호가",
+    }
+    multiplier = CONDITION_MULTIPLIER[condition]
+    sign = "+" if multiplier >= 1 else ""
+    print(f"[수리상태 참고 배율] ({CONDITION_LABELS[condition]}, {sign}{(multiplier - 1) * 100:.0f}% 참고용)")
+    print("⚠️ 국토부 실거래가에는 수리상태 정보가 없어 검증된 수치가 아닙니다 — 경매 강의/경험에서 나온 참고 배율일 뿐입니다.")
+    for key, label in labels.items():
+        print(f"{label}: {fmt(scenarios[key])} → {fmt(adjusted[key])}")
+    print()
+
+
+def print_inspection_checklist():
+    print()
+    print("[임장 체크리스트] (참고용 — 매도가 계산에는 반영되지 않습니다)")
+    print("아래 요소가 나쁘면 가격을 낮춰도 잘 안 팔릴 수 있다고 합니다 — 임장(현장답사) 때 직접 확인하세요:")
+    print(", ".join(INSPECTION_CHECKLIST))
+    print()
+
+
 def print_location_check(subject_coord: tuple[float, float]):
     """CLAUDE.md 19절 규칙: 카카오 로컬 API로 가까운 지하철역/초등학교/마트를 찾는다."""
     from geocode import nearby_place
@@ -1568,6 +1624,8 @@ def main():
     ap.add_argument("--no-dong-compare", action="store_true", help="25절 인근 동 비교(거래활발도/가격상승률)를 건너뛴다")
     ap.add_argument("--station-premium", action="store_true", help="26절 역세권 프리미엄 참고(거리-가격 회귀)를 계산한다 — 카카오 키워드 검색을 비교거래마다 추가로 호출해서 기본은 꺼져 있다")
     ap.add_argument("--no-time-correction", action="store_true", help="7-2절 시계열 가격보정(오래된 거래를 이 동네 가격 추이로 지금 시세 수준으로 환산)을 건너뛴다")
+    ap.add_argument("--condition", choices=list(CONDITION_MULTIPLIER), default=None,
+                     help="35절 수리상태별 매도가능가격 참고 배율 — 생략하면 표시하지 않는다 (검증된 수치가 아닌 경험적 참고치)")
     args = ap.parse_args()
 
     this_year = datetime.now().year
@@ -1606,6 +1664,8 @@ def main():
 
     if not args.no_building_info:
         print_building_info(subject_detail)
+
+    print_inspection_checklist()
 
     if not args.no_market_trend:
         print_market_trend(args.address)
@@ -1661,6 +1721,13 @@ def main():
     print(f"AI 기준매도가: {fmt(ai_base)}")
     print(f"권장 최초 호가: {fmt(listing)}")
     print()
+
+    if args.condition:
+        condition_scenarios = {
+            "conservative": conservative, "realistic": realistic, "auction_price": auction_price,
+            "upper": upper, "ai_base": ai_base, "listing": listing,
+        }
+        print_condition_adjustment(condition_scenarios, args.condition, fmt)
 
     liquidity = compute_liquidity(rows, subject_coord, args.area, this_year, gu_filter,
                                    area_tolerance_pct=area_tolerance_pct)

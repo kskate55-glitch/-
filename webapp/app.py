@@ -195,6 +195,10 @@ def estimate():
     except RuntimeError:
         building = None  # 건축물대장 조회는 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
 
+    from estimate_price import CONDITION_LABELS, CONDITION_MULTIPLIER, INSPECTION_CHECKLIST
+
+    inspection_checklist = INSPECTION_CHECKLIST
+
     terrain = None
     try:
         from estimate_price import compute_terrain_check
@@ -313,6 +317,32 @@ def estimate():
     upper = scen["p75"]
     ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
     auction_price = round((conservative + realistic) / 2, -1)
+
+    # CLAUDE.md 35절 — 강의에서 나온 수리상태별 매도가능가격 참고 배율.
+    # "기본"이나 미선택이면 배율이 1.0이라 카드 자체를 표시하지 않는다.
+    condition = form.get("condition", "").strip()
+    condition_display = None
+    if condition in CONDITION_MULTIPLIER and condition != "기본":
+        from estimate_price import compute_condition_adjustment
+
+        condition_scenarios = {
+            "conservative": conservative, "realistic": realistic, "auction_price": auction_price,
+            "upper": upper, "ai_base": ai_base,
+        }
+        condition_adjusted = compute_condition_adjustment(condition_scenarios, condition)
+        multiplier = CONDITION_MULTIPLIER[condition]
+        condition_display = {
+            "label": CONDITION_LABELS[condition],
+            "sign": "+" if multiplier >= 1 else "",
+            "pct": f"{(multiplier - 1) * 100:.0f}",
+            "rows": [
+                {"label": label, "before": _fmt_eok(condition_scenarios[key]), "after": _fmt_eok(condition_adjusted[key])}
+                for key, label in [
+                    ("conservative", "보수적 급매가"), ("realistic", "현실적 체결가"),
+                    ("auction_price", "경매용 매도가"), ("upper", "상단 매도가"), ("ai_base", "AI 기준매도가"),
+                ]
+            ],
+        }
 
     from estimate_price import (
         PRICE_TIER_LABELS, build_verdict, compute_liquidity, compute_price_tiers,
@@ -464,6 +494,8 @@ def estimate():
         "period": f"{year_min}.01 ~ {this_year}.12",
         "building": building,
         "terrain": terrain,
+        "inspection_checklist": inspection_checklist,
+        "condition_adjustment": condition_display,
         "villa_market_trend": villa_market_trend,
         "dong_compare": dong_compare,
         "station_premium": station_premium,

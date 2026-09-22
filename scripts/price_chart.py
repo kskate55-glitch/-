@@ -214,13 +214,35 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
 
     dot_count = len(rows)
     truncated_note = f" (가까운 {dot_count}건만 표시)" if len(filtered) > max_dots else ""
+
+    def _legend_row(head_color: str, head: str, sub: str) -> str:
+        return (
+            f'<div style="display:flex; flex-direction:column; gap:1px">'
+            f'<span style="color:{head_color}; font-weight:700; font-size:12.5px; line-height:1.4">{head}</span>'
+            f'<span style="color:{MUTED}; font-size:11px; line-height:1.5">{sub}</span>'
+            f'</div>'
+        )
+
     caption = (
-        f'<p class="muted" style="margin-top:6px">● 점 하나 = 비교거래 1건{truncated_note}, '
-        f'누르면 상세 정보가 뜹니다 · 진하고 클수록 대상 물건과 조건(거리·계약시기·층)이 더 비슷한 거래예요 '
-        f'(점의 위아래 높이는 겹치지 않게 배치한 것뿐, 값과는 무관합니다) · '
-        f'글자가 붙은 점 = {html.escape(hero_name)}(이 화면의 대표값), 나머지 색깔 점은 위 가격 카드와 같은 색으로 이어집니다 · '
-        f'진하게 색칠된 구간 = <strong>{highlight[0]}~{highlight[1]}</strong> 구간 '
-        f'(사용자가 실제 낙찰 후 매도 사례와 대조해 확인한 구간 — 통계적으로 확정된 값이 아닌 참고용)</p>'
+        '<div style="margin-top:10px; padding-top:8px; border-top:1px dashed '
+        f'{BORDER}; display:flex; flex-direction:column; gap:7px">'
+        + _legend_row(
+            INK, f"● 점 하나 = 비교거래 1건{truncated_note}",
+            "누르면 상세 정보가 떠요(단지명·면적·금액·계약월·거리·유사도)",
+        )
+        + _legend_row(
+            INK, "진하고 클수록 조건이 더 비슷한 거래예요",
+            "거리·계약시기·층 기준 — 점의 위아래 높이는 겹치지 않게 배치한 것뿐, 값과는 무관합니다",
+        )
+        + _legend_row(
+            primary, f"글자가 붙은 점 = {html.escape(hero_name)}",
+            "이 화면의 대표값이에요 · 나머지 색깔 점은 위 가격 카드와 같은 색으로 이어집니다",
+        )
+        + _legend_row(
+            HIGHLIGHT_EDGE, f"진하게 칠해진 구간 = {highlight[0]}~{highlight[1]}",
+            "사용자가 실제 낙찰 후 매도 사례와 대조해 확인한 구간 — 통계적으로 확정된 값이 아닌 참고용입니다",
+        )
+        + "</div>"
     )
     tooltip_box = (
         f'<div class="pd-tip" style="position:absolute; display:none; z-index:5; '

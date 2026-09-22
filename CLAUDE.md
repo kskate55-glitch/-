@@ -1230,6 +1230,14 @@ AI 기준매도가: X.XX억 → X.XX억
 
 ## 22. 웹 버전(다른 사람도 쓸 수 있는 매도가 추정기)
 
+**서비스 이름은 "주영이의 빌라 경매 매도가 계산기"다**(사용자 지정). 화면에
+이름이 나가는 곳은 네 군데 — `base.html`의 `<title>`, `index.html` 히어로
+`<h1>`, `result.html` 결과 페이지 `<h1>`, `webapp/app.py` 모듈 독스트링.
+이름을 또 바꾸게 되면 이 네 군데를 같이 고친다. ⚠️ `render.yaml`의
+`name: molit-price-estimator`는 **배포 URL을 정하는 값이라 건드리지
+않는다** — 바꾸면 주소(`https://molit-price-estimator.onrender.com`)가
+같이 바뀌어 기존 링크가 죽는다.
+
 CLI(`estimate_price.py`)는 사용자 본인이 로컬에서 국토부 API를 직접 실행하고
 `data/raw/`에 저장한 뒤 계산하는 방식이지만, 다른 사람들도 주소만 입력하면
 바로 쓸 수 있도록 `webapp/`에 Flask 웹 서버를 따로 만들었다. **계산 로직

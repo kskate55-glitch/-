@@ -184,19 +184,38 @@ class DescribeComparableSimilarityTests(unittest.TestCase):
         row = {"excluUseAr": "69.5", "floor": "4", "buildYear": "2012"}
         note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
         self.assertIn("면적 비슷", note)
-        self.assertIn("층 동일", note)
+        self.assertIn("4층 동일", note)
         self.assertIn("준공 동일", note)
 
-    def test_reports_differences_with_sign(self):
+    def test_reports_differences_with_direction(self):
+        # 비교거래가 대상 물건보다 면적 넓고(+), 층 높고(+2), 구축(4년 더 오래됨)
         row = {"excluUseAr": "80.0", "floor": "6", "buildYear": "2008"}
         note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
-        self.assertIn("층 +2", note)
-        self.assertIn("준공 4년 차이", note)
+        self.assertIn("6층(+2)", note)
+        self.assertIn("준공 4년 구축", note)
+
+    def test_reports_newer_buildyear_direction(self):
+        # 비교거래가 대상 물건보다 신축(2년 더 최근 준공)이면 방향이 반대로 나와야 함
+        row = {"excluUseAr": "69.27", "floor": "4", "buildYear": "2014"}
+        note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
+        self.assertIn("준공 2년 신축", note)
 
     def test_missing_floor_info(self):
         row = {"excluUseAr": "69.27", "floor": "", "buildYear": "2012"}
         note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
         self.assertIn("층 정보없음", note)
+
+    def test_floor_preference_rank_shown_for_known_floors(self):
+        row = {"excluUseAr": "69.27", "floor": "3", "buildYear": "2012"}
+        note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
+        self.assertIn("3층(-1) · 선호순위 1위", note)
+
+    def test_floor_preference_rank_omitted_for_unranked_floors(self):
+        # 1층/7층처럼 아직 선호순위를 모르는 층은 태그를 안 붙인다(추측 금지)
+        row = {"excluUseAr": "69.27", "floor": "7", "buildYear": "2012"}
+        note = ep.describe_comparable_similarity(69.27, 4, "2012", row)
+        self.assertIn("7층(+3)", note)
+        self.assertNotIn("선호순위", note)
 
 
 class FindComparablesMutationSafetyTests(unittest.TestCase):

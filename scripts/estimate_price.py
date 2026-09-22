@@ -466,13 +466,27 @@ def similarity_score(distance_m: float, radius_m: float,
     return sum(scores[k] * weights[k] for k in weights)
 
 
+# 층 선호순위 (사용자가 실제 임장·매도 경험으로 확인해준 값 — 검증된 통계가
+# 아니라 경험적 순위다. 낮은 숫자일수록 선호도가 높다: 3층 > 2층 > 4층 > 5층.
+# 이 넷 말고 다른 층(1층/반지하 제외 상급층/6층 이상 등)은 아직 순위를 못
+# 받아서 태그를 안 붙인다 — 잘못 추측해서 알려주는 것보다 아예 안 알려주는
+# 게 낫다고 판단했다. 사용자가 나머지 순위를 알려주면 이 표에 추가한다.
+FLOOR_PREFERENCE_RANK = {3: 1, 2: 2, 4: 3, 5: 4}
+
+
 def describe_comparable_similarity(subject_area: float, subject_floor: int | None,
                                     subject_build_year: str | None, row: dict) -> str:
     """비교거래 하나가 대상 물건과 정확히 어떤 부분이 비슷하고 어떤 부분이
     다른지 짧게 요약한다(면적/층/준공년도) — "핵심 비교거래" 목록에 물건마다
     괄호로 달아서, 왜 이 물건이 골라졌는지/어디를 감안하고 봐야 하는지
     사용자가 바로 알 수 있게 한다. 거리는 목록에 이미 따로 표시되므로 여기
-    넣지 않는다."""
+    넣지 않는다.
+
+    면적·층·준공년도 모두 단순히 "차이가 몇인지"뿐 아니라 그 차이의 **방향**
+    (더 넓은지/좁은지, 더 신축인지/구축인지, 선호도가 높은 층인지)까지 같이
+    보여준다 — 예를 들어 "준공 2년 차이"만 보면 대상 물건보다 신축인지 구축인지
+    알 수 없어서, 그 비교거래가 대상 물건보다 조건이 더 좋은 건지 나쁜 건지
+    판단할 수 없다는 지적을 반영했다."""
     parts = []
 
     row_area = row.get("excluUseAr")
@@ -491,7 +505,11 @@ def describe_comparable_similarity(subject_area: float, subject_floor: int | Non
         try:
             row_floor = int(row_floor_raw)
             diff = row_floor - subject_floor
-            parts.append("층 동일" if diff == 0 else f"층 {diff:+d}")
+            floor_text = f"{row_floor}층" + (" 동일" if diff == 0 else f"({diff:+d})")
+            rank = FLOOR_PREFERENCE_RANK.get(row_floor)
+            if rank is not None:
+                floor_text += f" · 선호순위 {rank}위"
+            parts.append(floor_text)
         except ValueError:
             parts.append("층 정보없음")
 
@@ -499,7 +517,12 @@ def describe_comparable_similarity(subject_area: float, subject_floor: int | Non
         row_build_year = (row.get("buildYear") or "").strip()
         if row_build_year.isdigit():
             diff = int(row_build_year) - int(subject_build_year)
-            parts.append("준공 동일" if diff == 0 else f"준공 {abs(diff)}년 차이")
+            if diff == 0:
+                parts.append("준공 동일")
+            elif diff > 0:
+                parts.append(f"준공 {diff}년 신축")
+            else:
+                parts.append(f"준공 {abs(diff)}년 구축")
         else:
             parts.append("준공년도 정보없음")
 

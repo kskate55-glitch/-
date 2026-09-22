@@ -173,7 +173,7 @@ def estimate_conversion_rate(rent_dir: str, subject_coord: tuple[float, float], 
                                         build_year_tolerance=build_year_tolerance)
     if not jeonse_filtered:
         return None
-    reference_deposit = compute_scenarios(jeonse_filtered, radius_m, this_year)["median"]
+    reference_deposit = compute_scenarios(jeonse_filtered, radius_m, this_year, subject_area=area)["median"]
 
     wolse_rows = filter_wolse(rent_rows)
     wolse_filtered = find_comparables(wolse_rows, subject_coord, area, floor, build_year,
@@ -233,6 +233,19 @@ DEALING_TYPE_WEIGHT_DEFAULT = 1.0
 PRICE_OUTLIER_MAD_MULTIPLIER = 3
 PRICE_OUTLIER_WEIGHT = 0.1
 PRICE_OUTLIER_MIN_SAMPLE = 5  # 이보다 표본이 적으면 이상치 판단 자체가 무의미해서 건너뜀
+
+# 동일건물 보너스 — 좌표가 거의 겹치는(=사실상 같은 건물) 거래는 "바로 이
+# 건물이 실제로 얼마에 팔렸는지" 보여주는 가장 직접적인 증거라 가중치를 한 번
+# 더 높인다. 지번 문자열(jibun)을 비교하는 대신 좌표 거리로 판정한다 — 5절이
+# "동일건물 매칭" 대신 반경 기반 비교로 바꾼 것과 같은 이유다(지번 표기가
+# "123-4"/"산 123-4"처럼 미묘하게 달라도 좌표 거리는 안정적으로 잡힌다).
+# ⚠️ 18절/describe_comparable_similarity()의 전례처럼, 이 플래그는 UI 텍스트에
+# 새로 노출하지 않는다 — 사용자가 "판단까지 얹은 부가 설명은 이해하기 어렵다"고
+# 지적한 걸 반영해, 이미 있는 "유사도" 점수·거리 열로 충분히 드러나는 정보 위에
+# 또 다른 판단 문구를 얹지 않기로 한 결정을 그대로 따른 것 — 순수 내부 가중치
+# 보정으로만 쓴다.
+SAME_BUILDING_DISTANCE_M = 20  # 빌라 한 동 부지 규모를 감안한 경험적 임계치 — 검증된 값은 아니다
+SAME_BUILDING_BONUS = 2.0  # GPT 제안 범위(1.5~2.5)의 중간값 — 마찬가지로 경험적 값
 
 
 def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area: float,
@@ -368,6 +381,9 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             r["_similarity_score"] = score
             r["_dealing_gbn"] = dealing_gbn or None
             r["_weight"] = recency_weight * SIMILARITY_EMPHASIS_CURVE(score) * dealing_weight
+            if distance <= SAME_BUILDING_DISTANCE_M:
+                r["_weight"] *= SAME_BUILDING_BONUS
+                r["_same_building"] = True
             out.append(r)
 
     # 평당가(㎡당가) 기준 이상치 다운웨이트 — 같은 반경·면적대인데 가격이
@@ -604,6 +620,32 @@ def _weighted_amounts_sorted(filtered: list[dict]) -> list[float]:
     return sorted(amounts_weighted)
 
 
+def _weighted_unit_prices_sorted(filtered: list[dict], subject_area: float) -> list[float]:
+    """CLAUDE.md 7-1절 ㎡당가 모델 — 비교거래의 평당가(만원/㎡ = _amount_man ÷
+    비교거래 면적)를 대상 물건 면적(subject_area)에 곱해 "이 물건 넓이 기준으로
+    환산했다면 얼마였을지" 리스트를 만들고, `_weighted_amounts_sorted()`와 같은
+    방식(round(가중치)만큼 복제, 최소 1개)으로 가중 복제해서 정렬한다.
+
+    총액 모델(`_weighted_amounts_sorted()`)은 이미 5절에서 ±허용범위로 면적을
+    거른 거래들의 원 체결가를 그대로 쓰는 반면, 이 모델은 면적 차이를 한 번 더
+    정규화한다 — 허용범위 안에서도 비교거래가 대상 물건보다 살짝 크거나
+    작으면 총액 모델은 그 차이를 그대로 반영하지만, 이 모델은 "같은 넓이면
+    얼마"로 환산해서 비교한다. `compute_scenarios()`가 두 모델을 50:50으로
+    블렌딩하고, 둘이 많이 갈리면 그 자체를 불확실성 신호(model_divergence_pct)로
+    쓴다."""
+    amounts_weighted = []
+    for r in filtered:
+        try:
+            row_area = float(r.get("excluUseAr"))
+        except (TypeError, ValueError):
+            continue
+        if row_area <= 0:
+            continue
+        unit_price = r["_amount_man"] / row_area
+        amounts_weighted.extend([unit_price * subject_area] * max(1, round(r["_weight"])))
+    return sorted(amounts_weighted)
+
+
 def _weighted_percentile(amounts_sorted: list[float], pct: float) -> float:
     """정렬된 가중 복제 리스트에서 pct(0~100) 위치의 값을 최근접-순위 방식으로
     뽑는다. compute_scenarios()의 p25/p75(중앙값-of-절반 방식)보다 더 세밀한
@@ -615,15 +657,37 @@ def _weighted_percentile(amounts_sorted: list[float], pct: float) -> float:
     return amounts_sorted[idx]
 
 
-def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int) -> dict:
+def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int,
+                       subject_area: float | None = None) -> dict:
     """CLAUDE.md 7~8절 규칙: 가중 복제 후 p25/중앙값/p75와 시세 신뢰도를 계산한다.
     매매·전세(16절) 양쪽에서 공통으로 쓴다 — find_comparables()가 이미 채워둔
-    _amount_man/_weight/_distance_m을 그대로 사용한다."""
+    _amount_man/_weight/_distance_m을 그대로 사용한다.
+
+    subject_area를 주면 CLAUDE.md 7-1절 ㎡당가 모델(`_weighted_unit_prices_sorted()`)을
+    함께 계산해서 총액 모델(위 amounts_weighted)과 50:50으로 블렌딩한다 —
+    "총액 모델 50% + 단가 모델 50%"라는 두 독립적인 계산 경로의 평균을 최종
+    값으로 쓰고, 두 모델이 크게 갈리면(`model_divergence_pct`) 그 자체를
+    불확실성 신호로 보고 시세 신뢰도에서 깎는다(최대 15점). subject_area를
+    생략하면(기존 호출부와의 하위호환) 예전처럼 총액 모델만 쓴다."""
     amounts_weighted = _weighted_amounts_sorted(filtered)
 
-    median_man = statistics.median(amounts_weighted)
-    p25 = statistics.median(amounts_weighted[: max(1, len(amounts_weighted) // 2)])
-    p75 = statistics.median(amounts_weighted[len(amounts_weighted) // 2 :])
+    median_total = statistics.median(amounts_weighted)
+    p25_total = statistics.median(amounts_weighted[: max(1, len(amounts_weighted) // 2)])
+    p75_total = statistics.median(amounts_weighted[len(amounts_weighted) // 2 :])
+
+    unit_weighted = _weighted_unit_prices_sorted(filtered, subject_area) if subject_area else []
+    model_divergence_pct = None
+    if unit_weighted:
+        median_unit = statistics.median(unit_weighted)
+        p25_unit = statistics.median(unit_weighted[: max(1, len(unit_weighted) // 2)])
+        p75_unit = statistics.median(unit_weighted[len(unit_weighted) // 2 :])
+        median_man = (median_total + median_unit) / 2
+        p25 = (p25_total + p25_unit) / 2
+        p75 = (p75_total + p75_unit) / 2
+        if median_man:
+            model_divergence_pct = abs(median_total - median_unit) / median_man * 100
+    else:
+        median_man, p25, p75 = median_total, p25_total, p75_total
 
     n_total = len(filtered)
     n_this_year = sum(1 for r in filtered if r.get("dealYear") == str(this_year))
@@ -635,12 +699,14 @@ def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int) -> 
     confidence -= max(0, (2 - n_close)) * 10
     confidence -= min(30, spread * 100)
     confidence -= max(0, (1 - (n_this_year / n_total))) * 15
+    if model_divergence_pct is not None:
+        confidence -= min(15, model_divergence_pct)
     confidence = max(10, min(100, round(confidence)))
 
     return {
         "p25": p25, "median": median_man, "p75": p75,
         "n_total": n_total, "n_close": n_close, "n_this_year": n_this_year,
-        "confidence": confidence,
+        "confidence": confidence, "model_divergence_pct": model_divergence_pct,
     }
 
 
@@ -764,8 +830,12 @@ def speed_label_for_percentile(percentile: float, liquidity_monthly_avg: float |
     return "장기화 가능성 큼"
 
 
+MODEL_DIVERGENCE_MENTION_THRESHOLD_PCT = 8  # 이 정도부터는 우연한 오차가 아니라 언급할 만하다고 판단
+
+
 def build_verdict(confidence: int, n_total: int, liquidity: dict | None = None,
-                   listing_summary: dict | None = None, trend_pct: float | None = None) -> str:
+                   listing_summary: dict | None = None, trend_pct: float | None = None,
+                   model_divergence_pct: float | None = None) -> str:
     """CLAUDE.md 32절: 시세 신뢰도·유동성·경쟁매물 포지션·가격 추이를 한데
     묶어 사람이 읽는 짧은 종합 판단 문단을 만든다. Claude(LLM)를 호출하지
     않는 규칙 기반 템플릿이다 — 22절 원칙(웹 버전은 AI 호출 없는 순수
@@ -808,6 +878,9 @@ def build_verdict(confidence: int, n_total: int, liquidity: dict | None = None,
             parts.append(f"최근 가격 추이도 {trend_pct:+.1f}%로 상승세라 매도에 유리한 시점일 수 있습니다.")
         elif trend_pct < -3:
             parts.append(f"다만 최근 가격 추이가 {trend_pct:+.1f}%로 하락세라, 너무 늦추면 더 낮은 가격을 감수해야 할 수 있습니다.")
+
+    if model_divergence_pct is not None and model_divergence_pct >= MODEL_DIVERGENCE_MENTION_THRESHOLD_PCT:
+        parts.append(f"총액 기준 추정과 ㎡당가 기준 추정이 {model_divergence_pct:.0f}% 차이 나 모델 간 의견이 다소 엇갈립니다 — 표본을 늘리거나 참고용으로만 활용하세요.")
 
     parts.append("⚠️ 규칙 기반으로 자동 생성한 참고용 요약이며, 최종 판단은 직접 확인 후 내리세요.")
     return " ".join(parts)
@@ -1290,7 +1363,7 @@ def print_jeonse_comparison(rent_dir: str, subject_coord: tuple[float, float], a
         print(f"[예상 전세가] 반경 {radius_m:.0f}m, 유사면적 조건에 맞는 전세 비교거래를 찾지 못해 생략합니다.")
         return
 
-    jscen = compute_scenarios(jeonse_filtered, radius_m, this_year)
+    jscen = compute_scenarios(jeonse_filtered, radius_m, this_year, subject_area=area)
     print()
     print(f"[예상 전세가] (매매가와 동일 조건 — 반경 {radius_m:.0f}m, 유사면적·유사층·유사연식)")
     print(f"유효 비교거래: {jscen['n_total']}건 (반경 {radius_m:.0f}m 이내, {radius_m/2:.0f}m 이내 {jscen['n_close']}건 / {this_year}년 {jscen['n_this_year']}건)")
@@ -1415,7 +1488,7 @@ def main():
               f"반경을 {effective_radius:.0f}m로 자동으로 넓혀서 다시 찾았습니다.")
         print()
 
-    scen = compute_scenarios(filtered, effective_radius, this_year)
+    scen = compute_scenarios(filtered, effective_radius, this_year, subject_area=args.area)
     n_total, n_close, n_2026, confidence = scen["n_total"], scen["n_close"], scen["n_this_year"], scen["confidence"]
     conservative = scen["p25"]
     realistic = scen["median"]
@@ -1443,7 +1516,8 @@ def main():
     liquidity = compute_liquidity(rows, subject_coord, args.area, this_year, gu_filter,
                                    area_tolerance_pct=area_tolerance_pct)
 
-    verdict = build_verdict(confidence, n_total, liquidity=liquidity)
+    verdict = build_verdict(confidence, n_total, liquidity=liquidity,
+                             model_divergence_pct=scen.get("model_divergence_pct"))
     print("[종합 판단] (규칙 기반 자동 요약, 참고용)")
     print(verdict)
     print()

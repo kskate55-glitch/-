@@ -298,7 +298,7 @@ def estimate():
             form=form, last_year=this_year - 1,
         )
 
-    scen = compute_scenarios(filtered, radius, this_year)
+    scen = compute_scenarios(filtered, radius, this_year, subject_area=area)
     conservative = scen["p25"]
     realistic = scen["median"]
     upper = scen["p75"]
@@ -518,7 +518,8 @@ def estimate():
     result["similar_listings"] = similar_listings
     result["listings_text_echo"] = listings_text
     result["verdict"] = build_verdict(scen["confidence"], scen["n_total"], liquidity=liquidity,
-                                       listing_summary=listing_price_summary)
+                                       listing_summary=listing_price_summary,
+                                       model_divergence_pct=scen.get("model_divergence_pct"))
 
     monthly_deposit = _optional_float("monthly_deposit")
     if monthly_deposit is not None:

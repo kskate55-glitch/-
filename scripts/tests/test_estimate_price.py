@@ -148,6 +148,46 @@ class ComputeScenariosTests(unittest.TestCase):
         self.assertLessEqual(scen["confidence"], 100)
 
 
+class UnitPriceModelBlendTests(unittest.TestCase):
+    """CLAUDE.md 7-1절 — ㎡당가 모델을 총액 모델과 50:50 블렌딩하고, 두 모델이
+    갈리면 model_divergence_pct로 시세 신뢰도를 깎는다."""
+
+    def _filtered_with_area(self, amounts, area):
+        return [
+            {"_amount_man": v, "_weight": 1.0, "_distance_m": 100.0, "dealYear": "2026",
+             "excluUseAr": str(area)}
+            for v in amounts
+        ]
+
+    def test_defaults_to_total_model_only_when_subject_area_omitted(self):
+        filtered = self._filtered_with_area((10000, 20000, 30000, 40000, 50000), 60)
+        scen = ep.compute_scenarios(filtered, radius_m=400, this_year=2026)
+        self.assertEqual(scen["median"], 30000)
+        self.assertIsNone(scen["model_divergence_pct"])
+
+    def test_unit_model_matches_total_model_when_areas_already_equal_subject(self):
+        # 비교거래 면적이 전부 대상 물건 면적과 같으면, ㎡당가 모델로 환산해도
+        # 총액 모델과 정확히 같은 값이 나와야 한다 (면적 정규화가 아무 영향을 안 줌).
+        filtered = self._filtered_with_area((10000, 20000, 30000, 40000, 50000), 60)
+        scen = ep.compute_scenarios(filtered, radius_m=400, this_year=2026, subject_area=60)
+        self.assertEqual(scen["median"], 30000)
+        self.assertAlmostEqual(scen["model_divergence_pct"], 0.0, places=6)
+
+    def test_diverging_models_lower_confidence_more_than_matching_models(self):
+        matching = self._filtered_with_area((28000, 29000, 30000, 31000, 32000), 60)
+        diverging = [
+            {"_amount_man": 28000, "_weight": 1.0, "_distance_m": 100.0, "dealYear": "2026", "excluUseAr": "50"},
+            {"_amount_man": 29000, "_weight": 1.0, "_distance_m": 100.0, "dealYear": "2026", "excluUseAr": "52"},
+            {"_amount_man": 30000, "_weight": 1.0, "_distance_m": 100.0, "dealYear": "2026", "excluUseAr": "55"},
+            {"_amount_man": 31000, "_weight": 1.0, "_distance_m": 100.0, "dealYear": "2026", "excluUseAr": "58"},
+            {"_amount_man": 50000, "_weight": 1.0, "_distance_m": 100.0, "dealYear": "2026", "excluUseAr": "90"},
+        ]
+        scen_matching = ep.compute_scenarios(matching, radius_m=400, this_year=2026, subject_area=60)
+        scen_diverging = ep.compute_scenarios(diverging, radius_m=400, this_year=2026, subject_area=60)
+        self.assertGreater(scen_diverging["model_divergence_pct"], scen_matching["model_divergence_pct"])
+        self.assertLessEqual(scen_diverging["confidence"], scen_matching["confidence"])
+
+
 class ComputePriceTiersTests(unittest.TestCase):
     def test_tiers_are_monotonically_nondecreasing(self):
         filtered = [
@@ -326,7 +366,10 @@ class DealingTypeWeightTests(unittest.TestCase):
                 [row], (37.65, 127.02), 69.27, 4, "2012", 400, 2025, 2026, None,
                 area_tolerance_pct=0.15, this_month=9,
             )
-            expected = ep.weight_for_recency("2026", "9", 2026, 9) * ep.SIMILARITY_EMPHASIS_CURVE(100.0)
+            # 이 테스트의 mock geocode는 대상 좌표와 완전히 동일한 좌표를 돌려주므로
+            # (거리 0m) 동일건물 보너스도 함께 곱해져야 한다.
+            expected = (ep.weight_for_recency("2026", "9", 2026, 9) * ep.SIMILARITY_EMPHASIS_CURVE(100.0)
+                        * ep.SAME_BUILDING_BONUS)
             self.assertAlmostEqual(out[0]["_weight"], expected, places=6)
 
 
@@ -422,6 +465,50 @@ class FindComparablesAdaptiveTests(unittest.TestCase):
             self.assertEqual(radius, 1000)
             self.assertTrue(expanded)
             self.assertEqual(len(out), 1)
+
+
+class SameBuildingBonusTests(unittest.TestCase):
+    """GPT 조언 반영 — 좌표가 거의 겹치는(사실상 동일건물) 거래는 가중치를
+    SAME_BUILDING_BONUS만큼 추가로 높인다."""
+
+    def test_coincident_coordinate_gets_bonus_weight(self):
+        with patch("geocode.geocode", return_value=(37.65, 127.02)):  # 대상과 동일 좌표 -> 거리 0m
+            row = _fake_row("동일건물빌라", "1", 69.27, 4, 2012, 2026, 9, 35000)
+            out = ep.find_comparables(
+                [row], (37.65, 127.02), 69.27, 4, "2012", 400, 2025, 2026, None,
+                area_tolerance_pct=0.15, this_month=9,
+            )
+            self.assertTrue(out[0].get("_same_building"))
+            expected = (ep.weight_for_recency("2026", "9", 2026, 9) * ep.SIMILARITY_EMPHASIS_CURVE(100.0)
+                        * ep.SAME_BUILDING_BONUS)
+            self.assertAlmostEqual(out[0]["_weight"], expected, places=6)
+
+    def test_far_coordinate_gets_no_bonus(self):
+        # 약 350m 떨어진 좌표 — SAME_BUILDING_DISTANCE_M(20m)보다 훨씬 멀다
+        with patch("geocode.geocode", return_value=(37.65 + 0.00315, 127.02)):
+            row = _fake_row("먼빌라", "1", 69.27, 4, 2012, 2026, 9, 35000)
+            out = ep.find_comparables(
+                [row], (37.65, 127.02), 69.27, 4, "2012", 400, 2025, 2026, None,
+                area_tolerance_pct=0.15, this_month=9,
+            )
+            self.assertFalse(out[0].get("_same_building", False))
+
+
+class BuildVerdictModelDivergenceTests(unittest.TestCase):
+    """32절 확장 — 모델 합의도(model_divergence_pct)가 크면 종합 판단 문단에
+    엇갈림을 언급한다."""
+
+    def test_large_divergence_is_mentioned(self):
+        verdict = ep.build_verdict(80, 10, model_divergence_pct=20.0)
+        self.assertIn("엇갈립니다", verdict)
+
+    def test_small_divergence_is_not_mentioned(self):
+        verdict = ep.build_verdict(80, 10, model_divergence_pct=1.0)
+        self.assertNotIn("엇갈립니다", verdict)
+
+    def test_none_divergence_is_not_mentioned(self):
+        verdict = ep.build_verdict(80, 10, model_divergence_pct=None)
+        self.assertNotIn("엇갈립니다", verdict)
 
 
 class ComputeTerrainCheckTests(unittest.TestCase):

@@ -40,6 +40,14 @@ from estimate_price import (compute_scenarios, dedupe, find_comparables,
                             load_transactions, to_amount_man)
 from geocode import geocode
 
+# .env에 적어둔 키를 환경변수로 올린다 (6절) — 이미 설정된 값은 안 덮어쓴다.
+try:
+    from env_file import load_env
+    load_env()
+except ImportError:  # 다른 경로에서 import될 때도 죽지 않게
+    pass
+
+
 # 이보다 비교거래가 적으면 그 건은 "표본 부족"으로 건너뛴다. 계산기 자체는
 # 1건만 있어도 숫자를 뱉지만, 그런 값까지 정확도 통계에 넣으면 도구의 실력이
 # 아니라 데이터 부족을 재는 꼴이 된다. 건너뛴 비율도 결과에 같이 보고한다.

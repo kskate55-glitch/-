@@ -33,6 +33,14 @@ from urllib.error import HTTPError, URLError
 
 from molit_rhtrade_api import ERROR_MESSAGES, _get_service_key, save_rows
 
+# .env에 적어둔 키를 환경변수로 올린다 (6절) — 이미 설정된 값은 안 덮어쓴다.
+try:
+    from env_file import load_env
+    load_env()
+except ImportError:  # 다른 경로에서 import될 때도 죽지 않게
+    pass
+
+
 BASE_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcRHRent/getRTMSDataSvcRHRent"
 
 

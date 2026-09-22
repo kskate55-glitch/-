@@ -44,6 +44,14 @@ from molit_rhtrade_api import (  # noqa: F401  (재노출)
 )
 from molit_rhtrade_api import fetch_rhtrade as _fetch_generic
 
+# .env에 적어둔 키를 환경변수로 올린다 (6절) — 이미 설정된 값은 안 덮어쓴다.
+try:
+    from env_file import load_env
+    load_env()
+except ImportError:  # 다른 경로에서 import될 때도 죽지 않게
+    pass
+
+
 BASE = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade"
 OPERATION = "getRTMSDataSvcAptTrade"  # ✅ 실측 확인 (강북구 2026-04~07)
 BASE_URL = f"{BASE}/{OPERATION}"

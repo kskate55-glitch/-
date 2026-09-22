@@ -552,14 +552,28 @@
 {% if result.location %}
 <div class="card">
   <h3>🚇 입지 체크 (카카오 로컬 기준, 반경 {{ result.location.radius_km }}km)</h3>
-  <ul class="note-lines" style="margin-top:-6px; margin-bottom:0">
-    <li>가장 가까운 지하철역:
-      {% if result.location.station %}<b>{{ result.location.station.name }}</b> ({{ result.location.station.distance_m }}m)
-      {% else %}{{ result.location.radius_km }}km 이내 없음{% endif %}</li>
-    <li>가장 가까운 초등학교:
-      {% if result.location.school %}<b>{{ result.location.school.name }}</b> ({{ result.location.school.distance_m }}m)
-      {% else %}{{ result.location.radius_km }}km 이내 없음{% endif %}</li>
-    <li>※ 이 거리는 위 환금성 진단의 "역세권·학세권" 항목 판정에 그대로 쓰입니다 — 매도가 계산에는 반영되지 않아요.</li>
+  <div class="loc-groups">
+    {% for g in result.location.groups %}
+    <div class="loc-group">
+      <div class="loc-group-name">{{ g.icon }} {{ g.name }}</div>
+      {% for p in g.places %}
+      <div class="loc-row{{ ' loc-none' if not p.place else '' }}">
+        <span class="loc-label">{{ p.label }}{% if p.scored %}<span class="loc-star" title="환금성 진단 판정에 쓰이는 항목">★</span>{% endif %}</span>
+        {% if p.place %}
+        <span class="loc-place">{{ p.place.name }}</span>
+        <span class="loc-dist">{{ p.place.distance_m }}m</span>
+        {% else %}
+        <span class="loc-place">{{ result.location.radius_km }}km 안에 없음</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <ul class="note-lines" style="margin-top:12px; margin-bottom:0">
+    <li><b>★ 표시(지하철역·초등학교)만</b> 위 환금성 진단의 "역세권·학세권" 항목 판정에 쓰입니다.</li>
+    <li>나머지는 참고 정보예요 — 편의점이 200m냐 400m냐가 매도 속도를 가르지는 않아서 점수에는 넣지 않았습니다.</li>
+    <li>매도가 계산에는 어느 항목도 반영되지 않습니다.</li>
   </ul>
 </div>
 {% endif %}

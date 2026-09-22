@@ -1666,9 +1666,27 @@ def print_inspection_checklist():
 # 45절에서 "역까지 1.1km"와 "아예 없음"을 구분해서 판정해야 하는데, 1km에서
 # 자르면 둘 다 "없음"으로 뭉개진다.
 LOCATION_SEARCH_RADIUS_M = 1500
-LOCATION_KEYWORDS = [("지하철역", "가장 가까운 지하철역"),
-                     ("초등학교", "가장 가까운 초등학교"),
-                     ("마트", "가장 가까운 마트")]
+
+# 사용자가 "편의점이나 병원, 중학교 고등학교 등등 더 자세히 만들 수 있냐"고
+# 물어서 세 개(지하철역·초등학교·마트)에서 열 개로 늘리고, 읽기 쉽게 네 갈래로
+# 묶었다. 각 항목은 (키워드, 화면 라벨).
+# ⚠️ **점수에 들어가는 건 지하철역·초등학교 둘뿐이다**(45절, `LOCATION_SCORED`)
+#    — 나머지는 참고 정보로만 보여준다. 사용자와 정한 원칙: 편의점이 200m냐
+#    400m냐가 빌라 매도 속도를 가르지는 않는데 다 점수에 넣으면 오히려
+#    변별력이 흐려진다.
+# ⚠️ 혐오시설(유흥가·모텔촌·공장)은 **일부러 뺐다** — 매도에 제일 크게
+#    영향 주는 요소인 건 맞지만, 키워드 검색으로는 정확히 못 잡는다(34절
+#    산·하천에서 겪은 것과 같은 한계). 없는 문제를 만들어내는 쪽이 더
+#    해로워서 36절 임장 체크로 넘긴다.
+LOCATION_GROUPS = [
+    ("교통", "🚇", [("지하철역", "지하철역"), ("버스정류장", "버스정류장")]),
+    ("교육", "🏫", [("초등학교", "초등학교"), ("중학교", "중학교"), ("고등학교", "고등학교")]),
+    ("생활", "🏪", [("편의점", "편의점"), ("대형마트", "대형마트"), ("공원", "공원")]),
+    ("의료", "🏥", [("병원", "병원"), ("약국", "약국")]),
+]
+# 45절 환금성 판정에 실제로 쓰이는 키워드 — 여기 없는 항목은 화면 참고용이다.
+LOCATION_SCORED = ("지하철역", "초등학교")
+LOCATION_KEYWORDS = [item for _name, _icon, items in LOCATION_GROUPS for item in items]
 
 
 def compute_location_check(subject_coord: tuple[float, float],
@@ -1694,16 +1712,22 @@ def compute_location_check(subject_coord: tuple[float, float],
 def print_location_check(subject_coord: tuple[float, float]):
     """CLAUDE.md 19절 규칙: 카카오 로컬 API로 가까운 지하철역/초등학교/마트를 찾는다."""
     checked = compute_location_check(subject_coord)
+    km = f"{LOCATION_SEARCH_RADIUS_M / 1000:.1f}km"
     print()
-    print(f"[입지 체크] (카카오 로컬 기준, 반경 {LOCATION_SEARCH_RADIUS_M / 1000:.1f}km)")
-    for keyword, label in LOCATION_KEYWORDS:
-        got = checked.get(keyword) or {}
-        if got.get("error"):
-            print(f"{label}: 조회 실패 ({got['error']})")
-        elif got.get("place"):
-            print(f"{label}: {got['place']['name']} ({got['place']['distance_m']}m)")
-        else:
-            print(f"{label}: {LOCATION_SEARCH_RADIUS_M / 1000:.1f}km 이내 없음")
+    print(f"[입지 체크] (카카오 로컬 기준, 반경 {km})")
+    for group_name, icon, items in LOCATION_GROUPS:
+        parts = []
+        for keyword, label in items:
+            got = checked.get(keyword) or {}
+            if got.get("error"):
+                parts.append(f"{label} 조회 실패")
+            elif got.get("place"):
+                parts.append(f"{label} {got['place']['name']} {got['place']['distance_m']}m")
+            else:
+                parts.append(f"{label} 없음")
+        print(f"{icon} {group_name}: " + " · ".join(parts))
+    print(f"※ 지하철역·초등학교 거리만 환금성 진단 판정에 쓰입니다 — 나머지는 참고 정보이고, "
+          f"매도가 계산에는 어느 것도 반영되지 않아요. '없음'은 반경 {km} 안에 없다는 뜻입니다.")
     return checked
 
 

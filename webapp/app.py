@@ -198,7 +198,8 @@ def estimate():
 
     from estimate_price import (CONDITION_LABELS, CONDITION_MULTIPLIER,
                                  INSPECTION_CHECKLIST, INSPECTION_FIELDS,
-                                 LOCATION_SEARCH_RADIUS_M)
+                                 LOCATION_GROUPS, LOCATION_KEYWORDS,
+                                 LOCATION_SCORED, LOCATION_SEARCH_RADIUS_M)
 
     inspection_checklist = INSPECTION_CHECKLIST
     # 43절 — 임장에서 "이 항목이 나쁘다"고 체크한 것을 41절 환금성 점수에
@@ -209,14 +210,15 @@ def estimate():
     inspection_clean = bool(form.get("insp_clean")) and not inspection_bad
 
     # 45절 — 역세권·학세권. 19절 입지 체크를 웹에도 붙였다(예전엔 CLI 전용).
-    # 카카오 호출 2번이지만 좌표+키워드 캐시(`data/nearby_place_cache.json`)가
-    # 있어 같은 동네를 다시 조회하면 호출이 없다.
+    # 처음엔 판정에 쓰는 두 개(지하철역·초등학교)만 조회했는데, 사용자가
+    # "더 자세히 만들 수 있냐"고 해서 19절 전체 목록(10개, 4갈래)으로 늘렸다.
+    # 첫 조회는 카카오 호출 10번이지만 좌표+키워드 캐시
+    # (`data/nearby_place_cache.json`)가 있어 같은 동네를 다시 조회하면 0번이다.
     location = None
     try:
         from estimate_price import compute_location_check
 
-        location = compute_location_check(subject_coord,
-                                           keywords=[("지하철역", ""), ("초등학교", "")])
+        location = compute_location_check(subject_coord)
     except Exception:
         location = None
 
@@ -538,10 +540,18 @@ def estimate():
         "building": building,
         "terrain": terrain,
         "location": ({
-            "station": (location.get("지하철역") or {}).get("place"),
-            "school": (location.get("초등학교") or {}).get("place"),
+            # 갈래별로 묶어서 보여준다 — 열 개를 한 줄로 늘어놓으면 안 읽힌다.
+            # 한 갈래 안에서 하나도 못 찾았으면 그 갈래는 통째로 뺀다.
+            "groups": [g for g in (
+                {"name": name, "icon": icon,
+                 "places": [{"label": label,
+                             "place": (location.get(kw) or {}).get("place"),
+                             "scored": kw in LOCATION_SCORED}
+                            for kw, label in items]}
+                for name, icon, items in LOCATION_GROUPS
+            ) if any(p["place"] for p in g["places"])],
             "radius_km": f"{LOCATION_SEARCH_RADIUS_M / 1000:.1f}",
-        } if location and any((location.get(k) or {}).get("place") for k in ("지하철역", "초등학교")) else None),
+        } if location and any((location.get(k) or {}).get("place") for k, _ in LOCATION_KEYWORDS) else None),
         "inspection_checklist": inspection_checklist,
         "inspection_fields": INSPECTION_FIELDS,
         "inspection_bad": inspection_bad,

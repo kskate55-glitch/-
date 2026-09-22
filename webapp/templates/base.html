@@ -221,6 +221,30 @@
   }
   .field-tag-rare { background: #f1f2f4; color: var(--muted); }
 
+  /* 19절 입지 체크 — 항목이 3개에서 10개로 늘어서, 갈래(교통/교육/생활/의료)
+     별로 묶은 카드 그리드로 보여준다. 한 줄로 늘어놓으면 안 읽힌다. */
+  .loc-groups {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px;
+  }
+  .loc-group {
+    padding: 12px 14px; background: #fafbfc;
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+  }
+  .loc-group-name {
+    font-size: 13.5px; font-weight: 800; color: var(--ink); margin-bottom: 7px;
+  }
+  .loc-row {
+    display: flex; align-items: baseline; gap: 7px;
+    font-size: 14px; line-height: 1.75; color: var(--ink);
+  }
+  /* ★는 줄바꿈되면 라벨과 떨어져 보여서 nowrap으로 붙여 둔다 */
+  .loc-label { flex: 0 0 auto; min-width: 68px; white-space: nowrap;
+    color: var(--muted); font-weight: 600; }
+  .loc-place { flex: 1; font-weight: 700; }
+  .loc-dist { flex: 0 0 auto; font-weight: 800; color: var(--primary-dark); }
+  .loc-none .loc-place { font-weight: 500; color: var(--muted-2); }
+  .loc-star { color: #e8920a; margin-left: 3px; font-size: 12px; }
+
   /* 아이콘 타일 + 입력칸 한 줄 */
   .field { display: flex; align-items: center; gap: 11px; }
   .field-icon {

@@ -772,6 +772,35 @@ class TestMarketabilityReport(unittest.TestCase):
         self.assertEqual(r["score"], 100)  # 층 good + 신뢰도 good만 반영
 
 
+class TestLocationKeywords(unittest.TestCase):
+    """19절 — 입지 체크를 10개(4갈래)로 늘렸지만, 45절 환금성 판정에 쓰이는
+    항목은 여전히 지하철역·초등학교 둘뿐이어야 한다."""
+
+    def test_groups_cover_every_keyword_exactly_once(self):
+        flat = [kw for _n, _i, items in ep.LOCATION_GROUPS for kw, _lb in items]
+        self.assertEqual(flat, [kw for kw, _lb in ep.LOCATION_KEYWORDS])
+        self.assertEqual(len(flat), len(set(flat)))
+
+    def test_only_station_and_school_are_scored(self):
+        self.assertEqual(set(ep.LOCATION_SCORED), {"지하철역", "초등학교"})
+        for kw in ep.LOCATION_SCORED:
+            self.assertIn(kw, [k for k, _lb in ep.LOCATION_KEYWORDS])
+
+    def test_extra_facilities_do_not_change_the_transit_verdict(self):
+        """편의점·병원이 코앞이어도 역·학교가 멀면 판정은 그대로 warn이다 —
+        추가 시설은 화면 참고용이지 점수 항목이 아니다."""
+        def report(extras_near):
+            loc = {}
+            for kw, _lb in ep.LOCATION_KEYWORDS:
+                far = {"name": "멀리", "distance_m": 1400}
+                near = {"name": "코앞", "distance_m": 50}
+                loc[kw] = {"place": (far if kw in ep.LOCATION_SCORED
+                                     else (near if extras_near else far)), "error": None}
+            r = ep.build_marketability_report(location=loc)
+            return next(i for i in r["items"] if i["key"] == "transit_school")["verdict"]
+        self.assertEqual(report(True), report(False))
+
+
 class TestBuildYearScoring(unittest.TestCase):
     """41절 — 사용자 요청으로 연식이 참고 안내(`info`)에서 실제 감점
     항목으로 바뀌었다: "완전 구축이면 그것도 디버프 요소로 넣어줘"."""

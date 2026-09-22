@@ -1699,14 +1699,21 @@ def compute_location_check(subject_coord: tuple[float, float],
     매도가 계산의 필수 조건이 아니다(20절/34절과 같은 원칙)."""
     from geocode import nearby_place
 
-    out = {}
-    for keyword, _label in (keywords or LOCATION_KEYWORDS):
+    # 항목이 10개라 순차로 돌리면 카카오를 열 번 줄줄이 기다린다 — 서로
+    # 의존이 없어 병렬로 던진다(캐시가 차 있으면 어차피 즉시 끝난다).
+    def _one(item):
+        keyword = item[0]
         try:
-            out[keyword] = {"place": nearby_place(subject_coord[0], subject_coord[1],
-                                                   keyword, radius_m=radius_m), "error": None}
+            return keyword, {"place": nearby_place(subject_coord[0], subject_coord[1],
+                                                    keyword, radius_m=radius_m), "error": None}
         except RuntimeError as e:
-            out[keyword] = {"place": None, "error": str(e)}
-    return out
+            return keyword, {"place": None, "error": str(e)}
+
+    items = list(keywords or LOCATION_KEYWORDS)
+    if not items:
+        return {}
+    with ThreadPoolExecutor(max_workers=GEOCODE_WORKERS) as executor:
+        return dict(executor.map(_one, items))
 
 
 def print_location_check(subject_coord: tuple[float, float]):
@@ -2477,17 +2484,22 @@ def _nearby_dong_names(apt_rows: list[dict], dong: str, gu_code: str,
     }
     candidates.discard(dong.strip())
 
-    near = []
-    for name in sorted(candidates):
+    # 한 구에 동이 10~25개라 순차로 돌리면 그만큼 카카오를 줄줄이 기다린다 —
+    # 서로 의존이 없어 5절 비교거래 지오코딩과 같은 방식으로 병렬 처리한다.
+    def _coord_of(name):
         try:
-            coord = geocode(f"{sido} {gu} {name}")
+            return geocode(f"{sido} {gu} {name}")
         except Exception:
-            continue
-        if not coord:
-            continue
-        if haversine_m(subject_coord[0], subject_coord[1], coord[0], coord[1]) <= radius_m:
-            near.append(name)
-    return near
+            return None
+
+    names = sorted(candidates)
+    if not names:
+        return []
+    with ThreadPoolExecutor(max_workers=GEOCODE_WORKERS) as executor:
+        coords = list(executor.map(_coord_of, names))
+    return [name for name, coord in zip(names, coords)
+            if coord and haversine_m(subject_coord[0], subject_coord[1],
+                                      coord[0], coord[1]) <= radius_m]
 
 
 def compute_apt_gap(apt_rows: list[dict], dong: str, area: float, villa_price_man: float,

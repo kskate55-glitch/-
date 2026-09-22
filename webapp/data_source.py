@@ -10,9 +10,31 @@ data/raw/에 저장)과 달리, 웹 서버가 방문자 대신 그때그때 호�
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
+
+# 달마다 국토부 API를 한 번씩 부르는데, 기본 조회 기간이 21개월이라 순차로
+# 돌리면 빌라+아파트 합쳐 42번을 줄줄이 기다리게 된다(국토부 응답이 한 번에
+# 0.5~2초라 이것만 20~80초). 달끼리는 서로 의존이 없어서 그냥 병렬로 던지면
+# 된다 — 각 달이 자기 캐시 파일만 쓰므로 공유 상태도 없다.
+# ⚠️ 국토부 제한은 "일일 트래픽 건수"라 동시 호출 수를 늘려도 총 호출량은
+#    똑같다. 그래도 서버를 때리지 않게 적당히 잡았다.
+FETCH_WORKERS = 8
+
+
+def _fetch_months(months: list[str], fetch_one) -> list[dict]:
+    """달 목록을 병렬로 받아 **원래 순서대로** 이어붙인다.
+
+    `fetch_one(ym)`은 그 달의 행 목록을 돌려준다(캐시 읽기/쓰기 포함).
+    순서를 지키는 건 계산 결과를 결정적으로 만들기 위해서다 — 이후 단계가
+    정렬·중복제거를 다시 하긴 하지만, 같은 입력에 같은 출력이 나오는 편이
+    디버깅에 낫다."""
+    if not months:
+        return []
+    with ThreadPoolExecutor(max_workers=FETCH_WORKERS) as executor:
+        return [row for rows in executor.map(fetch_one, months) for row in rows]
 
 
 def _month_range(year_min: int, this_year: int, this_month: int) -> list[str]:
@@ -34,25 +56,22 @@ def get_trade_rows(lawd_cd: str, year_min: int) -> list[dict]:
     this_ym = f"{now.year}{now.month:02d}"
     cache_dir = os.path.join(CACHE_DIR, "trade", lawd_cd)
 
-    all_rows = []
-    for ym in _month_range(year_min, now.year, now.month):
+    def one_month(ym):
         if ym == this_ym:
-            all_rows.extend(fetch_all_pages(lawd_cd, ym))
-            continue
+            return fetch_all_pages(lawd_cd, ym)  # 이번 달은 신고가 계속 들어와 캐시 안 함
 
         cache_path = os.path.join(cache_dir, f"{ym}.json")
         if os.path.exists(cache_path):
             with open(cache_path, encoding="utf-8") as f:
-                all_rows.extend(json.load(f))
-            continue
+                return json.load(f)
 
         rows = fetch_all_pages(lawd_cd, ym)
         os.makedirs(cache_dir, exist_ok=True)
         with open(cache_path, "w", encoding="utf-8") as f:
             json.dump(rows, f, ensure_ascii=False)
-        all_rows.extend(rows)
+        return rows
 
-    return all_rows
+    return _fetch_months(_month_range(year_min, now.year, now.month), one_month)
 
 
 def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
@@ -70,22 +89,20 @@ def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
     this_ym = f"{now.year}{now.month:02d}"
     cache_dir = os.path.join(CACHE_DIR, "apt", lawd_cd)
 
-    all_rows = []
-    for ym in _month_range(year_min, now.year, now.month):
+    def one_month(ym):
         cache_path = os.path.join(cache_dir, f"{ym}.json")
         if ym != this_ym and os.path.exists(cache_path):
             with open(cache_path, encoding="utf-8") as f:
-                all_rows.extend(json.load(f))
-            continue
+                return json.load(f)
         try:
             rows = fetch_all_pages(lawd_cd, ym)
         except Exception:
-            continue  # 한 달 실패해도 나머지 달로 계속 간다
+            return []  # 한 달 실패해도 나머지 달로 계속 간다
         rows = [r for r in (normalize_apt_row(r) for r in rows) if r]
         if ym != this_ym:
             os.makedirs(cache_dir, exist_ok=True)
             with open(cache_path, "w", encoding="utf-8") as f:
                 json.dump(rows, f, ensure_ascii=False)
-        all_rows.extend(rows)
+        return rows
 
-    return all_rows
+    return _fetch_months(_month_range(year_min, now.year, now.month), one_month)

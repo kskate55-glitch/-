@@ -231,3 +231,88 @@ class TestSuccessCodesAreNotJustOne(unittest.TestCase):
         import molit_rhrent_api as rent
         import molit_rhtrade_api as trade
         self.assertIs(rent.SUCCESS_CODES, trade.SUCCESS_CODES)
+
+
+class TestBuildingRegisterFailuresNeverReachTheVisitor(unittest.TestCase):
+    """CLAUDE.md 20절·72-10절 — 건축물대장 조회가 **무엇으로 터지든** 방문자는
+    정상 결과 페이지를 본다.
+
+    ⚠️ 예전엔 `except RuntimeError`만 잡았다. 응답 필드가 숫자가 아닐 때 나는
+    `ValueError`는 그대로 Flask까지 올라가 오류 화면이 됐다 — 20절이 못박은
+    "참고 정보 실패가 매도가 계산을 막지 않는다"가 깨지는 것이다.
+    """
+
+    FORM = {"address": "서울특별시 강북구 수유동 468-202", "area": "69.27",
+            "floor": "3", "build_year": "2012"}
+
+    @classmethod
+    def setUpClass(cls):
+        import os
+        import zlib
+        os.environ.setdefault("MOLIT_SERVICE_KEY", "TESTKEY")
+        os.environ.setdefault("KAKAO_REST_API_KEY", "TESTKEY")
+        import building_register
+        import data_source
+        import geocode
+        cls._saved = (geocode.geocode, geocode.geocode_full, geocode.nearby_place,
+                      data_source.get_trade_rows, data_source.get_apt_rows,
+                      building_register.get_building_info)
+        base = (37.6380, 127.0250)
+        geocode.geocode = lambda a, **k: (
+            base[0] + (zlib.crc32(a.encode()) % 600 - 300) / 1e5, base[1])
+        geocode.geocode_full = lambda a, **k: {
+            "lat": base[0], "lon": base[1], "b_code": "1130510200",
+            "main_no": "468", "sub_no": "202", "is_mountain": False}
+        geocode.nearby_place = lambda *a, **k: None
+        data_source.get_trade_rows = lambda lawd, y, **k: [
+            {"umdNm": "수유동", "mhouseNm": f"빌{i}", "jibun": f"468-{200 + i % 9}",
+             "dealYear": "2026", "dealMonth": str(i % 9 + 1), "dealDay": "10",
+             "dealAmount": f"{26000 + i * 250:,}", "excluUseAr": f"{66 + i % 7}",
+             "floor": str(i % 5 + 1), "buildYear": str(2010 + i % 5),
+             "sggCd": "11305", "dealingGbn": "중개거래"} for i in range(30)]
+        data_source.get_apt_rows = lambda lawd, y, **k: []
+        import app
+        cls.app = app
+        cls.client = app.app.test_client()
+
+    @classmethod
+    def tearDownClass(cls):
+        import building_register
+        import data_source
+        import geocode
+        (geocode.geocode, geocode.geocode_full, geocode.nearby_place,
+         data_source.get_trade_rows, data_source.get_apt_rows,
+         building_register.get_building_info) = cls._saved
+
+    def tearDown(self):
+        import building_register
+        building_register.get_building_info = lambda *a, **k: None
+        self.app.PREFETCH_BUILDING = True
+
+    def test_every_kind_of_failure_still_renders_the_result_page(self):
+        import building_register
+
+        def raiser(exc):
+            def _f(*_a, **_k):
+                raise exc
+            return _f
+
+        cases = {
+            "RuntimeError": raiser(RuntimeError("키 없음")),
+            "ValueError": raiser(ValueError("숫자가 아닌 필드")),
+            "KeyError": raiser(KeyError("rideUseElvtCnt")),
+            "TypeError": raiser(TypeError("None에 int()")),
+            "OverflowError": raiser(OverflowError("무한대")),
+            "None 반환": lambda *a, **k: None,
+            "빈 dict": lambda *a, **k: {},
+        }
+        for label, fn in cases.items():
+            for prefetch in (True, False):
+                with self.subTest(f"{label} · 미리받기={prefetch}"):
+                    building_register.get_building_info = fn
+                    self.app.PREFETCH_BUILDING = prefetch
+                    resp = self.client.post("/estimate", data=self.FORM)
+                    self.assertEqual(resp.status_code, 200,
+                                     f"건축물대장 {label} 때문에 결과 페이지가 안 떴습니다")
+                    self.assertIn("억", resp.get_data(as_text=True),
+                                  "매도가가 화면에 안 찍혔습니다")

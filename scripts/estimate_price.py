@@ -2798,8 +2798,10 @@ def print_building_info(subject_detail: dict):
             subject_detail.get("b_code"), subject_detail.get("main_no"),
             subject_detail.get("sub_no"), subject_detail.get("is_mountain", False),
         )
-    except RuntimeError as e:
-        print(f"조회 실패: {e}")
+    except Exception as e:
+        # 20절 — 참고 정보일 뿐이라 **무엇이 터지든** 여기서 끝낸다.
+        # (웹도 같은 이유로 72-10절에서 `except Exception`으로 넓혔다.)
+        print(f"조회 실패: {type(e).__name__}: {e}")
         return None
 
     if info is None:

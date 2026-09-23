@@ -718,8 +718,12 @@ def estimate():
                 "approval_date": building_info.get("approval_date"),
                 "ground_floors": building_info.get("ground_floors"),
             }
-    except RuntimeError:
-        building = None  # 건축물대장 조회는 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
+    except Exception:
+        # 20절 — 건축물대장은 참고 정보일 뿐이라 **무엇이 터지든** 매도가
+        # 계산을 막지 않는다. ⚠️ 예전엔 `except RuntimeError`만 잡아서,
+        # 응답 필드가 숫자가 아닐 때 나는 `ValueError`가 그대로 Flask까지
+        # 올라가 방문자에게 오류 화면이 갔다(72-10절에서 실제로 재현했다).
+        building = None
 
     def _direction(delta, unit="p"):
         if delta is None:

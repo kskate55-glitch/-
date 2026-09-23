@@ -104,6 +104,29 @@ def _cache_put(key: str, info) -> None:
         pass                                  # 못 써도 조회 자체는 이미 성공했다
 
 
+def _as_count(value) -> int:
+    """건축물대장 숫자 필드를 관대하게 읽는다(못 읽으면 0).
+
+    ⚠️ 예전엔 `int(item.get("rideUseElvtCnt") or 0)`이었는데, 값이 `"1.0"`·
+    `"-"`·`"없음"`처럼 숫자가 아니면 **`ValueError`가 그대로 터져 나갔다.**
+    호출부(webapp/app.py)는 `except RuntimeError`만 잡고 있어서 그 예외가
+    Flask까지 올라가 **방문자에게 오류 화면이 갔다** — 20절이 못박은
+    "건축물대장 조회 실패는 매도가 계산을 막지 않는다"가 깨지는 것이다.
+    실제 응답에 그런 값이 오는지는 확인 못 했지만, 확인 못 한 필드일수록
+    **터지지 말고 모르는 값으로 넘어가야 한다**(21절·27절·50-1절 원칙).
+    """
+    try:
+        number = float(str(value).strip())
+    except (TypeError, ValueError):
+        return 0
+    # ⚠️ `float("inf")`·`float("nan")`은 파이썬이 아무 불평 없이 만들어 준다.
+    #    거기에 `int()`를 씌우면 각각 `OverflowError`·`ValueError`가 나는데,
+    #    둘 다 여기서 안 잡으면 20절 약속이 또 깨진다(72-7절과 같은 함정).
+    if number != number or number in (float("inf"), float("-inf")):
+        return 0
+    return int(number)
+
+
 def get_building_info(b_code: str, main_no: str, sub_no: str, is_mountain: bool = False,
                        timeout: int = 10) -> dict | None:
     """법정동코드(10자리)+본번+부번으로 건축물대장 표제부를 조회한다.
@@ -154,8 +177,8 @@ def get_building_info(b_code: str, main_no: str, sub_no: str, is_mountain: bool 
         _cache_put(key, None)
         return None
 
-    ride_elv = int(item.get("rideUseElvtCnt") or 0)
-    emgen_elv = int(item.get("emgenUseElvtCnt") or 0)
+    ride_elv = _as_count(item.get("rideUseElvtCnt"))
+    emgen_elv = _as_count(item.get("emgenUseElvtCnt"))
 
     info = {
         "household_count": item.get("hhldCnt"),

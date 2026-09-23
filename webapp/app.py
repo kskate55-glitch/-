@@ -322,7 +322,10 @@ def backtest_one():
         # 긁고도 전부 실패로 끝났다(한 번 돌 때마다 다음 날 몫까지 까먹는다).
         from molit_rhtrade_api import QUOTA_MESSAGE
 
-        quota = QUOTA_MESSAGE[:20] in out["error"] or "429" in out["error"]
+        # ⚠️ 59절 — **429는 여기 해당하지 않는다.** 그건 초당 호출 제한이라
+        #    기다리면 풀리고, 이제 API 계층이 알아서 물러섰다 다시 시도한다.
+        #    순회를 멈춰야 하는 건 **진짜 일일 한도(resultCode 22)**뿐이다.
+        quota = QUOTA_MESSAGE[:20] in out["error"]
         return jsonify({"ok": False, "lawd_cd": lawd_cd, "gu": out.get("gu"),
                         "error": out["error"], "quota_exhausted": quota})
 

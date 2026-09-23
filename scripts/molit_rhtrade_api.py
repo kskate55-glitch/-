@@ -125,12 +125,17 @@ def fetch_rhtrade(lawd_cd: str, deal_ymd: str, page_no: int = 1,
         #    그래서 **재시도조차 못 하고** 예외가 그대로 올라갔다(54절).
         #    OSError가 HTTPError·URLError·TimeoutError를 전부 덮는다.
         except HTTPError as e:
-            # ⚠️ 58절 — 429(Too Many Requests)는 **일일 한도 초과**다. 여기서
-            #    재시도하면 한도를 3배로 더 쓰고도 똑같이 실패한다 — 순회처럼
-            #    수백 번 도는 작업에서 이 낭비가 그대로 곱해진다. 즉시 멈추고
-            #    사람이 읽을 수 있는 문구로 바꾼다.
+            # ⚠️ 59절 — **58절의 판단을 뒤집었다.** 429를 "일일 한도"로 보고
+            #    즉시 포기하게 했었는데, 공식 스펙상 **일일 한도는 `resultCode 22`**
+            #    (HTTP 200 + XML)다. HTTP 429는 게이트웨이의 **초당/분당 호출
+            #    제한**일 가능성이 크고, 그건 **기다리면 풀린다.** 즉시 포기하면
+            #    잠깐 숨 고르면 될 걸 실패로 끝낸다.
+            #    그래서 429는 **더 길게 쉬고 다시** 시도한다(1.5초가 아니라
+            #    4초·8초·16초). 일일 한도는 아래 resultCode 22에서 따로 잡는다.
             if e.code == 429:
-                raise RuntimeError(QUOTA_MESSAGE) from None
+                last_err = e
+                time.sleep(THROTTLE_BACKOFF_SECONDS * (2 ** (attempt - 1)))
+                continue
             last_err = e
             time.sleep(1.5 * attempt)
         except OSError as e:
@@ -139,6 +144,10 @@ def fetch_rhtrade(lawd_cd: str, deal_ymd: str, page_no: int = 1,
         except RuntimeError as e:
             # API가 명시적 에러코드를 반환한 경우 (일시적 오류만 재시도)
             msg = str(e)
+            # 59절 — [22] 일일 요청 한도 초과는 **하루가 지나야** 풀린다.
+            # 재시도하면 한도만 더 깎으므로 즉시 멈춘다(이게 진짜 한도 신호다).
+            if "[22]" in msg:
+                raise RuntimeError(QUOTA_MESSAGE) from None
             if any(f"[{c}]" in msg for c in ("01", "02", "04", "05")):
                 last_err = e
                 time.sleep(1.5 * attempt)
@@ -149,7 +158,10 @@ def fetch_rhtrade(lawd_cd: str, deal_ymd: str, page_no: int = 1,
 
 # 58절 — 국토부 일일 트래픽 한도를 넘기면 HTTP 429가 온다. 재시도로는
 # 절대 풀리지 않으므로(하루가 지나야 한다) 문구를 하나로 두고 즉시 멈춘다.
-QUOTA_MESSAGE = ("국토부 API 일일 조회 한도를 넘겼습니다(429). 재시도로는 풀리지 않고 하루가 지나야 복구됩니다 — 내일 다시 시도해 주세요.")
+# 59절 — 429는 대개 "초당 호출이 몰렸다"는 뜻이라 조금 쉬면 풀린다.
+THROTTLE_BACKOFF_SECONDS = 4.0
+
+QUOTA_MESSAGE = ("국토부 API 일일 조회 한도를 넘겼습니다(resultCode 22). 재시도로는 풀리지 않고 하루가 지나야 복구됩니다 — 내일 다시 시도해 주세요.")
 
 def _parse_response(raw_bytes: bytes) -> list[dict]:
     # ⚠️ 응답이 XML이 아닐 수 있다 — 일일 트래픽 초과·점검·차단 시 data.go.kr은

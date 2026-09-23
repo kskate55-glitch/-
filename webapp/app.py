@@ -62,6 +62,9 @@ def _fmt_eok(man: float) -> str:
 # 예전처럼 필요한 시점(지오코딩이 다 끝난 뒤)에 직접 부른다 — A/B 측정과
 # 회귀 테스트가 이 스위치로 두 동작을 모두 확인한다.
 PREFETCH_APT = True
+# 72-2절 — 실거래 조회를 건축물대장·입지·지형보다 먼저 던진다.
+# 문제가 생기면 이 값만 False로 돌리면 예전 순서 그대로다.
+PREFETCH_ROWS = True
 
 
 @app.context_processor
@@ -590,14 +593,43 @@ def estimate():
         return render_template("index.html", error="주소에서 지역코드를 확인하지 못했습니다.",
                                 form=form, last_year=this_year - 1)
 
+    # ⚡ **국토부 실거래 조회를 여기서 미리 던진다(72-2절).**
+    #    바로 아래 건축물대장(1회)·19절 입지 체크(카카오 10회)·34절 주변
+    #    지형(3회)은 전부 **좌표만 있으면 되는 일**인데, 예전엔 그 셋이 끝나야
+    #    실거래 조회가 시작됐다 — 네트워크를 기다리는 시간이 그대로 더해졌다.
+    #    이제 셋이 도는 동안 실거래가 내려온다.
+    # ⚠️ 국토부 **동시 호출 수는 그대로다**(여기 워커 1개 + 내부 8개). 59절이
+    #    지목한 429(초당 제한) 위험을 키우지 않으려고 아파트 미리받기는
+    #    예전 자리에 둔다 — 그쪽은 이미 지오코딩 구간과 겹쳐 돈다.
+    _rows_future = _apt_future = None
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+
+        from data_source import get_apt_rows as _get_apt_rows
+        from data_source import get_trade_rows as _get_trade_rows
+        from estimate_price import dedupe as _dedupe
+        from lawd_lookup import find_dong_in_address as _find_dong
+
+        _pool = ThreadPoolExecutor(max_workers=2)
+        if PREFETCH_ROWS:
+            _rows_future = _pool.submit(
+                lambda: _dedupe(_get_trade_rows(lawd_cd, year_min)))
+        # 40절 아파트는 동 이름이 있어야 쓸모가 있다(주소 문자열만 보는
+        # 순수 함수라 앞으로 당겨도 부작용이 없다).
+        if PREFETCH_APT and _find_dong(address):
+            _apt_future = _pool.submit(_get_apt_rows, lawd_cd, year_min)
+        _pool.shutdown(wait=False)
+    except Exception:
+        _rows_future = _apt_future = None   # 실패는 조용히 — 아래에서 직접 부른다
+
     building = None
     try:
         from building_register import get_building_info
 
-        building_info = get_building_info(
+        building_info = _timer.measure("건물대장", lambda: get_building_info(
             subject_detail.get("b_code"), subject_detail.get("main_no"),
             subject_detail.get("sub_no"), subject_detail.get("is_mountain", False),
-        )
+        ))
         if building_info:
             building = {
                 "elevator": f"있음 ({building_info['elevator_count']}대)" if building_info["has_elevator"] else "없음",
@@ -632,7 +664,8 @@ def estimate():
     try:
         from estimate_price import compute_location_check
 
-        location = compute_location_check(subject_coord)
+        location = _timer.measure("입지 체크",
+                                  lambda: compute_location_check(subject_coord))
     except Exception:
         location = None
 
@@ -643,7 +676,7 @@ def estimate():
     try:
         from estimate_price import compute_terrain_check
 
-        t = compute_terrain_check(subject_coord)
+        t = _timer.measure("주변 지형", lambda: compute_terrain_check(subject_coord))
         if t["mountain"] or t["river"]:
             terrain_none = f"{TERRAIN_SEARCH_RADIUS_M / 1000:.0f}km 안에 없음"
             terrain_places = [
@@ -735,8 +768,12 @@ def estimate():
     target_dong_early = find_dong_in_address(address)
 
     try:
-        rows = _timer.measure("실거래 조회",
-                              lambda: dedupe(get_trade_rows(lawd_cd, year_min)))
+        # 위에서 미리 던져 뒀으면 결과만 받는다 — 여기 찍히는 시간은 "다운로드에
+        # 걸린 시간"이 아니라 **아직 안 끝나서 더 기다린 시간**이다.
+        rows = _timer.measure(
+            "실거래 조회",
+            (lambda: _rows_future.result()) if _rows_future is not None
+            else (lambda: dedupe(get_trade_rows(lawd_cd, year_min))))
     except RuntimeError as e:
         return render_template("index.html", error=f"국토부 API 조회 중 문제가 발생했습니다: {e}",
                                 form=form, last_year=this_year - 1)
@@ -763,17 +800,6 @@ def estimate():
     #    전혀 없고 각자 자기 캐시만 쓰므로(22절 "의존 없는 호출은 병렬로"
     #    방침 그대로) 지금 던져놓고 필요할 때 받으면 된다 — 새 지역 첫
     #    조회에서 국토부 왕복 한 묶음이 통째로 빠진다.
-    _apt_future = None
-    if target_dong_early and PREFETCH_APT:
-        try:
-            from concurrent.futures import ThreadPoolExecutor
-
-            from data_source import get_apt_rows as _get_apt_rows
-            _apt_pool = ThreadPoolExecutor(max_workers=1)
-            _apt_future = _apt_pool.submit(_get_apt_rows, lawd_cd, year_min)
-            _apt_pool.shutdown(wait=False)
-        except Exception:
-            _apt_future = None      # 미리 받기 실패는 조용히 — 아래에서 그냥 직접 부른다
 
     # 7-2절 시계열 가격보정 — CLI는 data/raw의 전체 기간 데이터로 추세를
     # 추정하지만, 웹 버전은 애초에 get_trade_rows()가 year_min 이후 데이터만
@@ -1263,8 +1289,10 @@ def estimate():
             from estimate_price import compute_apt_gap
 
             # 57절 — 위에서 미리 던져둔 결과를 받는다(없으면 지금 직접 부른다).
-            apt_rows = (_apt_future.result(timeout=60) if _apt_future is not None
-                        else get_apt_rows(lawd_cd, year_min))
+            apt_rows = _timer.measure(
+                "아파트 조회",
+                (lambda: _apt_future.result(timeout=60)) if _apt_future is not None
+                else (lambda: get_apt_rows(lawd_cd, year_min)))
             apt_gap = compute_apt_gap(apt_rows, target_dong, area, auction_price,
                                        this_year, year_min, lawd_cd=lawd_cd,
                                        subject_coord=subject_coord)

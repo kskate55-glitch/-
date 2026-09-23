@@ -10,6 +10,7 @@ data/raw/에 저장)과 달리, 웹 서버가 방문자 대신 그때그때 호�
 
 import json
 import os
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
@@ -26,6 +27,13 @@ CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
 #    똑같다. 그래도 서버를 때리지 않게 적당히 잡았다.
 FETCH_WORKERS = 8
 
+# ⚠️ **동시에 나가는 국토부 호출 수를 전체에서 이만큼으로 묶는다(72-2절).**
+#    빌라 조회와 40절 아파트 조회를 겹쳐 돌리면 대기시간이 크게 줄지만,
+#    각자 워커 8개를 쓰면 순간 16개가 나가 59절이 지목한 429(초당 제한)
+#    위험이 커진다. 슬롯을 공유하면 **겹쳐 돌면서도 순간 호출 수는 예전
+#    그대로**다 — 겹치기의 이득만 가져오고 위험은 안 늘린다.
+_MOLIT_SLOTS = threading.BoundedSemaphore(FETCH_WORKERS)
+
 
 def _fetch_months(months: list[str], fetch_one) -> list[dict]:
     """달 목록을 병렬로 받아 **원래 순서대로** 이어붙인다.
@@ -36,8 +44,12 @@ def _fetch_months(months: list[str], fetch_one) -> list[dict]:
     디버깅에 낫다."""
     if not months:
         return []
+    def _one(ym):
+        with _MOLIT_SLOTS:          # 전체 동시 호출 수를 FETCH_WORKERS로 묶는다
+            return fetch_one(ym)
+
     with ThreadPoolExecutor(max_workers=FETCH_WORKERS) as executor:
-        return [row for rows in executor.map(fetch_one, months) for row in rows]
+        return [row for rows in executor.map(_one, months) for row in rows]
 
 
 def _month_range(year_min: int, this_year: int, this_month: int) -> list[str]:
@@ -50,6 +62,27 @@ def _month_range(year_min: int, this_year: int, this_month: int) -> list[str]:
             m = 1
             y += 1
     return months
+
+
+# ⚠️ **40절 아파트는 최근 12개월만 받는다(72-2절).** 빌라와 달리 아파트는
+#    "인근 아파트 ㎡당가 중앙값" 하나만 쓰는데, 아파트는 거래가 워낙 많아
+#    (실측 사례: 강북구 한 달 100~200건) 12개월이면 동 단위 표본이 넘친다.
+#    얻는 것: 요청당 국토부 호출 9회 감소(48-6절 한도 문제에도 도움) +
+#    대기시간 단축. **12개월(만 1년)로 끊은 건 계절성을 타지 않게 하려는
+#    것**이다 — 8개월로 더 줄이면 특정 계절에 치우친 중앙값이 나온다.
+APT_MONTHS = 12
+
+
+def _recent_months(n: int, this_year: int, this_month: int) -> list[str]:
+    """이번 달까지 최근 n개월을 오래된 순으로."""
+    out = []
+    y, m = this_year, this_month
+    for _ in range(n):
+        out.append(f"{y}{m:02d}")
+        m -= 1
+        if m == 0:
+            m, y = 12, y - 1
+    return list(reversed(out))
 
 
 # ⚠️ 48-4절 — 아파트 데이터가 빌라 캐시에 섞여 들어간 사고가 있어서 폴더
@@ -151,4 +184,7 @@ def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
             supabase_cache.put(f"apt:{lawd_cd}", ym, rows)
         return rows
 
-    return _fetch_months(_month_range(year_min, now.year, now.month), one_month)
+    # 빌라와 달리 최근 APT_MONTHS개월만 받는다 — 위 주석 참고.
+    months = _recent_months(APT_MONTHS, now.year, now.month)
+    earliest = f"{year_min}01"
+    return _fetch_months([m for m in months if m >= earliest], one_month)

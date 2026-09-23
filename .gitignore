@@ -9,3 +9,4 @@ data/brokers_seoul.csv
 webapp/cache/
 __pycache__/
 *.pyc
+thumbnail_248x93.png

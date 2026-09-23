@@ -3642,6 +3642,16 @@ CSV 101건 중 **80건이 빌라가 아니라 아파트였다.** 46층·26억·1
   푸터에 "버전 abc1234"로 찍는다. 환경변수가 없으면(로컬 실행) `local`.
 - **결과를 보내줄 때 이 값도 같이 보면 "어느 코드로 나온 숫자인지" 바로
   갈린다.** 백테스트처럼 오래 걸리는 작업은 시작 전에 확인하는 게 맞다.
+- ⚠️ **입력 페이지(`/`)에는 한동안 안 보였다.** 46절에서 면책 문구 중복을
+  없애려고 `index.html`이 `base.html`의 footer 블록을 **빈 값으로 덮어썼는데**,
+  버전 표시도 그 안에 있어서 같이 사라졌다 — **백테스트를 돌리기 직전에
+  확인해야 할 값인데 정작 시작 화면에서만 안 보이는** 상태였다(사용자가
+  실제로 못 찾아서 드러났다). `index.html`에 `.home-version` 한 줄을 따로
+  뒀다.
+- ⚠️ **Render 자동 배포가 꺼져 있을 수 있다.** 푸시해도 안 올라가면 배포
+  로그의 TRIGGER가 `Manually deployed by you via Dashboard`로 찍힌다 —
+  그때는 `Manual Deploy → Deploy latest commit`을 누르거나
+  Settings에서 Auto-Deploy를 켜야 한다.
 - 사용자는 `git pull`을 직접 칠 필요가 없다 — Render Auto-Deploy가 푸시를
   받아 알아서 올린다. (사용자가 PowerShell에서 `git pull`을 쳤다가
   `fatal: not a git repository`를 본 적이 있다. 저장소를 받아둔 적이 없으니

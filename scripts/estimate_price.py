@@ -751,6 +751,48 @@ def SIMILARITY_EMPHASIS_CURVE(score: float) -> float:
     return (score / 100) ** SIMILARITY_EMPHASIS_POWER
 
 
+# CLAUDE.md 72-9절 — 비교물건 종합 유사도(7절)의 네 요소 배분.
+#
+# ⚠️ **예전엔 거리 35 · 면적 30 · 층 20 · 연식 15였다.** 그 값은 문서에도
+#    "검증된 공식이 아니라 경험적 배분"이라고 적혀 있었고, 실제로 한 번도
+#    측정된 적이 없었다. 실제 계산 코드로 몬테카를로를 세 번 돌려 바꿨다.
+#
+# **왜 거리에 더 주나 — 구조적인 이유가 있다.** 나머지 셋은 이미 한 번씩
+# 더 걸러진다: 면적은 5절 ±15% 하드필터 + 7-1절 ㎡당가 모델이 정규화하고,
+# 층은 5절이 반지하를 통째로 빼고 64절이 1층 가격을 보정하며, 준공년도는
+# 5절 ±4년 하드필터를 통과한 것만 남는다. **거리만 반경 안에서 아무 보정
+# 없이 가중치 하나로 다뤄진다** — 그런데 배분은 거리에 제일 적게 주고 있었다.
+#
+# **측정 결과(세 실험, 각각 130~200회 시뮬레이션):**
+#   ① 네 속성의 실제 영향 크기를 바꿔가며 · 동네 거래수 14/30/60
+#   ② 미시입지 프리미엄이 거리와 상관 rho(0~0.9)로만 이어질 때
+#   ③ 아주 가까운 거래가 오히려 특이하거나, 가까울수록 싼 경우
+#   → **최악의 손해**(그 상황의 최선 대비): 거리 35% +3.2%p · 55% +1.4%p ·
+#      **65% +0.63%p** · 75% +0.77%p. 세 실험 모두 65%가 가장 작았다.
+#
+# ⚠️ **거리에 아무 정보가 없을 때만 예전 값이 낫고, 그 손해는 +0.2~0.3%p다.**
+#    반대로 거리가 조금이라도(rho=0.3) 신호를 담으면 곧바로 뒤집힌다 —
+#    64절 1층 계수를 "맞았을 때 얼마나 좋나"가 아니라 **"틀렸을 때 얼마나
+#    나빠지나"**로 고른 것과 같은 기준이다.
+#
+# ⚠️ 합성 데이터다. 진짜 검증은 48절 백테스트 순회에서 **짝지은 비교**로
+#    한다(51-2절 — 그룹 평균은 구성 변화에 오염된다). 되돌리려면 이 표만
+#    예전 값(0.35/0.30/0.20/0.15)으로 되돌리면 된다.
+SIMILARITY_WEIGHTS = {"distance": 0.65, "area": 0.16, "floor": 0.11, "build_year": 0.08}
+
+
+def similarity_weights_text() -> str:
+    """화면·CLI에 "거리 65%·면적 16%·…"처럼 보여줄 문구.
+
+    ⚠️ **배분값을 문구에 그대로 박아 두면 안 된다** — 72-9절에서 배분을
+    고쳤더니 화면은 옛 값(거리 35%)을 그대로 말하고 있었다. 5절이 "비교거래를
+    어떤 기준으로 골랐는지는 항상 사용자에게 설명한다"고 못박은 자리인데
+    그 설명이 틀리면 안 하느니만 못하다. 표에서 직접 만들어 쓴다.
+    """
+    label = {"distance": "거리", "area": "면적", "floor": "층", "build_year": "준공년도"}
+    return "·".join(f"{label[k]} {v * 100:.0f}%" for k, v in SIMILARITY_WEIGHTS.items())
+
+
 def similarity_score(distance_m: float, radius_m: float,
                       area: float, subject_area: float, area_tolerance_pct: float,
                       floor: int | None, subject_floor: int | None,
@@ -775,7 +817,7 @@ def similarity_score(distance_m: float, radius_m: float,
       대수 같은 정보는 공개된 어떤 데이터로도 구할 수 없다.
 
     그래서 지금은 구할 수 있는 네 요소로만 점수를 매기고, 가중치는
-    거리 35% · 면적 30% · 층 20% · 준공년도 15%로 뒀다(경험적 배분 —
+    `SIMILARITY_WEIGHTS`로 뒀다(72-9절에서 실측으로 바꾼 값 —
     검증된 공식이 아니다). 준공년도 정보가 없으면(대상 물건 준공년도를
     모르거나 비교거래에 buildYear가 없으면) 그 15%를 나머지 세 요소에
     비례 배분한다.
@@ -817,12 +859,12 @@ def similarity_score(distance_m: float, radius_m: float,
         build_year_score = None
 
     if build_year_score is not None:
-        weights = {"distance": 0.35, "area": 0.30, "floor": 0.20, "build_year": 0.15}
+        weights = dict(SIMILARITY_WEIGHTS)
         scores = {"distance": distance_score, "area": area_score, "floor": floor_score,
                   "build_year": build_year_score}
     else:
-        # 준공년도 정보가 없으면 그 몫(15%)을 나머지 세 요소에 비례 배분한다
-        base = {"distance": 0.35, "area": 0.30, "floor": 0.20}
+        # 준공년도 정보가 없으면 그 몫을 나머지 세 요소에 비례 배분한다
+        base = {k: v for k, v in SIMILARITY_WEIGHTS.items() if k != "build_year"}
         total = sum(base.values())
         weights = {k: v / total for k, v in base.items()}
         scores = {"distance": distance_score, "area": area_score, "floor": floor_score}
@@ -3303,7 +3345,7 @@ def main():
     top_floor_map = estimate_building_top_floors(rows)
     print(f"핵심 비교거래 (과거 실거래 기준 — 국토교통부에 신고된 실제 체결 기록입니다, 지금 나온 매물 호가가 아닙니다):")
     print(f"가까운 순 — 반경 {effective_radius:.0f}m 안, 전용면적 ±{args.area_tolerance:.0f}%{build_year_note}인 "
-          f"실거래 중 거리·면적·층·준공년도 종합 유사도(0~100점, 거리 35%·면적 30%·층 20%·준공년도 15%)가 "
+          f"실거래 중 거리·면적·층·준공년도 종합 유사도(0~100점, {similarity_weights_text()})가 "
           f"높을수록, 계약월이 최근일수록 가중치를 높게 준 것입니다:")
     # 64절 — 보정이 실제로 걸렸으면 반드시 알린다. 목록의 금액은 신고된 실제
     # 체결가 그대로라, 안 알리면 "표에 뜬 가격이랑 매도가가 왜 안 맞지"로 읽힌다

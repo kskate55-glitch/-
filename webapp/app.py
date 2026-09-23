@@ -792,7 +792,8 @@ def estimate():
     from data_source import get_trade_rows
     from estimate_price import (FIRST_FLOOR_PRICE_RATIO, SALE_CALIBRATION_FACTOR,
                                 compute_scenarios, dedupe,
-                                estimate_monthly_trend_rate, find_comparables)
+                                estimate_monthly_trend_rate, find_comparables,
+                                similarity_weights_text)
     # 68절 — CLI와 **같은 문장**을 쓰려고 한 함수에서 가져온다. 이름이 지역
     # 변수 `time_correction_note`와 겹쳐서 별칭을 붙인다.
     from estimate_price import time_correction_note as ep_time_correction_note
@@ -1090,7 +1091,8 @@ def estimate():
             )
     comparable_criteria = (
         f"반경 {radius:.0f}m 안, 전용면적 ±{area_tolerance_pct_input:.0f}%{build_year_note}인 실거래 중 "
-        f"거리·면적·층·준공년도 종합 유사도(0~100점, 표의 '유사도' 열)가 높을수록, "
+        f"거리·면적·층·준공년도 종합 유사도(0~100점, 표의 '유사도' 열 — "
+        f"{similarity_weights_text()})가 높을수록, "
         f"계약월이 최근일수록 가중치를 높게 줘서 고른 것입니다."
         f"{first_floor_note}{expanded_note}{time_correction_note}"
     )

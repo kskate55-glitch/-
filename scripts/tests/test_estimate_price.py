@@ -95,12 +95,23 @@ class SimilarityScoreTests(unittest.TestCase):
 
     def test_boundary_of_radius_scores_near_zero_distance_component(self):
         # 거리만 반경 경계(가중치 0)로 두고 나머지는 완전 동일 —
-        # 거리 비중(35%)만큼 100점에서 깎여야 한다
+        # 거리 비중만큼 100점에서 깎여야 한다.
+        # ⚠️ 기대값을 숫자로 박아 두면 72-9절처럼 배분을 고칠 때마다 이 테스트가
+        #    같이 깨진다 — 배분표에서 끌어와 "관계"를 고정한다.
         s = ep.similarity_score(
             distance_m=400, radius_m=400, area=69.27, subject_area=69.27, area_tolerance_pct=0.15,
             floor=4, subject_floor=4, build_year=2012, subject_build_year=2012, build_year_tolerance=4,
         )
-        self.assertAlmostEqual(s, 65.0)  # 100 - 35(거리 비중)
+        expected = 100 * (1 - ep.SIMILARITY_WEIGHTS["distance"])
+        self.assertAlmostEqual(s, expected)
+
+    def test_the_weights_add_up_to_one(self):
+        """합이 1이 아니면 점수가 0~100을 벗어나 7절 강조 곡선이 뒤틀린다."""
+        self.assertAlmostEqual(sum(ep.SIMILARITY_WEIGHTS.values()), 1.0)
+        self.assertEqual(set(ep.SIMILARITY_WEIGHTS),
+                         {"distance", "area", "floor", "build_year"})
+        for key, value in ep.SIMILARITY_WEIGHTS.items():
+            self.assertGreater(value, 0, f"{key} 비중이 0 이하입니다")
 
     def test_missing_build_year_redistributes_its_weight(self):
         # 준공년도 정보가 없으면 15% 몫이 거리/면적/층에 비례 배분되고,
@@ -2426,3 +2437,45 @@ class TestTerrainLookupsRunTogether(unittest.TestCase):
         self.assertEqual(result["mountain"]["name"], "OO산")
         self.assertEqual(result["river"]["name"], "OO천", "성공한 키워드 결과가 사라졌습니다")
         self.assertIsNone(result["river_error"], "하나가 성공했으면 오류로 덮지 않는다")
+
+
+class TestTheScreenNeverStatesStaleWeights(unittest.TestCase):
+    """CLAUDE.md 72-9절 — 화면·CLI가 말하는 유사도 배분은 **표에서 끌어와야** 한다.
+
+    ⚠️ 실제로 겪었다: 배분을 거리 35% → 65%로 바꿨는데 CLI 안내 문구는
+    "거리 35%·면적 30%·층 20%·준공년도 15%"를 그대로 말하고 있었다. 5절이
+    "비교거래를 어떤 기준으로 골랐는지는 항상 설명한다"고 못박은 자리인데,
+    그 설명이 틀리면 안 하느니만 못하다.
+    """
+
+    def test_the_sentence_is_built_from_the_table(self):
+        text = ep.similarity_weights_text()
+        for label, key in (("거리", "distance"), ("면적", "area"),
+                           ("층", "floor"), ("준공년도", "build_year")):
+            pct = round(ep.SIMILARITY_WEIGHTS[key] * 100)
+            self.assertIn(f"{label} {pct}%", text, f"{label} 비중이 문구와 다릅니다")
+
+    def test_it_follows_a_changed_table(self):
+        saved = dict(ep.SIMILARITY_WEIGHTS)
+        try:
+            ep.SIMILARITY_WEIGHTS.update({"distance": 0.40, "area": 0.30,
+                                          "floor": 0.20, "build_year": 0.10})
+            self.assertIn("거리 40%", ep.similarity_weights_text())
+        finally:
+            ep.SIMILARITY_WEIGHTS.clear()
+            ep.SIMILARITY_WEIGHTS.update(saved)
+
+    def test_no_source_file_hardcodes_the_old_split(self):
+        """배분값을 문구에 박아 넣는 습관 자체를 막는다 — 주석은 세지 않는다."""
+        import re as _re
+        stale = _re.compile(r"거리\s*35\s*%\s*[·,]\s*면적\s*30\s*%")
+        for rel in ("scripts/estimate_price.py", "webapp/app.py",
+                    "webapp/templates/result.html"):
+            path = _repo(rel)
+            if not os.path.exists(path):
+                continue
+            with open(path, encoding="utf-8") as f:
+                body = "\n".join(line for line in f
+                                 if not line.lstrip().startswith(("#", "//")))
+            self.assertIsNone(stale.search(body),
+                              f"{rel}에 옛 배분이 문구로 박혀 있습니다")

@@ -1546,20 +1546,22 @@ class TestEstimateWarnings(unittest.TestCase):
         """경고는 껐지만 `top_weight_share()` 자체는 백테스트 CSV가 계속 쓴다."""
         self.assertIsNotNone(ep.top_weight_share(self._rows(10, top_share=60.0)))
 
-    def test_exactly_one_same_building_warns(self):
-        """⚠️ 실측에서 **1건일 때가 제일 나빴다** — 경기 44건에서 0건 14.5%·
-        1건 18.9%·2~3건 11.0%·4건 이상 3.1%였고, 표본을 바꾼 92건에서도
-        0건 11.7%·1건 14.6%·2~3건 8.4%·4건 이상 7.8%로 **같은 순서가 다시
-        나왔다**(재현된 몇 안 되는 신호다)."""
-        self.assertIn("same_building", self._keys(self._rows(12, same_building=1), 0.0))
+    def test_same_building_never_warns_anymore(self):
+        """⛔ 67절 — '같은 건물 거래가 딱 한 건' 경고는 **껐다.**
 
-    def test_zero_or_many_same_building_do_not_warn(self):
-        self.assertNotIn("same_building", self._keys(self._rows(12, same_building=0), 0.0))
-        self.assertNotIn("same_building", self._keys(self._rows(12, same_building=4), 0.0))
+        경기 44건에서 "1건이 0건보다 나쁘다"는 반직관적 순서를 보고 채택했고
+        92건에서도 같은 순서가 나왔지만, **두 표본이 사실 같은 물건이었다**
+        (49-2절 시드 고정). 독립 표본인 서울 53건에서는 방향이 뒤집혔고
+        (−3.8%p), 118건을 합쳐도 +1.1%p [−3.8, +6.8]로 0을 못 넘는다.
+        49-1절 최대지분 경고와 똑같은 경로다 — **되살아나지 않게 고정한다.**
+        """
+        for sb in (0, 1, 2, 4):
+            self.assertNotIn("same_building", self._keys(self._rows(12, same_building=sb), 0.0),
+                             f"동일건물 {sb}건에서 껐어야 할 경고가 되살아났다")
 
     def test_warnings_can_stack(self):
         keys = self._keys(self._rows(10, same_building=1, top_share=70.0), 12.0)
-        self.assertEqual(keys, {"divergence", "same_building"})
+        self.assertEqual(keys, {"divergence"})
 
     def test_every_warning_carries_text_for_the_screen(self):
         for w in ep.compute_estimate_warnings(self._rows(10, same_building=1, top_share=70.0), 12.0):
@@ -1780,23 +1782,29 @@ class TestPredictionInterval(unittest.TestCase):
     def test_each_risk_widens_the_band(self):
         """위험요인이 늘수록 구간이 좁아지는 일은 없어야 한다(단조)."""
         widths = []
-        for area, div, sb in [(70.0, 0.5, 0), (70.0, 9.0, 0), (40.0, 9.0, 0), (40.0, 9.0, 1)]:
-            r = ep.compute_prediction_interval(20000, self._rows(10, same_building=sb), area, div)
+        for area, div in [(70.0, 0.5), (70.0, 9.0), (40.0, 9.0)]:
+            r = ep.compute_prediction_interval(20000, self._rows(10), area, div)
             widths.append(r["pct"])
         self.assertEqual(widths, sorted(widths), f"구간 폭이 단조가 아니다: {widths}")
 
-    def test_three_risks_collapse_into_the_top_tier(self):
-        """위험 3개짜리는 실측 표본이 8건뿐이라 2개 칸에 합친다."""
-        r = ep.compute_prediction_interval(20000, self._rows(10, same_building=1), 40.0, 9.0)
-        self.assertEqual(r["risks"], 3)
+    def test_both_risks_land_in_the_top_tier(self):
+        """남은 위험요인은 둘뿐이라, 둘 다 걸리면 곧 최상위 칸이다(67절)."""
+        r = ep.compute_prediction_interval(20000, self._rows(10), 40.0, 9.0)
+        self.assertEqual(r["risks"], 2)
         self.assertEqual(r["tier"], 2)
 
-    def test_two_same_building_rows_are_not_a_risk(self):
-        """위험한 건 '딱 한 건'일 때다 — 2건 이상은 오히려 정확했다."""
-        one = ep.compute_prediction_interval(20000, self._rows(10, same_building=1), 70.0, 0.5)
-        two = ep.compute_prediction_interval(20000, self._rows(10, same_building=2), 70.0, 0.5)
-        self.assertEqual(one["risks"], 1)
-        self.assertEqual(two["risks"], 0)
+    def test_same_building_count_no_longer_changes_the_band(self):
+        """⛔ 67절 — 동일건물 건수는 더 이상 위험요인이 아니다.
+
+        118건(경기 65 + 서울 53)에서 +1.1%p [−3.8, +6.8]로 0을 못 넘었다.
+        빼도 갈라내는 힘이 그대로이고(합계 +4.2%p → +4.2%p) 경고율만
+        59% → 47%로 내려간다.
+        """
+        base = ep.compute_prediction_interval(20000, self._rows(10, same_building=0), 70.0, 0.5)
+        for sb in (1, 2, 4):
+            r = ep.compute_prediction_interval(20000, self._rows(10, same_building=sb), 70.0, 0.5)
+            self.assertEqual(r["risks"], base["risks"], f"동일건물 {sb}건이 위험요인으로 되살아났다")
+            self.assertEqual(r["pct"], base["pct"])
 
     def test_band_brackets_the_center(self):
         r = ep.compute_prediction_interval(20000, self._rows(10), 70.0, 0.5)
@@ -1811,26 +1819,30 @@ class TestPredictionInterval(unittest.TestCase):
         self.assertEqual(ep.compute_prediction_interval(20000, self._rows(10), None, None)["risks"], 0)
 
     def test_table_is_wider_than_the_measured_quantiles(self):
-        """⚠️ **두 표본 모두의** 실측 80% 분위보다 넓게 잡아둔 상태를 고정한다.
+        """⚠️ **두 지역 모두의** 실측 80% 분위보다 넓게 잡아둔 상태를 고정한다.
 
-        경기 92건은 ±9.3/17.4/25.0이었는데, 독립 표본인 서울 53건은
-        ±26/31/25로 훨씬 넓게 나왔다(66절) — 좁게 잡으면 "80%가 이 범위"라는
-        화면 문구가 그대로 거짓말이 된다. 둘 중 넓은 쪽을 기준으로 삼는다.
+        66절에서 독립 표본(서울 53건)이 예전 폭 ±10/18/25를 깨뜨렸다 —
+        적중이 50/58/76%였다. 좁게 잡으면 "80%가 이 범위"라는 화면 문구가
+        그대로 거짓말이 되고, 그만큼 입찰가를 잘못 쓰게 된다.
+        **좁아서 틀리는 쪽이 넓어서 싱거운 쪽보다 훨씬 해롭다.**
 
-        ⚠️ **표본이 얇은 칸은 기준에서 뺀다.** 서울 위험0개는 8건뿐이고 오차가
-        1·5·7·9·16·17·26·30%라, 80% 분위(26%)가 **한 건에 통째로 좌우된다** —
-        게다가 ±20과 ±26 사이에는 데이터가 한 건도 없어서 그 사이 어디로 잡든
-        적중률이 똑같다. 그런 꼬리에 폭을 맞추는 건 48-2절 0.97과 같은
-        과적합이다."""
+        아래 수치는 67절에서 위험요인을 둘로 줄인 뒤 다시 잰 값이다
+        (경기 65건 + 서울 53건 = 118건).
+
+        ⚠️ **표본이 얇은 칸은 기준에서 뺀다.** 경기 위험2개는 14건뿐이라
+        80% 분위(37%)가 한두 건에 좌우된다 — 그런 꼬리에 폭을 맞추는 건
+        48-2절 0.97과 같은 과적합이다.
+        """
         MIN_N = 15
-        measured = [  # (tier, 경기 92건, 서울 53건, 서울 표본수)
-            (0, 9.3, 26.0, 8),
-            (1, 17.4, 31.0, 24),
-            (2, 25.0, 25.0, 21),
+        measured = [  # (tier, 경기 80%분위, 경기 n, 서울 80%분위, 서울 n)
+            (0, 13.0, 30, 18.0, 11),
+            (1, 14.0, 21, 31.0, 25),
+            (2, 37.0, 14, 25.0, 17),
         ]
-        for tier, gyeonggi, seoul, seoul_n in measured:
-            floor = gyeonggi if seoul_n < MIN_N else max(gyeonggi, seoul)
-            self.assertGreaterEqual(ep.PREDICTION_INTERVAL_PCT[tier], floor * 0.95,
+        for tier, gg, gg_n, seoul, seoul_n in measured:
+            thick = [q for q, n in ((gg, gg_n), (seoul, seoul_n)) if n >= MIN_N]
+            self.assertTrue(thick, f"위험 {tier}개 칸에 기준 삼을 표본이 없다")
+            self.assertGreaterEqual(ep.PREDICTION_INTERVAL_PCT[tier], max(thick) * 0.95,
                                      f"위험 {tier}개 구간이 실측 꼬리보다 좁다")
 
     def test_widths_never_shrink_as_risk_grows(self):

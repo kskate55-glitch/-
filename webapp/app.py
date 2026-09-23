@@ -633,7 +633,11 @@ def estimate():
 
     from data_source import get_trade_rows
     from estimate_price import (FIRST_FLOOR_PRICE_RATIO, SALE_CALIBRATION_FACTOR,
-                                compute_scenarios, dedupe, find_comparables)
+                                compute_scenarios, dedupe,
+                                estimate_monthly_trend_rate, find_comparables)
+    # 68절 — CLI와 **같은 문장**을 쓰려고 한 함수에서 가져온다. 이름이 지역
+    # 변수 `time_correction_note`와 겹쳐서 별칭을 붙인다.
+    from estimate_price import time_correction_note as ep_time_correction_note
     from lawd_lookup import find_dong_in_address
 
     # 40절 아파트 조회를 미리 던지려면 동 이름이 먼저 필요하다(주소 문자열만
@@ -702,6 +706,10 @@ def estimate():
         target_dong, subject_detail.get("main_no"), subject_detail.get("sub_no"),
         bool(subject_detail.get("is_mountain")))
 
+    # 68절 — 7-2절 시계열 보정을 다시 켰다. 주소에서 동을 못 뽑으면(target_dong이
+    # None) 조용히 None이라 예전처럼 보정 없이 간다.
+    trend_rate = (estimate_monthly_trend_rate(rows, target_dong) if target_dong else None)
+
     filtered = _timer.measure("비교거래 찾기", lambda: find_comparables(
         rows, subject_coord, area, floor, build_year,
         radius, year_min, this_year, gu_filter=None,
@@ -709,6 +717,7 @@ def estimate():
         build_year_tolerance=build_year_tolerance,
         this_month=this_month,
         subject_building=subject_building,
+        monthly_trend_rate=trend_rate,               # 68절 — 매매 경로만 켠다
         first_floor_ratio=FIRST_FLOOR_PRICE_RATIO))  # 64절 — 매매 경로만 켠다
     if not filtered:
         return render_template(
@@ -905,7 +914,11 @@ def estimate():
 
     build_year_note = f", 준공년도 ±{build_year_tolerance}년 이내" if build_year is not None else ""
     expanded_note = ""  # 5절 적응형 반경을 끄면서 "자동으로 넓혔습니다" 안내도 비워둔다
-    time_correction_note = ""  # 7-2절 시계열 보정을 끄면서 안내 문구도 비워둔다
+    # 68절 — 7-2절 시계열 보정을 다시 켜면서 안내 문구도 되살렸다. 보정이
+    # 실제로 걸린 행이 있을 때만 붙는다(CLI와 같은 문장 — 한 함수에서 나온다).
+    time_correction_note = ""
+    if any(c.get("_amount_man_adjusted") for c in filtered):
+        time_correction_note = ep_time_correction_note(trend_rate)
 
     # 64절 — 1층 보정이 실제로 걸렸으면 **반드시 알린다.** 조용히 값만 바꾸면
     # "왜 예전 계산이랑 숫자가 다르지" 혼란을 준다(7-2절이 같은 이유로 안내

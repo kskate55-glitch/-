@@ -36,7 +36,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import lawd_lookup
-from estimate_price import (FIRST_FLOOR_PRICE_RATIO, SALE_CALIBRATION_FACTOR,
+from estimate_price import (FIRST_FLOOR_PRICE_RATIO, estimate_monthly_trend_rate, SALE_CALIBRATION_FACTOR,
                             compute_scenarios, dedupe,
                             top_weight_share,
                             find_comparables, load_transactions, to_amount_man,
@@ -160,6 +160,12 @@ def estimate_as_of(rows: list[dict], target: dict, radius_m: float,
         subject_building=building_identity(target.get("umdNm"), target.get("jibun")),
         # 64절 — 화면(매매)과 같은 보정을 써야 그 효과를 백테스트로 잴 수 있다.
         first_floor_ratio=FIRST_FLOOR_PRICE_RATIO,
+        # 68절 — 7-2절 시계열 보정도 화면과 같이 켠다.
+        # ⚠️ **추세도 `prior`로만 추정한다.** `rows`(전체)로 추정하면 대상
+        #    계약일 **이후** 가격이 추세에 섞여 들어와 48절이 막아둔 데이터
+        #    누출이 뒷문으로 되살아난다 — 그러면 백테스트 점수가 통째로 거짓말이
+        #    된다. `TestTrendRateHasNoLeakage`가 이걸 고정한다.
+        monthly_trend_rate=estimate_monthly_trend_rate(prior, target.get("umdNm") or ""),
     )
     if len(filtered) < MIN_COMPARABLES:
         return {"n_comparables": len(filtered), "skipped": "표본부족"}

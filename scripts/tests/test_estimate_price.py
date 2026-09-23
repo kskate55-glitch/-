@@ -15,6 +15,7 @@ CLAUDE.md 33절 — scripts/estimate_price.py의 핵심 계산 함수(7~8절 가
 """
 
 import os
+import random
 import re
 import sys
 import unittest
@@ -32,6 +33,12 @@ def _fake_row(name, jibun, area, floor, build_year, deal_year, deal_month, amoun
         "excluUseAr": str(area), "dealYear": str(deal_year), "dealMonth": str(deal_month),
         "dealDay": "10", "dealAmount": f"{amount_man:,}", "floor": str(floor), "sggCd": sgg,
     }
+
+
+def _repo(rel: str) -> str:
+    """리포 루트 기준 경로 — 소스 검사 테스트가 공유한다."""
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__)))), rel)
 
 
 class ToAmountManTests(unittest.TestCase):
@@ -213,6 +220,137 @@ class TimeSeriesPriceCorrectionTests(unittest.TestCase):
         rows = self._rows_with_trend(110, -2, 6)  # 110 -> 100 만원/㎡
         rate = ep.estimate_monthly_trend_rate(rows, "수유동")
         self.assertLess(rate, 0)
+
+
+    def test_one_up_trade_no_longer_flips_the_trend(self):
+        """⚠️ 68절 — 추세가 이제 **가격을 실제로 움직이므로**, 업거래 한 건에
+        부호가 뒤집히면 매도가가 통째로 틀린다. 그래서 추정기만 월별 **중앙값**을
+        쓴다(15절 화면은 익숙한 평균 그대로)."""
+        rows = []
+        for month in range(1, 7):                       # 한 달에 4건씩, 꾸준히 상승
+            for k in range(4):
+                pps = 100 + (month - 1) * 2
+                rows.append(_fake_row(f"빌라{month}{k}", f"{month}{k}", 60, 4, 2012,
+                                      2025, month, round(pps * 60)))
+        clean = ep.estimate_monthly_trend_rate(rows, "수유동")
+        self.assertGreater(clean, 0)
+        rows.append(_fake_row("업거래", "999", 60, 4, 2012, 2025, 6, round(30 * 60)))
+        self.assertGreater(ep.estimate_monthly_trend_rate(rows, "수유동"), 0,
+                           "업거래 한 건에 상승 추세가 하락으로 뒤집혔다")
+
+    def test_noise_without_a_real_trend_is_not_corrected(self):
+        """⚠️ 68절의 핵심 안전장치 — 가격이 안 움직이는 동네에서 잡음을 추세로
+        착각하면 **멀쩡한 매도가를 흔든다**(실측: 거래가 드문 동네 보합장
+        MAPE 3.2% → 3.8%). 기울기가 자기 표준오차를 못 넘으면 보정하지 않는다."""
+        rnd = random.Random(7)
+        rows = []
+        for month in range(1, 13):
+            for k in range(3):
+                pps = 100 * rnd.lognormvariate(0, 0.12)      # 추세 0, 잡음만
+                rows.append(_fake_row(f"빌라{month}{k}", f"{month}{k}", 60, 4, 2012,
+                                      2025, month, round(pps * 60)))
+        self.assertIsNone(ep.estimate_monthly_trend_rate(rows, "수유동"),
+                          "추세가 없는데 보정을 걸고 있다")
+
+    def test_a_clear_trend_still_passes_the_gate(self):
+        """게이트가 너무 빡빡하면 진짜 상승장에서도 보정을 못 건다."""
+        rnd = random.Random(7)
+        rows = []
+        for month in range(1, 25):          # 24개월 × 6건 — 실제 동 규모
+            y, m = (2025, month) if month <= 12 else (2026, month - 12)
+            for k in range(6):
+                pps = 100 * (1.007 ** (month - 1)) * rnd.lognormvariate(0, 0.12)
+                rows.append(_fake_row(f"빌라{month}{k}", f"{month}{k}", 60, 4, 2012,
+                                      y, m, round(pps * 60)))
+        rate = ep.estimate_monthly_trend_rate(rows, "수유동")
+        self.assertIsNotNone(rate, "뚜렷한 상승 추세인데 게이트가 막았다")
+        self.assertGreater(rate, 0.002)
+
+    def test_the_rate_is_clamped_to_a_sane_range(self):
+        """표본이 얇으면 추정이 터무니없이 나올 수 있다 — 마지막 안전장치."""
+        rows = [_fake_row(f"빌라{i}", str(i), 60, 4, 2012, 2025, i + 1,
+                          round(100 * (3 ** i) * 60)) for i in range(4)]   # 매달 3배
+        self.assertAlmostEqual(ep.estimate_monthly_trend_rate(rows, "수유동"),
+                               ep.TREND_RATE_SANITY_MAX, places=9)
+        crash = [_fake_row(f"빌라{i}", str(i), 60, 4, 2012, 2025, i + 1,
+                           round(100 / (3 ** i) * 60)) for i in range(4)]
+        self.assertAlmostEqual(ep.estimate_monthly_trend_rate(crash, "수유동"),
+                               -ep.TREND_RATE_SANITY_MAX, places=9)
+
+    def test_display_series_still_uses_the_mean(self):
+        """15절 화면은 바꾸지 않았다 — 기본 집계는 여전히 평균이다."""
+        rows = [_fake_row("a", "1", 60, 4, 2012, 2025, 1, round(100 * 60)),
+                _fake_row("b", "2", 60, 4, 2012, 2025, 1, round(200 * 60))]
+        series, _ = ep._price_trend_monthly_series(rows, "수유동")
+        self.assertAlmostEqual(series[0][2], 150.0)
+
+    def test_flat_prices_are_not_corrected_at_all(self):
+        """보합이면 None — 68절 게이트가 "움직이지 않는 동네는 건드리지 않는다"를
+        보장한다(예전엔 0.0을 돌려줬는데, 의미상 같지만 호출부가 보정 자체를
+        건너뛰는 쪽이 명확하다)."""
+        rows = self._rows_with_trend(100, 0, 6)
+        self.assertIsNone(ep.estimate_monthly_trend_rate(rows, "수유동"))
+
+    def test_rate_is_compounding_not_linear(self):
+        """log를 씌워 회귀하므로 기울기가 곧 **월 복리율**이어야 한다."""
+        rows = [_fake_row(f"빌라{i}", str(i), 60, 4, 2012, 2025, i + 1,
+                          round(100 * (1.01 ** i) * 60)) for i in range(8)]
+        self.assertAlmostEqual(ep.estimate_monthly_trend_rate(rows, "수유동"), 0.01, places=5)
+
+
+class TimeCorrectionNoteTests(unittest.TestCase):
+    """68절 — 보정이 걸리면 **반드시 화면에 알린다**(목록엔 실제 체결가가 그대로
+    뜨므로, 안 알리면 '표 가격이랑 매도가가 왜 안 맞지'로 읽힌다)."""
+
+    def test_no_note_when_rate_is_missing_or_tiny(self):
+        self.assertEqual(ep.time_correction_note(None), "")
+        self.assertEqual(ep.time_correction_note(0.0), "")
+        self.assertEqual(ep.time_correction_note(ep.TIME_CORRECTION_MENTION_RATE / 2), "")
+
+    def test_rising_and_falling_read_differently(self):
+        up = ep.time_correction_note(0.007)
+        down = ep.time_correction_note(-0.007)
+        self.assertIn("오르는", up)
+        self.assertIn("내리는", down)
+        for note in (up, down):
+            self.assertIn("실제 체결가 그대로", note,
+                          "목록 금액이 손대지 않은 값이라는 걸 반드시 밝혀야 한다")
+
+    def test_cli_and_web_use_the_same_sentence(self):
+        """CLI와 웹이 각자 문장을 쓰면 조용히 갈라진다 — 한 함수만 부르는지 고정."""
+        for path in ("scripts/estimate_price.py", "webapp/app.py"):
+            src = open(_repo(path), encoding="utf-8").read()
+            self.assertIn("time_correction_note", src)
+
+
+class TimeCorrectionIsOnForSaleOnly(unittest.TestCase):
+    """68절 — 7-2절을 되살리면서 16절 전세·23-1절 전환율이 **매매 추세를
+    물려받지 않는지** 소스로 고정한다(48-2절·65절에서 같은 실수를 두 번 했다)."""
+
+    def test_sale_call_sites_pass_the_trend(self):
+        for path in ("scripts/estimate_price.py", "webapp/app.py", "scripts/backtest.py"):
+            src = open(_repo(path), encoding="utf-8").read()
+            self.assertIn("monthly_trend_rate=", src, f"{path}에서 매매 보정이 빠졌다")
+
+    def test_default_is_off(self):
+        import inspect
+        sig = inspect.signature(ep.find_comparables)
+        self.assertIsNone(sig.parameters["monthly_trend_rate"].default,
+                          "기본값이 켜져 있으면 전세 경로가 매매 추세를 물려받는다")
+
+    def test_the_jeonse_call_sites_do_not_pass_it(self):
+        src = open(_repo("scripts/estimate_price.py"), encoding="utf-8").read()
+        for marker in ('amount_field="deposit"', 'amount_field="monthlyRent"'):
+            idx = 0
+            while True:
+                idx = src.find(marker, idx)
+                if idx < 0:
+                    break
+                start = src.rfind("find_comparables(", 0, idx)
+                self.assertGreaterEqual(start, 0)
+                self.assertNotIn("monthly_trend_rate", src[start:idx + len(marker) + 400],
+                                 "전세/전환율 경로가 매매 시계열 보정을 물려받고 있다")
+                idx += len(marker)
 
 
 class TimeCorrectionFactorTests(unittest.TestCase):

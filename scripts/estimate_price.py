@@ -48,6 +48,7 @@ API도 직접 호출한다(broker_lookup.py, 환경변수 GG_DATA_KEY 필요).
 
 import argparse
 import glob
+import math
 import os
 import re
 import statistics
@@ -2202,12 +2203,21 @@ def print_seasonality(season: dict):
         print("→ 뚜렷한 계절성이 보이지 않아 매도 시점보다 가격 자체에 집중하는 것을 추천합니다.")
 
 
-def _price_trend_monthly_series(all_rows: list[dict], dong: str) -> tuple[list[tuple[int, int, float]], str]:
-    """15절(가격 추이)과 7-2절(시계열 보정)이 공유하는 집계 로직 — 월별 평균
-    평당가(만원/㎡)를 (연, 월, 평균평당가) 튜플 리스트로 시간순 정렬해서 돌려준다.
+def _price_trend_monthly_series(all_rows: list[dict], dong: str,
+                                 aggregate=statistics.mean) -> tuple[list[tuple[int, int, float]], str]:
+    """15절(가격 추이)과 7-2절(시계열 보정)이 공유하는 집계 로직 — 월별 평당가
+    (만원/㎡)를 (연, 월, 대표값) 튜플 리스트로 시간순 정렬해서 돌려준다.
     `compute_price_trend()`(15절 텍스트/그래프용 문자열 라벨 포맷)와
     `estimate_monthly_trend_rate()`(7-2절 월평균 변동률 추정)가 같은 집계를 두 번
-    구현하지 않도록 이 함수 하나로 합쳤다."""
+    구현하지 않도록 이 함수 하나로 합쳤다.
+
+    ⚠️ **`aggregate`가 기본 평균인 이유는 15절 화면을 바꾸지 않기 위해서다.**
+    7-2절 추정기만 `statistics.median`을 넘긴다 — 68절에서 실제로 겪은 문제
+    때문이다: 한 달 거래가 몇 건뿐인 동네에서 업거래 한 건이 섞이면 그 달
+    **평균**이 통째로 끌려가 추세 부호까지 뒤집혔다(회귀로 바꾼 뒤에도 그랬다).
+    중앙값은 그 한 건에 흔들리지 않는다. 화면(15절)은 익숙한 평균 그대로 두고,
+    **가격을 실제로 움직이는 쪽(7-2절)만** 보수적인 집계를 쓴다.
+    """
     non_cancelled = [r for r in all_rows if r.get("cdealType", "").strip() != "해제"]
     dong_rows = [r for r in non_cancelled if r.get("umdNm", "").strip() == dong.strip()]
 
@@ -2228,7 +2238,7 @@ def _price_trend_monthly_series(all_rows: list[dict], dong: str) -> tuple[list[t
             continue
         buckets[(y, m)].append(amount / area)
 
-    series = sorted((y, m, statistics.mean(vals)) for (y, m), vals in buckets.items())
+    series = sorted((y, m, aggregate(vals)) for (y, m), vals in buckets.items())
     return series, scope_label
 
 
@@ -2244,23 +2254,82 @@ def compute_price_trend(all_rows: list[dict], dong: str) -> dict:
 # 먼 과거는 더 외삽하지 않는다(추세가 그만큼 오래 이어졌으리라는 가정이
 # 약해지므로). 최종 보정 배율도 이 비율을 넘지 않게 clamp한다 — 5절 평당가
 # 이상치 다운웨이트와 같은 "보정은 하되 폭주는 막는다"는 원칙이다.
+TREND_RATE_MIN_T = 1.5         # 68절 — 기울기가 자기 표준오차의 이 배수를 넘어야 보정한다
+TREND_RATE_SANITY_MAX = 0.02   # 68절 — 추정 월변동률 상식 범위(월 ±2% = 연 ±27%)
 TIME_CORRECTION_MAX_MONTHS = 12
 TIME_CORRECTION_MAX_PCT = 0.15
 
 
 def estimate_monthly_trend_rate(all_rows: list[dict], dong: str) -> float | None:
-    """CLAUDE.md 7-2절 — 15절과 같은 월별 평당가 시계열의 첫 점과 마지막 점으로
-    월평균 복리 변동률을 추정한다. 시계열이 3개월 미만이면(15절과 동일한 최소
-    표본 기준) None을 돌려주고, 호출부는 조용히 시계열 보정을 건너뛴다."""
-    series, _ = _price_trend_monthly_series(all_rows, dong)
+    """CLAUDE.md 7-2절 — 15절과 같은 월별 평당가 시계열로 월평균 복리 변동률을
+    추정한다. 시계열이 3개월 미만이면(15절과 동일한 최소 표본 기준) None을
+    돌려주고, 호출부는 조용히 시계열 보정을 건너뛴다.
+
+    ⚠️ **68절에서 첫점-끝점 방식을 최소제곱 회귀로 바꿨다.** 예전엔 시계열의
+    첫 점과 마지막 점 **두 개만** 써서 그 두 달이 우연히 높거나 낮으면 추세
+    전체가 흔들렸다 — 합성 실측으로 추정 편차가 ±0.25%p/월이었는데, 모든 점을
+    쓰는 회귀로 바꾸니 **±0.13%p/월로 절반**이 됐다. 보정이 잘못된 방향으로
+    걸리는 일이 그만큼 줄고, 가격이 안 움직이는 동네에서 괜히 흔드는 손해도
+    같이 줄어든다(보합 동네 MAPE 3.6% → 3.3%).
+
+    `log(평당가)`를 월 인덱스에 회귀한 기울기가 곧 월 복리 변동률이다 —
+    로그를 씌워야 "매달 N%"가 직선이 되고, 그래야 기울기 하나로 복리율이
+    바로 나온다.
+    """
+    # 월별 **중앙값** — 업거래 한 건이 그 달을 통째로 끌고 가는 걸 막는다.
+    series, _ = _price_trend_monthly_series(all_rows, dong, aggregate=statistics.median)
     if len(series) < 3:
         return None
-    y0, m0, v0 = series[0]
-    y1, m1, v1 = series[-1]
-    months_span = (y1 - y0) * 12 + (m1 - m0)
-    if months_span <= 0 or v0 <= 0:
+    pts = [((y * 12 + m), math.log(v)) for y, m, v in series if v > 0]
+    if len(pts) < 3:
         return None
-    return (v1 / v0) ** (1 / months_span) - 1
+    mean_x = sum(x for x, _ in pts) / len(pts)
+    mean_y = sum(y for _, y in pts) / len(pts)
+    denom = sum((x - mean_x) ** 2 for x, _ in pts)
+    if denom <= 0:          # 모든 점이 같은 달 — 기울기를 구할 수 없다
+        return None
+    slope = sum((x - mean_x) * (y - mean_y) for x, y in pts) / denom
+    intercept = mean_y - slope * mean_x
+
+    # ⚠️ **추세가 잡음과 구별될 때만 보정한다** (68절). 회귀를 쓰면 기울기의
+    # 표준오차가 공짜로 나오는데, 그걸 안 보면 **가격이 안 움직이는 동네에서
+    # 잡음을 추세로 착각해 매도가를 흔든다** — 실측으로 확인했다(거래가 드문
+    # 동네 보합장에서 MAPE 3.2% → 3.8%). t = |기울기| / 표준오차가
+    # `TREND_RATE_MIN_T` 미만이면 "추세 없음"으로 보고 None을 돌려준다.
+    dof = len(pts) - 2
+    if dof < 1:
+        return None
+    resid = sum((y - (intercept + slope * x)) ** 2 for x, y in pts)
+    se = math.sqrt(resid / dof / denom) if resid > 0 else 0.0
+    if se > 0 and abs(slope) / se < TREND_RATE_MIN_T:
+        return None
+
+    rate = math.exp(slope) - 1
+    # 마지막 안전장치 — 표본이 얇으면 추정이 터무니없이 나올 수 있다.
+    # 월 ±2%(연 ±27%)를 넘는 빌라 시세 추세는 현실적으로 없다고 본다.
+    return max(-TREND_RATE_SANITY_MAX, min(TREND_RATE_SANITY_MAX, rate))
+
+
+# 7-2절 안내 문구를 띄우는 최소 변동률 — 이보다 작으면 보정폭이 1%도
+# 안 되므로 굳이 화면에 한 줄을 더하지 않는다(문구만 늘고 읽을 게 없다).
+TIME_CORRECTION_MENTION_RATE = 0.001   # 월 ±0.1%
+
+
+def time_correction_note(monthly_rate: float | None) -> str:
+    """CLAUDE.md 7-2절 — 보정이 실제로 걸렸을 때 화면에 다는 한 줄.
+
+    ⚠️ **조용히 값만 바꾸면 안 된다.** "핵심 비교거래" 목록에는 신고된 실제
+    체결가가 그대로 뜨는데 매도가만 달라지면 "표에 뜬 가격이랑 왜 안 맞지"로
+    읽힌다(64절 1층 보정이 안내를 다는 것과 같은 이유). CLI·웹이 같은 문장을
+    쓰도록 여기 한 군데에 둔다.
+    """
+    if monthly_rate is None or abs(monthly_rate) < TIME_CORRECTION_MENTION_RATE:
+        return ""
+    pct = monthly_rate * 100
+    direction = "오르는" if pct > 0 else "내리는"
+    return (f" 이 동네는 가격이 {direction} 추세(월 {pct:+.1f}%)라, 오래된 실거래는 "
+            f"지금 시세 수준으로 보정(최대 ±{TIME_CORRECTION_MAX_PCT * 100:.0f}%)해서 "
+            f"계산했습니다(아래 목록의 금액은 신고된 실제 체결가 그대로입니다).")
 
 
 def time_correction_factor(deal_year: str, deal_month: str, this_year: int, this_month: int,
@@ -3020,6 +3089,10 @@ def main():
         args.dong, subject_detail.get("main_no"), subject_detail.get("sub_no"),
         bool(subject_detail.get("is_mountain")))
 
+    # 68절 — 7-2절 시계열 보정을 다시 켰다. `rows`는 연도 필터 전 전체 기간이라
+    # 추세 표본이 비교거래(수십 건)보다 훨씬 크다 — 그래서 추정이 안정적이다.
+    trend_rate = estimate_monthly_trend_rate(rows, args.dong)
+
     filtered = find_comparables(
         rows, subject_coord, args.area, args.floor, args.build_year,
         args.radius, year_min, this_year, gu_filter,
@@ -3027,6 +3100,7 @@ def main():
         build_year_tolerance=args.build_year_tolerance,
         this_month=this_month,
         subject_building=subject_building,
+        monthly_trend_rate=trend_rate,               # 68절 — 매매 경로만 켠다
         first_floor_ratio=FIRST_FLOOR_PRICE_RATIO)  # 64절 — 매매 경로만 켠다
 
     if not filtered:
@@ -3159,6 +3233,11 @@ def main():
         else:
             print(f"  ※ 비교거래 중 1층 건은 위층 시세대로 약 {_ff_pct:.0f}% 올려서 "
                   f"계산했습니다 (아래 목록의 금액은 신고된 실제 체결가 그대로입니다).")
+    # 68절 — 7-2절 시계열 보정이 실제로 걸렸을 때의 안내. 웹과 같은 문장을 쓴다.
+    _tc_note = time_correction_note(trend_rate)
+    if _tc_note and any(c.get("_amount_man_adjusted") for c in filtered):
+        print(f"  ※{_tc_note}")
+
     for r in filtered[:8]:
         floor_txt = format_floor_label(r, top_floor_map)
         note = describe_comparable_similarity(args.area, args.floor, args.build_year, r)

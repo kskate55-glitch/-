@@ -121,3 +121,40 @@ class TestMissingIsNotTheSameAsEmpty(unittest.TestCase):
         p = os.path.join(d, "x.json")
         write_json(p, [])
         self.assertEqual(read_json(p, default=None), [])
+
+
+class TestAnyUnreadableFileIsTreatedAsMissing(unittest.TestCase):
+    """53절이 약속한 "깨진 캐시는 없는 것으로 친다"에 구멍이 있었다.
+
+    ⚠️ 파이썬 3.11부터 **아주 긴 숫자 문자열**은 `json.loads`에서
+    `ValueError: Exceeds the limit (4300 digits)`로 죽는데, 그건
+    `JSONDecodeError`가 아니라 잡히지 않고 그대로 올라갔다 — 깨진 캐시
+    파일에 숫자 쓰레기가 남으면 그 지역 조회가 계속 죽는다.
+    """
+
+    def _read(self, content):
+        import json_cache
+        path = os.path.join(self.tmp, "c.json")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return json_cache.read_json(path, default={"fallback": True})
+
+    def setUp(self):
+        import tempfile
+        self.tmp = tempfile.mkdtemp()
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_a_huge_number_does_not_raise(self):
+        self.assertEqual(self._read("9" * 100000), {"fallback": True})
+        self.assertEqual(self._read('{"a": ' + "9" * 6000 + "}"), {"fallback": True})
+
+    def test_the_usual_broken_shapes_still_work(self):
+        for content in ("", "{", "not json", "\x00\x01"):
+            self.assertEqual(self._read(content), {"fallback": True}, repr(content))
+
+    def test_valid_json_is_untouched(self):
+        self.assertEqual(self._read('{"a": 1}'), {"a": 1})
+        self.assertEqual(self._read('[1, 2, 3]'), [1, 2, 3])

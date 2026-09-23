@@ -79,7 +79,13 @@ def find_nearby_brokers_seoul(rows: list[dict], subject_coord: tuple[float, floa
         addr = r.get("주소", "").strip()
         if not addr:
             continue
-        coord = geocode(addr)
+        # ⚠️ 사무소 한 건 때문에 21절 전체가 죽으면 안 된다 — 지오코딩이
+        #    None을 돌려주든 예외를 던지든 **그 건만 건너뛴다**. 참고 정보는
+        #    실패해도 계산을 막지 않는다(20·26·50-1절과 같은 원칙).
+        try:
+            coord = geocode(addr)
+        except Exception:
+            continue
         if coord is None:
             continue
         distance = haversine_m(subject_lat, subject_lon, coord[0], coord[1])

@@ -2242,3 +2242,41 @@ class TestSameBuildingUsesJibunNotDistance(unittest.TestCase):
         other = [r for r in out if not r.get("_same_building")]
         self.assertGreater(min(r["_weight"] for r in same),
                            max(r["_weight"] for r in other))
+
+
+class TestZeroToleranceDoesNotCrash(unittest.TestCase):
+    """⚠️ 실제로 겪은 크래시: `--build-year-tolerance 0`(= "같은 연식만 보겠다"는
+    정상적인 입력)에서 `TypeError: unsupported operand type(s) for *: 'NoneType'`.
+
+    준공년도 점수는 None이 되는데 **아래 가중합 분기는 그대로 준공년도 항목을
+    넣고 있었다.** 웹 상세 옵션에도 같은 칸이 있어 방문자가 0을 넣으면
+    그대로 오류 화면을 본다.
+    """
+
+    def test_build_year_tolerance_zero_scores_instead_of_crashing(self):
+        same = ep.similarity_score(100, 400, 60, 60, 0.15, 3, 3, 2012, 2012, 0)
+        diff = ep.similarity_score(100, 400, 60, 60, 0.15, 3, 3, 2010, 2012, 0)
+        self.assertGreater(same, diff, "같은 연식이 더 높아야 한다")
+        for v in (same, diff):
+            self.assertGreaterEqual(v, 0)
+            self.assertLessEqual(v, 100)
+
+    def test_area_tolerance_zero_also_scores(self):
+        v = ep.similarity_score(100, 400, 60, 60, 0, 3, 3, 2012, 2012, 4)
+        self.assertGreaterEqual(v, 0)
+        self.assertLessEqual(v, 100)
+
+    def test_both_zero_at_once(self):
+        v = ep.similarity_score(100, 400, 60, 60, 0, 3, 3, 2012, 2012, 0)
+        self.assertGreaterEqual(v, 0)
+        self.assertLessEqual(v, 100)
+
+    def test_the_normal_case_is_unchanged(self):
+        """고치면서 평소 점수가 바뀌지 않았는지 — 같은 스펙이면 여전히 만점이다."""
+        self.assertAlmostEqual(
+            ep.similarity_score(0, 400, 60, 60, 0.15, 3, 3, 2012, 2012, 4), 100.0, places=6)
+
+    def test_missing_build_year_still_redistributes(self):
+        v = ep.similarity_score(100, 400, 60, 60, 0.15, 3, 3, None, 2012, 4)
+        self.assertGreater(v, 0)
+        self.assertLessEqual(v, 100)

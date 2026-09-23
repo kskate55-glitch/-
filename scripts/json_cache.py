@@ -45,7 +45,12 @@ def read_json(path: str, default=_MISSING):
             return json.load(f)
     except FileNotFoundError:
         return default
-    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+    # ⚠️ `ValueError`로 넓게 잡는다 — `JSONDecodeError`·`UnicodeDecodeError`가
+    #    둘 다 그 하위라서 전보다 좁아지지 않고, **파이썬 3.11부터 아주 긴
+    #    숫자 문자열은 `ValueError: Exceeds the limit (4300 digits)`로 죽는다**
+    #    (깨진 캐시 파일에 숫자 쓰레기가 남으면 실제로 난다). 53절이 약속한
+    #    "깨진 캐시는 없는 것으로 친다"가 그 한 줄에 뚫려 있었다.
+    except (ValueError, OSError):
         # 깨진 캐시는 지우고 다시 만든다 — 그대로 두면 다음 호출도 똑같이 죽는다.
         try:
             os.replace(path, path + ".corrupt")

@@ -786,12 +786,21 @@ def similarity_score(distance_m: float, radius_m: float,
         floor_score = 60.0  # 층 정보를 모르면 중립값(예전 7절의 0.6 배율과 같은 취지)
 
     have_build_year = subject_build_year is not None and build_year is not None
-    if have_build_year and build_year_tolerance:
-        build_year_score = 100 * max(0.0, 1 - abs(build_year - subject_build_year) / build_year_tolerance)
+    if have_build_year:
+        gap = abs(build_year - subject_build_year)
+        if build_year_tolerance:
+            build_year_score = 100 * max(0.0, 1 - gap / build_year_tolerance)
+        else:
+            # ⚠️ 허용범위 0은 "같은 연식만 보겠다"는 정상적인 입력이다.
+            #    예전엔 여기서 점수가 None이 되는데 **아래 분기는 그대로
+            #    준공년도 항목을 넣어서** `None * 0.15`로 터졌다(CLI
+            #    `--build-year-tolerance 0`, 웹 상세 옵션 둘 다).
+            #    5절 하드 필터를 통과했다면 같은 해이므로 만점이다.
+            build_year_score = 100.0 if gap == 0 else 0.0
     else:
         build_year_score = None
 
-    if have_build_year:
+    if build_year_score is not None:
         weights = {"distance": 0.35, "area": 0.30, "floor": 0.20, "build_year": 0.15}
         scores = {"distance": distance_score, "area": area_score, "floor": floor_score,
                   "build_year": build_year_score}
@@ -3098,7 +3107,13 @@ def main():
         print_terrain_check(subject_coord)
 
     if not args.no_brokers:
-        print_broker_check(args.address, subject_coord, args.dong, args.brokers_csv, args.broker_radius)
+        # ⚠️ 21절은 참고 정보다 — 여기서 터지면 뒤에 오는 섹션(건물 정보·
+        #    시장 동향·매도가 산출)이 통째로 날아간다. 조용히 건너뛴다.
+        try:
+            print_broker_check(args.address, subject_coord, args.dong,
+                               args.brokers_csv, args.broker_radius)
+        except Exception as e:
+            print(f"\n[인근 중개업소] 조회에 실패해 건너뜁니다 ({type(e).__name__}).")
 
     building_info = None
     if not args.no_building_info:

@@ -607,7 +607,8 @@ def estimate():
         speed_label_for_percentile,
     )
 
-    price_tiers = compute_price_tiers(filtered, calibration=SALE_CALIBRATION_FACTOR)
+    price_tiers = compute_price_tiers(filtered, calibration=SALE_CALIBRATION_FACTOR,
+                                      subject_area=area)
     liquidity = compute_liquidity(rows, subject_coord, area, this_year, gu_filter=None,
                                    area_tolerance_pct=area_tolerance_pct)
 

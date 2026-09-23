@@ -838,8 +838,71 @@ def describe_comparable_similarity(subject_area: float, subject_floor: int | Non
     return " · ".join(parts)
 
 
+def weighted_quantile(pairs: list[tuple[float, float]], q: float) -> float | None:
+    """(값, 가중치) 목록의 q(0~1) 분위수. 값이 없으면 `None`.
+
+    ⚠️ **예전엔 가중치만큼 값을 복제한 리스트의 중앙값**으로 근사했다
+    (`_replication_count()`). 동작은 했지만 두 가지가 나빴다:
+      1. 가중치를 정수로 양자화한다 — 배율을 살리려고 100을 곱해야 했고,
+         **그 배율을 빠뜨린 탓에 모든 가중치가 1표로 뭉개지는 버그를 실제로
+         겪었다**(7절 버그 이력). 이 방식에는 그 실수가 존재할 수 없다.
+      2. 비교거래 40건이면 리스트가 4천 개로 불어난다.
+
+    누적가중치에 **중점 규칙**(각 점의 대표 위치 = 누적 − 자기 가중치/2)을
+    쓰고 점 사이를 선형보간한다 — 가중치가 전부 같으면 통상적인 백분위수와
+    일치한다.
+    """
+    pts = sorted((v, w) for v, w in pairs if w and w > 0)
+    if not pts:
+        return None
+    total = sum(w for _, w in pts)
+    if total <= 0:
+        return None
+    xs, ps, acc = [], [], 0.0
+    for v, w in pts:
+        acc += w
+        xs.append(v)
+        ps.append((acc - w / 2) / total)
+    if q <= ps[0]:
+        return xs[0]
+    if q >= ps[-1]:
+        return xs[-1]
+    for i in range(1, len(ps)):
+        if q <= ps[i]:
+            lo, hi = ps[i - 1], ps[i]
+            t = 0.0 if hi == lo else (q - lo) / (hi - lo)
+            return xs[i - 1] + (xs[i] - xs[i - 1]) * t
+    return xs[-1]
+
+
+def _weighted_amount_pairs(filtered: list[dict]) -> list[tuple[float, float]]:
+    """총액 모델용 (체결가, 가중치) 쌍. 7-2절 보정값이 있으면 그쪽을 쓴다."""
+    return [(r.get("_amount_man_adjusted", r["_amount_man"]), r["_weight"]) for r in filtered]
+
+
+def _weighted_unit_price_pairs(filtered: list[dict],
+                                subject_area: float) -> list[tuple[float, float]]:
+    """7-1절 ㎡당가 모델용 (대상 면적으로 환산한 금액, 가중치) 쌍."""
+    pairs = []
+    for r in filtered:
+        try:
+            row_area = float(r.get("excluUseAr"))
+        except (TypeError, ValueError):
+            continue
+        if row_area <= 0:
+            continue
+        amount = r.get("_amount_man_adjusted", r["_amount_man"])
+        pairs.append((amount / row_area * subject_area, r["_weight"]))
+    return pairs
+
+
 def _replication_count(weight: float) -> int:
     """가중치 → 가중 중앙값 리스트에 복제할 개수(7절).
+
+    ⛔ **더 이상 계산에 쓰이지 않는다** — `weighted_quantile()`로 대체했다
+    (7-4절). 함수와 테스트는 5절 적응형 반경·7-2절 시계열 보정과 같은
+    처리로 남겨 뒀다: 아래 버그 이력이 이 프로젝트에서 제일 비싼 교훈이라
+    지워버리면 같은 실수를 다시 한다.
 
     ⚠️ 예전엔 `max(1, round(weight))`였는데, 실제 가중치가 대부분 0.05~1.6
     범위라 **1.5 미만이 전부 1개로 뭉개졌다** — 유사도 90점 최근 거래도,
@@ -926,18 +989,18 @@ def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int,
     걸 막기 위해서다** — 매매 호출부만 `SALE_CALIBRATION_FACTOR`를 명시적으로
     넘긴다. 세 값에 같은 배율을 곱하므로 스프레드 비율은 그대로이고, 따라서
     **시세 신뢰도 점수는 보정의 영향을 받지 않는다**."""
-    amounts_weighted = _weighted_amounts_sorted(filtered)
+    total_pairs = _weighted_amount_pairs(filtered)
 
-    median_total = statistics.median(amounts_weighted)
-    p25_total = statistics.median(amounts_weighted[: max(1, len(amounts_weighted) // 2)])
-    p75_total = statistics.median(amounts_weighted[len(amounts_weighted) // 2 :])
+    median_total = weighted_quantile(total_pairs, 0.50)
+    p25_total = weighted_quantile(total_pairs, 0.25)
+    p75_total = weighted_quantile(total_pairs, 0.75)
 
-    unit_weighted = _weighted_unit_prices_sorted(filtered, subject_area) if subject_area else []
+    unit_weighted = _weighted_unit_price_pairs(filtered, subject_area) if subject_area else []
     model_divergence_pct = None
     if unit_weighted:
-        median_unit = statistics.median(unit_weighted)
-        p25_unit = statistics.median(unit_weighted[: max(1, len(unit_weighted) // 2)])
-        p75_unit = statistics.median(unit_weighted[len(unit_weighted) // 2 :])
+        median_unit = weighted_quantile(unit_weighted, 0.50)
+        p25_unit = weighted_quantile(unit_weighted, 0.25)
+        p75_unit = weighted_quantile(unit_weighted, 0.75)
         median_man = (median_total + median_unit) / 2
         p25 = (p25_total + p25_unit) / 2
         p75 = (p75_total + p75_unit) / 2
@@ -1304,7 +1367,8 @@ def print_estimate_warnings(warnings: list[dict]):
     print("  ※ 신호가 떴다고 틀린 값이라는 뜻은 아닙니다 — 한 번 더 확인하라는 표시입니다.")
 
 
-def compute_price_tiers(filtered: list[dict], calibration: float = 1.0) -> dict:
+def compute_price_tiers(filtered: list[dict], calibration: float = 1.0,
+                         subject_area: float | None = None) -> dict:
     """CLAUDE.md 29절: 8절과 같은 가중 복제 분포를 5단계 백분위수(10/30/50/70/92)로
     더 세분화해서 "얼마나 빨리 팔릴 만한 가격대인지" 참고용 라벨을 붙인다.
 
@@ -1315,13 +1379,28 @@ def compute_price_tiers(filtered: list[dict], calibration: float = 1.0) -> dict:
     높다는 상식적 가정을 반영한 목표 라벨일 뿐이다 — 30절 유동성 점수와 함께
     보면 "이 동네가 원래 거래가 활발한지"까지 고려해서 더 현실적으로 참고할 수
     있다."""
-    amounts_sorted = _weighted_amounts_sorted(filtered)
+    # ⚠️ **8절과 완전히 같은 분포를 써야 한다** — 예전엔 두 가지가 어긋나 있었다:
+    #    (ㄱ) 8절은 "하위 절반의 중앙값"(튜키 힌지), 29절은 최근접-순위 백분위수
+    #    (ㄴ) 8절은 총액·㎡당가 두 모델을 50:50으로 블렌딩(7-1절)하는데 29절은
+    #         총액 모델만 썼다
+    #    그래서 29절 원문이 "60일 목표가(p50)는 현실적 체결가와 **거의** 같음"
+    #    이라고 적어야 했다. 지금은 같은 `weighted_quantile()`에 같은 블렌딩을
+    #    써서 **정확히 같다**(`subject_area`를 넘긴 경우).
+    #    ⚠️ `subject_area`를 생략하면 총액 모델만 쓴다 — 하위호환 유지용이고,
+    #       그때는 d60이 현실적 체결가와 미세하게 다를 수 있다.
+    total_pairs = _weighted_amount_pairs(filtered)
+    unit_pairs = _weighted_unit_price_pairs(filtered, subject_area) if subject_area else []
+
+    def q(p: float) -> float:
+        a = weighted_quantile(total_pairs, p)
+        if not unit_pairs:
+            return a
+        b = weighted_quantile(unit_pairs, p)
+        return (a + b) / 2 if b is not None else a
+
     tiers = {
-        "urgent": _weighted_percentile(amounts_sorted, 10),
-        "d30": _weighted_percentile(amounts_sorted, 30),
-        "d60": _weighted_percentile(amounts_sorted, 50),
-        "normal": _weighted_percentile(amounts_sorted, 70),
-        "test": _weighted_percentile(amounts_sorted, 92),
+        "urgent": q(0.10), "d30": q(0.30), "d60": q(0.50),
+        "normal": q(0.70), "test": q(0.92),
     }
     # 8절 산출값과 같은 보정을 걸어야 화면 안에서 두 숫자가 어긋나지 않는다.
     return {k: round(v * calibration, -1) for k, v in tiers.items()}
@@ -2897,7 +2976,8 @@ def main():
         inspection_clean=args.inspection_clean and not args.inspection_bad,
         apt_gap=apt_gap, location=location_check))
 
-    tiers = compute_price_tiers(filtered, calibration=SALE_CALIBRATION_FACTOR)
+    tiers = compute_price_tiers(filtered, calibration=SALE_CALIBRATION_FACTOR,
+                                subject_area=args.area)
     print("[가격 구간별 매도 전략] (비교거래 분포 안에서의 위치 기반 참고 라벨 — 실제 매도 소요일수 데이터는 아님)")
     for key in ("urgent", "d30", "d60", "normal", "test"):
         print(f"- {PRICE_TIER_LABELS[key]}: {fmt(tiers[key])}")

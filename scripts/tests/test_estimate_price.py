@@ -1803,3 +1803,87 @@ class TestPredictionInterval(unittest.TestCase):
         칸당 표본이 26~37건뿐이라 꼬리가 과소평가되기 쉽다."""
         for tier, measured in [(0, 9.3), (1, 17.4), (2, 25.0)]:
             self.assertGreaterEqual(ep.PREDICTION_INTERVAL_PCT[tier], measured)
+
+
+class TestWeightedQuantile(unittest.TestCase):
+    """7절 — 복제 근사를 대체한 진짜 가중 분위수."""
+
+    def test_equal_weights_match_ordinary_percentiles(self):
+        """가중치가 전부 같으면 통상적인 백분위수와 같아야 한다."""
+        pairs = [(float(v), 1.0) for v in range(1, 101)]
+        self.assertAlmostEqual(ep.weighted_quantile(pairs, 0.5), 50.5, places=6)
+        self.assertAlmostEqual(ep.weighted_quantile(pairs, 0.0), 1.0, places=6)
+        self.assertAlmostEqual(ep.weighted_quantile(pairs, 1.0), 100.0, places=6)
+
+    def test_weight_actually_moves_the_answer(self):
+        """⚠️ 이게 예전 복제 방식에서 터졌던 버그다 — 가중치가 달라도
+        전부 1표로 뭉개져서 답이 안 움직였다."""
+        light = ep.weighted_quantile([(100.0, 1.0), (200.0, 1.0)], 0.5)
+        heavy = ep.weighted_quantile([(100.0, 100.0), (200.0, 1.0)], 0.5)
+        self.assertLess(heavy, light, "가중치를 100배 줬는데 중앙값이 안 끌려왔다")
+        # 보간이 들어가므로 정확히 100.0은 아니고 그 바로 옆에 붙는다
+        self.assertLess(heavy, 105.0, f"무거운 쪽으로 충분히 안 끌려왔다: {heavy}")
+
+    def test_tiny_weights_are_not_quantized_away(self):
+        """0.004 같은 작은 가중치도 0으로 반올림되지 않는다(복제 방식의 약점)."""
+        a = ep.weighted_quantile([(100.0, 1.0), (500.0, 0.004)], 0.5)
+        b = ep.weighted_quantile([(100.0, 1.0), (500.0, 0.400)], 0.5)
+        self.assertNotEqual(a, b)
+
+    def test_quantiles_are_monotone(self):
+        pairs = [(10.0, 1.0), (20.0, 3.0), (30.0, 0.5), (40.0, 2.0)]
+        vals = [ep.weighted_quantile(pairs, q) for q in (0.1, 0.25, 0.5, 0.75, 0.92)]
+        self.assertEqual(vals, sorted(vals), f"분위수가 오름차순이 아니다: {vals}")
+
+    def test_result_stays_inside_the_data_range(self):
+        pairs = [(10.0, 1.0), (20.0, 3.0), (30.0, 0.5)]
+        for q in (0.0, 0.1, 0.5, 0.9, 1.0):
+            v = ep.weighted_quantile(pairs, q)
+            self.assertGreaterEqual(v, 10.0)
+            self.assertLessEqual(v, 30.0)
+
+    def test_degenerate_inputs_are_safe(self):
+        self.assertIsNone(ep.weighted_quantile([], 0.5))
+        self.assertIsNone(ep.weighted_quantile([(100.0, 0.0)], 0.5))   # 가중치 0뿐
+        self.assertEqual(ep.weighted_quantile([(7.0, 1.0)], 0.5), 7.0)  # 한 건뿐
+
+
+class TestTiersShareTheScenarioDistribution(unittest.TestCase):
+    """29절 60일 목표가(p50) == 8절 현실적 체결가.
+
+    ⚠️ 예전엔 두 군데가 **다른 분포**를 썼다 — 8절은 튜키 힌지 + 두 모델
+    블렌딩, 29절은 최근접-순위 백분위수 + 총액 모델만. 그래서 29절 원문이
+    "거의 같음"이라고 적어야 했다. 한 화면에 나란히 뜨는 두 숫자라 어긋나면
+    사용자가 바로 알아챈다."""
+
+    def _rows(self):
+        rows = []
+        for i in range(12):
+            rows.append({
+                "_amount_man": 20000.0 + i * 400,
+                "_weight": 0.3 + i * 0.1,
+                "_distance_m": 50.0 + i * 20,
+                "excluUseAr": str(48.0 + i * 0.4),
+                "dealYear": "2026",
+            })
+        return rows
+
+    def test_d60_equals_realistic_price(self):
+        rows = self._rows()
+        scen = ep.compute_scenarios(rows, 2026, 400, subject_area=50.0)
+        tiers = ep.compute_price_tiers(rows, subject_area=50.0)
+        self.assertAlmostEqual(tiers["d60"], round(scen["median"], -1), delta=1)
+
+    def test_same_calibration_keeps_them_aligned(self):
+        rows = self._rows()
+        scen = ep.compute_scenarios(rows, 2026, 400, subject_area=50.0,
+                                    calibration=ep.SALE_CALIBRATION_FACTOR)
+        tiers = ep.compute_price_tiers(rows, calibration=ep.SALE_CALIBRATION_FACTOR,
+                                       subject_area=50.0)
+        self.assertAlmostEqual(tiers["d60"], round(scen["median"], -1), delta=1)
+
+    def test_without_subject_area_it_still_works(self):
+        """하위호환 — 면적을 안 주면 총액 모델만 쓰고 예외는 안 난다."""
+        tiers = ep.compute_price_tiers(self._rows())
+        vals = [tiers[k] for k in ("urgent", "d30", "d60", "normal", "test")]
+        self.assertEqual(vals, sorted(vals))

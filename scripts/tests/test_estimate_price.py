@@ -1519,16 +1519,26 @@ class TestEstimateWarnings(unittest.TestCase):
         """괴리율을 못 구한 경우(대상 면적 미입력 등)는 경고하지 않는다."""
         self.assertNotIn("divergence", self._keys(self._rows(12), None))
 
-    def test_dominant_single_row_warns(self):
-        self.assertIn("share", self._keys(self._rows(10, top_share=60.0), 0.0))
+    def test_top_share_never_warns_anymore(self):
+        """⛔ 49-1절 — 최대지분 경고는 껐다.
 
-    def test_evenly_spread_weights_do_not_warn(self):
-        self.assertNotIn("share", self._keys(self._rows(10, top_share=20.0), 0.0))
+        표본 92건에서 방향이 **뒤집혔다**(45% 이상 8.7% vs 그 미만 11.4%).
+        지분이 아무리 높아도 이 키는 안 나와야 한다 — 되살리면 이 테스트가
+        먼저 깨지므로 "왜 껐는지"를 다시 읽게 된다.
+        """
+        for share in (50.0, 60.0, 70.0, 95.0):
+            self.assertNotIn("share", self._keys(self._rows(10, top_share=share), 0.0),
+                             f"지분 {share}%에서 경고가 되살아났다")
+
+    def test_top_share_is_still_computable_for_the_backtest(self):
+        """경고는 껐지만 `top_weight_share()` 자체는 백테스트 CSV가 계속 쓴다."""
+        self.assertIsNotNone(ep.top_weight_share(self._rows(10, top_share=60.0)))
 
     def test_exactly_one_same_building_warns(self):
-        """⚠️ 실측에서 **1건일 때가 제일 나빴다**(18.9%) — 0건(14.5%)·
-        2~3건(11.0%)·4건 이상(3.1%)보다 나쁘다. 견제할 같은 건물 거래 없이
-        동일건물 보너스(×2.0)를 그 한 건이 독차지하기 때문이다."""
+        """⚠️ 실측에서 **1건일 때가 제일 나빴다** — 경기 44건에서 0건 14.5%·
+        1건 18.9%·2~3건 11.0%·4건 이상 3.1%였고, 표본을 바꾼 92건에서도
+        0건 11.7%·1건 14.6%·2~3건 8.4%·4건 이상 7.8%로 **같은 순서가 다시
+        나왔다**(재현된 몇 안 되는 신호다)."""
         self.assertIn("same_building", self._keys(self._rows(12, same_building=1), 0.0))
 
     def test_zero_or_many_same_building_do_not_warn(self):
@@ -1537,7 +1547,7 @@ class TestEstimateWarnings(unittest.TestCase):
 
     def test_warnings_can_stack(self):
         keys = self._keys(self._rows(10, same_building=1, top_share=70.0), 12.0)
-        self.assertEqual(keys, {"divergence", "share", "same_building"})
+        self.assertEqual(keys, {"divergence", "same_building"})
 
     def test_every_warning_carries_text_for_the_screen(self):
         for w in ep.compute_estimate_warnings(self._rows(10, same_building=1, top_share=70.0), 12.0):

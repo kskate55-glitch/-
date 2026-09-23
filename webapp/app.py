@@ -57,6 +57,12 @@ def _fmt_eok(man: float) -> str:
     return f"{man / 10000:.2f}억"
 
 
+@app.context_processor
+def _inject_version():
+    """모든 화면 푸터에 배포 버전을 꽂는다 — 48-5절."""
+    return {"deploy_version": _deploy_version()}
+
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html", last_year=datetime.now().year - 1)
@@ -71,6 +77,15 @@ def index():
 # ⚠️ 건수 상한이 낮은 이유는 Render 무료 티어 gunicorn 타임아웃(120초) 때문이다.
 #    첫 건은 비교거래를 수백 개 지오코딩해야 해서 느리지만, 같은 구 안에서는
 #    주소가 겹쳐 캐시가 차므로 두 번째 건부터는 훨씬 빠르다.
+# ⚠️ 48-5절 — "고친 게 지금 사이트에 올라간 건지" 화면에서 바로 확인하려고 둔다.
+# 사용자가 백테스트를 돌린 뒤 "이게 고치기 전 코드냐 후 코드냐"를 알 방법이
+# 전혀 없어서 실제로 옛 코드로 27분을 돌린 적이 있다. Render가 배포할 때
+# 넣어주는 커밋 해시를 그대로 읽어 화면 맨 아래에 찍는다(없으면 "로컬").
+def _deploy_version() -> str:
+    commit = (os.environ.get("RENDER_GIT_COMMIT") or "").strip()
+    return commit[:7] if commit else "local"
+
+
 BACKTEST_MAX_CASES = 20
 BACKTEST_DEFAULT_CASES = 10
 # 48-3절 전체순회 기본 건수 — 67개 구를 도는 동안 구당 시간을 줄이려고

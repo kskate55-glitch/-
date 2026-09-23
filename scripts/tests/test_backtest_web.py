@@ -166,3 +166,38 @@ class TestSharedCodePath(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDeployVersion(unittest.TestCase):
+    """CLAUDE.md 48-5절 — 화면에 배포 버전이 찍히는지.
+
+    ⚠️ 이게 없어서 사용자가 **고치기 전 코드로 27분짜리 순회를 돌렸다.**
+    결과만 보고는 그게 어느 코드로 나온 건지 알 방법이 전혀 없었다.
+    """
+
+    def setUp(self):
+        import app as web
+        self.web = web
+        self._orig = os.environ.get("RENDER_GIT_COMMIT")
+        web.app.config["TESTING"] = True
+        self.client = web.app.test_client()
+
+    def tearDown(self):
+        if self._orig is None:
+            os.environ.pop("RENDER_GIT_COMMIT", None)
+        else:
+            os.environ["RENDER_GIT_COMMIT"] = self._orig
+
+    def test_shows_short_commit_when_deployed(self):
+        os.environ["RENDER_GIT_COMMIT"] = "abcdef1234567890"
+        html = self.client.get("/backtest").get_data(as_text=True)
+        self.assertIn("버전 abcdef1", html)
+        self.assertNotIn("abcdef1234567890", html, "전체 해시까지 쓸 필요는 없다")
+
+    def test_falls_back_to_local(self):
+        os.environ.pop("RENDER_GIT_COMMIT", None)
+        self.assertEqual(self.web._deploy_version(), "local")
+
+    def test_blank_env_is_local(self):
+        os.environ["RENDER_GIT_COMMIT"] = "   "
+        self.assertEqual(self.web._deploy_version(), "local")

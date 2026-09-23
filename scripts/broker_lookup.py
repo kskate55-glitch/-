@@ -106,12 +106,12 @@ def find_brokers_gyeonggi(sigun_nm: str, dong: str, num_of_rows: int = 100,
     try:
         with urlopen(req, timeout=timeout) as resp:
             raw = resp.read().decode("utf-8")
-    except (HTTPError, URLError):
+    except (OSError, ValueError):   # 54절 — 타임아웃·인코딩 오류까지
         return []
 
     try:
         data = json.loads(raw)
-    except json.JSONDecodeError:
+    except ValueError:                # 54절 — UnicodeDecodeError도 ValueError다
         return []  # 예상과 다른 응답 형식 — 실제 응답을 보고 고쳐야 함
 
     rows = data.get("Rlestatebrkragofc", [])

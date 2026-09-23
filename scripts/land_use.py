@@ -129,6 +129,6 @@ def get_land_use_zones(b_code: str, main_no, sub_no, is_mountain: bool = False,
         req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urlopen(req, timeout=timeout) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
-    except (HTTPError, URLError, json.JSONDecodeError, ValueError):
+    except (OSError, ValueError):   # 54절 — 타임아웃·인코딩 오류까지
         return None
     return parse_zone_names(payload)

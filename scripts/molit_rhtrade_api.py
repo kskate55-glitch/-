@@ -121,7 +121,10 @@ def fetch_rhtrade(lawd_cd: str, deal_ymd: str, page_no: int = 1,
             with urlopen(req, timeout=timeout) as resp:
                 raw = resp.read()
             return _parse_response(raw)
-        except (HTTPError, URLError) as e:
+        # ⚠️ 읽기 타임아웃은 TimeoutError(OSError)라 URLError로는 안 잡힌다 —
+        #    그래서 **재시도조차 못 하고** 예외가 그대로 올라갔다(54절).
+        #    OSError가 HTTPError·URLError·TimeoutError를 전부 덮는다.
+        except OSError as e:
             last_err = e
             time.sleep(1.5 * attempt)
         except RuntimeError as e:

@@ -72,12 +72,12 @@ def get_building_info(b_code: str, main_no: str, sub_no: str, is_mountain: bool 
     try:
         with urlopen(req, timeout=timeout) as resp:
             raw = resp.read().decode("utf-8")
-    except (HTTPError, URLError):
+    except (OSError, ValueError):   # 54절 — 타임아웃·인코딩 오류까지
         return None
 
     try:
         data = json.loads(raw)
-    except json.JSONDecodeError:
+    except ValueError:                # 54절 — UnicodeDecodeError도 ValueError다
         return None  # XML 에러 응답 등 예상과 다른 형식 — 실제 응답을 보고 고쳐야 함
 
     body = data.get("response", {}).get("body", {})

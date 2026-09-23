@@ -386,6 +386,12 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
     통과한 후보만 모아서 병렬로 지오코딩한다(MAX_GEOCODE_CANDIDATES로 상한도
     둔다).
     """
+    # 54절 — 전용면적 0/음수는 ZeroDivisionError로 터진다(면적 차이를 % 로
+    # 재기 때문). 웹은 폼에서 막지만 CLI·백테스트·다른 호출부는 안 막으므로,
+    # 여기서 **무슨 값이 잘못됐는지 말하는 예외**로 바꿔 둔다.
+    if not area or area <= 0:
+        raise ValueError(f"전용면적은 0보다 커야 합니다 (받은 값: {area!r})")
+
     from geocode import geocode, haversine_m
     from lawd_lookup import full_address, gu_name
 
@@ -1041,6 +1047,11 @@ def compute_scenarios(filtered: list[dict], radius_m: float, this_year: int,
     걸 막기 위해서다** — 매매 호출부만 `SALE_CALIBRATION_FACTOR`를 명시적으로
     넘긴다. 세 값에 같은 배율을 곱하므로 스프레드 비율은 그대로이고, 따라서
     **시세 신뢰도 점수는 보정의 영향을 받지 않는다**."""
+    # 54절 — 빈 비교거래로 부르면 나눗셈에서 터진다. 지금은 모든 호출부가
+    #    앞에서 막고 있지만, 가드가 없으면 다음에 부르는 사람이 똑같이 밟는다.
+    if not filtered:
+        raise ValueError("비교거래가 비어 있어 매도가를 계산할 수 없습니다")
+
     total_pairs = _weighted_amount_pairs(filtered)
 
     median_total = weighted_quantile(total_pairs, 0.50)
@@ -1431,6 +1442,11 @@ def compute_price_tiers(filtered: list[dict], calibration: float = 1.0,
     높다는 상식적 가정을 반영한 목표 라벨일 뿐이다 — 30절 유동성 점수와 함께
     보면 "이 동네가 원래 거래가 활발한지"까지 고려해서 더 현실적으로 참고할 수
     있다."""
+    # 54절 — 빈 비교거래로 부르면 나눗셈에서 터진다. 지금은 모든 호출부가
+    #    앞에서 막고 있지만, 가드가 없으면 다음에 부르는 사람이 똑같이 밟는다.
+    if not filtered:
+        raise ValueError("비교거래가 비어 있어 가격 구간를 계산할 수 없습니다")
+
     # ⚠️ **8절과 완전히 같은 분포를 써야 한다** — 예전엔 두 가지가 어긋나 있었다:
     #    (ㄱ) 8절은 "하위 절반의 중앙값"(튜키 힌지), 29절은 최근접-순위 백분위수
     #    (ㄴ) 8절은 총액·㎡당가 두 모델을 50:50으로 블렌딩(7-1절)하는데 29절은
@@ -2833,7 +2849,8 @@ def main():
     ap.add_argument("--rent-dir", default="data/raw_rent", help="전월세 실거래가 XML 폴더 — 데이터가 있으면 예상 전세가와 매매 대비 비교도 함께 보여준다 (CLAUDE.md 16절)")
     ap.add_argument("--address", required=True, help="대상 물건의 지번 주소 (지오코딩용, 예: '서울특별시 강북구 수유동 468-202')")
     ap.add_argument("--dong", required=True, help="법정동명 — 계절성/가격추이 등 동네 단위 분석 범위로 쓰인다")
-    ap.add_argument("--area", type=float, required=True)
+    ap.add_argument("--area", type=float, required=True,
+                    help="대상 물건의 전용면적(㎡) — 0보다 커야 한다")
     ap.add_argument("--floor", type=int, default=None, help="대상 물건의 층 (선택 — 유사층 가중치 판단에 사용)")
     ap.add_argument("--build-year", default=None, help="대상 물건의 준공년도 (선택 — 유사연식 가중치 판단에 사용)")
     ap.add_argument("--radius", type=float, default=400,
@@ -2870,6 +2887,8 @@ def main():
     ap.add_argument("--inspection-clean", action="store_true",
                      help="43절 임장에서 8가지 항목 중 걸리는 게 없었음 — 41절 환금성 점수에 가점으로 반영된다")
     args = ap.parse_args()
+    if args.area <= 0:                 # 54절 — argparse는 음수·0을 그대로 통과시킨다
+        ap.error(f"--area는 0보다 커야 합니다 (받은 값: {args.area})")
 
     this_year = datetime.now().year
     this_month = datetime.now().month

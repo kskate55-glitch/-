@@ -67,7 +67,7 @@ def geocode(address: str) -> tuple[float, float] | None:
     try:
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-    except (HTTPError, URLError, json.JSONDecodeError):
+    except (OSError, ValueError):   # 54절 — 타임아웃·인코딩 오류까지
         # ⚠️ **일시적 실패는 절대 캐시하지 않는다** (CLAUDE.md 48-7절).
         #    예전엔 여기서도 `cache[address] = None`을 썼는데, 카카오 일일
         #    할당량이 소진되면 HTTPError가 나므로 **그때 조회한 주소가 전부
@@ -116,7 +116,7 @@ def geocode_full(address: str) -> dict | None:
     try:
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-    except (HTTPError, URLError, json.JSONDecodeError):
+    except (OSError, ValueError):   # 54절 — 타임아웃·인코딩 오류까지
         return None  # 일시적 실패는 캐시하지 않는다 — 48-7절
 
     docs = data.get("documents", [])
@@ -184,7 +184,7 @@ def nearby_place(lat: float, lon: float, keyword: str, radius_m: int = 1000,
     try:
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-    except (HTTPError, URLError, json.JSONDecodeError):
+    except (OSError, ValueError):   # 54절 — 타임아웃·인코딩 오류까지
         return None
 
     docs = data.get("documents", [])

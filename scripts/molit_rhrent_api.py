@@ -60,7 +60,10 @@ def fetch_rhrent(lawd_cd: str, deal_ymd: str, page_no: int = 1,
             with urlopen(req, timeout=timeout) as resp:
                 raw = resp.read()
             return _parse_response(raw)
-        except (HTTPError, URLError) as e:
+        # ⚠️ 읽기 타임아웃은 TimeoutError(OSError)라 URLError로는 안 잡힌다 —
+        #    그래서 **재시도조차 못 하고** 예외가 그대로 올라갔다(54절).
+        #    OSError가 HTTPError·URLError·TimeoutError를 전부 덮는다.
+        except OSError as e:
             last_err = e
             time.sleep(1.5 * attempt)
         except RuntimeError as e:
@@ -74,7 +77,23 @@ def fetch_rhrent(lawd_cd: str, deal_ymd: str, page_no: int = 1,
 
 
 def _parse_response(raw_bytes: bytes) -> list[dict]:
-    root = ET.fromstring(raw_bytes)
+    # 52절과 같은 방어 — 한도 초과·점검 시 data.go.kr은 HTTP 200에 HTML/JSON
+    # 오류 페이지를 싣는다. 매매 API만 고치고 전월세를 빼두면 16절을 웹에
+    # 붙이는 순간 같은 500이 재발한다.
+    try:
+        root = ET.fromstring(raw_bytes)
+    except ET.ParseError:
+        head = raw_bytes[:300].decode("utf-8", "replace").strip().replace("\n", " ")
+        raise RuntimeError(
+            "국토부 전월세 API가 XML이 아닌 응답을 보냈습니다 — 일일 트래픽 한도 "
+            f"초과이거나 서비스 점검 중일 수 있습니다. 받은 내용 앞부분: {head[:200]}") from None
+
+    if str(root.tag).split("}")[-1].lower() in ("html", "body", "error", "errors"):
+        head = raw_bytes[:300].decode("utf-8", "replace").strip().replace("\n", " ")
+        raise RuntimeError(
+            "국토부 전월세 API가 실거래 데이터 대신 오류 페이지를 보냈습니다. "
+            f"받은 내용 앞부분: {head[:200]}")
+
     result_code = root.findtext(".//resultCode")
     result_msg = root.findtext(".//resultMsg")
 

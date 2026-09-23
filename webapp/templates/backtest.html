@@ -64,6 +64,24 @@
   </div>
 
   <div id="sweep_out"></div>
+
+  <!-- ⚠️ 이 카드는 일부러 `#sweep_out` **밖**에 둔다(72-12절). 순회는 구
+       하나가 끝날 때마다 `render()`로 `#sweep_out`을 통째로 다시 그리는데,
+       카드가 그 안에 있으면 **붙여넣던 CSV와 비교 결과가 통째로 지워진다**
+       (진짜 브라우저로 돌려 보고 발견했다 — 클릭이 아예 안 먹는 것처럼
+       보였다). 밖에 두면 순회가 도는 중에도 그대로 남는다. -->
+  <div class="card" id="cmp_card" hidden>
+    <h3>📊 이전 결과와 비교하기</h3>
+    <ul class="note-lines" style="margin-top:-2px">
+      <li>계산기를 고치기 <b>전에 받아둔 CSV</b>를 아래에 붙여넣으면, 같은 물건끼리 짝지어 비교해 드려요.</li>
+      <li>표본 번호를 <b>같게</b> 두고 돌려야 짝이 맞습니다 — 번호가 다르면 다른 물건이 뽑혀요.</li>
+      <li>평균끼리 비교하면 표본이 조금만 달라져도 엉뚱한 결론이 납니다. 그래서 짝지어 봅니다.</li>
+    </ul>
+    <textarea id="cmp_csv" rows="5" placeholder="이전에 저장한 CSV 내용을 통째로 붙여넣으세요"
+              style="width:100%; box-sizing:border-box; font-size:13px; margin-top:8px"></textarea>
+    <button type="button" id="cmp_run" class="cta-submit" style="margin-top:8px">🔍 비교하기</button>
+    <div id="cmp_out" style="margin-top:12px"></div>
+  </div>
 </div>
 
 <form method="post" action="/backtest">
@@ -416,6 +434,135 @@
 
     var csvBtn = document.getElementById('sweep_csv');
     if (csvBtn) csvBtn.addEventListener('click', downloadCsv);
+    var cmpCard = document.getElementById('cmp_card');
+    if (cmpCard) cmpCard.hidden = false;      // 결과가 생겼을 때만 보여준다
+  }
+
+  // ── 이전 결과와 짝지은 비교 (72-12절) ──────────────────────────────
+  // ⚠️ **계산기를 고쳤을 때 좋아졌는지 나빠졌는지는 평균으로 보면 안 된다.**
+  //    표본이 조금만 달라져도 평균은 그쪽으로 끌려간다 — 같은 물건끼리
+  //    짝지어 비교해야 코드 변경의 순수한 효과가 나온다. 예전에 "같은 건물
+  //    1건" 구간 평균이 16.0%에서 13.3%로 내려간 걸 개선으로 읽었다가,
+  //    짝지어 보니 **그 물건들은 오히려 나빠져 있었던** 적이 있다.
+  // ⚠️ 그래서 표본 번호를 **같게** 두고 돌려야 한다(같은 번호면 같은 물건이
+  //    다시 뽑힌다). 번호가 다르면 짝이 거의 안 맞는다.
+  (function attachCompare() {
+    var btn = document.getElementById('cmp_run');
+    if (btn) btn.addEventListener('click', comparePasted);
+  })();
+
+  function parseCsv(text) {
+    // BOM 제거 + 따옴표로 감싼 칸 처리(엑셀이 저장한 파일을 그대로 받기 위해)
+    text = String(text || '').replace(/^\ufeff/, '').trim();
+    if (!text) return [];
+    var rows = [], row = [], cell = '', inQuotes = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (text[i + 1] === '"') { cell += '"'; i++; } else { inQuotes = false; }
+        } else { cell += ch; }
+      } else if (ch === '"') { inQuotes = true;
+      } else if (ch === ',') { row.push(cell); cell = '';
+      } else if (ch === '\n') { row.push(cell); rows.push(row); row = []; cell = '';
+      } else if (ch !== '\r') { cell += ch; }
+    }
+    row.push(cell); rows.push(row);
+    var header = rows.shift().map(function (h) { return h.trim(); });
+    return rows.filter(function (r) { return r.length >= header.length - 1 && r.join('').trim(); })
+      .map(function (r) {
+        var o = {};
+        header.forEach(function (h, idx) { o[h] = (r[idx] || '').trim(); });
+        return o;
+      });
+  }
+
+  function caseKey(c) {
+    // 같은 물건인지 — 지역·단지명·계약월·면적·층이 다 같아야 한다.
+    return [c.gu, c.name, c.date, c.area, c.floor].join('|');
+  }
+
+  function comparePasted() {
+    var out = document.getElementById('cmp_out');
+    var before;
+    try {
+      before = parseCsv(document.getElementById('cmp_csv').value);
+    } catch (e) {
+      out.innerHTML = '<p class="muted">CSV를 읽지 못했습니다 (' + esc(String(e)) + ').</p>';
+      return;
+    }
+    if (!before.length) {
+      out.innerHTML = '<p class="muted">붙여넣은 내용에서 표를 찾지 못했습니다. CSV 파일을 통째로 붙여넣어 주세요.</p>';
+      return;
+    }
+    var prev = {};
+    before.forEach(function (c) { prev[caseKey(c)] = c; });
+
+    var pairs = [], seedsBefore = {}, versionsBefore = {};
+    cases.forEach(function (now) {
+      var was = prev[caseKey(now)];
+      if (!was) return;
+      var e0 = parseFloat(was.err), e1 = parseFloat(now.err);
+      if (!isFinite(e0) || !isFinite(e1)) return;
+      // 실제 체결가가 다르면 같은 물건이 아니다 — 짝을 잘못 맺으면 안 된다.
+      if (was.actual && now.actual && Math.abs(parseFloat(was.actual) - parseFloat(now.actual)) > 1) return;
+      seedsBefore[was.seed || '?'] = 1;
+      versionsBefore[was.version || '?'] = 1;
+      pairs.push({name: now.name, gu: now.gu, before: e0, after: e1});
+    });
+
+    if (!pairs.length) {
+      out.innerHTML = '<ul class="note-lines"><li>같은 물건을 한 건도 못 찾았습니다.</li>' +
+        '<li>표본 번호가 서로 다르면 다른 물건이 뽑힙니다 — 번호를 같게 두고 다시 돌려 보세요.</li></ul>';
+      return;
+    }
+    var n = pairs.length;
+    var mean = function (xs) { return xs.reduce(function (a, b) { return a + b; }, 0) / xs.length; };
+    var absB = mean(pairs.map(function (p) { return Math.abs(p.before); }));
+    var absA = mean(pairs.map(function (p) { return Math.abs(p.after); }));
+    var biasB = mean(pairs.map(function (p) { return p.before; }));
+    var biasA = mean(pairs.map(function (p) { return p.after; }));
+    var diffs = pairs.map(function (p) { return Math.abs(p.after) - Math.abs(p.before); });
+    var d = mean(diffs);
+    var sd = n > 1 ? Math.sqrt(diffs.reduce(function (a, x) {
+      return a + (x - d) * (x - d); }, 0) / (n - 1)) : 0;
+    var se = n > 1 ? sd / Math.sqrt(n) : 0;
+    var lo = d - 1.96 * se, hi = d + 1.96 * se;
+    var better = pairs.filter(function (p) { return Math.abs(p.after) < Math.abs(p.before) - 0.05; }).length;
+    var worse = pairs.filter(function (p) { return Math.abs(p.after) > Math.abs(p.before) + 0.05; }).length;
+    var verdict = hi < 0 ? '✅ 좋아졌습니다 (우연으로 보기 어려운 차이)'
+      : lo > 0 ? '⚠️ 나빠졌습니다 (우연으로 보기 어려운 차이)'
+      : '➖ 차이가 뚜렷하지 않습니다 (표본을 더 모아야 합니다)';
+    var movers = pairs.slice().sort(function (a, b) {
+      return Math.abs(Math.abs(b.after) - Math.abs(b.before)) -
+             Math.abs(Math.abs(a.after) - Math.abs(a.before)); }).slice(0, 12);
+
+    out.innerHTML =
+      '<div class="tier-table-wrap"><table><tr><th>항목</th><th>이전</th><th>지금</th><th>차이</th></tr>' +
+      '<tr><td>평균 오차</td><td>' + absB.toFixed(2) + '%</td><td><b>' + absA.toFixed(2) +
+        '%</b></td><td>' + (d >= 0 ? '+' : '') + d.toFixed(2) + '%p</td></tr>' +
+      '<tr><td>높게/낮게 부르는 정도</td><td>' + (biasB >= 0 ? '+' : '') + biasB.toFixed(2) +
+        '%</td><td><b>' + (biasA >= 0 ? '+' : '') + biasA.toFixed(2) + '%</b></td><td>' +
+        ((biasA - biasB) >= 0 ? '+' : '') + (biasA - biasB).toFixed(2) + '%p</td></tr>' +
+      '</table></div>' +
+      '<ul class="note-lines" style="margin-top:10px">' +
+      '<li>짝이 맞은 물건 <b>' + n + '건</b> (붙여넣은 ' + before.length + '건 중) · ' +
+        '좋아진 것 ' + better + '건 · 나빠진 것 ' + worse + '건</li>' +
+      '<li>평균 오차 변화 <b>' + (d >= 0 ? '+' : '') + d.toFixed(2) + '%p</b> ' +
+        '(95% 범위 ' + lo.toFixed(2) + ' ~ ' + hi.toFixed(2) + '%p) → <b>' + verdict + '</b></li>' +
+      '<li>이전 CSV: 버전 ' + esc(Object.keys(versionsBefore).join(', ')) +
+        ' · 표본 번호 ' + esc(Object.keys(seedsBefore).join(', ')) + '</li>' +
+      '<li>0을 포함하는 범위는 "아직 모른다"는 뜻입니다 — 지역을 더 돌려 표본을 늘리세요.</li>' +
+      '</ul>' +
+      '<div class="tier-table-wrap" style="margin-top:8px"><table>' +
+      '<tr><th>가장 많이 움직인 물건</th><th>지역</th><th>이전</th><th>지금</th></tr>' +
+      movers.map(function (p) {
+        var good = Math.abs(p.after) < Math.abs(p.before);
+        return '<tr><td>' + esc(p.name) + '</td><td>' + esc(p.gu) + '</td><td>' +
+          (p.before >= 0 ? '+' : '') + p.before.toFixed(1) + '%</td>' +
+          '<td style="color:' + (good ? '#2f9e44' : '#d33232') + '; font-weight:700">' +
+          (p.after >= 0 ? '+' : '') + p.after.toFixed(1) + '%</td></tr>';
+      }).join('') + '</table></div>';
   }
 
   function downloadCsv() {

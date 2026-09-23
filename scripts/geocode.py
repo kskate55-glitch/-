@@ -12,9 +12,11 @@
 같은 주소를 반복 조회하지 않도록 data/geocode_cache.json에 결과를 캐시한다.
 """
 
+import atexit
 import json
 import os
 import threading
+import time
 import urllib.parse
 from math import atan2, cos, radians, sin, sqrt
 from urllib.error import HTTPError, URLError
@@ -33,14 +35,71 @@ KAKAO_KEYWORD_URL = "https://dapi.kakao.com/v2/local/search/keyword.json"
 _cache_lock = threading.Lock()
 
 
+# ⚠️ 57절 — **캐시를 메모리에 들고 있는다.** 예전엔 `geocode()`를 부를 때마다
+# 캐시 파일을 통째로 읽고(히트여도!) 쓸 때 통째로 다시 썼다. 캐시가 커질수록
+# 느려지는 구조라 **쓸수록 사이트가 느려졌다** — 실측:
+#
+#   캐시 2,000건  → 지오코딩 200번에 디스크만 1.7초
+#   캐시 10,000건 → 7.1초
+#   캐시 30,000건 → **23.4초**
+#
+# 게다가 이 작업이 전부 `_cache_lock` 안에서 벌어져 22절 병렬 8워커가 줄을
+# 섰다 — 병렬로 만들어 둔 의미가 없었다.
+#
+# 이제 파일은 **프로세스당 한 번만** 읽고, 쓰기는 모아서 가끔 한다. 캐시를
+# 잃어봐야 느려질 뿐이라(53절과 같은 판단) 안전한 맞바꿈이다.
+CACHE_FLUSH_EVERY = 50        # 새 항목 이만큼 쌓이면 파일에 쓴다
+CACHE_FLUSH_SECONDS = 5.0     # 또는 이 시간이 지나면
+
+_memory: dict[str, dict] = {}          # 경로 -> 내용
+_memory_dirty: dict[str, int] = {}
+_memory_written: dict[str, float] = {}
+
+
+def _mem_load(path: str) -> dict:
+    """파일을 프로세스당 한 번만 읽고, 그다음부터는 메모리에서 돌려준다."""
+    if path not in _memory:
+        _memory[path] = read_json(path)
+        _memory_dirty[path] = 0
+        _memory_written[path] = 0.0
+    return _memory[path]
+
+
+def _mem_save(path: str, cache: dict, force: bool = False) -> None:
+    """메모리를 갱신하고, 쌓였거나 시간이 지났을 때만 파일에 쓴다."""
+    _memory[path] = cache
+    _memory_dirty[path] = _memory_dirty.get(path, 0) + 1
+    now = time.monotonic()
+    if (force
+            or _memory_dirty[path] >= CACHE_FLUSH_EVERY
+            or now - _memory_written.get(path, 0.0) >= CACHE_FLUSH_SECONDS):
+        write_json(path, cache)        # 53절 — 원자적 교체
+        _memory_dirty[path] = 0
+        _memory_written[path] = now
+
+
+def flush_caches() -> None:
+    """아직 파일에 안 쓴 캐시를 전부 내려쓴다 (프로세스 종료 시 자동 호출)."""
+    for path, cache in list(_memory.items()):
+        if _memory_dirty.get(path):
+            try:
+                write_json(path, cache)
+                _memory_dirty[path] = 0
+            except OSError:
+                pass
+
+
+atexit.register(flush_caches)
+
+
 def _load_cache() -> dict:
     # 53절 — 깨진 캐시는 없는 것으로 친다. 예전엔 json.load를 그대로 불러서
     # 파일이 한 번 깨지면 이후 모든 조회가 JSONDecodeError로 죽었다.
-    return read_json(CACHE_PATH)
+    return _mem_load(CACHE_PATH)
 
 
 def _save_cache(cache: dict) -> None:
-    write_json(CACHE_PATH, cache)      # 53절 — 원자적 교체
+    _mem_save(CACHE_PATH, cache)
 
 
 def _get_api_key() -> str:
@@ -140,11 +199,11 @@ def geocode_full(address: str) -> dict | None:
 
 
 def _load_cache_file(path: str) -> dict:
-    return read_json(path)             # 53절
+    return _mem_load(path)             # 53·57절
 
 
 def _save_cache_file(path: str, cache: dict) -> None:
-    write_json(path, cache)            # 53절
+    _mem_save(path, cache)             # 53·57절
 
 
 NEARBY_CACHE_PATH = os.path.join(_DATA_DIR, "nearby_place_cache.json")

@@ -57,6 +57,12 @@ def _fmt_eok(man: float) -> str:
     return f"{man / 10000:.2f}억"
 
 
+# 57절 — 40절 아파트 조회를 빌라 조회 직후 백그라운드로 미리 던질지. 끄면
+# 예전처럼 필요한 시점(지오코딩이 다 끝난 뒤)에 직접 부른다 — A/B 측정과
+# 회귀 테스트가 이 스위치로 두 동작을 모두 확인한다.
+PREFETCH_APT = True
+
+
 @app.context_processor
 def _inject_version():
     """모든 화면 푸터에 배포 버전을 꽂는다 — 48-5절."""
@@ -548,6 +554,10 @@ def estimate():
                                 dedupe, find_comparables)
     from lawd_lookup import find_dong_in_address
 
+    # 40절 아파트 조회를 미리 던지려면 동 이름이 먼저 필요하다(주소 문자열만
+    # 보면 되는 순수 함수라 앞으로 당겨도 아무 부작용이 없다).
+    target_dong_early = find_dong_in_address(address)
+
     try:
         rows = dedupe(get_trade_rows(lawd_cd, year_min))
     except RuntimeError as e:
@@ -570,11 +580,29 @@ def estimate():
             form=form, last_year=this_year - 1,
         )
 
+    # ⚡ 57절 — 40절 아파트 조회를 **여기서 미리 던져둔다.** 예전엔 한참 아래
+    #    (지오코딩·유사도 계산이 다 끝난 뒤)에서야 불러서, 국토부를 기다리는
+    #    구간이 빌라·아파트 두 번으로 **줄줄이** 생겼다. 둘은 서로 의존이
+    #    전혀 없고 각자 자기 캐시만 쓰므로(22절 "의존 없는 호출은 병렬로"
+    #    방침 그대로) 지금 던져놓고 필요할 때 받으면 된다 — 새 지역 첫
+    #    조회에서 국토부 왕복 한 묶음이 통째로 빠진다.
+    _apt_future = None
+    if target_dong_early and PREFETCH_APT:
+        try:
+            from concurrent.futures import ThreadPoolExecutor
+
+            from data_source import get_apt_rows as _get_apt_rows
+            _apt_pool = ThreadPoolExecutor(max_workers=1)
+            _apt_future = _apt_pool.submit(_get_apt_rows, lawd_cd, year_min)
+            _apt_pool.shutdown(wait=False)
+        except Exception:
+            _apt_future = None      # 미리 받기 실패는 조용히 — 아래에서 그냥 직접 부른다
+
     # 7-2절 시계열 가격보정 — CLI는 data/raw의 전체 기간 데이터로 추세를
     # 추정하지만, 웹 버전은 애초에 get_trade_rows()가 year_min 이후 데이터만
     # 가져오므로 그 범위 안에서만 추세를 추정한다(그래도 최근 추세가 더
     # 중요하다는 점에서 크게 어긋나지 않는다).
-    target_dong = find_dong_in_address(address)
+    target_dong = target_dong_early
 
     # ⚠️ 7-2절 시계열 가격보정은 껐다 — 어차피 year_min 이후(보통 2년치)
     #    데이터만 쓰는데 그 안에서 다시 "지금 시세로 환산"하는 건 얻는
@@ -1027,7 +1055,9 @@ def estimate():
             from data_source import get_apt_rows
             from estimate_price import compute_apt_gap
 
-            apt_rows = get_apt_rows(lawd_cd, year_min)
+            # 57절 — 위에서 미리 던져둔 결과를 받는다(없으면 지금 직접 부른다).
+            apt_rows = (_apt_future.result(timeout=60) if _apt_future is not None
+                        else get_apt_rows(lawd_cd, year_min))
             apt_gap = compute_apt_gap(apt_rows, target_dong, area, auction_price,
                                        this_year, year_min, lawd_cd=lawd_cd,
                                        subject_coord=subject_coord)

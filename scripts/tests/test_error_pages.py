@@ -187,3 +187,47 @@ class TestDiagnosticPageTakesBothMethods(unittest.TestCase):
                 self.assertIn("수유동", resp.get_data(as_text=True))
         finally:
             geocode.geocode_full = orig
+
+
+class TestSuccessCodesAreNotJustOne(unittest.TestCase):
+    """⚠️ 성공 판정이 `!= "000"` 하나였다. 이 계열 API에서 흔한 `"00"`
+    (resultMsg: NORMAL SERVICE)으로 바뀌는 순간 **정상 응답이 통째로 오류가
+    되어 사이트 전체가 죽는다** — 게다가 "00"은 오류 목록에 없어서 화면에
+    "알 수 없는 오류"라고만 뜬다. 모르는 코드는 예전처럼 시끄럽게 실패시킨다.
+    """
+
+    def _xml(self, code, tag_pairs):
+        body = "".join(f"<{k}>{v}</{k}>" for k, v in tag_pairs)
+        return (f"<response><header><resultCode>{code}</resultCode>"
+                f"<resultMsg>NORMAL SERVICE.</resultMsg></header>"
+                f"<body><items><item>{body}</item></items></body></response>").encode()
+
+    TRADE = (("umdNm", "수유동"), ("dealAmount", "20,000"),
+             ("excluUseAr", "60"), ("floor", "3"))
+    RENT = (("umdNm", "수유동"), ("deposit", "20,000"),
+            ("monthlyRent", "0"), ("excluUseAr", "60"), ("floor", "3"))
+
+    def test_every_known_success_spelling_parses(self):
+        import molit_rhrent_api as rent
+        import molit_rhtrade_api as trade
+        for code in ("000", "00", "0", "0000"):
+            self.assertEqual(len(trade._parse_response(self._xml(code, self.TRADE))), 1, code)
+            self.assertEqual(len(rent._parse_response(self._xml(code, self.RENT))), 1, code)
+
+    def test_no_data_is_still_an_empty_result_not_an_error(self):
+        import molit_rhtrade_api as trade
+        self.assertEqual(trade._parse_response(self._xml("03", self.TRADE)), [])
+
+    def test_real_errors_still_raise_loudly(self):
+        import molit_rhrent_api as rent
+        import molit_rhtrade_api as trade
+        for code in ("22", "30", "20", "99"):
+            for mod, pairs in ((trade, self.TRADE), (rent, self.RENT)):
+                with self.assertRaises(RuntimeError, msg=f"{mod.__name__} {code}"):
+                    mod._parse_response(self._xml(code, pairs))
+
+    def test_both_apis_share_one_list(self):
+        """한쪽만 고치면 다른 경로에서 같은 사고가 난다(52절 전례)."""
+        import molit_rhrent_api as rent
+        import molit_rhtrade_api as trade
+        self.assertIs(rent.SUCCESS_CODES, trade.SUCCESS_CODES)

@@ -163,9 +163,23 @@ class TestTheKeyNeverReachesTheScreen(unittest.TestCase):
         import land_use
         self.land_use = land_use
         self._urlopen = land_use.urlopen
+        # ⚠️ 폴백 경로(`urlopen_no_pool`)도 같이 막아야 한다 — 하나만 막으면
+        #    풀링이 실패했을 때 **실제 브이월드로 요청이 새어 나간다**(프록시
+        #    로그에 실제로 8번 찍혔다). 48절·55절이 못박은 그 함정이다.
+        self._urlopen_no_pool = land_use.urlopen_no_pool
+
+        def _blocked(*a, **k):
+            # 풀링이 실패하면 `_fetch_raw`가 여기로 폴백한다 — 네트워크로
+            # 나가지 않으면서 "둘 다 실패"라는 상황은 그대로 재현해야 하므로
+            # 같은 계열(OSError)로 돌려준다. 이때 화면에 실리는 것은 **처음
+            # 실패(pooled_err)**라, 아래 테스트들이 보는 대상은 그대로다.
+            raise OSError("테스트: 네트워크로 나가지 않는다")
+
+        land_use.urlopen_no_pool = _blocked
 
     def tearDown(self):
         self.land_use.urlopen = self._urlopen
+        self.land_use.urlopen_no_pool = self._urlopen_no_pool
         if self._orig is None:
             os.environ.pop("VWORLD_API_KEY", None)
         else:

@@ -36,7 +36,8 @@ from urllib.request import Request
 from http_pool import urlopen
 from urllib.error import HTTPError, URLError
 
-from molit_rhtrade_api import ERROR_MESSAGES, _get_service_key, save_rows
+from molit_rhtrade_api import (ERROR_MESSAGES, SUCCESS_CODES, _get_service_key,
+                               save_rows)
 
 # .env에 적어둔 키를 환경변수로 올린다 (6절) — 이미 설정된 값은 안 덮어쓴다.
 try:
@@ -127,7 +128,10 @@ def _parse_response(raw_bytes: bytes) -> list[dict]:
     result_code = root.findtext(".//resultCode")
     result_msg = root.findtext(".//resultMsg")
 
-    if result_code and result_code != "000":
+    # ⚠️ 성공 코드는 매매 API와 **같은 목록을 쓴다** — 한쪽만 고치면 전월세
+    #    경로에서 같은 사고가 난다(52절이 `ET.ParseError` 방어를 매매에만
+    #    넣었다가 전월세에 그대로 남아 있던 것과 같은 실수).
+    if result_code and result_code not in SUCCESS_CODES:
         note = ERROR_MESSAGES.get(result_code, "알 수 없는 오류")
         if result_code == "03":
             return []

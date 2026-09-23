@@ -162,3 +162,22 @@ class TestRankingAndPlainWords(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestEmptyAddressesDoNotCrash(unittest.TestCase):
+    """참고용 카드 하나 때문에 매도가 계산 전체가 죽으면 안 된다(71절 ④ 전례)."""
+
+    def test_none_and_blank_just_return_none(self):
+        import market_index as mi
+        for addr in (None, "", "   ", "\n"):
+            self.assertIsNone(mi.sido_token(addr), repr(addr))
+            self.assertIsNone(mi.seoul_zone_from_address(addr), repr(addr))
+            self.assertIsNone(mi.region_from_address(addr), repr(addr))
+
+    def test_real_addresses_still_work(self):
+        import market_index as mi
+        self.assertEqual(mi.seoul_zone_from_address("서울특별시 강북구 수유동 468"), "동북권")
+        self.assertEqual(mi.region_from_address("경기 김포시 사우동 1309"), "경기도")
+        self.assertEqual(
+            mi.region_from_address("경기 김포시 사우동 1309", mi.VILLA_SIDO_ALIAS), "경기")
+        self.assertIsNone(mi.seoul_zone_from_address("부산광역시 중구 1"))

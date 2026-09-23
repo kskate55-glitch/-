@@ -88,6 +88,11 @@ def seoul_zone_from_address(address: str) -> str | None:
     지수**가 떴다. 조용히 틀리는 종류라 화면만 보고는 알 수 없다.
     시/도 토큰이 아예 없는 주소("강북구 수유동 468")는 예전처럼 구 이름으로
     판정한다 — 서울 전용 구 이름이 대부분이라 그쪽이 더 쓸모 있다."""
+    # ⚠️ 주소가 비어 있거나 None이면 여기서 끝낸다 — 아래 `in address`가
+    #    None을 만나면 TypeError로 터지고, 참고용 카드 하나 때문에 계산
+    #    전체가 죽는다(71절 ④와 같은 실패다).
+    if not address:
+        return None
     sido = sido_token(address)
     if sido is not None and sido != "서울":
         return None
@@ -130,6 +135,11 @@ def region_from_address(address: str, alias_map: dict[str, str] = SIDO_ALIAS) ->
     ("서울특별시")만 부분 문자열로 찾아서, 사용자가 흔하게 치는 짧은 표기
     ("경기 김포시 …")면 `None`이 되어 **24절 시장동향 카드가 통째로 조용히
     사라졌다.** 토큰으로 못 알아보면 예전 방식으로 폴백한다."""
+    # ⚠️ 주소가 비어 있거나 None이면 여기서 끝낸다 — 아래 `in address`가
+    #    None을 만나면 TypeError로 터지고, 참고용 카드 하나 때문에 계산
+    #    전체가 죽는다(71절 ④와 같은 실패다).
+    if not address:
+        return None
     token = sido_token(address)
     if token is not None:
         # alias_map은 "경기도"를 "경기"로 줄이는 식의 CSV별 차이만 담고 있다.

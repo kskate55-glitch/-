@@ -61,6 +61,14 @@ except ImportError:  # 다른 경로에서 import될 때도 죽지 않게
 
 BASE_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcRHTrade/getRTMSDataSvcRHTrade"
 
+# ⚠️ **성공 코드를 하나만 인정하면 안 된다.** 예전엔 `!= "000"`이라, 이 계열
+#    API에서 흔히 쓰는 `"00"`(resultMsg: NORMAL SERVICE)로 바뀌는 순간
+#    **정상 응답이 통째로 오류가 되어 사이트 전체가 죽는다** — 게다가 "00"은
+#    아래 오류 목록에 없어서 "알 수 없는 오류"라고만 뜬다. 모르는 코드는
+#    예전처럼 시끄럽게 실패시키되(48-4절 — 조용히 틀리는 것보다 낫다),
+#    알려진 성공 표기는 전부 받는다.
+SUCCESS_CODES = {"000", "00", "0", "0000"}
+
 ERROR_MESSAGES = {
     "01": "Application Error - 제공기관 서비스 상태 불안정",
     "02": "DB Error - 제공기관 서비스 상태 불안정",
@@ -193,7 +201,7 @@ def _parse_response(raw_bytes: bytes) -> list[dict]:
     result_code = root.findtext(".//resultCode")
     result_msg = root.findtext(".//resultMsg")
 
-    if result_code and result_code != "000":
+    if result_code and result_code not in SUCCESS_CODES:
         note = ERROR_MESSAGES.get(result_code, "알 수 없는 오류")
         if result_code == "03":
             return []  # 데이터 없음은 정상 케이스

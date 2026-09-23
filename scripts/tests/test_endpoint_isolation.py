@@ -143,11 +143,21 @@ class TestTransientGeocodeFailureIsNotCached(unittest.TestCase):
         self.cache = {}
         geo._load_cache = lambda: dict(self.cache)
         geo._save_cache = lambda c: self.cache.update(c)
+        # ⚠️ 이 클래스는 한동안 **다른 테스트 파일이 심어둔 환경변수에 얹혀서만**
+        #    통과했다(`test_backtest_web`이 import 시점에 os.environ.setdefault로
+        #    키를 넣고, 알파벳순으로 먼저 돌았다). 단독 실행하면 그대로 깨졌다 —
+        #    55절. 테스트는 실행 순서에 기대지 않고 스스로 갖춰야 한다.
+        self._orig_key = os.environ.get("KAKAO_REST_API_KEY")
+        os.environ["KAKAO_REST_API_KEY"] = "test-key"
 
     def tearDown(self):
         self.geo.urlopen = self._orig_urlopen
         self.geo._load_cache = self._orig_load
         self.geo._save_cache = self._orig_save
+        if self._orig_key is None:
+            os.environ.pop("KAKAO_REST_API_KEY", None)
+        else:
+            os.environ["KAKAO_REST_API_KEY"] = self._orig_key
 
     def _fail_with(self, exc):
         def boom(req, timeout=None):

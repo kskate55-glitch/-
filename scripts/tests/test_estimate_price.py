@@ -2137,6 +2137,53 @@ class TestPredictionInterval(unittest.TestCase):
         self.assertEqual(set(w), set(ep.PREDICTION_INTERVAL_SAMPLE_N))
 
 
+class TestZeroWeightsNeverKillThePage(unittest.TestCase):
+    """72-18절 — 가중치 합이 0이어도 매도가가 나와야 한다.
+
+    ⚠️ 예전엔 `weighted_quantile`이 `None`을 돌려줬고, 호출부는 그 값으로 바로
+    산술을 한다 — 8-2절 경매용 매도가 `(p25 + median) / 2`, 29절 구간 표의
+    `v * calibration`. 그래서 **`TypeError`로 페이지가 통째로 죽었다.**
+    퍼징이 아니면 안 드러날 잠복 지뢰였다.
+
+    7절 가중치는 지금 구조상 0이 될 수 없지만(최소 ~5e-7), 계수 하나만
+    바뀌면 0이 될 수 있고 그때 증상이 "매도가가 안 나온다"가 아니라
+    "사이트가 죽는다"가 된다.
+    """
+
+    def _rows(self, weight, n=5):
+        return [{"_weight": weight, "_amount_man": 20000.0 + i * 1000,
+                 "_area": 69.0, "_distance_m": 100.0} for i in range(n)]
+
+    def test_all_zero_weights_still_produce_a_price(self):
+        for weight in (0.0, -1.0, None):
+            scen = ep.compute_scenarios(self._rows(weight), 400.0, 2026, subject_area=69.3)
+            for key in ("p25", "median", "p75"):
+                self.assertIsNotNone(scen[key], f"가중치 {weight!r}에서 {key}가 None")
+            self.assertLessEqual(scen["p25"], scen["median"])
+            self.assertLessEqual(scen["median"], scen["p75"])
+
+    def test_the_auction_price_arithmetic_does_not_blow_up(self):
+        """8-2절 경매용 매도가는 호출부에서 바로 더한다 — 거기서 터지던 경로다."""
+        scen = ep.compute_scenarios(self._rows(0.0), 400.0, 2026, subject_area=69.3)
+        auction = round((scen["p25"] + scen["median"]) / 2, -1)
+        self.assertGreater(auction, 0)
+
+    def test_price_tiers_survive_too(self):
+        tiers = ep.compute_price_tiers(self._rows(0.0), subject_area=69.3)
+        vals = [tiers[k] for k in ("urgent", "d30", "d60", "normal", "test")]
+        self.assertEqual(vals, sorted(vals))
+
+    def test_the_fallback_is_the_ordinary_percentile(self):
+        """가중치가 없으면 **가중치 없는 분위수**가 가장 말이 되는 답이다."""
+        vals = [1.0, 2.0, 3.0, 4.0, 5.0]
+        self.assertAlmostEqual(ep.weighted_quantile([(v, 0.0) for v in vals], 0.5),
+                                ep.weighted_quantile([(v, 1.0) for v in vals], 0.5))
+
+    def test_an_empty_list_is_still_none(self):
+        """값이 아예 없으면 답이 없는 게 맞다 — 폴백이 이것까지 덮으면 안 된다."""
+        self.assertIsNone(ep.weighted_quantile([], 0.5))
+
+
 class TestWeightedQuantile(unittest.TestCase):
     """7절 — 복제 근사를 대체한 진짜 가중 분위수."""
 
@@ -2175,9 +2222,20 @@ class TestWeightedQuantile(unittest.TestCase):
             self.assertLessEqual(v, 30.0)
 
     def test_degenerate_inputs_are_safe(self):
-        self.assertIsNone(ep.weighted_quantile([], 0.5))
-        self.assertIsNone(ep.weighted_quantile([(100.0, 0.0)], 0.5))   # 가중치 0뿐
+        self.assertIsNone(ep.weighted_quantile([], 0.5))            # 값이 아예 없다
         self.assertEqual(ep.weighted_quantile([(7.0, 1.0)], 0.5), 7.0)  # 한 건뿐
+
+    def test_zero_weights_fall_back_instead_of_returning_none(self):
+        """⚠️ **계약이 바뀌었다**(72-18절) — 예전엔 `None`이었다.
+
+        호출부가 그 값으로 바로 산술을 해서(8-2절 `(p25 + median) / 2`,
+        29절 `v * calibration`) **페이지가 통째로 죽었다.** 값이 있는데
+        가중치만 없는 상황에서는 **가중치 없는 분위수**가 가장 말이 되는
+        답이라 그렇게 폴백한다.
+        """
+        self.assertEqual(ep.weighted_quantile([(100.0, 0.0)], 0.5), 100.0)
+        self.assertAlmostEqual(
+            ep.weighted_quantile([(10.0, 0.0), (20.0, 0.0), (30.0, 0.0)], 0.5), 20.0)
 
 
 class TestTiersShareTheScenarioDistribution(unittest.TestCase):

@@ -1056,7 +1056,19 @@ def weighted_quantile(pairs: list[tuple[float, float]], q: float) -> float | Non
     """
     pts = sorted((v, w) for v, w in pairs if w and w > 0)
     if not pts:
-        return None
+        # ⚠️ **가중치가 전부 0이어도 값이 있으면 답을 낸다**(72-18절).
+        #    예전엔 `None`을 돌려줬는데, 호출부는 그 값으로 바로 산술을 한다
+        #    (8-2절 경매용 매도가 `(p25 + median) / 2`, 29절 구간 표의
+        #    `v * calibration`) — 그래서 **페이지가 통째로 죽는다.** 퍼징이
+        #    아니면 안 드러날 잠복 지뢰였다.
+        #    7절 가중치는 지금 구조상 0이 될 수 없지만(최소 ~5e-7), 계수 하나만
+        #    바뀌면 0이 될 수 있고 그때 증상이 "매도가가 안 나온다"가 아니라
+        #    "사이트가 죽는다"가 된다. **가중치가 없으면 가중치 없는 분위수**가
+        #    가장 말이 되는 답이라 그렇게 폴백한다.
+        vals = sorted(v for v, _ in pairs)
+        if not vals:
+            return None
+        pts = [(v, 1.0) for v in vals]
     total = sum(w for _, w in pts)
     if total <= 0:
         return None

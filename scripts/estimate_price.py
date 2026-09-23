@@ -3049,11 +3049,18 @@ def main():
                      help="38절 올수리(전체 리모델링) 예상 공사비(만원)")
     ap.add_argument("--inspection-bad", nargs="*", choices=INSPECTION_CHECKLIST, default=None,
                      metavar="항목",
-                     help="43절 임장에서 걸린다고 본 항목 (예: --inspection-bad 누수 경사) — 41절 환금성 점수에 반영된다")
+                     # ⚠️ 36절에서 라벨을 "나쁜 상태"로 바꾸면서 choices는 고쳤는데
+                     #    이 예시만 옛 이름("누수")으로 남아 있었다 — 즉 도움말이
+                     #    **자기가 거부하는 값**을 안내하고 있었다. 값에 공백이
+                     #    들어가므로 따옴표가 필요하다는 것도 같이 적는다.
+                     help='43절 임장에서 걸린다고 본 항목 — 41절 환금성 점수에 반영된다. '
+                          '값에 공백이 있으니 따옴표로 묶는다 (예: --inspection-bad "누수 흔적 있음" "경사 심함")')
     ap.add_argument("--apt-dir", default="data/raw_apt",
                      help="40절 아파트 매매 실거래가 XML 폴더 — 데이터가 있으면 인근 아파트 대비 가격비율도 함께 보여준다")
     ap.add_argument("--inspection-clean", action="store_true",
-                     help="43절 임장에서 8가지 항목 중 걸리는 게 없었음 — 41절 환금성 점수에 가점으로 반영된다")
+                     # ⚠️ "8가지"는 36절에서 엘리베이터를 빼기 전 숫자다 — 지금은 7개.
+                     help=f"43절 임장에서 {len(INSPECTION_CHECKLIST)}가지 항목 중 걸리는 게 없었음 "
+                          "— 41절 환금성 점수에 가점으로 반영된다")
     args = ap.parse_args()
     if args.area <= 0:                 # 54절 — argparse는 음수·0을 그대로 통과시킨다
         ap.error(f"--area는 0보다 커야 합니다 (받은 값: {args.area})")

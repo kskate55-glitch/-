@@ -49,7 +49,14 @@ def load_buyer_age(path: str = CSV_PATH) -> dict:
     try:
         with open(path, encoding="utf-8") as f:
             for row in csv.DictReader(f):
-                key = (row["sido"].strip(), row["sigungu"].strip())
+                # ⚠️ 53절 교훈 — 깨진 줄 하나가 서비스를 멈춰 세우면 안 된다.
+                #    짧은 줄이면 DictReader가 None을 채우는데, 예전엔 거기서
+                #    AttributeError가 나서 호출부의 except 목록을 그대로
+                #    빠져나가 500이 됐다(조용히가 아니라 시끄럽게 틀리는 쪽).
+                key = ((row.get("sido") or "").strip(),
+                       (row.get("sigungu") or "").strip())
+                if not key[0]:
+                    continue
                 by_year = {}
                 for k, v in row.items():
                     if k and k.isdigit():
@@ -57,7 +64,10 @@ def load_buyer_age(path: str = CSV_PATH) -> dict:
                             by_year[int(k)] = int(v or 0)
                         except ValueError:
                             continue
-                table.setdefault(key, {})[row["age"].strip()] = by_year
+                age = (row.get("age") or "").strip()
+                if not age:
+                    continue
+                table.setdefault(key, {})[age] = by_year
     except (OSError, ValueError, KeyError):
         return {}
     if path == CSV_PATH:

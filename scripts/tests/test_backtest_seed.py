@@ -88,3 +88,43 @@ class TestDifferentSeedsPickDifferentProperties(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBothRunPathsActuallyUseIt(unittest.TestCase):
+    """⚠️ **실제로 겪은 버그**: 표본 번호 입력칸은 화면에 있고 템플릿으로도
+    넘어가는데, `/backtest` 단일 지역 실행이 `_run_region_backtest()`에 그
+    값을 **안 넘기고 있었다** — 즉 입력칸을 아무리 바꿔도 항상 42로 돌았다.
+    소스 검사(`seed=seed`)만으로는 순회 경로 한 곳만 보고 통과해버려서
+    못 잡았으므로, **두 경로 모두 실제로 호출해서** 확인한다.
+    """
+
+    def setUp(self):
+        os.environ.setdefault("MOLIT_SERVICE_KEY", "TESTKEY")
+        os.environ.setdefault("KAKAO_REST_API_KEY", "TESTKEY")
+        import app as webapp
+
+        self.webapp = webapp
+        self._orig = webapp._run_region_backtest
+        self.calls = []
+
+        def fake(lawd_cd, n_cases, months, seed=None):
+            self.calls.append(seed)
+            return {"error": "테스트라 여기서 멈춘다"}
+
+        webapp._run_region_backtest = fake
+        self.client = webapp.app.test_client()
+
+    def tearDown(self):
+        self.webapp._run_region_backtest = self._orig
+
+    def test_single_region_page_passes_the_seed(self):
+        self.client.post("/backtest", data={"lawd_cd": "11305", "seed": "7"})
+        self.assertEqual(self.calls, [7], "단일 지역 실행이 표본 번호를 버렸다")
+
+    def test_sweep_endpoint_passes_the_seed(self):
+        self.client.post("/backtest/one", data={"lawd_cd": "11305", "seed": "7"})
+        self.assertEqual(self.calls, [7], "순회가 표본 번호를 버렸다")
+
+    def test_a_junk_seed_falls_back_instead_of_breaking_the_run(self):
+        self.client.post("/backtest", data={"lawd_cd": "11305", "seed": "abc"})
+        self.assertEqual(self.calls, [self.webapp.BACKTEST_DEFAULT_SEED])

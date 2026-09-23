@@ -162,8 +162,12 @@ def probe_land_use(b_code: str, main_no, sub_no, is_mountain: bool = False,
             raw = resp.read().decode("utf-8")
         payload = json.loads(raw)
     except (OSError, ValueError) as e:   # 54절 — 타임아웃·인코딩 오류까지
+        # ⚠️ 이 detail은 **화면에 그대로 뜨고 사용자가 캡처해서 보낸다** —
+        #    예외 문구에 요청 URL이 섞여 오면 키가 통째로 새므로 한 번 지운다
+        #    (지금 쓰는 예외들은 URL을 안 담지만, 6절 원칙은 "새지 않는 걸
+        #    확인했다"가 아니라 "샐 수 없게 해둔다"이다).
         out.update(status="call_failed",
-                   detail=f"{type(e).__name__}: {str(e)[:160]}")
+                   detail=f"{type(e).__name__}: {str(e)[:160]}".replace(service_key, "***"))
         return out
 
     # ⚠️ 응답 앞부분을 그대로 보여준다 — 50-1절이 "응답 필드명을 실측으로

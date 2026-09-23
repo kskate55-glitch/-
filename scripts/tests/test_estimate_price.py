@@ -1423,6 +1423,39 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class TestTheCliHelpMatchesWhatItAccepts(unittest.TestCase):
+    """⚠️ 실제로 겪은 것: 도움말이 **자기가 거부하는 예시**를 안내하고 있었다.
+
+    36절에서 항목 이름을 "나쁜 상태"로 바꾸면서 `choices`는 고쳤는데 `help`의
+    예시(`--inspection-bad 누수 경사`)는 옛 이름 그대로라, 안내대로 치면
+    argparse가 그 자리에서 거부했다. 항목 개수도 엘리베이터를 뺀 뒤 7개인데
+    "8가지"로 남아 있었다.
+    """
+    def test_every_example_in_the_help_is_an_accepted_choice(self):
+        import re
+        import estimate_price as ep
+        with open(ep.__file__, encoding="utf-8") as f:
+            src = f.read()
+        block = src.split('"--inspection-bad"')[1].split("ap.add_argument")[0]
+        examples = re.findall(r'--inspection-bad ((?:"[^"]+"\s*)+)', block)
+        self.assertTrue(examples, "도움말에 예시가 없다")
+        for chunk in examples:
+            for value in re.findall(r'"([^"]+)"', chunk):
+                self.assertIn(value, ep.INSPECTION_CHECKLIST,
+                              f"도움말이 안내하는 {value!r}를 argparse가 거부한다")
+
+    def test_the_count_in_the_help_is_not_hardcoded(self):
+        import estimate_price as ep
+        with open(ep.__file__, encoding="utf-8") as f:
+            src = f.read()
+        block = src.split('"--inspection-clean"')[1].split("args = ap.parse_args")[0]
+        # ⚠️ 주석은 빼고 본다 — 69절에서 겪은 것과 같은 소스검사 오탐이다
+        #    (이 수정을 설명하는 주석 자체가 옛 숫자를 인용하고 있다).
+        code = "\n".join(l.split("#")[0] for l in block.splitlines())
+        self.assertNotIn("8가지", code, "항목 수를 다시 박으면 또 어긋난다")
+        self.assertIn("len(INSPECTION_CHECKLIST)", code)
+
+
 class TestInspectionChecklistLabels(unittest.TestCase):
     """43절 — 체크리스트 항목명이 '나쁜 상태'를 서술하는지, 승강기가 빠졌는지."""
 

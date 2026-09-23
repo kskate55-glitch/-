@@ -134,9 +134,12 @@ def healthz():
 #    (48-4절이 제일 비싸게 배운 "조용히 틀리는" 패턴). 이 페이지가 그걸 가른다.
 # ⚠️ 50-1절이 "응답 필드명을 실측으로 확인 못 했다"고 남겨둔 것도, 여기서
 #    실제 응답 앞부분을 보여주므로 한 번 돌려보면 확정된다.
-@app.route("/land-use-check", methods=["GET"], strict_slashes=False)
+@app.route("/land-use-check", methods=["GET", "POST"], strict_slashes=False)
 def land_use_check():
-    address = (request.args.get("address") or "").strip()
+    # ⚠️ GET 폼이지만 POST도 받는다 — `base.html`의 제출 핸들러가 한때
+    #    **모든 폼을 POST로 바꿔** 보내서 이 페이지가 405로 죽었다. 프론트를
+    #    고쳤지만, 진단 페이지가 프론트 버그 하나에 같이 죽으면 본말전도다.
+    address = (request.values.get("address") or "").strip()
     result = None
     if address:
         result = {"address": address}
@@ -416,7 +419,7 @@ def backtest_page():
     if request.method == "GET" or not lawd_cd:
         return render_template("backtest.html", **base)
 
-    out = _run_region_backtest(lawd_cd, n_cases, months)
+    out = _run_region_backtest(lawd_cd, n_cases, months, seed)
     if out.get("error"):
         return render_template("backtest.html", error=out["error"], **base)
 

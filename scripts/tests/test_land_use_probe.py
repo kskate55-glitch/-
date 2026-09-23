@@ -147,3 +147,56 @@ class TheDiagnosticPageNeverCrashes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTheKeyNeverReachesTheScreen(unittest.TestCase):
+    """⚠️ 이 화면의 문구는 **사용자가 캡처해서 그대로 보낸다** — 저장소가
+    공개라 키가 한 번 새면 끝이다(6절). `sample`뿐 아니라 **실패 문구**도
+    지운다: 지금 쓰는 예외들은 URL을 안 담지만, 원칙은 "안 새는 걸 확인했다"가
+    아니라 "샐 수 없게 해둔다"이다.
+    """
+    KEY = "SECRET-KEY-DO-NOT-LEAK"
+
+    def setUp(self):
+        self._orig = os.environ.get("VWORLD_API_KEY")
+        os.environ["VWORLD_API_KEY"] = self.KEY
+        import land_use
+        self.land_use = land_use
+        self._urlopen = land_use.urlopen
+
+    def tearDown(self):
+        self.land_use.urlopen = self._urlopen
+        if self._orig is None:
+            os.environ.pop("VWORLD_API_KEY", None)
+        else:
+            os.environ["VWORLD_API_KEY"] = self._orig
+
+    def test_a_failure_message_that_echoes_the_url_is_scrubbed(self):
+        def boom(*a, **k):
+            raise OSError(f"connect failed: https://api.vworld.kr/x?key={self.KEY}&pnu=1")
+        self.land_use.urlopen = boom
+        out = self.land_use.probe_land_use("1130510200", "468", "202")
+        self.assertEqual(out["status"], "call_failed")
+        self.assertNotIn(self.KEY, out["detail"])
+        self.assertIn("***", out["detail"])
+
+    def test_a_response_that_echoes_the_key_is_scrubbed(self):
+        import io as _io
+
+        class Resp:
+            def read(self_inner):
+                return f'{{"request":{{"key":"{TestTheKeyNeverReachesTheScreen.KEY}"}}}}'.encode()
+            def __enter__(self_inner):
+                return self_inner
+            def __exit__(self_inner, *a):
+                return False
+        self.land_use.urlopen = lambda *a, **k: Resp()
+        out = self.land_use.probe_land_use("1130510200", "468", "202")
+        self.assertNotIn(self.KEY, out["sample"])
+
+    def test_nothing_in_the_result_ever_carries_it(self):
+        def boom(*a, **k):
+            raise OSError(f"key={self.KEY}")
+        self.land_use.urlopen = boom
+        out = self.land_use.probe_land_use("1130510200", "468", "202")
+        self.assertNotIn(self.KEY, repr(out))

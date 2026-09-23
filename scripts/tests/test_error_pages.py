@@ -109,3 +109,81 @@ class TrailingSlashAndWrongUrls(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestFormsKeepTheirOwnMethod(unittest.TestCase):
+    """⚠️ **사용자가 실제로 맞은 405의 진짜 원인.**
+
+    `base.html`의 제출 핸들러가 `document.querySelectorAll("form")`으로 페이지의
+    **모든** 폼을 가로채 **무조건 POST**로 바꿔 보내고 있었다. 그래서
+    `method="get"`인 70-2절 진단 폼이 서버가 받을 수 없는 메서드로 나가
+    405가 떴다 — 70-3절에서 고친 건 **에러 화면 문구**뿐이었고 원인은 그대로
+    남아 있었다. 새 페이지를 만들 때마다 같은 사고가 나길 기다리는 구조다.
+    """
+    _ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+
+    def _base_html(self):
+        with open(os.path.join(self._ROOT, "webapp/templates/base.html"),
+                  encoding="utf-8") as f:
+            return f.read()
+
+    def test_the_handler_reads_the_forms_own_method(self):
+        src = self._base_html()
+        self.assertIn('form.getAttribute("method")', src,
+                      "폼이 정한 전송 방식을 읽지 않으면 GET 폼이 또 POST로 나간다")
+
+    def test_it_no_longer_hardcodes_post(self):
+        src = self._base_html()
+        self.assertNotIn('method: "POST"', src,
+                         "전송 방식을 다시 박아버리면 GET 폼이 405로 죽는다")
+
+    def test_every_form_in_the_project_is_reachable_by_its_own_method(self):
+        """폼이 선언한 method로 실제 서버가 받아주는지 — 템플릿을 훑어 확인한다."""
+        import re
+
+        import app as webapp
+
+        rules = {r.rule: r.methods for r in webapp.app.url_map.iter_rules()}
+        tpl_dir = os.path.join(self._ROOT, "webapp/templates")
+        checked = 0
+        for name in os.listdir(tpl_dir):
+            if not name.endswith(".html"):
+                continue
+            with open(os.path.join(tpl_dir, name), encoding="utf-8") as f:
+                html = f.read()
+            for tag in re.findall(r"<form[^>]*>", html):
+                method = (re.search(r'method="([^"]+)"', tag) or [None, "get"])[1].upper()
+                action = (re.search(r'action="([^"]+)"', tag) or [None, None])[1]
+                if not action or not action.startswith("/"):
+                    continue
+                self.assertIn(action, rules, f"{name}: {action} 라우트가 없다")
+                self.assertIn(method, rules[action],
+                              f"{name}: {action} 폼이 {method}인데 서버가 안 받는다")
+                checked += 1
+        self.assertGreater(checked, 3, "폼을 하나도 못 찾았다 — 검사가 헛돌았다")
+
+
+class TestDiagnosticPageTakesBothMethods(unittest.TestCase):
+    """진단 페이지가 프론트 버그 하나에 같이 죽으면 본말전도다 — 둘 다 받는다."""
+
+    def setUp(self):
+        os.environ.setdefault("MOLIT_SERVICE_KEY", "TESTKEY")
+        os.environ.setdefault("KAKAO_REST_API_KEY", "TESTKEY")
+        import app as webapp
+        self.client = webapp.app.test_client()
+
+    def test_get_and_post_both_answer(self):
+        for call in (self.client.get, self.client.post):
+            self.assertEqual(call("/land-use-check").status_code, 200)
+
+    def test_the_address_is_read_from_either(self):
+        import geocode
+        orig = geocode.geocode_full
+        geocode.geocode_full = lambda *a, **k: None      # 카카오로 새지 않게
+        try:
+            for resp in (self.client.get("/land-use-check?address=서울 강북구 수유동 1"),
+                         self.client.post("/land-use-check", data={"address": "서울 강북구 수유동 1"})):
+                self.assertEqual(resp.status_code, 200)
+                self.assertIn("수유동", resp.get_data(as_text=True))
+        finally:
+            geocode.geocode_full = orig

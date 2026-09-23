@@ -55,8 +55,8 @@
   <div class="field">
     <span class="field-icon" aria-hidden="true">📍</span>
     <div class="field-body">
-      <label>지번 주소</label>
-      <input type="text" name="address" placeholder="서울특별시 강북구 수유동 468-202"
+      <label for="f_address">지번 주소</label>
+      <input type="text" id="f_address" name="address" placeholder="서울특별시 강북구 수유동 468-202"
              value="{{ form.address if form else '' }}" required>
     </div>
   </div>
@@ -64,24 +64,24 @@
     <div class="field">
       <span class="field-icon" aria-hidden="true">📐</span>
       <div class="field-body">
-        <label>전용면적(㎡)</label>
-        <input type="number" step="0.01" name="area" placeholder="69.27"
+        <label for="f_area">전용면적(㎡)</label>
+        <input type="number" step="0.01" id="f_area" name="area" placeholder="69.27"
                value="{{ form.area if form else '' }}" required>
       </div>
     </div>
     <div class="field">
       <span class="field-icon" aria-hidden="true">🏢</span>
       <div class="field-body">
-        <label>층</label>
-        <input type="number" name="floor" placeholder="5" value="{{ form.floor if form else '' }}" required>
+        <label for="f_floor">층</label>
+        <input type="number" id="f_floor" name="floor" placeholder="5" value="{{ form.floor if form else '' }}" required>
       </div>
     </div>
   </div>
   <div class="field">
     <span class="field-icon" aria-hidden="true">📅</span>
     <div class="field-body">
-      <label>준공년도</label>
-      <input type="number" name="build_year" placeholder="2012" value="{{ form.build_year if form else '' }}" required>
+      <label for="f_build_year">준공년도</label>
+      <input type="number" id="f_build_year" name="build_year" placeholder="2012" value="{{ form.build_year if form else '' }}" required>
     </div>
   </div>
   <p class="hint" style="margin-top:-2px">※ 층·전용면적·준공년도는 <b>유사층·유사연식 비교에 꼭 필요</b>해서 필수 입력입니다 — 빠지면 엉뚱한 매물과 비교돼 매도가가 부정확해질 수 있어요.</p>
@@ -95,8 +95,8 @@
   <div class="field">
     <span class="field-icon" aria-hidden="true">🔨</span>
     <div class="field-body">
-      <label>현재 수리상태</label>
-      <select name="condition">
+      <label for="f_condition">현재 수리상태</label>
+      <select id="f_condition" name="condition">
         <option value="" {{ "selected" if not form or not form.condition else "" }}>선택 안 함</option>
         <option value="노후" {{ "selected" if form and form.condition == '노후' else "" }}>노후 (수리 필요 / 험한 집)</option>
         <option value="기본" {{ "selected" if form and form.condition == '기본' else "" }}>기본 (깨끗한 상태)</option>
@@ -110,15 +110,15 @@
     <div class="field">
       <span class="field-icon" aria-hidden="true">🧹</span>
       <div class="field-body">
-        <label>기본 정리까지 공사비(만원) <span class="field-tag">보통 여기까지</span></label>
-        <input type="number" name="repair_cost_basic" placeholder="450" value="{{ form.repair_cost_basic if form else '' }}">
+        <label for="f_repair_cost_basic">기본 정리까지 공사비(만원) <span class="field-tag">보통 여기까지</span></label>
+        <input type="number" id="f_repair_cost_basic" name="repair_cost_basic" placeholder="450" value="{{ form.repair_cost_basic if form else '' }}">
       </div>
     </div>
     <div class="field">
       <span class="field-icon" aria-hidden="true">🛠️</span>
       <div class="field-body">
-        <label>올수리까지 공사비(만원) <span class="field-tag field-tag-rare">드묾</span></label>
-        <input type="number" name="repair_cost_full" placeholder="1200" value="{{ form.repair_cost_full if form else '' }}">
+        <label for="f_repair_cost_full">올수리까지 공사비(만원) <span class="field-tag field-tag-rare">드묾</span></label>
+        <input type="number" id="f_repair_cost_full" name="repair_cost_full" placeholder="1200" value="{{ form.repair_cost_full if form else '' }}">
       </div>
     </div>
   </div>
@@ -133,34 +133,34 @@
     <div class="adv-body">
       <div class="row">
         <div>
-          <label>비교 반경(m)</label>
-          <input type="number" name="radius" placeholder="400" value="{{ form.radius if form else '400' }}">
+          <label for="f_radius">비교 반경(m)</label>
+          <input type="number" id="f_radius" name="radius" placeholder="400" value="{{ form.radius if form else '400' }}">
           <p class="hint" style="margin-top:4px">최소값이에요 — 이 안에 비교거래가 7건 미만이면 자동으로 더 넓혀서 찾아요.</p>
         </div>
         <div>
-          <label>기준연도 이후 (선택)</label>
-          <input type="number" name="year_min" placeholder="{{ last_year }}" value="{{ form.year_min if form else '' }}">
+          <label for="f_year_min">기준연도 이후 (선택)</label>
+          <input type="number" id="f_year_min" name="year_min" placeholder="{{ last_year }}" value="{{ form.year_min if form else '' }}">
         </div>
       </div>
       <div class="row">
         <div>
-          <label>면적 허용범위(%)</label>
-          <input type="number" step="1" name="area_tolerance" placeholder="15" value="{{ form.area_tolerance if form else '15' }}">
+          <label for="f_area_tolerance">면적 허용범위(%)</label>
+          <input type="number" step="1" id="f_area_tolerance" name="area_tolerance" placeholder="15" value="{{ form.area_tolerance if form else '15' }}">
         </div>
         <div>
-          <label>준공년도 허용범위(년)</label>
-          <input type="number" step="1" name="build_year_tolerance" placeholder="4" value="{{ form.build_year_tolerance if form else '4' }}">
+          <label for="f_build_year_tolerance">준공년도 허용범위(년)</label>
+          <input type="number" step="1" id="f_build_year_tolerance" name="build_year_tolerance" placeholder="4" value="{{ form.build_year_tolerance if form else '4' }}">
         </div>
       </div>
       <p class="hint" style="margin-top:-8px">※ 비교거래를 더 넓게(느슨하게) 또는 더 좁게(엄격하게) 잡고 싶을 때 조정하세요 — 기본값은 국토부 실거래 비교 관행(면적 ±15%, 연식 ±4년)입니다.</p>
       <div class="row">
         <div>
-          <label>월세보증금(만원, 선택 — 예상 월세도 보려면)</label>
-          <input type="number" name="monthly_deposit" placeholder="1000" value="{{ form.monthly_deposit if form else '' }}">
+          <label for="f_monthly_deposit">월세보증금(만원, 선택 — 예상 월세도 보려면)</label>
+          <input type="number" id="f_monthly_deposit" name="monthly_deposit" placeholder="1000" value="{{ form.monthly_deposit if form else '' }}">
         </div>
         <div>
-          <label>전월세전환율(연 %, 선택)</label>
-          <input type="number" step="0.1" name="conversion_rate" placeholder="6.0" value="{{ form.conversion_rate if form else '' }}">
+          <label for="f_conversion_rate">전월세전환율(연 %, 선택)</label>
+          <input type="number" step="0.1" id="f_conversion_rate" name="conversion_rate" placeholder="6.0" value="{{ form.conversion_rate if form else '' }}">
         </div>
       </div>
       <label class="checkbox-row">
@@ -169,8 +169,8 @@
         <span>역세권 프리미엄도 계산하기 (카카오 API를 추가로 호출해서 조금 더 걸려요)</span>
       </label>
       <div>
-        <label>네이버부동산 매물 목록 붙여넣기 (선택 — 유사매물 상위 20개 순위)</label>
-        <textarea name="listings_text" rows="6" placeholder="네이버부동산에서 이 동네·빌라·매매로 검색한 매물 목록 화면을 복사해서 붙여넣으세요"
+        <label for="f_listings_text">네이버부동산 매물 목록 붙여넣기 (선택 — 유사매물 상위 20개 순위)</label>
+        <textarea id="f_listings_text" name="listings_text" rows="6" placeholder="네이버부동산에서 이 동네·빌라·매매로 검색한 매물 목록 화면을 복사해서 붙여넣으세요"
                   style="width:100%; margin-top:6px; padding:11px 12px; border:1.5px solid var(--border); border-radius:var(--radius-md); font-size:14px; font-family:inherit; resize:vertical">{{ form.listings_text if form else '' }}</textarea>
       </div>
       <p class="hint" style="margin-top:-8px">※ 자동으로 긁어오지 않습니다(11절 원칙) — 직접 복사해서 붙여넣은 텍스트만 읽어서, 대상 물건과 면적·층·연식이 가장 비슷한 매물 최대 20개를 순위로 보여드려요. 형식이 사이트마다 달라 일부 매물은 인식이 안 될 수 있어요.</p>

@@ -173,3 +173,47 @@ class TheRealFileLoads(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestABrokenRowDoesNotTakeTheSiteDown(unittest.TestCase):
+    """53절 교훈 — 깨진 파일 한 줄이 서비스를 멈춰 세우면 안 된다.
+
+    ⚠️ 짧은 줄이면 `csv.DictReader`가 빠진 칸을 `None`으로 채운다. 예전엔
+    거기서 `AttributeError`가 났는데, 호출부(`webapp/app.py`·CLI)의 except
+    목록에 그게 없어서 **참고용 카드 하나 때문에 매도가 계산 전체가 500**이
+    됐다. 조용히 틀리는 것보다 낫긴 해도, 여전히 고쳐야 할 실패다.
+    """
+
+    def _load(self, text):
+        import tempfile
+
+        from buyer_age import load_buyer_age
+        with tempfile.NamedTemporaryFile("w", suffix=".csv", encoding="utf-8",
+                                         delete=False) as f:
+            f.write(text)
+            path = f.name
+        try:
+            return load_buyer_age(path)
+        finally:
+            os.unlink(path)
+
+    HEAD = "sido,sigungu,age,2025\n"
+
+    def test_a_short_row_is_skipped_not_raised(self):
+        table = self._load(self.HEAD + "서울,강북구\n서울,강북구,합계,300\n")
+        self.assertIn(("서울", "강북구"), table)
+
+    def test_a_row_with_no_age_is_skipped(self):
+        table = self._load(self.HEAD + "서울,강북구,,300\n서울,강북구,합계,300\n")
+        self.assertEqual(list(table[("서울", "강북구")]), ["합계"])
+
+    def test_a_row_with_no_sido_is_skipped(self):
+        table = self._load(self.HEAD + ",,합계,300\n서울,강북구,합계,300\n")
+        self.assertNotIn(("", ""), table)
+
+    def test_extra_columns_do_not_raise(self):
+        table = self._load(self.HEAD + "서울,강북구,합계,300,999,777\n")
+        self.assertEqual(table[("서울", "강북구")]["합계"][2025], 300)
+
+    def test_a_totally_garbled_file_gives_an_empty_table(self):
+        self.assertEqual(self._load("\x00\x01 not a csv at all"), {})

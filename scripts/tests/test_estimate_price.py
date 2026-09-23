@@ -1710,6 +1710,56 @@ class TestEstimateWarnings(unittest.TestCase):
         self.assertEqual(ep.compute_estimate_warnings([], None), [])
 
 
+class TestThinSampleWarning(unittest.TestCase):
+    """CLAUDE.md 70절 — 비교거래가 얇으면 **높게 부른다**.
+
+    ⚠️ 이 경고는 다른 경고들과 성격이 다르다 — 크기가 아니라 **방향**을
+    말해준다. 그래서 문구가 "높게 잡혔을 수 있다"라고 한쪽을 가리키는지까지
+    고정한다(양쪽으로 틀릴 수 있다고 바꿔 쓰면 정보가 사라진다).
+    """
+
+    @staticmethod
+    def _keys(n, divergence=0.5):
+        return {w["key"] for w in ep.compute_estimate_warnings([{"_weight": 1.0}] * n,
+                                                               divergence)}
+
+    def test_it_fires_only_below_the_threshold(self):
+        th = ep.ESTIMATE_WARN_THIN_SAMPLE
+        for n in range(1, th):
+            self.assertIn("thin_sample", self._keys(n), f"{n}건인데 경고가 없다")
+        for n in (th, th + 1, th + 10):
+            self.assertNotIn("thin_sample", self._keys(n), f"{n}건인데 경고가 뜬다")
+
+    def test_no_comparables_at_all_stays_silent(self):
+        """0건은 애초에 계산 자체가 안 되는 상태라 이 경고를 얹을 자리가 아니다."""
+        self.assertEqual(ep.compute_estimate_warnings([], None), [])
+
+    def test_it_says_which_way_the_error_leans(self):
+        w = [x for x in ep.compute_estimate_warnings([{"_weight": 1.0}] * 3, 0.5)
+             if x["key"] == "thin_sample"][0]
+        self.assertIn("높게", w["label"] + w["detail"])
+        self.assertNotIn("낮게", w["label"])
+
+    def test_it_stacks_with_the_divergence_warning(self):
+        """둘은 서로 다른 질문에 답한다 — 하나가 다른 하나를 덮으면 안 된다."""
+        self.assertEqual(self._keys(3, divergence=12.0), {"divergence", "thin_sample"})
+
+    def test_the_warning_never_changes_the_price(self):
+        """50절과 같은 계약 — 탐지만 하고 가격은 그대로다.
+
+        ⚠️ 소스 검사가 아니라 **행동 검사**로 한다(50절이 `to_amount_man`
+        이름에 걸려 오탐을 낸 전례 그대로).
+        """
+        rows = [{"_amount_man": 20000 + i * 500, "_weight": 1.0,
+                 "_distance_m": 100.0, "dealYear": "2026", "excluUseAr": "50"}
+                for i in range(3)]
+        before = ep.compute_scenarios([dict(r) for r in rows], 400, 2026)
+        ep.compute_estimate_warnings(rows, 0.5)
+        after = ep.compute_scenarios([dict(r) for r in rows], 400, 2026)
+        self.assertEqual(before["median"], after["median"])
+        self.assertTrue(all("_amount_man_adjusted" not in r for r in rows))
+
+
 class TestTopWeightShareShared(unittest.TestCase):
     """49절 — `backtest.py`와 같은 구현을 쓰는지(중복 구현이 갈리면 화면과
     백테스트 숫자가 어긋난다)."""

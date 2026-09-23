@@ -624,8 +624,8 @@ def estimate():
         }
 
     from data_source import get_trade_rows
-    from estimate_price import (SALE_CALIBRATION_FACTOR, compute_scenarios,
-                                dedupe, find_comparables)
+    from estimate_price import (FIRST_FLOOR_PRICE_RATIO, SALE_CALIBRATION_FACTOR,
+                                compute_scenarios, dedupe, find_comparables)
     from lawd_lookup import find_dong_in_address
 
     # 40절 아파트 조회를 미리 던지려면 동 이름이 먼저 필요하다(주소 문자열만
@@ -897,10 +897,29 @@ def estimate():
     build_year_note = f", 준공년도 ±{build_year_tolerance}년 이내" if build_year is not None else ""
     expanded_note = ""  # 5절 적응형 반경을 끄면서 "자동으로 넓혔습니다" 안내도 비워둔다
     time_correction_note = ""  # 7-2절 시계열 보정을 끄면서 안내 문구도 비워둔다
+
+    # 64절 — 1층 보정이 실제로 걸렸으면 **반드시 알린다.** 조용히 값만 바꾸면
+    # "왜 예전 계산이랑 숫자가 다르지" 혼란을 준다(7-2절이 같은 이유로 안내
+    # 문구를 달았다). 목록의 금액은 신고된 실제 체결가 그대로라, 안 알리면
+    # "표에 뜬 가격들이랑 매도가가 왜 안 맞지"로도 읽힌다.
+    first_floor_note = ""
+    if any(c.get("_first_floor_factor") for c in filtered):
+        pct = (1 - FIRST_FLOOR_PRICE_RATIO) * 100
+        if floor == 1:
+            first_floor_note = (
+                f" 이 물건은 1층이라, 위층 실거래는 1층 시세대로 약 {pct:.0f}% 낮춰서 계산했습니다"
+                f"(아래 목록의 금액은 신고된 실제 체결가 그대로입니다)."
+            )
+        else:
+            first_floor_note = (
+                f" 비교거래 중 1층 건은 위층 시세대로 약 {pct:.0f}% 올려서 계산했습니다"
+                f"(아래 목록의 금액은 신고된 실제 체결가 그대로입니다)."
+            )
     comparable_criteria = (
         f"반경 {radius:.0f}m 안, 전용면적 ±{area_tolerance_pct_input:.0f}%{build_year_note}인 실거래 중 "
         f"거리·면적·층·준공년도 종합 유사도(0~100점, 표의 '유사도' 열)가 높을수록, "
-        f"계약월이 최근일수록 가중치를 높게 줘서 고른 것입니다.{expanded_note}{time_correction_note}"
+        f"계약월이 최근일수록 가중치를 높게 줘서 고른 것입니다."
+        f"{first_floor_note}{expanded_note}{time_correction_note}"
     )
 
     price_tiers_display = {

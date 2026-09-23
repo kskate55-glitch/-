@@ -515,6 +515,16 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
                                                  this_year, this_month, monthly_trend_rate)
                 r["_amount_man_adjusted"] = amount * factor
                 r["_time_correction_factor"] = factor
+
+            # 64절 — 1층 ↔ 지상 중간층의 가격대 차이를 메운다.
+            # ⚠️ 7-2절과 **같은 `_amount_man_adjusted` 필드를 쓰되 곱해서 얹는다**
+            #    (7-2절이 다시 켜져도 두 보정이 서로를 덮어쓰지 않는다).
+            # ⚠️ 원래 `_amount_man`(실제 체결가)은 절대 안 건드린다 — "핵심
+            #    비교거래" 목록에는 항상 신고된 금액 그대로 떠야 한다.
+            floor_factor = first_floor_price_factor(row_floor, floor)
+            if floor_factor != 1.0:
+                r["_amount_man_adjusted"] = r.get("_amount_man_adjusted", amount) * floor_factor
+                r["_first_floor_factor"] = floor_factor
             out.append(r)
 
     # 51절 — 동일건물 보너스는 **같은 건물 거래가 2건 이상일 때만** 준다.
@@ -672,6 +682,43 @@ def weight_for_recency(deal_year: str, deal_month: str, this_year: int, this_mon
 # 60점짜리보다 훨씬 크게 반영"을 만족하는 지수. 3은 임의로 고른 경험적
 # 값이고, 더 강하게/약하게 강조하고 싶으면 이 지수만 바꾸면 된다.
 SIMILARITY_EMPHASIS_POWER = 3
+
+
+# CLAUDE.md 64절 — 1층은 지상층 중에서도 값이 따로 논다(사생활·보안·채광).
+# ⚠️ 7절 층 점수는 **층 번호 차이만** 본다: `diff <= 1`이면 만점이라 1층과 2층이
+#    똑같이 취급됐다. 그래서 1층 물건을 2·3층 거래로 계산하면 그대로 과대평가되고,
+#    반대로 2·3층 물건에 1층 거래가 섞이면 과소평가된다.
+#    실측(백테스트 74건)에 그 양쪽이 다 찍혀 있었다 — 1층 대상 편향 **+7.0%**,
+#    2~3층 대상 편향 **−2.7%**(차이 +9.7%p, 95%CI [+0.4, +19.9]). 면적·연식을
+#    통제한 회귀에서도 1층 효과가 +8.2%p로 남았다.
+#
+# ⚠️ **계수를 실측 점추정치(9%)로 잡지 않았다.** 신뢰구간이 넓어(진짜 값이 2%일
+#    수도 18%일 수도 있다) 민감도 분석으로 "틀렸을 때 얼마나 나빠지나"를 봤다:
+#      적용 없음 → 최악 편향 13.9% · 평균 5.5%
+#      3% → 10.9% / 4.1%   5% → 7.9% / 3.6%
+#      **7% → 6.3% / 3.3%  ← 최악·평균 둘 다 최소**
+#      9% → 6.4% / 3.5%
+#    진짜 할인이 **아예 없더라도** 7% 보정 쪽이 지금보다 편향이 작다.
+FIRST_FLOOR_PRICE_RATIO = 0.93
+
+
+def first_floor_price_factor(row_floor: int | None, subject_floor: int | None) -> float:
+    """비교거래 가격을 "대상 물건의 층대였다면 얼마"로 환산하는 배율 (64절).
+
+    ⚠️ 반지하(층 0 이하)에는 적용하지 않는다 — 5절이 이미 반지하↔지상층을
+    **양방향으로 하드 제외**하므로 여기까지 오면 둘 다 반지하이거나 둘 다
+    지상층이고, 반지하끼리는 이 보정이 의미가 없다.
+    """
+    if row_floor is None or subject_floor is None:
+        return 1.0
+    if row_floor <= 0 or subject_floor <= 0:
+        return 1.0
+    row_is_first = row_floor == 1
+    subject_is_first = subject_floor == 1
+    if row_is_first == subject_is_first:
+        return 1.0
+    # 대상이 1층이면 지상 중간층 거래를 1층 값으로 낮추고, 반대면 올린다.
+    return FIRST_FLOOR_PRICE_RATIO if subject_is_first else 1.0 / FIRST_FLOOR_PRICE_RATIO
 
 
 def SIMILARITY_EMPHASIS_CURVE(score: float) -> float:

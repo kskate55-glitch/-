@@ -991,7 +991,8 @@ def estimate():
         except Exception:
             zone_check = None       # 참고 정보라 실패해도 계산을 막지 않는다
     estimate_warnings = compute_estimate_warnings(
-        filtered, scen.get("model_divergence_pct"), redevelopment, zone_check)
+        filtered, scen.get("model_divergence_pct"), redevelopment, zone_check,
+        build_year)
     conservative = scen["p25"]
     realistic = scen["median"]
     upper = scen["p75"]

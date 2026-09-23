@@ -106,21 +106,28 @@ class TestCalculationInvariants(unittest.TestCase):
                 self.assertLessEqual(sc["median"], pi["high"])
 
     def test_the_thin_sample_warning_matches_the_sample_size(self):
-        """70절 — 경고가 실제 비교거래 수와 어긋나면 화면이 거짓말을 한다."""
-        seen_thin = seen_thick = 0
+        """70절 · 72-19절 — 경고가 실제 상태와 어긋나면 화면이 거짓말을 한다.
+
+        ⚠️ 72-19절에서 **구축 조건이 붙었다** — 신축 얇은 표본은 실측에서
+        오히려 정확했다(편향 +0.5% · MAPE 8.6%). 그래서 "얇다"만으로는
+        경고가 뜨지 않는 게 맞고, 이 불변식도 두 축을 같이 본다.
+        """
+        seen = {(True, True): 0, (True, False): 0, (False, True): 0, (False, False): 0}
         for f in self._cases():
             sc = ep.compute_scenarios(f, 400, 2026, subject_area=60.0)
-            keys = {w["key"] for w in ep.compute_estimate_warnings(
-                f, sc["model_divergence_pct"])}
-            thin = "thin_sample" in keys
-            if len(f) < ep.ESTIMATE_WARN_THIN_SAMPLE:
-                self.assertTrue(thin, f"비교거래 {len(f)}건인데 경고가 없다")
-                seen_thin += 1
-            else:
-                self.assertFalse(thin, f"비교거래 {len(f)}건인데 얇다고 경고한다")
-                seen_thick += 1
-        self.assertGreater(seen_thin, 0)
-        self.assertGreater(seen_thick, 0)
+            for build_year in (1995, 2015):
+                keys = {w["key"] for w in ep.compute_estimate_warnings(
+                    f, sc["model_divergence_pct"], None, None, build_year)}
+                thin = len(f) < ep.ESTIMATE_WARN_THIN_SAMPLE
+                old = build_year < ep.ESTIMATE_WARN_THIN_OLD_BUILD_YEAR
+                fired = "thin_sample" in keys
+                self.assertEqual(fired, thin and old,
+                                 f"비교거래 {len(f)}건 · {build_year}년식인데 "
+                                 f"경고가 {'떴다' if fired else '없다'}")
+                seen[(thin, old)] += 1
+        # 네 칸을 모두 지나쳤는지 — 한 칸만 돌고 통과하면 고정한 게 없다
+        for cell, n in seen.items():
+            self.assertGreater(n, 0, f"{cell} 조합을 한 번도 안 봤다")
 
 
 class TestBasementExclusionIsSound(unittest.TestCase):

@@ -1756,38 +1756,73 @@ class TestEstimateWarnings(unittest.TestCase):
 
 
 class TestThinSampleWarning(unittest.TestCase):
-    """CLAUDE.md 70절 — 비교거래가 얇으면 **높게 부른다**.
+    """70절 · 72-19절 — 비교거래가 얇으면 **높게 부른다. 단, 구축일 때만.**
 
     ⚠️ 이 경고는 다른 경고들과 성격이 다르다 — 크기가 아니라 **방향**을
     말해준다. 그래서 문구가 "높게 잡혔을 수 있다"라고 한쪽을 가리키는지까지
     고정한다(양쪽으로 틀릴 수 있다고 바꿔 쓰면 정보가 사라진다).
+
+    ⚠️ **72-19절에서 구축 조건이 붙었다.** 실측 139건 2×2에서 신축 얇은
+    표본은 편향 +0.5% · MAPE 8.6%로 **오히려 제일 좋았다** — 모든 얇은
+    표본에 띄우면 열에 여섯이 오탐이다. 부트스트랩으로도 갈라내는 힘이
+    +3.8%p [−2.7, +11.2](➖)에서 +15.5%p [+3.2, +29.4](⭐)로 바뀐다.
     """
 
+    OLD, NEW = 1995, 2015
+
     @staticmethod
-    def _keys(n, divergence=0.5):
-        return {w["key"] for w in ep.compute_estimate_warnings([{"_weight": 1.0}] * n,
-                                                               divergence)}
+    def _keys(n, divergence=0.5, build_year=1995):
+        return {w["key"] for w in ep.compute_estimate_warnings(
+            [{"_weight": 1.0}] * n, divergence, None, None, build_year)}
 
     def test_it_fires_only_below_the_threshold(self):
         th = ep.ESTIMATE_WARN_THIN_SAMPLE
         for n in range(1, th):
-            self.assertIn("thin_sample", self._keys(n), f"{n}건인데 경고가 없다")
+            self.assertIn("thin_sample", self._keys(n, build_year=self.OLD),
+                          f"{n}건인데 경고가 없다")
         for n in (th, th + 1, th + 10):
-            self.assertNotIn("thin_sample", self._keys(n), f"{n}건인데 경고가 뜬다")
+            self.assertNotIn("thin_sample", self._keys(n, build_year=self.OLD),
+                             f"{n}건인데 경고가 뜬다")
+
+    def test_a_recent_building_with_a_thin_sample_stays_silent(self):
+        """⭐ 72-19절의 핵심 — 신축 얇은 표본은 실측에서 멀쩡했다."""
+        for n in range(1, ep.ESTIMATE_WARN_THIN_SAMPLE):
+            self.assertNotIn("thin_sample", self._keys(n, build_year=self.NEW),
+                             f"신축 {n}건에 경고가 떴다 (오탐)")
+
+    def test_the_cutoff_year_is_where_the_data_splits(self):
+        boundary = ep.ESTIMATE_WARN_THIN_OLD_BUILD_YEAR
+        self.assertIn("thin_sample", self._keys(3, build_year=boundary - 1))
+        self.assertNotIn("thin_sample", self._keys(3, build_year=boundary))
+
+    def test_an_unknown_build_year_stays_silent(self):
+        """⚠️ 모르면 경고하지 않는다 — 41절 "정보가 없다고 감점하지 않는다"와 같다."""
+        for bad in (None, "", "몰라요", float("nan"), []):
+            self.assertNotIn("thin_sample", self._keys(3, build_year=bad),
+                             f"{bad!r}에서 경고가 떴다")
+
+    def test_a_string_build_year_still_counts(self):
+        """⚠️ CLI `--build-year`는 문자열이다(65절 ③)."""
+        self.assertIn("thin_sample", self._keys(3, build_year="1995"))
+        self.assertNotIn("thin_sample", self._keys(3, build_year=" 2015 "))
 
     def test_no_comparables_at_all_stays_silent(self):
         """0건은 애초에 계산 자체가 안 되는 상태라 이 경고를 얹을 자리가 아니다."""
-        self.assertEqual(ep.compute_estimate_warnings([], None), [])
+        self.assertEqual(ep.compute_estimate_warnings([], None, None, None, 1995), [])
 
     def test_it_says_which_way_the_error_leans(self):
-        w = [x for x in ep.compute_estimate_warnings([{"_weight": 1.0}] * 3, 0.5)
+        w = [x for x in ep.compute_estimate_warnings([{"_weight": 1.0}] * 3, 0.5,
+                                                      None, None, self.OLD)
              if x["key"] == "thin_sample"][0]
         self.assertIn("높게", w["label"] + w["detail"])
         self.assertNotIn("낮게", w["label"])
+        # 왜 구축에만 뜨는지가 문구에 드러나야 한다 — 안 그러면 오탐처럼 읽힌다
+        self.assertIn("오래된", w["label"] + w["detail"])
 
     def test_it_stacks_with_the_divergence_warning(self):
         """둘은 서로 다른 질문에 답한다 — 하나가 다른 하나를 덮으면 안 된다."""
-        self.assertEqual(self._keys(3, divergence=12.0), {"divergence", "thin_sample"})
+        self.assertEqual(self._keys(3, divergence=12.0, build_year=self.OLD),
+                         {"divergence", "thin_sample"})
 
     def test_the_warning_never_changes_the_price(self):
         """50절과 같은 계약 — 탐지만 하고 가격은 그대로다.
@@ -1799,7 +1834,7 @@ class TestThinSampleWarning(unittest.TestCase):
                  "_distance_m": 100.0, "dealYear": "2026", "excluUseAr": "50"}
                 for i in range(3)]
         before = ep.compute_scenarios([dict(r) for r in rows], 400, 2026)
-        ep.compute_estimate_warnings(rows, 0.5)
+        ep.compute_estimate_warnings(rows, 0.5, None, None, 1995)
         after = ep.compute_scenarios([dict(r) for r in rows], 400, 2026)
         self.assertEqual(before["median"], after["median"])
         self.assertTrue(all("_amount_man_adjusted" not in r for r in rows))

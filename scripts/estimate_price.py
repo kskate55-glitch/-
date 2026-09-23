@@ -1281,7 +1281,25 @@ ESTIMATE_WARN_TOP_SHARE_PCT = 45.0   # 한 건이 전체 가중치에서 차지�
 #    같은 계열이고(얇은 표본 = 동네 평균에 끌려간 상태), 관계가 완만해서
 #    임계값 보정은 애초에 모양이 안 맞는다. 50절 "탐지만 하고 가격은 안
 #    바꾼다"와 같은 처리다.
-ESTIMATE_WARN_THIN_SAMPLE = 6        # 비교거래가 이 수보다 적으면 경고
+ESTIMATE_WARN_THIN_SAMPLE = 6        # 비교거래가 이 수보다 적으면
+# ⭐ **그리고 구축일 때만** 경고한다 (72-19절). 실측 139건 2×2:
+#
+#   |           | 건수 | MAPE  | 편향   |
+#   |-----------|------|-------|--------|
+#   | 신축 두툼 |  69  | 10.7% |  −4.9% |
+#   | **신축 얇음** |  17  | **8.6%** | **+0.5%** ← 멀쩡하다 |
+#   | 구축 두툼 |  42  | 14.4% |  −2.1% |
+#   | **구축 얇음** |  11  | **27.1%** | **+15.2%** ← 여기서만 나쁘다 |
+#
+# ⚠️ **70절이 "얇으면 높게 부른다"고 적은 것은 구축에서만 성립한다.**
+#    신축 얇은 표본은 오히려 이 표본에서 MAPE가 제일 좋다 — 모든 얇은
+#    표본에 경고를 띄우면 열에 여섯이 오탐이다.
+#    갈라내는 힘도 그래서 달라진다(부트스트랩 95%):
+#      - 지금(≤5건 전부):      경고 20% · +3.8%p [−2.7, +11.2] ➖ 유의하지 않음
+#      - **구축 AND ≤5건**:  경고  8% · **+15.5%p [+3.2, +29.4]** ⭐
+#    67절이 "둘에 한 번 뜨는 경고는 경고가 아니다"라며 같은건물 경고를
+#    뺐던 기준을 그대로 적용한 것이다.
+ESTIMATE_WARN_THIN_OLD_BUILD_YEAR = 2000
 
 # ── 50절 정비구역(재개발) 신호 탐지 ────────────────────────────────────
 # ⚠️ **프리미엄을 가격에 더하지 않는다. 있을 수 있다고 알리기만 한다.**
@@ -1539,7 +1557,8 @@ def compute_prediction_interval(center_man: float | None,
 def compute_estimate_warnings(filtered: list[dict],
                                model_divergence_pct: float | None,
                                redevelopment: dict | None = None,
-                               zone_check: dict | None = None) -> list[dict]:
+                               zone_check: dict | None = None,
+                               build_year=None) -> list[dict]:
     """이 추정치를 얼마나 믿어도 되는지 경고등으로 돌려준다 (49절).
 
     ⚠️ **7절 시세 신뢰도 점수를 대체하는 게 아니라 보완한다.** 48절 실측에서
@@ -1567,15 +1586,18 @@ def compute_estimate_warnings(filtered: list[dict],
     #    이건 크기는 못 가르는 대신 **방향을 안다**(편향 +8.8% [+0.7, +17.2]).
     #    입찰가를 쓰는 사람에게는 "높게 잡혀 있다"가 그 자체로 쓸 정보다.
     n_comp = len(filtered)
-    if 0 < n_comp < ESTIMATE_WARN_THIN_SAMPLE:
+    _year = _as_int(build_year)
+    _is_old = _year is not None and _year < ESTIMATE_WARN_THIN_OLD_BUILD_YEAR
+    if 0 < n_comp < ESTIMATE_WARN_THIN_SAMPLE and _is_old:
         warnings.append({
             "key": "thin_sample",
-            "label": "비교거래가 얇아 다소 높게 잡혔을 수 있습니다",
-            "detail": (f"반경 안에서 조건이 맞는 실거래를 {n_comp}건밖에 못 찾았어요. "
-                       "표본이 이렇게 얇으면 이 물건 고유의 사정보다 동네 평균에 "
-                       "끌려가는데, 비교거래를 찾기 어려운 물건일수록 동네 평균보다 "
-                       "싼 편이라 결과적으로 높게 나옵니다 "
-                       "(과거 실거래 125건으로 재보니 평균 9% 높게 불렀습니다)."),
+            "label": "오래된 집인데 비교거래까지 얇아 높게 잡혔을 수 있습니다",
+            "detail": (f"{_year}년에 지어진 집인데 반경 안에서 조건이 맞는 실거래를 "
+                       f"{n_comp}건밖에 못 찾았어요. 오래된 집은 같은 해에 지어졌어도 "
+                       "관리 상태·수리 여부·땅 지분에 따라 값이 크게 갈리는데, "
+                       "표본까지 얇으면 그 차이를 못 보고 동네 평균에 끌려갑니다 "
+                       "(과거 실거래 139건에서 이 조합만 평균 15% 높게 불렀습니다 — "
+                       "지은 지 얼마 안 된 집은 표본이 얇아도 이런 쏠림이 없었어요)."),
             "advice": "반경이나 면적 허용범위를 넓혀 표본을 늘려 보시고, "
                       "그대로 쓰신다면 이 값을 상한으로 보세요.",
         })
@@ -3374,7 +3396,8 @@ def main():
             zone_check = None
     print_estimate_warnings(compute_estimate_warnings(
         filtered, scen.get("model_divergence_pct"),
-        detect_redevelopment_signal(rows, args.dong, this_year), zone_check))
+        detect_redevelopment_signal(rows, args.dong, this_year), zone_check,
+        args.build_year))
 
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
     print_marketability_report(build_marketability_report(

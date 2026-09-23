@@ -548,6 +548,21 @@ def estimate():
     realistic = scen["median"]
     upper = scen["p75"]
     ai_base = round((conservative * 0.3 + realistic * 0.5 + upper * 0.2), -1)
+
+    # 49-2절 — 백테스트 잔차 기반 예측구간. ⚠️ 기준은 **현실적 체결가**다
+    # (백테스트가 실제 체결가와 비교한 값이 그것이라서) — 히어로의 경매용
+    # 매도가에 그대로 붙이면 근거 없는 숫자가 된다.
+    from estimate_price import compute_prediction_interval
+    _pi = compute_prediction_interval(
+        realistic, filtered, area, scen.get("model_divergence_pct"))
+    prediction_interval = None
+    if _pi:
+        prediction_interval = {
+            **_pi,
+            "low": _fmt_eok(_pi["low_man"]),
+            "high": _fmt_eok(_pi["high_man"]),
+            "center": _fmt_eok(_pi["center_man"]),
+        }
     auction_price = round((conservative + realistic) / 2, -1)
 
     # CLAUDE.md 38절 — 상태별 매도가 3단계. 35절이 "고른 상태 하나에 배율을
@@ -791,6 +806,7 @@ def estimate():
         "resubmit_fields": resubmit_fields,
         "n_total": scen["n_total"], "n_close": scen["n_close"], "n_this_year": scen["n_this_year"],
         "confidence": scen["confidence"],
+        "prediction_interval": prediction_interval,
         "conservative": _fmt_eok(conservative), "realistic": _fmt_eok(realistic),
         "auction_price": _fmt_eok(auction_price),
         "upper": _fmt_eok(upper), "ai_base": _fmt_eok(ai_base),

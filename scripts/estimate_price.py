@@ -1127,6 +1127,84 @@ def top_weight_share(filtered: list[dict]) -> float | None:
     return round(max(weights) / total * 100, 1) if total > 0 else None
 
 
+# ── 49-2절 예측구간 ────────────────────────────────────────────────────
+# "시세 신뢰도 78점"은 **실측에서 정확도를 예측하지 못했다**(49절·49-1절).
+# 대신 백테스트 잔차를 그대로 구간으로 돌려준다 — 점수를 해석할 필요 없이
+# "80% 확률로 1.41~1.79억"이라고 바로 읽힌다.
+#
+# ⚠️ **이 구간은 8절 현실적 체결가(median) 기준이다** — 백테스트가 실제
+#    체결가와 비교한 값이 그것이기 때문이다. 경매용 매도가(8-2절)에 그대로
+#    붙이면 근거 없는 숫자가 된다.
+#
+# 위험요인 세 가지를 **세기만 한다**(가중치를 새로 만들지 않는다):
+PREDICTION_RISK_DIVERGENCE_PCT = 3.0    # 7-1절 두 모델 괴리율
+PREDICTION_RISK_SMALL_AREA_SQM = 50.0   # 소형 — 유일하게 통계적으로 튼튼한 신호
+PREDICTION_RISK_SAME_BUILDING_ONE = 1   # 같은 건물 거래가 딱 한 건
+
+PREDICTION_INTERVAL_LEVEL = 80          # %
+
+# 위험요인 개수 → ±몇 % (경기·서울 92건 실측 80% 분위수를 **올림**해서 잡았다).
+# ⚠️ 표본이 칸당 26~37건뿐이라 꼬리가 과소평가되기 쉬워, 실측값보다 넓게 뒀다:
+#    실측 ±9.3 / ±17.4 / ±25.0  →  아래 ±10 / ±18 / ±25
+PREDICTION_INTERVAL_PCT = {0: 10.0, 1: 18.0, 2: 25.0}
+PREDICTION_INTERVAL_SAMPLE_N = {0: 29, 1: 37, 2: 26}
+PREDICTION_INTERVAL_LABEL = {
+    0: "안정적인 편",
+    1: "보통",
+    2: "불안정 — 넓게 잡으세요",
+}
+
+
+def count_prediction_risks(filtered: list[dict],
+                            subject_area: float | None,
+                            model_divergence_pct: float | None) -> int:
+    """이 추정이 흔들릴 위험요인이 몇 개인지 센다 (0~3). 49-2절.
+
+    ⚠️ 세 요인의 **증거 강도가 서로 다르다**(92건 부트스트랩 95% 신뢰구간):
+      - 소형(<50㎡)    +8.8%p [+4.3, +13.9] → 튼튼함
+      - 괴리율 ≥3%     +5.2%p [+0.2, +10.7] → 간신히 유의
+      - 같은 건물 1건  +2.9%p [−4.2, +10.4] → **단독으로는 유의하지 않다**
+    그래도 셋을 **함께 셀 때** 구간이 단조로 갈라져서(±9.3/±17.4/±25.0)
+    세 개를 다 쓴다 — 다만 하나하나를 독립된 근거로 내세우지는 않는다.
+    """
+    risks = 0
+    if model_divergence_pct is not None and model_divergence_pct >= PREDICTION_RISK_DIVERGENCE_PCT:
+        risks += 1
+    if subject_area is not None and subject_area < PREDICTION_RISK_SMALL_AREA_SQM:
+        risks += 1
+    same_building = sum(1 for r in filtered if r.get("_same_building"))
+    if same_building == PREDICTION_RISK_SAME_BUILDING_ONE:
+        risks += 1
+    return risks
+
+
+def compute_prediction_interval(center_man: float | None,
+                                 filtered: list[dict],
+                                 subject_area: float | None,
+                                 model_divergence_pct: float | None) -> dict | None:
+    """현실적 체결가 기준 예측구간. 계산할 수 없으면 `None`.
+
+    "비슷한 조건의 과거 물건 N건 중 80%가 이 범위 안에서 팔렸다"는 뜻이지,
+    통계 모형에서 유도한 신뢰구간이 아니다 — 화면에 그대로 밝힌다.
+    """
+    if not center_man or center_man <= 0 or not filtered:
+        return None
+    risks = count_prediction_risks(filtered, subject_area, model_divergence_pct)
+    tier = min(risks, 2)          # 3개짜리는 표본이 8건뿐이라 2개 칸에 합친다
+    pct = PREDICTION_INTERVAL_PCT[tier]
+    return {
+        "level": PREDICTION_INTERVAL_LEVEL,
+        "pct": pct,
+        "risks": risks,
+        "tier": tier,
+        "label": PREDICTION_INTERVAL_LABEL[tier],
+        "sample_n": PREDICTION_INTERVAL_SAMPLE_N[tier],
+        "center_man": center_man,
+        "low_man": center_man * (1 - pct / 100),
+        "high_man": center_man * (1 + pct / 100),
+    }
+
+
 def compute_estimate_warnings(filtered: list[dict],
                                model_divergence_pct: float | None,
                                redevelopment: dict | None = None,
@@ -2754,6 +2832,17 @@ def main():
     print(f"AI 기준매도가: {fmt(ai_base)}")
     print(f"권장 최초 호가: {fmt(listing)}")
     print()
+
+    # 49-2절 — 백테스트 잔차 기반 예측구간. 신뢰도 점수와 달리 실측으로
+    # 검증된 숫자라, 화면에서는 이쪽을 주된 신호로 읽는다.
+    interval = compute_prediction_interval(
+        realistic, filtered, args.area, scen.get("model_divergence_pct"))
+    if interval:
+        print(f"[예측구간] 현실적 체결가 {fmt(realistic)} 기준 — {interval['label']}")
+        print(f"{interval['level']}% 구간: {fmt(interval['low_man'])} ~ {fmt(interval['high_man'])} (±{interval['pct']:.0f}%)")
+        print(f"※ 비슷한 조건의 과거 실거래 {interval['sample_n']}건 중 {interval['level']}%가 이 범위 안에서 팔렸다는 뜻입니다 —")
+        print(f"   통계 모형으로 유도한 신뢰구간이 아니라 백테스트 실측 오차 분포입니다.")
+        print()
 
     if args.condition:
         # 38절 — 지금 상태에서 손볼수록 매도가가 얼마나 올라가는지 사다리로

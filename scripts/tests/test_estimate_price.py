@@ -1746,3 +1746,60 @@ class TestRedevelopmentZoneKeywords(unittest.TestCase):
         keys = {w["key"] for w in ep.compute_estimate_warnings(
             [{"_weight": 1.0} for _ in range(12)], 0.0, guess, None)}
         self.assertIn("redevelopment", keys)
+
+
+class TestPredictionInterval(unittest.TestCase):
+    """49-2절 — 신뢰도 점수를 대체하는 백테스트 잔차 기반 예측구간."""
+
+    def _rows(self, n, same_building=0):
+        rows = []
+        for i in range(n):
+            r = {"_weight": 1.0, "_amount_man": 20000.0}
+            if i < same_building:
+                r["_same_building"] = True
+            rows.append(r)
+        return rows
+
+    def test_no_risk_gives_the_narrowest_band(self):
+        r = ep.compute_prediction_interval(20000, self._rows(10), 70.0, 0.5)
+        self.assertEqual(r["risks"], 0)
+        self.assertEqual(r["pct"], ep.PREDICTION_INTERVAL_PCT[0])
+
+    def test_each_risk_widens_the_band(self):
+        """위험요인이 늘수록 구간이 좁아지는 일은 없어야 한다(단조)."""
+        widths = []
+        for area, div, sb in [(70.0, 0.5, 0), (70.0, 9.0, 0), (40.0, 9.0, 0), (40.0, 9.0, 1)]:
+            r = ep.compute_prediction_interval(20000, self._rows(10, same_building=sb), area, div)
+            widths.append(r["pct"])
+        self.assertEqual(widths, sorted(widths), f"구간 폭이 단조가 아니다: {widths}")
+
+    def test_three_risks_collapse_into_the_top_tier(self):
+        """위험 3개짜리는 실측 표본이 8건뿐이라 2개 칸에 합친다."""
+        r = ep.compute_prediction_interval(20000, self._rows(10, same_building=1), 40.0, 9.0)
+        self.assertEqual(r["risks"], 3)
+        self.assertEqual(r["tier"], 2)
+
+    def test_two_same_building_rows_are_not_a_risk(self):
+        """위험한 건 '딱 한 건'일 때다 — 2건 이상은 오히려 정확했다."""
+        one = ep.compute_prediction_interval(20000, self._rows(10, same_building=1), 70.0, 0.5)
+        two = ep.compute_prediction_interval(20000, self._rows(10, same_building=2), 70.0, 0.5)
+        self.assertEqual(one["risks"], 1)
+        self.assertEqual(two["risks"], 0)
+
+    def test_band_brackets_the_center(self):
+        r = ep.compute_prediction_interval(20000, self._rows(10), 70.0, 0.5)
+        self.assertLess(r["low_man"], 20000)
+        self.assertGreater(r["high_man"], 20000)
+        self.assertAlmostEqual((r["low_man"] + r["high_man"]) / 2, 20000, places=6)
+
+    def test_missing_inputs_are_safe(self):
+        self.assertIsNone(ep.compute_prediction_interval(None, self._rows(10), 70.0, 0.5))
+        self.assertIsNone(ep.compute_prediction_interval(20000, [], 70.0, 0.5))
+        # 면적·괴리율을 몰라도 계산은 된다(그 요인만 빠진다)
+        self.assertEqual(ep.compute_prediction_interval(20000, self._rows(10), None, None)["risks"], 0)
+
+    def test_table_is_wider_than_the_measured_quantiles(self):
+        """⚠️ 실측(±9.3/17.4/25.0)보다 넓게 잡아둔 상태를 고정한다 —
+        칸당 표본이 26~37건뿐이라 꼬리가 과소평가되기 쉽다."""
+        for tier, measured in [(0, 9.3), (1, 17.4), (2, 25.0)]:
+            self.assertGreaterEqual(ep.PREDICTION_INTERVAL_PCT[tier], measured)

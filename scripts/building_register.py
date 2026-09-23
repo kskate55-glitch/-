@@ -70,6 +70,7 @@ CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..",
                           "data", "building_cache.json")
 CACHE_TTL_DAYS = 30
 _cache_lock = threading.Lock()
+_write_lock = threading.Lock()
 _memory: dict | None = None
 
 
@@ -97,11 +98,21 @@ def _cache_put(key: str, info) -> None:
         if _memory is None:
             _memory = read_json(CACHE_PATH, default={})
         _memory[key] = {"ts": time.time(), "info": info}
-        snapshot = dict(_memory)
-    try:
-        write_json(CACHE_PATH, snapshot)      # 53절 — 원자적 교체
-    except OSError:
-        pass                                  # 못 써도 조회 자체는 이미 성공했다
+    # ⚠️ **스냅샷과 쓰기를 한 덩어리로 묶는다(72-11절 — 분실 갱신).**
+    #    예전엔 락 안에서 스냅샷만 뜨고 쓰기는 밖에서 했는데, 그러면 항목
+    #    70개짜리 스냅샷이 72개짜리를 **덮어써서 파일에서 2건이 사라진다**
+    #    (12스레드 동시 쓰기 테스트가 가끔 70 != 72로 깨져서 발견했다).
+    #    메모리는 멀쩡하지만 파일은 재시작 뒤에 쓰이는 값이라 그냥 두면 안 된다.
+    # ⚠️ 쓰기 락은 **읽기(`_cache_get`)를 막지 않는다** — 57절이 없앤
+    #    "호출마다 파일 전체를 읽느라 8워커가 줄 서던" 문제가 되살아나지
+    #    않게, 이 락은 쓰는 쪽만 줄 세운다. 쓰기는 새 건물을 만났을 때뿐이다.
+    with _write_lock:
+        with _cache_lock:
+            snapshot = dict(_memory)
+        try:
+            write_json(CACHE_PATH, snapshot)  # 53절 — 원자적 교체
+        except OSError:
+            pass                              # 못 써도 조회 자체는 이미 성공했다
 
 
 def _as_count(value) -> int:

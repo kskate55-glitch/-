@@ -33,6 +33,7 @@ KAKAO_JS_KEY 환경변수(선택)를 설정하면 27절 결과 페이지에 대�
 그대로 동작한다.
 """
 
+import gzip
 import os
 import sys
 import time
@@ -76,6 +77,48 @@ PREFETCH_BUILDING = True
 def _inject_version():
     """모든 화면 푸터에 배포 버전을 꽂는다 — 48-5절."""
     return {"deploy_version": _deploy_version()}
+
+
+# ── 응답 압축 (CLAUDE.md 72-11절) ──────────────────────────────────────
+# ⚠️ Flask도 gunicorn도 **기본적으로 압축을 안 한다.** 결과 페이지가 raw
+#    139KB인데 gzip하면 33KB다 — 느린 모바일에서는 이 76%가 지금까지 줄여온
+#    서버 작업 시간만큼의 차이를 낸다(72-2·72-5·72-8절에서 3.17→0.78초를
+#    줄였는데, 전송에서 그만큼을 다시 까먹고 있었던 셈이다).
+# ⚠️ 앞단(호스팅·CDN)이 이미 압축해 주면 이 코드는 그냥 건너뛴다 — 이미
+#    `Content-Encoding`이 붙은 응답에는 손대지 않는다. 63절대로 호스팅을
+#    옮길 수 있으니 **어디로 가든 압축은 되게** 우리 쪽에도 둔다.
+GZIP_MIN_BYTES = 1024          # 이보다 작으면 압축이 오히려 손해다
+GZIP_TYPES = ("text/html", "text/css", "text/plain", "text/xml",
+              "application/json", "application/javascript",
+              "image/svg+xml", "text/csv")
+
+
+@app.after_request
+def _compress(response):
+    try:
+        if response.direct_passthrough or response.status_code >= 300:
+            return response
+        if response.headers.get("Content-Encoding"):
+            return response          # 앞단이 이미 했다
+        accepted = request.headers.get("Accept-Encoding", "")
+        if "gzip" not in accepted.lower():
+            return response
+        mimetype = (response.mimetype or "").lower()
+        if not any(mimetype.startswith(t) for t in GZIP_TYPES):
+            return response
+        body = response.get_data()
+        if len(body) < GZIP_MIN_BYTES:
+            return response
+        packed = gzip.compress(body, 6)
+        if len(packed) >= len(body):
+            return response          # 압축이 더 크면 그대로 보낸다
+        response.set_data(packed)
+        response.headers["Content-Encoding"] = "gzip"
+        response.headers["Content-Length"] = str(len(packed))
+        response.headers.add("Vary", "Accept-Encoding")
+    except Exception:
+        app.logger.exception("압축 실패 — 원본 그대로 보냅니다")
+    return response
 
 
 @app.errorhandler(Exception)

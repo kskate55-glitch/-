@@ -30,10 +30,23 @@ class ProbeTells(unittest.TestCase):
     def setUp(self):
         self._key = os.environ.get("VWORLD_API_KEY")
         self._open = land_use.urlopen
+        # ⚠️ **폴백 경로도 같이 막아야 한다.** `_fetch_raw()`는 연결 재사용
+        #    urlopen이 실패하면 `urlopen_no_pool`(진짜 urllib)로 한 번 더
+        #    시도한다 — 하나만 막으면 **실제 api.vworld.kr로 새어 나간다**
+        #    (프록시 로그에 12번 찍혀서 발견했다). 48절이 못박은 그 함정이
+        #    이 파일 안에서도 클래스마다 따로 걸린다.
+        self._plain = land_use.urlopen_no_pool
+
+        def _blocked(*_a, **_k):
+            # OSError여야 한다 — `_fetch_raw()`가 잡는 예외 종류다.
+            raise OSError("테스트에서는 네트워크를 쓰지 않는다")
+
+        land_use.urlopen_no_pool = _blocked
         os.environ["VWORLD_API_KEY"] = "SECRET-TEST-KEY"
 
     def tearDown(self):
         land_use.urlopen = self._open
+        land_use.urlopen_no_pool = self._plain
         if self._key is None:
             os.environ.pop("VWORLD_API_KEY", None)
         else:

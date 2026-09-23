@@ -131,6 +131,15 @@ class TestTransientFailuresAreNotCached(BuildingRegisterCase):
 
 class TestTheCacheSurvivesConcurrencyAndCorruption(BuildingRegisterCase):
     def test_many_threads_writing_different_buildings_lose_nothing(self):
+        """⚠️ **분실 갱신(lost update) 회귀 테스트다.**
+
+        예전엔 락 안에서 스냅샷만 뜨고 파일 쓰기는 밖에서 했다 — 항목
+        70개짜리 스냅샷이 72개짜리를 **덮어써서 파일에서 2건이 사라졌다.**
+        메모리는 멀쩡해서 그 요청 안에서는 티가 안 나고, **재시작 뒤에야**
+        "왜 또 조회하지"로 드러난다. 전체 테스트가 가끔 깨지는 것으로
+        발견했다 — 깜빡이는 테스트를 "원래 그런가 보다" 하고 넘기면
+        이런 게 숨는다.
+        """
         self._serve(_item())
 
         def worker(i):
@@ -143,7 +152,32 @@ class TestTheCacheSurvivesConcurrencyAndCorruption(BuildingRegisterCase):
         for t in threads:
             t.join()
         with open(br.CACHE_PATH, encoding="utf-8") as f:
-            self.assertEqual(len(json.load(f)), 72, "동시 쓰기로 캐시 항목이 유실됐습니다")
+            saved = json.load(f)
+        self.assertEqual(len(saved), 72, "동시 쓰기로 캐시 항목이 유실됐습니다")
+        self.assertEqual(len(br._memory), 72, "메모리 캐시에서도 유실됐습니다")
+
+    def test_the_file_and_the_memory_never_drift_apart(self):
+        """파일이 메모리보다 적으면 재시작 뒤 그만큼 다시 조회하게 된다."""
+        self._serve(_item())
+        errors = []
+
+        def worker(i):
+            try:
+                for j in range(10):
+                    br.get_building_info("1130510200", f"{i}-{j}", "0", False)
+            except Exception as exc:       # noqa: BLE001 — 스레드 예외를 모아 본다
+                errors.append(exc)
+
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(8)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        self.assertEqual(errors, [])
+        with open(br.CACHE_PATH, encoding="utf-8") as f:
+            saved = json.load(f)
+        self.assertEqual(set(saved), set(br._memory),
+                         "파일과 메모리의 항목이 어긋났습니다")
 
     def test_a_corrupt_cache_file_is_moved_aside(self):
         with open(br.CACHE_PATH, "w", encoding="utf-8") as f:

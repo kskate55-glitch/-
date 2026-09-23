@@ -1,0 +1,73 @@
+"""국토부가 XML이 아닌 응답을 보냈을 때 500이 아니라 안내가 떠야 한다.
+
+실제로 겪은 사고의 회귀 테스트다 — 방문자가 `Internal Server Error` 흰
+화면을 받았고, 원인은 `_parse_response()`의 `ET.fromstring`이 던진
+`ET.ParseError`가 호출부를 통째로 뚫고 올라간 것이었다(일일 트래픽 초과 시
+data.go.kr은 HTTP 200에 HTML 에러 페이지를 싣는다).
+"""
+import os
+import sys
+import unittest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "webapp"))
+
+
+class TestNonXmlResponse(unittest.TestCase):
+    def test_html_error_page_becomes_runtime_error(self):
+        import molit_rhtrade_api as m
+        body = b"<html><body>SERVICE ERROR: LIMITED NUMBER OF SERVICE REQUESTS</body></html>"
+        with self.assertRaises(RuntimeError) as cm:
+            m._parse_response(body)
+        self.assertNotIsInstance(cm.exception, m.ET.ParseError)
+
+    def test_message_carries_what_actually_came_back(self):
+        """무엇이 왔는지 안 적으면 화면만 보고는 원인을 좁힐 수 없다."""
+        import molit_rhtrade_api as m
+        with self.assertRaises(RuntimeError) as cm:
+            m._parse_response(b"<html>LIMITED NUMBER OF SERVICE REQUESTS EXCEEDS</html>")
+        self.assertIn("LIMITED NUMBER", str(cm.exception))
+
+    def test_plain_json_error_also_handled(self):
+        import molit_rhtrade_api as m
+        with self.assertRaises(RuntimeError):
+            m._parse_response(b'{"error": "quota exceeded"}')
+
+    def test_valid_xml_still_parses(self):
+        import molit_rhtrade_api as m
+        xml = (b"<response><header><resultCode>000</resultCode></header>"
+               b"<body><items><item><umdNm>\xec\x82\xac\xec\x9a\xb0\xeb\x8f\x99</umdNm>"
+               b"</item></items></body></response>")
+        self.assertEqual(len(m._parse_response(xml)), 1)
+
+
+class TestNoRawFlaskErrorPage(unittest.TestCase):
+    """어떤 예외가 나도 방문자는 안내 문구를 본다."""
+
+    def test_unexpected_exception_renders_the_form_with_a_message(self):
+        """예상 못 한 예외(RuntimeError가 아닌 것)가 나도 안내 화면이 뜬다."""
+        import geocode as geo
+        import app as webapp
+
+        original = geo.geocode_full
+        geo.geocode_full = lambda *a, **k: (_ for _ in ()).throw(ZeroDivisionError("터짐"))
+        try:
+            r = webapp.app.test_client().post("/estimate", data={
+                "address": "경기도 김포시 사우동 1309", "area": "47",
+                "floor": "2", "build_year": "2015"})
+        finally:
+            geo.geocode_full = original
+        body = r.get_data(as_text=True)
+        self.assertEqual(r.status_code, 500)
+        self.assertIn("ZeroDivisionError", body)
+        self.assertNotIn("The server encountered an internal error", body)
+
+    def test_404_stays_a_normal_404(self):
+        import app as webapp
+        r = webapp.app.test_client().get("/__nope__")
+        self.assertEqual(r.status_code, 404)
+
+
+if __name__ == "__main__":
+    unittest.main()

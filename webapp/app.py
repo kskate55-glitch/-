@@ -63,6 +63,28 @@ def _inject_version():
     return {"deploy_version": _deploy_version()}
 
 
+@app.errorhandler(Exception)
+def _friendly_error(e):
+    """⚠️ 마지막 안전망 — 방문자에게 Flask 기본 500 화면을 절대 안 보여준다.
+
+    친구가 실제로 `Internal Server Error` 흰 화면을 받았다(원인은 국토부가
+    XML이 아닌 응답을 보낸 것). 원인은 그때그때 다를 수 있으므로, 개별
+    호출부를 다 막는 것과 별개로 여기서 한 번 더 받아 **무엇이 터졌는지
+    화면에 적어** 준다 — 로그를 볼 수 없는 사용자가 그 문구를 그대로
+    전해줄 수 있어야 원인을 좁힐 수 있다.
+    """
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return e                      # 404 등 정상적인 HTTP 응답은 그대로 둔다
+    app.logger.exception("unhandled error")
+    now = datetime.now()
+    return render_template(
+        "index.html",
+        error=(f"처리 중 예상 못 한 오류가 발생했습니다 ({type(e).__name__}: {str(e)[:150]}). "
+               "잠시 후 다시 시도해 보시고, 계속되면 이 문구를 그대로 알려주세요."),
+        form={}, last_year=now.year - 1), 500
+
+
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html", last_year=datetime.now().year - 1)
@@ -486,6 +508,15 @@ def estimate():
     except RuntimeError as e:
         return render_template("index.html", error=f"국토부 API 조회 중 문제가 발생했습니다: {e}",
                                 form=form, last_year=this_year - 1)
+    except Exception as e:
+        # ⚠️ RuntimeError만 잡으면 예상 못 한 예외가 그대로 올라가 방문자에게
+        #    Flask 기본 500 화면이 뜬다 — 실제로 겪었다(응답이 XML이 아니어서
+        #    ET.ParseError가 났다). 여기서 한 번 더 받아 안내로 바꾼다.
+        return render_template(
+            "index.html",
+            error=(f"국토부 실거래가 조회에 실패했습니다 ({type(e).__name__}: {str(e)[:150]}). "
+                   "잠시 후 다시 시도해 보세요 — 일일 조회 한도에 걸렸을 수도 있습니다."),
+            form=form, last_year=this_year - 1)
 
     if not rows:
         return render_template(

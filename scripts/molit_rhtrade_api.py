@@ -136,7 +136,27 @@ def fetch_rhtrade(lawd_cd: str, deal_ymd: str, page_no: int = 1,
 
 
 def _parse_response(raw_bytes: bytes) -> list[dict]:
-    root = ET.fromstring(raw_bytes)
+    # ⚠️ 응답이 XML이 아닐 수 있다 — 일일 트래픽 초과·점검·차단 시 data.go.kr은
+    #    HTTP 200에 HTML(또는 JSON) 에러 페이지를 실어 보낸다. 그대로 두면
+    #    ET.ParseError가 호출부를 뚫고 올라가 웹이 **500 Internal Server Error**를
+    #    뱉는다(친구가 실제로 이 화면을 봤다). RuntimeError로 바꿔서 호출부가
+    #    사람이 읽을 수 있는 안내로 처리하게 하고, **무엇이 왔는지 앞부분을
+    #    메시지에 담아** 다음엔 화면만 보고 원인을 좁힐 수 있게 한다.
+    try:
+        root = ET.fromstring(raw_bytes)
+    except ET.ParseError:
+        head = raw_bytes[:300].decode("utf-8", "replace").strip().replace("\n", " ")
+        raise RuntimeError(
+            "국토부 API가 XML이 아닌 응답을 보냈습니다 — 일일 트래픽 한도 초과이거나 "
+            f"서비스 점검 중일 수 있습니다. 받은 내용 앞부분: {head[:200]}") from None
+    # 잘 닫힌 HTML은 XML로도 파싱된다 — 그러면 예외 없이 "데이터 0건"으로
+    # 조용히 틀린다(48-4절이 지적한 바로 그 실패 방식). 루트 태그로 걸러낸다.
+    if str(root.tag).split("}")[-1].lower() in ("html", "body", "error", "errors"):
+        head = raw_bytes[:300].decode("utf-8", "replace").strip().replace("\n", " ")
+        raise RuntimeError(
+            "국토부 API가 실거래 데이터 대신 오류 페이지를 보냈습니다 — 일일 트래픽 "
+            f"한도 초과이거나 서비스 점검 중일 수 있습니다. 받은 내용 앞부분: {head[:200]}")
+
     result_code = root.findtext(".//resultCode")
     result_msg = root.findtext(".//resultMsg")
 

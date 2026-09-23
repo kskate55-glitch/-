@@ -69,5 +69,43 @@ class TestNoRawFlaskErrorPage(unittest.TestCase):
         self.assertEqual(r.status_code, 404)
 
 
+
+class TrailingSlashAndWrongUrls(unittest.TestCase):
+    """CLAUDE.md 70-3절 — 주소 끝에 슬래시가 붙어도 같은 페이지로 간다.
+
+    ⚠️ 실제로 사용자가 여기서 막혔다. 브라우저가 `/healthz/`처럼 슬래시를
+    붙여 주는데 Flask 기본값(`strict_slashes=True`)은 그걸 **다른 주소로
+    보고 404**를 냈고, 화면에는 영어 기본 문구만 떠서 무엇이 잘못됐는지
+    알 수가 없었다.
+    """
+
+    def setUp(self):
+        import os
+        import sys
+        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+        sys.path.insert(0, os.path.join(root, "scripts"))
+        sys.path.insert(0, os.path.join(root, "webapp"))
+        os.environ.setdefault("KAKAO_REST_API_KEY", "test")
+        os.environ.setdefault("MOLIT_SERVICE_KEY", "test")
+        import app as appmod
+        self.c = appmod.app.test_client()
+
+    def test_a_trailing_slash_still_works(self):
+        for path in ("/healthz", "/land-use-check", "/backtest"):
+            self.assertEqual(self.c.get(path).status_code, 200, path)
+            self.assertEqual(self.c.get(path + "/").status_code, 200, path + "/")
+
+    def test_a_wrong_url_explains_itself_in_korean(self):
+        """404 화면이 영어 기본 문구면 사용자는 원인을 알 수 없다."""
+        body = self.c.get("/이런페이지는없다").get_data(as_text=True)
+        self.assertIn("그 주소에는 아무것도 없어요", body)
+        self.assertNotIn("not found on the server", body.lower())
+
+    def test_the_healthz_json_never_carries_a_key_value(self):
+        body = self.c.get("/healthz").get_json()
+        for name, value in body["optional_keys"].items():
+            self.assertIsInstance(value, bool, f"{name}이 값을 통째로 싣고 있다")
+
+
 if __name__ == "__main__":
     unittest.main()

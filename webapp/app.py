@@ -105,7 +105,20 @@ def index():
 #    매번 입력 폼 전체를 그려야 해서 깨우기용으로는 낭비다.
 #  - ⚠️ `/robots.txt`를 찌르면 안 된다 — 잠든 동안 호스팅 쪽이 그 경로를
 #    가로채 자기가 응답해 버려서 **요청이 서버까지 오지 않고, 따라서 안 깨어난다.**
-@app.route("/healthz", methods=["GET"])
+# 70-3절 — ⚠️ 주소를 잘못 눌렀을 때 **영어 기본 페이지**가 나가고 있었다.
+#    52절 안전망이 HTTPException(404·405)은 일부러 통과시키는데, 그게 곧
+#    "브라우저 기본 문구를 그대로 보여준다"는 뜻이었다. 사용자는 그걸 보고
+#    무엇이 잘못됐는지 알 수 없다(실제로 405/404를 받고 멈췄다).
+@app.errorhandler(404)
+@app.errorhandler(405)
+def _not_found(e):
+    return render_template("index.html", error=(
+        "그 주소에는 아무것도 없어요. 아래에서 다시 시작해 주세요. "
+        "(주소를 직접 치셨다면 오타가 없는지, 끝에 슬래시(/)가 붙지 않았는지 확인해 주세요.)"
+    ), form={}, last_year=datetime.now().year - 1), 404
+
+
+@app.route("/healthz", methods=["GET"], strict_slashes=False)
 def healthz():
     # 70-2절 — 선택 키가 서버에 **도착했는지**만 알려준다(값은 절대 안 싣는다).
     #    대시보드에 넣었는데 재배포가 안 돼서 반영이 안 된 경우를 여기서 가린다.
@@ -121,7 +134,7 @@ def healthz():
 #    (48-4절이 제일 비싸게 배운 "조용히 틀리는" 패턴). 이 페이지가 그걸 가른다.
 # ⚠️ 50-1절이 "응답 필드명을 실측으로 확인 못 했다"고 남겨둔 것도, 여기서
 #    실제 응답 앞부분을 보여주므로 한 번 돌려보면 확정된다.
-@app.route("/land-use-check", methods=["GET"])
+@app.route("/land-use-check", methods=["GET"], strict_slashes=False)
 def land_use_check():
     address = (request.args.get("address") or "").strip()
     result = None
@@ -380,7 +393,7 @@ def _run_region_backtest(lawd_cd: str, n_cases: int, months: int,
             "bands": bands, "skipped": skipped, "pool": pool}
 
 
-@app.route("/backtest", methods=["GET", "POST"])
+@app.route("/backtest", methods=["GET", "POST"], strict_slashes=False)
 def backtest_page():
     regions = _backtest_regions()
     form = request.form if request.method == "POST" else {}
@@ -413,7 +426,7 @@ def backtest_page():
         gu=out["gu"], **base)
 
 
-@app.route("/backtest/one", methods=["POST"])
+@app.route("/backtest/one", methods=["POST"], strict_slashes=False)
 def backtest_one():
     """48-3절 — 구 **하나**만 돌려 JSON으로 돌려준다.
 
@@ -485,7 +498,7 @@ def backtest_one():
                     "cases": cases})
 
 
-@app.route("/estimate", methods=["POST"])
+@app.route("/estimate", methods=["POST"], strict_slashes=False)
 def estimate():
     form = request.form
     address = form.get("address", "").strip()

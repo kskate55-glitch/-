@@ -348,7 +348,8 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
                       area_tolerance_pct: float = 0.15, build_year_tolerance: int = 4,
                       this_month: int | None = None,
                       monthly_trend_rate: float | None = None,
-                      subject_building: tuple | None = None) -> list[dict]:
+                      subject_building: tuple | None = None,
+                      first_floor_ratio: float = 1.0) -> list[dict]:
     """CLAUDE.md 5절 규칙: 실제 반경(기본 400m) 안의 유사면적 매물만 비교 대상으로
     삼고, 거리·면적·층·준공년도 종합 유사도(`similarity_score()`)와 계약
     시점 최근성(`weight_for_recency()`)으로 가중치를 준다.
@@ -521,7 +522,7 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             #    (7-2절이 다시 켜져도 두 보정이 서로를 덮어쓰지 않는다).
             # ⚠️ 원래 `_amount_man`(실제 체결가)은 절대 안 건드린다 — "핵심
             #    비교거래" 목록에는 항상 신고된 금액 그대로 떠야 한다.
-            floor_factor = first_floor_price_factor(row_floor, floor)
+            floor_factor = first_floor_price_factor(row_floor, floor, first_floor_ratio)
             if floor_factor != 1.0:
                 r["_amount_man_adjusted"] = r.get("_amount_man_adjusted", amount) * floor_factor
                 r["_first_floor_factor"] = floor_factor
@@ -702,13 +703,21 @@ SIMILARITY_EMPHASIS_POWER = 3
 FIRST_FLOOR_PRICE_RATIO = 0.93
 
 
-def first_floor_price_factor(row_floor: int | None, subject_floor: int | None) -> float:
+def first_floor_price_factor(row_floor: int | None, subject_floor: int | None,
+                              ratio: float = FIRST_FLOOR_PRICE_RATIO) -> float:
     """비교거래 가격을 "대상 물건의 층대였다면 얼마"로 환산하는 배율 (64절).
+
+    ⚠️ `ratio`가 1.0이면 아무것도 하지 않는다 — `find_comparables()`의
+    `first_floor_ratio` 기본값이 1.0이라, **매매 호출부가 명시적으로 켤 때만**
+    보정이 걸린다. 16절 전세·23-1절 전환율이 매매 실거래로만 잰 이 계수를
+    실수로 물려받는 걸 막기 위해서다(48-2절 `SALE_CALIBRATION_FACTOR`와 같은 보호).
 
     ⚠️ 반지하(층 0 이하)에는 적용하지 않는다 — 5절이 이미 반지하↔지상층을
     **양방향으로 하드 제외**하므로 여기까지 오면 둘 다 반지하이거나 둘 다
     지상층이고, 반지하끼리는 이 보정이 의미가 없다.
     """
+    if ratio == 1.0:
+        return 1.0
     if row_floor is None or subject_floor is None:
         return 1.0
     if row_floor <= 0 or subject_floor <= 0:
@@ -718,7 +727,7 @@ def first_floor_price_factor(row_floor: int | None, subject_floor: int | None) -
     if row_is_first == subject_is_first:
         return 1.0
     # 대상이 1층이면 지상 중간층 거래를 1층 값으로 낮추고, 반대면 올린다.
-    return FIRST_FLOOR_PRICE_RATIO if subject_is_first else 1.0 / FIRST_FLOOR_PRICE_RATIO
+    return ratio if subject_is_first else 1.0 / ratio
 
 
 def SIMILARITY_EMPHASIS_CURVE(score: float) -> float:
@@ -1992,6 +2001,12 @@ def build_marketability_report(floor: int | None = None, build_year: int | None 
 
     # ⑥ 연식 — 예전엔 판정 없는 안내(`info`)였는데, 사용자가 "완전 구축이면
     #    그것도 디버프 요소로 넣어달라"고 해서 실제 감점 항목으로 바꿨다.
+    # ⚠️ `build_year`는 호출부마다 타입이 다르게 온다 — 웹은 `int()`로 바꿔서
+    #    넘기지만 CLI `--build-year`는 문자열 그대로다(5절 하드 필터가 문자열
+    #    비교를 쓰기 때문). 예전엔 여기서 `this_year - build_year`를 바로 해서
+    #    **CLI로 준공년도를 주면 이 지점에서 TypeError로 죽었다.** 호출부가
+    #    정규화해 주기를 기대하지 말고 여기서 직접 숫자로 맞춘다.
+    build_year = _as_int(build_year)
     if build_year and this_year:
         age = this_year - build_year
         if age <= BUILD_AGE_NEW_MAX:
@@ -3004,7 +3019,8 @@ def main():
         area_tolerance_pct=area_tolerance_pct,
         build_year_tolerance=args.build_year_tolerance,
         this_month=this_month,
-        subject_building=subject_building)
+        subject_building=subject_building,
+        first_floor_ratio=FIRST_FLOOR_PRICE_RATIO)  # 64절 — 매매 경로만 켠다
 
     if not filtered:
         print(f"[안내] 반경 {args.radius:.0f}m 안에서 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")
@@ -3125,6 +3141,17 @@ def main():
     print(f"가까운 순 — 반경 {effective_radius:.0f}m 안, 전용면적 ±{args.area_tolerance:.0f}%{build_year_note}인 "
           f"실거래 중 거리·면적·층·준공년도 종합 유사도(0~100점, 거리 35%·면적 30%·층 20%·준공년도 15%)가 "
           f"높을수록, 계약월이 최근일수록 가중치를 높게 준 것입니다:")
+    # 64절 — 보정이 실제로 걸렸으면 반드시 알린다. 목록의 금액은 신고된 실제
+    # 체결가 그대로라, 안 알리면 "표에 뜬 가격이랑 매도가가 왜 안 맞지"로 읽힌다
+    # (7-2절 시계열 보정이 안내 문구를 단 것과 같은 이유). 웹에도 같은 문장이 있다.
+    if any(c.get("_first_floor_factor") for c in filtered):
+        _ff_pct = (1 - FIRST_FLOOR_PRICE_RATIO) * 100
+        if args.floor == 1:
+            print(f"  ※ 이 물건은 1층이라, 위층 실거래는 1층 시세대로 약 {_ff_pct:.0f}% 낮춰서 "
+                  f"계산했습니다 (아래 목록의 금액은 신고된 실제 체결가 그대로입니다).")
+        else:
+            print(f"  ※ 비교거래 중 1층 건은 위층 시세대로 약 {_ff_pct:.0f}% 올려서 "
+                  f"계산했습니다 (아래 목록의 금액은 신고된 실제 체결가 그대로입니다).")
     for r in filtered[:8]:
         floor_txt = format_floor_label(r, top_floor_map)
         note = describe_comparable_similarity(args.area, args.floor, args.build_year, r)

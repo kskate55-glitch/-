@@ -1312,6 +1312,18 @@ class TestBuildYearNotes(unittest.TestCase):
         report = ep.build_marketability_report(build_year=build_year, this_year=2026)
         return next(i for i in report["items"] if i["key"] == "build_year")
 
+    def test_a_string_build_year_does_not_crash(self):
+        """⚠️ 호출부마다 타입이 다르게 온다 — 웹은 `int()`로 바꿔 넘기지만
+        CLI `--build-year`는 문자열 그대로다(5절 하드 필터가 문자열 비교를
+        쓰기 때문). 예전엔 `this_year - build_year`에서 TypeError로 죽어서
+        **CLI로 준공년도를 주면 환금성 진단 지점에서 통째로 멈췄다.**"""
+        self.assertEqual(self._item("2012")["verdict"], self._item(2012)["verdict"])
+        self.assertIn("2012년식", self._item("2012")["text"])
+
+    def test_a_junk_build_year_is_skipped_not_crashed(self):
+        report = ep.build_marketability_report(build_year="-", this_year=2026)
+        self.assertFalse([i for i in report["items"] if i["key"] == "build_year"])
+
     def test_old_building_warns_about_leaks_and_repair_cost(self):
         item = self._item(1990)
         self.assertEqual(item["verdict"], "warn")

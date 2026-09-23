@@ -111,12 +111,21 @@ def _mem_save(path: str, cache: dict, force: bool = False) -> None:
         _push_new_entries(path, cache)  # 62절
 
 
-def _push_new_entries(path: str, cache: dict) -> None:
+def _push_new_entries(path: str, cache: dict, blocking: bool = False) -> None:
     """62절 — 이번에 새로 생긴 항목만 슈퍼베이스에 올린다.
 
     ⚠️ 매번 캐시 전체를 올리면 수만 건을 반복해서 보내게 된다. 올린 키를
     기억해 두고 **차이분만** 보낸다. 실패해도 조용히 넘어가고, 그 키는
     '아직 안 올림'으로 남아 다음 기회에 다시 시도된다.
+
+    ⚠️ **네트워크는 `_cache_lock` 밖에서 탄다.** 이 함수는 `_save_cache()`를
+    통해 락 안에서 불리는데, 여기서 곧바로 HTTP를 치면 **22절 병렬 8워커가
+    슈퍼베이스 왕복마다 줄을 선다** — 57절이 없앤 직렬화가 그대로 되살아나고,
+    슈퍼베이스가 느리거나 (무료 플랜) 7일 정지에서 깨어나는 중이면 지오코딩
+    전체가 그만큼 멈춘다. 캐시를 남기려다 계산을 느리게 만들면 본말전도다.
+    그래서 올릴 것만 락 안에서 복사해 두고 **백그라운드 스레드**에 넘긴다.
+    `blocking=True`는 프로세스 종료 직전(`flush_caches`)에만 쓴다 — 그때는
+    데몬 스레드가 영영 안 돌 수 있어서 그 자리에서 보내야 한다.
     """
     if not supabase_cache.enabled():
         return
@@ -124,11 +133,25 @@ def _push_new_entries(path: str, cache: dict) -> None:
     fresh = {k: cache[k] for k in cache.keys() - pushed}
     if not fresh:
         return
-    try:
-        if supabase_cache.put_many(_supabase_ns(path), fresh):
-            pushed.update(fresh)
-    except Exception:        # noqa: BLE001
-        pass
+    # 낙관적으로 먼저 '올림' 표시 — 실패하면 아래에서 되돌린다. 안 그러면
+    # 응답을 기다리는 동안 다음 플러시가 같은 항목을 또 보낸다.
+    pushed.update(fresh)
+    ns = _supabase_ns(path)
+
+    def _send():
+        ok = False
+        try:
+            ok = supabase_cache.put_many(ns, fresh)
+        except Exception:    # noqa: BLE001
+            ok = False
+        if not ok:
+            with _cache_lock:
+                _memory_pushed.get(path, set()).difference_update(fresh)
+
+    if blocking:
+        _send()
+    else:
+        threading.Thread(target=_send, name="supabase-push", daemon=True).start()
 
 
 def flush_caches() -> None:
@@ -140,7 +163,7 @@ def flush_caches() -> None:
                 _memory_dirty[path] = 0
             except OSError:
                 pass
-        _push_new_entries(path, cache)
+        _push_new_entries(path, cache, blocking=True)
 
 
 atexit.register(flush_caches)

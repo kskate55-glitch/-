@@ -92,6 +92,16 @@ def close_all() -> None:
     _pool().clear()
 
 
+# ⚠️ `urllib.request.urlopen`은 3xx 리다이렉트를 **자동으로 따라간다**.
+# `http.client`는 안 따라간다 — 그냥 리다이렉트 응답 본문을 돌려준다.
+# 그대로 두면 서버가 경로를 옮기거나 http→https로 올려보내는 순간
+# **국토부 XML 대신 빈 리다이렉트 페이지를, 카카오 JSON 대신 HTML을** 받게 되고,
+# 화면에는 "데이터를 못 찾음"으로만 보인다(48-4·48-7절과 같은 조용히 틀리는 실패).
+# 그래서 여기서도 urllib과 똑같이 따라간다.
+MAX_REDIRECTS = 5
+_REDIRECT_CODES = (301, 302, 303, 307, 308)
+
+
 def urlopen(req, timeout: float = 10, **kwargs):
     """`urllib.request.urlopen`과 같은 자리에 끼워 넣는 드롭인."""
     if not pooling_enabled() or kwargs:
@@ -100,6 +110,31 @@ def urlopen(req, timeout: float = 10, **kwargs):
     if isinstance(req, str):
         req = urllib.request.Request(req)
 
+    for _ in range(MAX_REDIRECTS + 1):
+        resp = _request_once(req, timeout)
+        if resp.status not in _REDIRECT_CODES:
+            return resp
+        location = resp.headers.get("Location")
+        if not location:
+            return resp
+        target = urllib.parse.urljoin(req.full_url, location)
+        # urllib과 같은 규칙: 301/302/303 + POST 는 GET으로 바뀌고 본문을 버린다.
+        # 307/308 은 메서드·본문을 그대로 유지한다.
+        data, method = req.data, req.get_method()
+        if resp.status in (301, 302, 303) and method != "HEAD":
+            data, method = None, "GET"
+        headers = {k: v for k, v in req.header_items()}
+        if urllib.parse.urlsplit(target).netloc != urllib.parse.urlsplit(req.full_url).netloc:
+            # 다른 호스트로 넘어갈 때 인증 헤더를 딸려 보내지 않는다 — 카카오
+            # REST 키·슈퍼베이스 서비스 키가 엉뚱한 서버로 새면 안 된다(6절).
+            headers = {k: v for k, v in headers.items()
+                       if k.lower() not in ("authorization", "apikey", "cookie")}
+        req = urllib.request.Request(target, data=data, headers=headers, method=method)
+    raise urllib.error.HTTPError(req.full_url, 310, "리다이렉트가 너무 많습니다",
+                                 resp.headers, io.BytesIO(b""))
+
+
+def _request_once(req, timeout: float):
     parts = urllib.parse.urlsplit(req.full_url)
     if parts.scheme not in ("http", "https"):
         return urllib.request.urlopen(req, timeout=timeout)

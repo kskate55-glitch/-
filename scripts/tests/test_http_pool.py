@@ -36,7 +36,23 @@ class _Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *a):             # 테스트 출력 조용히
         pass
 
-    def do_GET(self):
+    redirects: dict = {}                   # path -> (status, Location)
+    seen: list = []                        # (method, path, authorization)
+
+    def _respond(self):
+        length = int(self.headers.get("Content-Length") or 0)
+        if length:
+            self.rfile.read(length)
+        with type(self)._count_lock:
+            type(self).seen.append(
+                (self.command, self.path, self.headers.get("Authorization")))
+        if self.path in type(self).redirects:
+            code, location = type(self).redirects[self.path]
+            self.send_response(code)
+            self.send_header("Location", location)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
         code = type(self).statuses.get(self.path, 200)
         body = f"hello {self.path}".encode()
         self.send_response(code)
@@ -44,6 +60,9 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    do_GET = _respond
+    do_POST = _respond
 
 
 class _Server(socketserver.ThreadingTCPServer):
@@ -55,6 +74,8 @@ class HttpPoolTestBase(unittest.TestCase):
     def setUp(self):
         _Handler.n_connections = 0
         _Handler.statuses = {}
+        _Handler.redirects = {}
+        _Handler.seen = []
         self.srv = _Server(("127.0.0.1", 0), _Handler)
         self.port = self.srv.server_address[1]
         self.thread = threading.Thread(target=self.srv.serve_forever, daemon=True)
@@ -184,6 +205,72 @@ class TestHeadersAndPaths(HttpPoolTestBase):
         """쿼리스트링이 잘리면 국토부 요청이 통째로 엉뚱해진다."""
         with http_pool.urlopen(urllib.request.Request(self.url("/q?a=1&b=2"))) as r:
             self.assertEqual(r.read(), b"hello /q?a=1&b=2")
+
+
+class TestRedirectsAreFollowed(HttpPoolTestBase):
+    """⚠️ `urllib.request.urlopen`은 3xx를 따라간다 — `http.client`는 안 따라간다.
+
+    안 따라가면 국토부 XML 대신 빈 리다이렉트 본문을, 카카오 JSON 대신 HTML을
+    받고 화면에는 "데이터 없음"으로만 보인다(조용히 틀리는 실패).
+    """
+
+    def test_302_lands_on_the_target(self):
+        _Handler.redirects["/old"] = (302, "/new")
+        with http_pool.urlopen(urllib.request.Request(self.url("/old"))) as r:
+            self.assertEqual(r.read(), b"hello /new")
+            self.assertEqual(r.status, 200)
+
+    def test_relative_location_is_resolved(self):
+        _Handler.redirects["/a/old"] = (301, "new")
+        with http_pool.urlopen(urllib.request.Request(self.url("/a/old"))) as r:
+            self.assertEqual(r.read(), b"hello /a/new")
+
+    def test_chain_is_followed(self):
+        _Handler.redirects["/1"] = (302, "/2")
+        _Handler.redirects["/2"] = (302, "/3")
+        with http_pool.urlopen(urllib.request.Request(self.url("/1"))) as r:
+            self.assertEqual(r.read(), b"hello /3")
+
+    def test_a_loop_does_not_hang(self):
+        _Handler.redirects["/x"] = (302, "/y")
+        _Handler.redirects["/y"] = (302, "/x")
+        with self.assertRaises(urllib.error.HTTPError):
+            http_pool.urlopen(urllib.request.Request(self.url("/x")))
+
+    def test_303_turns_a_post_into_a_get(self):
+        _Handler.redirects["/post"] = (303, "/done")
+        req = urllib.request.Request(self.url("/post"), data=b"body=1")
+        with http_pool.urlopen(req) as r:
+            self.assertEqual(r.read(), b"hello /done")
+        methods = [m for m, path, _ in _Handler.seen if path == "/done"]
+        self.assertEqual(methods, ["GET"])
+
+    def test_307_keeps_the_method(self):
+        _Handler.redirects["/post"] = (307, "/done")
+        req = urllib.request.Request(self.url("/post"), data=b"body=1")
+        with http_pool.urlopen(req) as r:
+            self.assertEqual(r.read(), b"hello /done")
+        methods = [m for m, path, _ in _Handler.seen if path == "/done"]
+        self.assertEqual(methods, ["POST"])
+
+    def test_auth_header_survives_a_same_host_redirect(self):
+        _Handler.redirects["/old"] = (302, "/new")
+        req = urllib.request.Request(self.url("/old"),
+                                     headers={"Authorization": "KakaoAK secret"})
+        with http_pool.urlopen(req):
+            pass
+        auths = [a for _, path, a in _Handler.seen if path == "/new"]
+        self.assertEqual(auths, ["KakaoAK secret"])
+
+    def test_auth_header_is_dropped_when_the_host_changes(self):
+        """6절 — 카카오 REST 키·슈퍼베이스 서비스 키가 엉뚱한 서버로 새면 안 된다."""
+        _Handler.redirects["/old"] = (302, f"http://localhost:{self.port}/new")
+        req = urllib.request.Request(self.url("/old"),
+                                     headers={"Authorization": "KakaoAK secret"})
+        with http_pool.urlopen(req):
+            pass
+        auths = [a for _, path, a in _Handler.seen if path == "/new"]
+        self.assertEqual(auths, [None])
 
 
 if __name__ == "__main__":

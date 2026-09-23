@@ -34,9 +34,11 @@ class FloorTestBase(unittest.TestCase):
     def tearDown(self):
         geo.geocode = self._real
 
-    def comps(self, rows, subject_floor):
+    def comps(self, rows, subject_floor, **kw):
+        # 매매 경로를 흉내 낸다 — 보정은 **명시적으로 켤 때만** 걸린다.
+        kw.setdefault("first_floor_ratio", ep.FIRST_FLOOR_PRICE_RATIO)
         return ep.find_comparables(rows, BASE, 55.0, subject_floor, 2012,
-                                   400, 2025, 2026, None, this_month=10)
+                                   400, 2025, 2026, None, this_month=10, **kw)
 
 
 class TestFactor(unittest.TestCase):
@@ -114,8 +116,7 @@ class TestComposesWithTimeCorrection(FloorTestBase):
         """⚠️ 7-2절이 다시 켜지면 같은 필드를 쓴다 — 덮어쓰면 한쪽이 조용히 사라진다."""
         rows = [_row(i, 3, 20000) for i in range(4)]
         rate = -0.01     # 월 −1% 추세
-        comps = ep.find_comparables(rows, BASE, 55.0, 1, 2012, 400, 2025, 2026, None,
-                                    this_month=10, monthly_trend_rate=rate)
+        comps = self.comps(rows, 1, monthly_trend_rate=rate)
         for c in comps:
             time_factor = c["_time_correction_factor"]
             self.assertNotEqual(time_factor, 1.0)
@@ -131,6 +132,51 @@ class TestCoefficientStaysConservative(unittest.TestCase):
         discount = 1.0 - ep.FIRST_FLOOR_PRICE_RATIO
         self.assertGreater(discount, 0.03, "너무 작으면 고치는 의미가 없다")
         self.assertLess(discount, 0.09, "실측 점추정치(9%)보다는 보수적이어야 한다")
+
+
+class TestJeonsePathIsProtected(FloorTestBase):
+    """⚠️ 이 계수는 **매매 실거래로만** 쟀다 — 16절 전세·23-1절 전환율이
+    조용히 물려받으면 근거 없는 보정이 된다(48-2절 `SALE_CALIBRATION_FACTOR`를
+    기본 1.0으로 둔 것과 같은 이유). 실제로 한 번 새어 있었다."""
+
+    def test_default_is_off(self):
+        rows = [_row(i, 3, 30000) for i in range(4)] + [_row(9, 1, 30000)]
+        # first_floor_ratio를 안 주면(= 전세·전환율 호출부) 아무것도 안 건드린다
+        out = ep.find_comparables(rows, BASE, 55.0, 1, 2012, 400, 2025, 2026,
+                                  None, this_month=10)
+        self.assertTrue(all("_first_floor_factor" not in r for r in out))
+        self.assertTrue(all("_amount_man_adjusted" not in r for r in out))
+
+    def test_opting_in_actually_turns_it_on(self):
+        rows = [_row(i, 3, 30000) for i in range(4)] + [_row(9, 1, 30000)]
+        out = self.comps(rows, 1)
+        self.assertTrue(any("_first_floor_factor" in r for r in out))
+
+    def test_ratio_of_one_is_a_no_op(self):
+        rows = [_row(i, 3, 30000) for i in range(4)] + [_row(9, 1, 30000)]
+        out = self.comps(rows, 1, first_floor_ratio=1.0)
+        self.assertTrue(all("_first_floor_factor" not in r for r in out))
+
+    def test_the_jeonse_call_sites_do_not_pass_it(self):
+        """소스 검사 — 전세/전환율 경로가 이 인자를 넘기지 않는지 고정한다."""
+        path = os.path.join(os.path.dirname(__file__), "..", "estimate_price.py")
+        with open(path, encoding="utf-8") as f:
+            src = f.read()
+        for marker in ("jeonse_filtered = find_comparables(",
+                       "wolse_filtered = find_comparables("):
+            start = 0
+            found = False
+            while True:
+                i = src.find(marker, start)
+                if i < 0:
+                    break
+                found = True
+                # 그 호출의 닫는 괄호까지만 잘라서 본다
+                chunk = src[i:src.find(")", i + len(marker))]
+                self.assertNotIn("first_floor_ratio", chunk,
+                                 f"{marker} 가 매매 전용 보정을 넘기고 있다")
+                start = i + 1
+            self.assertTrue(found, f"{marker} 를 못 찾았다 — 테스트가 낡았다")
 
 
 if __name__ == "__main__":

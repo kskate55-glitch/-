@@ -700,7 +700,8 @@ def estimate():
         area_tolerance_pct=area_tolerance_pct,
         build_year_tolerance=build_year_tolerance,
         this_month=this_month,
-        subject_building=subject_building))
+        subject_building=subject_building,
+        first_floor_ratio=FIRST_FLOOR_PRICE_RATIO))  # 64절 — 매매 경로만 켠다
     if not filtered:
         return render_template(
             "index.html",

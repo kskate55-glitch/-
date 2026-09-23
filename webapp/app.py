@@ -125,6 +125,31 @@ def _backtest_regions() -> list[dict]:
     return items
 
 
+def _lawd_from_kakao(stale_code: str) -> str | None:
+    """`data/lawd_codes.md`의 코드가 낡았을 때, 그 지역명을 카카오에 물어
+    **지금 맞는 법정동코드 앞 5자리**를 받아온다 (56절).
+
+    코드를 기억이나 추측으로 적지 않는다는 2절/10절 원칙을 지키면서도
+    행정구역 개편을 따라가는 방법이다 — `/estimate`는 원래부터 사용자가 친
+    주소를 카카오로 지오코딩해 b_code 앞 5자리를 쓰고 있었고, 그래서 표가
+    낡아도 **일반 계산은 멀쩡했다.** 순회만 표를 직접 읽어서 막혔던 것이다.
+
+    실패하면 조용히 None — 이 경로가 죽어서 순회 전체가 멈추면 안 된다.
+    """
+    try:
+        from geocode import geocode_full
+        from lawd_lookup import gu_name, sido_name
+
+        sido, gu = sido_name(stale_code), gu_name(stale_code)
+        if not sido or not gu:
+            return None
+        detail = geocode_full(f"{sido} {gu}")
+        code = (detail or {}).get("b_code") or ""
+        return code[:5] or None
+    except Exception:
+        return None
+
+
 def _run_region_backtest(lawd_cd: str, n_cases: int, months: int) -> dict:
     """구 하나를 백테스트한다. HTML 화면과 48-3절 전체순회 JSON이 **같은 함수**를
     쓴다 — 두 경로가 갈리면 "화면 숫자와 순회 숫자가 다른" 문제가 생긴다.
@@ -148,9 +173,29 @@ def _run_region_backtest(lawd_cd: str, n_cases: int, months: int) -> dict:
     except Exception as e:                      # 전체순회 도중 한 구가 죽지 않게
         return {"error": f"조회 실패: {e}", "gu": gu}
 
+    used_code, code_note = lawd_cd, None
     if not rows:
-        return {"error": "이 지역의 실거래 데이터를 찾지 못했어요. 다른 지역을 골라보세요.",
-                "gu": gu}
+        # 56절 — 33개월이 전부 0건이면 그 지역에 빌라가 없는 게 아니라
+        # **`data/lawd_codes.md`의 코드가 낡은 것**이다(부천시가 실제로 그랬다).
+        # 코드를 추측해서 적지 않고(2절/10절), `/estimate`가 늘 쓰는 방식 그대로
+        # **카카오에 물어본다** — 행정구역 개편은 카카오가 우리 표보다 먼저 따라간다.
+        resolved = _lawd_from_kakao(lawd_cd)
+        if resolved and resolved != lawd_cd:
+            try:
+                rows = dedupe(get_trade_rows(resolved, this_year - 2))
+            except Exception:
+                rows = []
+            if rows:
+                used_code, code_note = resolved, (
+                    f"표에 적힌 코드({lawd_cd})로는 0건이라 카카오가 알려준 "
+                    f"코드({resolved})로 다시 받았어요 — data/lawd_codes.md를 고쳐야 합니다.")
+
+    if not rows:
+        hint = ""
+        if used_code == lawd_cd:
+            hint = (f" (코드 {lawd_cd}로 33개월 내내 0건이었어요 — 행정구역이 바뀌어 "
+                    "코드가 낡았을 수 있습니다)")
+        return {"error": f"이 지역의 실거래 데이터를 찾지 못했어요.{hint}", "gu": gu}
 
     targets, pool = bt.pick_targets(rows, months=months, n=n_cases, gu=None, seed=42)
     if not targets:

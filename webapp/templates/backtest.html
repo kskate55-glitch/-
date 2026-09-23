@@ -403,7 +403,8 @@
   }
 
   function downloadCsv() {
-    var cols = ['gu', 'name', 'date', 'area', 'floor', 'build_year',
+    // version: 어느 배포 코드로 나온 숫자인지 CSV만 보고도 알 수 있게 (66절)
+    var cols = ['version', 'gu', 'name', 'date', 'area', 'floor', 'build_year',
                 'actual', 'median', 'err', 'n', 'sb', 'outliers', 'share',
                 'conf', 'divergence', 'in_band'];
     var lines = [cols.join(',')].concat(cases.map(function (c) {

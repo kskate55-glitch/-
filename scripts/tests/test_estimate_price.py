@@ -1811,10 +1811,33 @@ class TestPredictionInterval(unittest.TestCase):
         self.assertEqual(ep.compute_prediction_interval(20000, self._rows(10), None, None)["risks"], 0)
 
     def test_table_is_wider_than_the_measured_quantiles(self):
-        """⚠️ 실측(±9.3/17.4/25.0)보다 넓게 잡아둔 상태를 고정한다 —
-        칸당 표본이 26~37건뿐이라 꼬리가 과소평가되기 쉽다."""
-        for tier, measured in [(0, 9.3), (1, 17.4), (2, 25.0)]:
-            self.assertGreaterEqual(ep.PREDICTION_INTERVAL_PCT[tier], measured)
+        """⚠️ **두 표본 모두의** 실측 80% 분위보다 넓게 잡아둔 상태를 고정한다.
+
+        경기 92건은 ±9.3/17.4/25.0이었는데, 독립 표본인 서울 53건은
+        ±26/31/25로 훨씬 넓게 나왔다(66절) — 좁게 잡으면 "80%가 이 범위"라는
+        화면 문구가 그대로 거짓말이 된다. 둘 중 넓은 쪽을 기준으로 삼는다.
+
+        ⚠️ **표본이 얇은 칸은 기준에서 뺀다.** 서울 위험0개는 8건뿐이고 오차가
+        1·5·7·9·16·17·26·30%라, 80% 분위(26%)가 **한 건에 통째로 좌우된다** —
+        게다가 ±20과 ±26 사이에는 데이터가 한 건도 없어서 그 사이 어디로 잡든
+        적중률이 똑같다. 그런 꼬리에 폭을 맞추는 건 48-2절 0.97과 같은
+        과적합이다."""
+        MIN_N = 15
+        measured = [  # (tier, 경기 92건, 서울 53건, 서울 표본수)
+            (0, 9.3, 26.0, 8),
+            (1, 17.4, 31.0, 24),
+            (2, 25.0, 25.0, 21),
+        ]
+        for tier, gyeonggi, seoul, seoul_n in measured:
+            floor = gyeonggi if seoul_n < MIN_N else max(gyeonggi, seoul)
+            self.assertGreaterEqual(ep.PREDICTION_INTERVAL_PCT[tier], floor * 0.95,
+                                     f"위험 {tier}개 구간이 실측 꼬리보다 좁다")
+
+    def test_widths_never_shrink_as_risk_grows(self):
+        """위험이 늘수록 구간이 좁아지면 등급 자체가 말이 안 된다."""
+        w = ep.PREDICTION_INTERVAL_PCT
+        self.assertLessEqual(w[0], w[1])
+        self.assertLessEqual(w[1], w[2])
 
 
 class TestWeightedQuantile(unittest.TestCase):

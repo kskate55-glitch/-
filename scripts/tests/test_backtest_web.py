@@ -164,6 +164,36 @@ class TestSharedCodePath(unittest.TestCase):
             self.assertIn("_run_region_backtest", inspect.getsource(fn))
 
 
+class TestVersionIsStampedOnEveryCase(unittest.TestCase):
+    """66절 — CSV만 보고도 "어느 코드로 나온 숫자인지" 알 수 있어야 한다.
+
+    ⚠️ 이게 없어서 실제로 판정을 못 했다: 서울 순회 결과가 64절 1층 보정
+    이후 코드인지 이전인지 구분할 방법이 없어, 그 보정이 먹혔는지 결론을
+    못 내렸다. 순회는 수십 분 걸려서 "다시 돌려보자"가 싸지 않다.
+    """
+
+    def test_sweep_json_carries_the_version(self):
+        src = _app_source()
+        self.assertIn('c["version"] = version', src,
+                       "순회 JSON의 건별 기록에 배포 버전이 안 실린다")
+        self.assertIn('"version": version', src,
+                       "순회 응답 자체에도 버전이 안 실린다")
+
+    def test_csv_download_includes_the_version_column(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "..",
+                             "webapp", "templates", "backtest.html")
+        with open(path, encoding="utf-8") as f:
+            html = f.read()
+        cols = html.split("var cols = [", 1)[1].split("]", 1)[0]
+        self.assertIn("'version'", cols, "CSV 내보내기에 version 열이 없다")
+
+
+def _app_source() -> str:
+    path = os.path.join(os.path.dirname(__file__), "..", "..", "webapp", "app.py")
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
 if __name__ == "__main__":
     unittest.main()
 

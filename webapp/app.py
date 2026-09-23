@@ -407,7 +407,15 @@ def backtest_one():
         "share": r.get("top_weight_share"),
     } for r in out["results"]]
 
+    # ⚠️ 66절 — **건마다 배포 버전을 실어 보낸다.** 48-5절에서 화면 푸터에
+    #    버전을 찍어뒀는데도, 내려받은 CSV만 보고는 "어느 코드로 돌린
+    #    결과인지" 알 방법이 없어 64절 1층 보정의 효과를 판정하지 못했다.
+    #    순회는 오래 걸려서 다시 돌리기도 비싸다 — 결과에 붙여 두는 게 맞다.
+    version = _deploy_version()
+    for c in cases:
+        c["version"] = version
     return jsonify({"ok": True, "lawd_cd": lawd_cd, "gu": out["gu"],
+                    "version": version,
                     "pool": out["pool"], "skipped": out["skipped"],
                     "cases": cases})
 

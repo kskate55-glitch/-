@@ -13,6 +13,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
+import supabase_cache
 from json_cache import read_json, write_json
 
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
@@ -93,8 +94,20 @@ def get_trade_rows(lawd_cd: str, year_min: int) -> list[dict]:
             if cached is not None:
                 return _checked(cached)
 
+        # 62절 — 파일이 없으면 슈퍼베이스에서 되살려 본다. 무료 호스팅은
+        # 재배포 때마다 파일이 날아가는데, 그때마다 국토부를 24번씩 다시
+        # 부르는 게 "배포 직후엔 항상 느린" 원인이었다.
+        # ⚠️ 되살린 데이터도 _checked를 통과시킨다 — 48-4절 오염이 저장돼
+        #    있었다면 여기서 걸러야지, 그냥 믿으면 오염이 영구히 남는다.
+        remote = supabase_cache.get(f"trade:{lawd_cd}", ym)
+        if remote is not None:
+            rows = _checked(remote)
+            write_json(cache_path, rows)                  # 파일로도 되살려 둔다
+            return rows
+
         rows = _checked(fetch_all_pages(lawd_cd, ym))
         write_json(cache_path, rows)                      # 53절 — 원자적 교체
+        supabase_cache.put(f"trade:{lawd_cd}", ym, rows)  # 다음 배포 뒤를 위해
         return rows
 
     return _fetch_months(_month_range(year_min, now.year, now.month), one_month)
@@ -121,6 +134,12 @@ def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
             cached = read_json(cache_path, default=None)   # 53절
             if cached is not None:
                 return cached
+        if ym != this_ym:                                 # 62절 — 슈퍼베이스에서 복구
+            remote = supabase_cache.get(f"apt:{lawd_cd}", ym)
+            if remote is not None:
+                os.makedirs(cache_dir, exist_ok=True)
+                write_json(cache_path, remote)
+                return remote
         try:
             rows = fetch_all_pages(lawd_cd, ym)
         except Exception:
@@ -129,6 +148,7 @@ def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
         if ym != this_ym:
             os.makedirs(cache_dir, exist_ok=True)
             write_json(cache_path, rows)                  # 53절
+            supabase_cache.put(f"apt:{lawd_cd}", ym, rows)
         return rows
 
     return _fetch_months(_month_range(year_min, now.year, now.month), one_month)

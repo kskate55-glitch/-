@@ -27,6 +27,7 @@ from urllib.request import Request
 # HTTP_POOL=0 으로 언제든 예전 동작으로 되돌릴 수 있다.
 from http_pool import urlopen
 
+import supabase_cache
 from json_cache import read_json, write_json
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
@@ -59,14 +60,40 @@ CACHE_FLUSH_SECONDS = 5.0     # 또는 이 시간이 지나면
 _memory: dict[str, dict] = {}          # 경로 -> 내용
 _memory_dirty: dict[str, int] = {}
 _memory_written: dict[str, float] = {}
+_memory_pushed: dict[str, set] = {}     # 62절 — 슈퍼베이스에 이미 올린 키
+
+
+def _supabase_ns(path: str) -> str:
+    """캐시 파일 이름을 슈퍼베이스 묶음 이름으로 쓴다(경로는 환경마다 다르다)."""
+    return "geo:" + os.path.basename(path)
 
 
 def _mem_load(path: str) -> dict:
-    """파일을 프로세스당 한 번만 읽고, 그다음부터는 메모리에서 돌려준다."""
+    """파일을 프로세스당 한 번만 읽고, 그다음부터는 메모리에서 돌려준다.
+
+    ⚠️ 62절 — 파일이 **비어 있을 때만** 슈퍼베이스에서 되살린다. 무료 호스팅은
+    재배포 때마다 파일이 날아가는데, 그러면 그 지역을 처음 조회하는 것과
+    똑같이 느려진다(57절이 잡아둔 개선이 배포마다 초기화됐다).
+    파일이 있으면 건드리지 않는다 — 메모리·파일 경로가 훨씬 빠르고, 슈퍼베이스는
+    그 **앞이 아니라 뒤**에 있어야 한다.
+    """
     if path not in _memory:
-        _memory[path] = read_json(path)
+        cache = read_json(path)
+        if not cache:
+            try:
+                restored = supabase_cache.get_all(_supabase_ns(path))
+            except Exception:          # noqa: BLE001 — 복구 실패가 계산을 막으면 안 된다
+                restored = {}
+            if restored:
+                cache = restored
+                try:
+                    write_json(path, cache)     # 파일로도 되살려 둔다
+                except OSError:
+                    pass
+        _memory[path] = cache
         _memory_dirty[path] = 0
         _memory_written[path] = 0.0
+        _memory_pushed[path] = set(cache)       # 이미 올라가 있는 키
     return _memory[path]
 
 
@@ -81,6 +108,27 @@ def _mem_save(path: str, cache: dict, force: bool = False) -> None:
         write_json(path, cache)        # 53절 — 원자적 교체
         _memory_dirty[path] = 0
         _memory_written[path] = now
+        _push_new_entries(path, cache)  # 62절
+
+
+def _push_new_entries(path: str, cache: dict) -> None:
+    """62절 — 이번에 새로 생긴 항목만 슈퍼베이스에 올린다.
+
+    ⚠️ 매번 캐시 전체를 올리면 수만 건을 반복해서 보내게 된다. 올린 키를
+    기억해 두고 **차이분만** 보낸다. 실패해도 조용히 넘어가고, 그 키는
+    '아직 안 올림'으로 남아 다음 기회에 다시 시도된다.
+    """
+    if not supabase_cache.enabled():
+        return
+    pushed = _memory_pushed.setdefault(path, set())
+    fresh = {k: cache[k] for k in cache.keys() - pushed}
+    if not fresh:
+        return
+    try:
+        if supabase_cache.put_many(_supabase_ns(path), fresh):
+            pushed.update(fresh)
+    except Exception:        # noqa: BLE001
+        pass
 
 
 def flush_caches() -> None:
@@ -92,6 +140,7 @@ def flush_caches() -> None:
                 _memory_dirty[path] = 0
             except OSError:
                 pass
+        _push_new_entries(path, cache)
 
 
 atexit.register(flush_caches)

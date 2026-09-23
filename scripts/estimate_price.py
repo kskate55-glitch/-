@@ -277,6 +277,9 @@ SALE_CALIBRATION_FACTOR = 1.0
 # 보정으로만 쓴다.
 SAME_BUILDING_DISTANCE_M = 20  # 빌라 한 동 부지 규모를 감안한 경험적 임계치 — 검증된 값은 아니다
 SAME_BUILDING_BONUS = 2.0  # GPT 제안 범위(1.5~2.5)의 중간값 — 마찬가지로 경험적 값
+# 51절 — 보너스를 받으려면 같은 건물 거래가 이만큼은 있어야 한다.
+# 한 건짜리는 "건물 시세"가 아니라 "그 한 호실 가격"이라 보너스를 주지 않는다.
+SAME_BUILDING_MIN_COUNT = 2
 
 # CLAUDE.md 35절: 수리상태별 매도가능가격 참고 배율 — 사용자가 들은 경매 강의의
 # "험한집/깔끔한 기본집/올수리는 각각 다른 매도가능가격을 가진다"는 인사이트를
@@ -488,7 +491,9 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             r["_dealing_gbn"] = dealing_gbn
             r["_weight"] = recency_weight * SIMILARITY_EMPHASIS_CURVE(score) * dealing_weight
             if distance <= SAME_BUILDING_DISTANCE_M:
-                r["_weight"] *= SAME_BUILDING_BONUS
+                # ⚠️ 보너스는 여기서 바로 곱하지 않는다 — **몇 건인지 다 세고 난 뒤**
+                #    아래에서 한꺼번에 적용한다(51절). 한 건뿐이면 "건물 시세"가
+                #    아니라 "그 한 호실 가격"이라 보너스를 주지 않는다.
                 r["_same_building"] = True
             if monthly_trend_rate is not None:
                 factor = time_correction_factor(r.get("dealYear"), r.get("dealMonth"),
@@ -496,6 +501,18 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
                 r["_amount_man_adjusted"] = amount * factor
                 r["_time_correction_factor"] = factor
             out.append(r)
+
+    # 51절 — 동일건물 보너스는 **같은 건물 거래가 2건 이상일 때만** 준다.
+    # 한 건뿐이면 그건 "이 건물의 시세"가 아니라 "그 한 호실이 받은 값"이라,
+    # 대표성이 없어도 견제할 거래가 없어 그대로 끌려간다(실측: 같은 건물
+    # 0건 14.5% · **1건 18.9%** · 2~3건 11.0% · 4건 이상 3.1% — 정보를 더
+    # 줬는데 오히려 나빠지는 구간이 있었다). 보너스를 안 줘도 그 거래는
+    # 거리 0m라 유사도 거리 점수를 이미 만점으로 받는다 — 버리는 게 아니라
+    # **이중으로 세지 않는** 것뿐이다.
+    same_building_rows = [r for r in out if r.get("_same_building")]
+    if len(same_building_rows) >= SAME_BUILDING_MIN_COUNT:
+        for r in same_building_rows:
+            r["_weight"] *= SAME_BUILDING_BONUS
 
     # 평당가(㎡당가) 기준 이상치 다운웨이트 — 같은 반경·면적대인데 가격이
     # 유독 튀는 거래(특수관계자 거래, 입력 오류 등)가 가중 중앙값을 왜곡하지
@@ -981,6 +998,51 @@ REDEV_MIN_COUNT = 2           # 한 건은 우연일 수 있어 2건 이상 몰�
 REDEV_MIN_BASELINE_SAMPLE = 20  # 기준선(구 중앙값)을 믿으려면 이만큼은 필요
 
 
+# 토지이용계획의 "지역지구등 지정여부"에 정비사업 관련 구역이 잡히는지 보는
+# 키워드 표 (50-1절). **API 응답을 받아오는 부분은 아직 없고, 이 판정만 있다** —
+# 엔드포인트·필드명을 확인하지 못해 지어내지 않았다(20절/21절과 같은 원칙).
+#
+# ⚠️ **"지구단위계획구역"은 일부러 뺐다.** 전국에 널려 있어 신호가 되지 않는다 —
+#    넣으면 거의 모든 물건에 경고가 떠서 경고 자체가 무의미해진다.
+REDEV_ZONE_KEYWORDS = (
+    "정비구역", "재정비촉진", "재개발", "재건축",
+    "도시환경정비", "주거환경개선", "가로주택정비", "소규모주택정비",
+)
+
+
+def is_redevelopment_zone(zone_names) -> dict | None:
+    """토지이용계획의 지역지구 목록에서 정비사업 구역을 찾는다 (50-1절).
+
+    ⚠️ **이 함수는 네트워크를 타지 않는다.** 이미 받아온 지역지구 이름 목록을
+    받아 판정만 한다 — 토지이용계획 API 스펙을 확인하면 그 응답을 여기에
+    넘기기만 하면 된다.
+
+    ⚠️ 찾았다고 **가격을 바꾸지는 않는다**(50절 결정 그대로). 다만 50절의
+    "동네에 비싼 구축이 몰려 있다"는 간접 추정과 달리, 이건 **그 필지가
+    구역 안인지 직접 확인**하는 것이라 훨씬 강한 근거다.
+    """
+    if not zone_names:
+        return None
+    hits = []
+    for name in zone_names:
+        text = (name or "").strip()
+        if not text:
+            continue
+        for kw in REDEV_ZONE_KEYWORDS:
+            if kw in text:
+                hits.append(text)
+                break
+    if not hits:
+        return None
+    # 같은 이름이 여러 번 와도 한 번만 — 순서는 응답 순서를 지킨다.
+    seen, unique = set(), []
+    for h in hits:
+        if h not in seen:
+            seen.add(h)
+            unique.append(h)
+    return {"zones": unique, "count": len(unique)}
+
+
 def _unit_price(row: dict) -> float | None:
     """㎡당가(만원). 금액이나 면적을 못 읽으면 None."""
     try:
@@ -1065,7 +1127,8 @@ def top_weight_share(filtered: list[dict]) -> float | None:
 
 def compute_estimate_warnings(filtered: list[dict],
                                model_divergence_pct: float | None,
-                               redevelopment: dict | None = None) -> list[dict]:
+                               redevelopment: dict | None = None,
+                               zone_check: dict | None = None) -> list[dict]:
     """이 추정치를 얼마나 믿어도 되는지 경고등으로 돌려준다 (49절).
 
     ⚠️ **7절 시세 신뢰도 점수를 대체하는 게 아니라 보완한다.** 48절 실측에서
@@ -1109,12 +1172,27 @@ def compute_estimate_warnings(filtered: list[dict],
         warnings.append({
             "key": "same_building",
             "label": "같은 건물 거래가 딱 한 건뿐입니다",
-            "detail": ("같은 건물 거래는 가중치를 2배로 받는데, 한 건뿐이면 "
-                       "그 거래가 유별난 값이어도 걸러줄 다른 거래가 없어요."),
+            "detail": ("한 건만으로는 '이 건물 시세'라고 보기 어려워 가중치 "
+                       "보너스를 주지 않았습니다 — 그래도 가장 가까운 거래라 "
+                       "영향이 큽니다."),
             "advice": "그 한 건이 시세와 동떨어지지 않았는지 꼭 확인하세요.",
         })
 
-    # ④ 50절 — 정비구역(재개발) 의심. 프리미엄을 가격에 더하지는 않는다.
+    # ④ 50-1절 — 토지이용계획으로 **직접 확인된** 정비구역. 아래 ⑤의 간접
+    #    추정보다 근거가 훨씬 강하므로, 둘 다 있으면 이쪽만 보여준다.
+    if zone_check:
+        names = " · ".join(zone_check["zones"][:3])
+        warnings.append({
+            "key": "zone",
+            "label": "이 땅은 정비구역 안입니다",
+            "detail": (f"토지이용계획에 {names}(으)로 지정돼 있어요. "
+                       "정비구역 빌라는 건물이 아니라 대지지분(입주권) 값으로 "
+                       "팔려서 이 계산기의 매도가와 전혀 다르게 형성됩니다."),
+            "advice": "이 매도가는 쓰지 마세요 — 대지지분과 사업 진행 단계로 따로 따져야 합니다.",
+        })
+        return warnings
+
+    # ⑤ 50절 — 정비구역(재개발) **의심**(동네 거래로 간접 추정).
     if redevelopment:
         ex = redevelopment["examples"][0]
         warnings.append({

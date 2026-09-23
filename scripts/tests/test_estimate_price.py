@@ -556,10 +556,10 @@ class DealingTypeWeightTests(unittest.TestCase):
                 [row], (37.65, 127.02), 69.27, 4, "2012", 400, 2025, 2026, None,
                 area_tolerance_pct=0.15, this_month=9,
             )
-            # 이 테스트의 mock geocode는 대상 좌표와 완전히 동일한 좌표를 돌려주므로
-            # (거리 0m) 동일건물 보너스도 함께 곱해져야 한다.
-            expected = (ep.weight_for_recency("2026", "9", 2026, 9) * ep.SIMILARITY_EMPHASIS_CURVE(100.0)
-                        * ep.SAME_BUILDING_BONUS)
+            # 이 mock은 대상과 같은 좌표를 돌려주므로 거리 0m(동일건물)이지만,
+            # 같은 건물 거래가 **한 건뿐이라 보너스는 안 붙는다**(51절).
+            expected = (ep.weight_for_recency("2026", "9", 2026, 9)
+                        * ep.SIMILARITY_EMPHASIS_CURVE(100.0))
             self.assertAlmostEqual(out[0]["_weight"], expected, places=6)
 
 
@@ -658,20 +658,63 @@ class FindComparablesAdaptiveTests(unittest.TestCase):
 
 
 class SameBuildingBonusTests(unittest.TestCase):
-    """GPT 조언 반영 — 좌표가 거의 겹치는(사실상 동일건물) 거래는 가중치를
-    SAME_BUILDING_BONUS만큼 추가로 높인다."""
+    """좌표가 거의 겹치는(사실상 동일건물) 거래는 가중치를 `SAME_BUILDING_BONUS`
+    만큼 높인다 — 단 **2건 이상일 때만**(51절).
 
-    def test_coincident_coordinate_gets_bonus_weight(self):
-        with patch("geocode.geocode", return_value=(37.65, 127.02)):  # 대상과 동일 좌표 -> 거리 0m
+    ⚠️ 한 건짜리에도 보너스를 주던 시절의 실측: 같은 건물 0건 14.5% ·
+    **1건 18.9%** · 2~3건 11.0% · 4건 이상 3.1%. 정보를 더 줬는데 오히려
+    나빠지는 구간이 있었고, 원인은 그 한 건이 대표성이 없어도 ×2 가중치를
+    견제 없이 받는 것이었다.
+    """
+
+    @staticmethod
+    def _base_weight():
+        return (ep.weight_for_recency("2026", "9", 2026, 9)
+                * ep.SIMILARITY_EMPHASIS_CURVE(100.0))
+
+    def test_single_same_building_row_gets_no_bonus(self):
+        """⚠️ 51절 핵심 — 한 건뿐이면 '건물 시세'가 아니라 '그 한 호실 가격'이다."""
+        with patch("geocode.geocode", return_value=(37.65, 127.02)):
             row = _fake_row("동일건물빌라", "1", 69.27, 4, 2012, 2026, 9, 35000)
             out = ep.find_comparables(
                 [row], (37.65, 127.02), 69.27, 4, "2012", 400, 2025, 2026, None,
                 area_tolerance_pct=0.15, this_month=9,
             )
-            self.assertTrue(out[0].get("_same_building"))
-            expected = (ep.weight_for_recency("2026", "9", 2026, 9) * ep.SIMILARITY_EMPHASIS_CURVE(100.0)
-                        * ep.SAME_BUILDING_BONUS)
-            self.assertAlmostEqual(out[0]["_weight"], expected, places=6)
+            self.assertTrue(out[0].get("_same_building"),
+                            "플래그 자체는 남아야 한다 — 그래프·경고가 쓴다")
+            self.assertAlmostEqual(out[0]["_weight"], self._base_weight(), places=6)
+
+    def test_two_same_building_rows_get_the_bonus(self):
+        coords = {"동일건물빌라A": (37.65, 127.02), "동일건물빌라B": (37.65, 127.02)}
+        rows = [_fake_row("동일건물빌라A", "1", 69.27, 4, 2012, 2026, 9, 35000),
+                _fake_row("동일건물빌라B", "2", 69.27, 4, 2012, 2026, 9, 35500)]
+        with patch("geocode.geocode", side_effect=lambda addr: (37.65, 127.02)):
+            out = ep.find_comparables(
+                rows, (37.65, 127.02), 69.27, 4, "2012", 400, 2025, 2026, None,
+                area_tolerance_pct=0.15, this_month=9,
+            )
+        self.assertEqual(len(out), 2)
+        expected = self._base_weight() * ep.SAME_BUILDING_BONUS
+        for r in out:
+            self.assertTrue(r.get("_same_building"))
+            self.assertAlmostEqual(r["_weight"], expected, places=6)
+        del coords
+
+    def test_gate_constant_is_honoured(self):
+        """상수를 바꾸면 동작도 따라와야 한다(하드코딩된 2가 아니어야 한다)."""
+        orig = ep.SAME_BUILDING_MIN_COUNT
+        try:
+            ep.SAME_BUILDING_MIN_COUNT = 1
+            with patch("geocode.geocode", return_value=(37.65, 127.02)):
+                row = _fake_row("동일건물빌라", "1", 69.27, 4, 2012, 2026, 9, 35000)
+                out = ep.find_comparables(
+                    [row], (37.65, 127.02), 69.27, 4, "2012", 400, 2025, 2026, None,
+                    area_tolerance_pct=0.15, this_month=9,
+                )
+            self.assertAlmostEqual(out[0]["_weight"],
+                                   self._base_weight() * ep.SAME_BUILDING_BONUS, places=6)
+        finally:
+            ep.SAME_BUILDING_MIN_COUNT = orig
 
     def test_far_coordinate_gets_no_bonus(self):
         # 약 350m 떨어진 좌표 — SAME_BUILDING_DISTANCE_M(20m)보다 훨씬 멀다
@@ -1634,3 +1677,62 @@ class TestRedevelopmentSignal(unittest.TestCase):
         self.assertEqual(before_scen["median"], after_scen["median"])
         self.assertEqual(before_scen["p25"], after_scen["p25"])
         self.assertEqual(before_scen["p75"], after_scen["p75"])
+
+
+class TestRedevelopmentZoneKeywords(unittest.TestCase):
+    """CLAUDE.md 50-1절 — 토지이용계획 지역지구 이름으로 정비구역을 가린다.
+
+    ⚠️ **API 응답을 받아오는 부분은 아직 없다.** 엔드포인트·필드명을 확인하지
+    못해 지어내지 않았다(20절/21절 원칙). 이 판정만 먼저 만들어 둬서, 스펙이
+    확인되면 응답을 그대로 넘기기만 하면 된다.
+    """
+
+    def test_finds_typical_zone_names(self):
+        for name in ("정비구역", "재정비촉진지구", "주택재개발사업구역",
+                     "주택재건축사업", "도시환경정비구역", "가로주택정비사업"):
+            with self.subTest(name=name):
+                self.assertIsNotNone(ep.is_redevelopment_zone([name]), name)
+
+    def test_ordinary_zones_are_ignored(self):
+        self.assertIsNone(ep.is_redevelopment_zone(
+            ["제2종일반주거지역", "도로", "상대보호구역", "가축사육제한구역"]))
+
+    def test_district_unit_plan_is_deliberately_excluded(self):
+        """⚠️ '지구단위계획구역'은 전국에 널려 있어 신호가 되지 않는다 —
+        넣으면 거의 모든 물건에 경고가 떠서 경고 자체가 무의미해진다."""
+        self.assertIsNone(ep.is_redevelopment_zone(
+            ["제2종일반주거지역", "지구단위계획구역"]))
+
+    def test_picks_the_zone_out_of_a_mixed_list(self):
+        found = ep.is_redevelopment_zone(
+            ["제2종일반주거지역", "지구단위계획구역", "○○1구역 주택재개발사업", "도로"])
+        self.assertIsNotNone(found)
+        self.assertEqual(found["zones"], ["○○1구역 주택재개발사업"])
+
+    def test_duplicates_are_collapsed(self):
+        found = ep.is_redevelopment_zone(["정비구역", "정비구역", "재개발구역"])
+        self.assertEqual(found["count"], 2)
+
+    def test_blank_input_is_safe(self):
+        for value in ([], None, ["", "   ", None]):
+            with self.subTest(value=value):
+                self.assertIsNone(ep.is_redevelopment_zone(value))
+
+    def test_confirmed_zone_replaces_the_guessed_signal(self):
+        """직접 확인된 구역이 있으면 간접 추정 경고는 안 띄운다 — 근거가 더 강하다."""
+        guess = {"dong": "재개발동", "count": 3, "max_ratio": 2.5, "baseline_unit": 300.0,
+                 "examples": [{"name": "한보주택", "area": 34.0, "amount_man": 30600.0,
+                               "build_year": 1991, "ratio": 2.5}]}
+        confirmed = ep.is_redevelopment_zone(["○○1구역 주택재개발사업"])
+        keys = {w["key"] for w in ep.compute_estimate_warnings(
+            [{"_weight": 1.0} for _ in range(12)], 0.0, guess, confirmed)}
+        self.assertIn("zone", keys)
+        self.assertNotIn("redevelopment", keys)
+
+    def test_without_confirmation_the_guess_still_shows(self):
+        guess = {"dong": "재개발동", "count": 3, "max_ratio": 2.5, "baseline_unit": 300.0,
+                 "examples": [{"name": "한보주택", "area": 34.0, "amount_man": 30600.0,
+                               "build_year": 1991, "ratio": 2.5}]}
+        keys = {w["key"] for w in ep.compute_estimate_warnings(
+            [{"_weight": 1.0} for _ in range(12)], 0.0, guess, None)}
+        self.assertIn("redevelopment", keys)

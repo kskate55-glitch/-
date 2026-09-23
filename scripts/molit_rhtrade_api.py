@@ -42,7 +42,12 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 from urllib.parse import quote
-from urllib.request import Request, urlopen
+from urllib.request import Request
+
+# 연결을 재사용하는 urlopen (http_pool 참고) — 먼 서버일수록 악수 비용이 커서,
+# 호출마다 연결을 새로 맺던 예전 방식은 그 왕복을 매번 다시 치렀다.
+# HTTP_POOL=0 으로 언제든 예전 동작으로 되돌릴 수 있다.
+from http_pool import urlopen
 from urllib.error import HTTPError, URLError
 from xml.sax.saxutils import escape
 

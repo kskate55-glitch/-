@@ -215,3 +215,77 @@ class TestSalePressure(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestLongPasteDoesNotHangTheServer(unittest.TestCase):
+    """⚠️ 실제로 겪은 것: 숫자가 길게 이어진 한 줄을 붙여넣으면 파싱이
+    **입력 길이의 제곱으로** 느려졌다(8천자 3.5초 · 2만자 20초). 정규식의
+    `\\d+`가 끝이 열려 있어서 시작 위치마다 끝까지 갔다가 되돌아온 탓이다.
+
+    공개 사이트에서는 이게 곧 **워커 하나를 묶는 수단**이 된다 — 누가
+    일부러 하지 않아도, 표가 통째로 복사된 텍스트 한 번이면 걸린다.
+    """
+
+    def _elapsed(self, n):
+        import time
+        t0 = time.monotonic()
+        lp.parse_listings("매매 " + "9" * n + "억 59.9㎡")
+        return time.monotonic() - t0
+
+    def test_a_very_long_line_finishes_quickly(self):
+        # 옛 코드는 여기서 20초가 걸렸다. 넉넉하게 2초로 잡아도 충분히 잡힌다.
+        self.assertLess(self._elapsed(20000), 2.0, "긴 줄에서 파서가 멈춰 선다")
+
+    def test_it_grows_linearly_not_quadratically(self):
+        """길이를 4배로 늘렸을 때 시간이 4배 근처면 선형, 16배면 제곱이다."""
+        small, big = self._elapsed(2000), self._elapsed(8000)
+        if small < 0.002:          # 너무 빨라 측정 잡음이 크면 상한만 본다
+            self.assertLess(big, 0.5)
+            return
+        self.assertLess(big / small, 8.0, "길이에 제곱으로 느려지고 있다")
+
+    def test_the_patterns_still_bound_their_digit_runs(self):
+        """상한을 다시 열어두면 같은 사고가 난다 — 소스로 고정한다."""
+        with open(lp.__file__, encoding="utf-8") as f:
+            code = "\n".join(l.split("#")[0] for l in f if "re.compile" in l)
+        self.assertNotIn(r"\d+", code, "끝이 열린 \\d+ 가 다시 들어왔다")
+
+    def test_normal_pastes_still_parse_the_same(self):
+        for text, want_price, want_area in [
+            ("OO빌라\n매매 3억 5,000\n59.9㎡ 3층", 35000.0, 59.9),
+            ("매매 32,000만원 59.9㎡", 32000.0, 59.9),
+            ("매매 3.6억 18평", 36000.0, 59.5),
+        ]:
+            got, _ = lp.parse_listings(text)
+            self.assertEqual(got[0]["price_man"], want_price, text)
+            self.assertAlmostEqual(got[0]["area"], want_area, places=1, msg=text)
+
+
+class TestTheEokRemainderIsNotJustAnyNumber(unittest.TestCase):
+    """⚠️ 실제로 겪은 값 오류: `억` 뒤에 오는 **아무 숫자나** 만원 단위
+    나머지로 삼켰다 — `3억 2012년 준공`이 3억 2,012만원(+2천만원),
+    `3.6억 18평`이 3억 6,018만원으로 읽혔다. 붙여넣은 매물 한 건이
+    2천만원 비싸게 잡히면 31절 가격 포지션·39절 매도압력이 통째로 흔들린다.
+    """
+
+    def _price(self, text):
+        got, _ = lp.parse_listings(text)
+        return got[0]["price_man"] if got else None
+
+    def test_a_build_year_is_not_a_price_remainder(self):
+        self.assertEqual(self._price("매매 3억 2012년 준공 59.9㎡"), 30000)
+
+    def test_an_area_is_not_a_price_remainder(self):
+        self.assertEqual(self._price("매매 3.6억 18평"), 36000)
+        self.assertEqual(self._price("매매 3억 59.9㎡ 3층"), 30000)
+
+    def test_a_comma_grouped_remainder_still_counts(self):
+        for text in ("매매 3억 5,000 59.9㎡", "매매 3억 5,000만원 59.9㎡"):
+            self.assertEqual(self._price(text), 35000, text)
+
+    def test_a_remainder_followed_by_man_still_counts(self):
+        for text in ("매매 3억5000만원 59.9㎡", "매매 3억 5000만 59.9㎡"):
+            self.assertEqual(self._price(text), 35000, text)
+
+    def test_a_bare_eok_is_unchanged(self):
+        self.assertEqual(self._price("매매 3.6억 59.9㎡"), 36000)

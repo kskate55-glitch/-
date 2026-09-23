@@ -358,17 +358,22 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         # 호버/탭 시 뜨는 미니 카드 — 굵은 제목(단지명·금액) + 연한 부제(거리·
         # 개월수·거래유형 등) 두 줄 구성. 사용자가 참고로 보내준 목업의 카드형
         # 툴팁 스타일을 반영했다.
-        tip_title = html.escape(f"{name} · {_fmt_eok(r['_amount_man'])}")
+        # ⚠️ `name`·`area`는 **위에서 이미 이스케이프했다** — 여기서 또 감싸면
+        #    `&`가 `&amp;amp;`가 되어 화면에 "A&amp;D빌라"처럼 글자 그대로
+        #    보인다(실제로 그랬다). 나머지 조각(금액·거리·개월수·고정 문구)은
+        #    숫자와 우리가 쓴 상수뿐이라 이스케이프할 것이 없다.
+        tip_title = f"{name} · {_fmt_eok(r['_amount_man'])}"
         tip_sub = html.escape(facts_line)
-        aria_label = html.escape(
-            f"{name} · {area}㎡ · {_fmt_eok(r['_amount_man'])} · {facts_line} · 반영도 {_similarity_tier(t)}"
+        aria_label = (
+            f"{name} · {area}㎡ · {_fmt_eok(r['_amount_man'])} · "
+            f"{html.escape(facts_line)} · 반영도 {_similarity_tier(t)}"
         )
 
-        detail = html.escape("\n".join([
+        detail = "\n".join([
             f"{name} {_fmt_eok(r['_amount_man'])} · 반영도 {_similarity_tier(t)}",
-            " · ".join(facts),
-            f"→ {_reflect_sentence(t, is_outlier)}",
-        ]))
+            html.escape(" · ".join(facts)),
+            f"→ {html.escape(_reflect_sentence(t, is_outlier))}",
+        ])
 
         group.append(
             f'<circle class="pd-dot" cx="{x:.1f}" cy="{y:.1f}" r="{hit_r}" fill="transparent" '

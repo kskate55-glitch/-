@@ -244,3 +244,32 @@ class SeasonalityAndTrendChartTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestNamesAreEscapedExactlyOnce(unittest.TestCase):
+    """⚠️ 단지명을 344줄에서 이스케이프해 놓고 툴팁·상세·aria 라벨에서 **한
+    번 더** 감싸고 있었다 — `A&D빌라`가 화면에 `A&amp;D빌라`로 글자 그대로
+    보인다(속성값은 HTML 파서가 한 겹만 풀어 주기 때문이다).
+    """
+    NASTY = 'A&D"빌라'
+
+    def _html(self):
+        rows = [{"mhouseNm": self.NASTY, "excluUseAr": "59.9", "floor": "3",
+                 "dealYear": "2026", "dealMonth": "5", "_amount_man": 20000 + i * 500,
+                 "_weight": 1.0, "_distance_m": 100 + i * 10, "buildYear": "2012"}
+                for i in range(6)]
+        return pc.render_price_distribution_html(
+            rows, {"p25": 19000, "median": 20500, "p75": 22000, "ai_price": 20800,
+                   "first_ask": 22600, "경매용 매도가": 19800}, hero_name="경매용 매도가")
+
+    def test_no_double_escaping(self):
+        self.assertNotIn("&amp;amp;", self._html(), "이스케이프가 두 번 걸렸다")
+
+    def test_the_name_is_still_escaped_once(self):
+        html = self._html()
+        self.assertIn("A&amp;D", html)
+        self.assertNotIn('="A&D', html, "날것이 속성 안으로 들어갔다")
+
+    def test_a_quote_cannot_break_out_of_the_attribute(self):
+        html = self._html()
+        self.assertNotIn('data-tip-title="A&D"빌라', html)

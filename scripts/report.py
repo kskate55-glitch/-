@@ -5,6 +5,8 @@
 estimate_price.py가 --html 옵션을 줬을 때 이 모듈을 사용한다.
 """
 
+import html as _html
+
 from price_chart import MARKER_COLORS, render_price_distribution_html
 
 
@@ -101,20 +103,35 @@ def _price_trend_summary(trend: dict) -> str:
     return f"{first_label} 평당 {first_val:.0f}만원 → {last_label} 평당 {last_val:.0f}만원 ({sign}{change_pct:.1f}%)"
 
 
+def _e(value) -> str:
+    """HTML에 넣기 전에 한 번 이스케이프한다.
+
+    ⚠️ **두 번 감싸지 않는다** — `price_chart.py`에서 이미 이스케이프한 값을
+    한 번 더 감쌌다가 화면에 `&amp;`가 글자 그대로 보이는 버그를 겪었다.
+    여기 들어오는 값은 전부 날것이므로 이 자리에서 딱 한 번 감싼다.
+    """
+    return _html.escape(str(value))
+
+
 def _comparables_table_html(comparables: list[dict]) -> str:
     if not comparables:
         return '<p class="muted">비교거래가 없습니다.</p>'
     rows = []
     for r in comparables:
-        name_cell = r["name"]
-        if r.get("map_url"):
-            name_cell += f" <a href=\"{r['map_url']}\" target=\"_blank\" rel=\"noopener\" style=\"text-decoration:none;font-size:12px\" title=\"네이버부동산 지도에서 위치 보기\">🗺️</a>"
-        if r.get("search_url"):
-            name_cell += f" <a href=\"{r['search_url']}\" target=\"_blank\" rel=\"noopener\" style=\"text-decoration:none;font-size:12px\" title=\"네이버에서 검색\">🔍</a>"
+        # ⚠️ 여기 들어오는 값은 국토부 응답(단지명)과 사용자가 친 주소에서
+        #    온다 — 둘 다 우리가 쓴 글자가 아니다. 예전엔 이스케이프를 전혀
+        #    안 해서 단지명에 `&`나 `<`가 있으면 표가 깨졌다(웹은 Jinja가
+        #    자동으로 막아 주는데 이 리포트만 맨몸이었다).
+        name_cell = _e(r["name"])
+        for key, icon, tip in (("map_url", "🗺️", "네이버부동산 지도에서 위치 보기"),
+                               ("search_url", "🔍", "네이버에서 검색")):
+            if r.get(key):
+                name_cell += (f' <a href="{_e(r[key])}" target="_blank" rel="noopener" '
+                              f'style="text-decoration:none;font-size:12px" title="{tip}">{icon}</a>')
         rows.append(
             "<tr>"
-            f"<td>{name_cell}</td><td>{r['area']}㎡</td><td>{r['date']}</td>"
-            f"<td>{fmt_eok(r['amount'])}</td><td><span class='tag'>{r['label']}</span></td>"
+            f"<td>{name_cell}</td><td>{_e(r['area'])}㎡</td><td>{_e(r['date'])}</td>"
+            f"<td>{fmt_eok(r['amount'])}</td><td><span class='tag'>{_e(r['label'])}</span></td>"
             "</tr>"
         )
     return (
@@ -229,9 +246,10 @@ def render_report(*, building, dong, area, period, generated, confidence,
             width=880, height=270, min_width=720)
 
     return PAGE_TEMPLATE.format(
-        title=f"{building} 매도가 분석",
-        building=building, dong=dong, area=area, period=period, generated=generated,
-        naver_url=naver_url,
+        title=_e(f"{building} 매도가 분석"),
+        building=_e(building), dong=_e(dong), area=_e(area),
+        period=_e(period), generated=_e(generated),
+        naver_url=_e(naver_url),
         confidence=confidence,
         conservative=fmt_eok(conservative), realistic=fmt_eok(realistic),
         upper=fmt_eok(upper), ai_base=fmt_eok(ai_base), listing=fmt_eok(listing),
@@ -242,10 +260,10 @@ def render_report(*, building, dong, area, period, generated, confidence,
         n_total=n_total, n_close=n_close,
         comp_table=_comparables_table_html(comparables),
         price_chart=price_chart,
-        season_scope=season.get("scope_label", "-"),
+        season_scope=_e(season.get("scope_label", "-")),
         season_chart=_seasonality_chart_html(season),
         season_summary=_seasonality_summary(season),
-        trend_scope=trend.get("scope_label", "-"),
+        trend_scope=_e(trend.get("scope_label", "-")),
         trend_chart=_price_trend_chart_html(trend),
         trend_summary=_price_trend_summary(trend),
     )

@@ -202,3 +202,115 @@ def get_building_info(b_code: str, main_no: str, sub_no: str, is_mountain: bool 
     }
     _cache_put(key, info)
     return info
+
+
+# ── 72-16절 진단 — 이 응답에 **어떤 필드가 오는지** 직접 본다 ──────────────
+# ⚠️ 20절이 "검증된 필드 목록에 대지면적이 없다"고 적어둔 것을 여태 확인하지
+#    않은 채로 뒀다. 추측으로 필드명을 지어내지 않는다는 원칙(21·27·50-1절)은
+#    맞지만, **원칙은 "확인하지 말라"는 뜻이 아니다** — 실제 응답을 한 번
+#    보면 끝나는 일이었다.
+#
+# 왜 지금 필요한가: 백테스트 139건에서 **구축(1999년 이전)이 MAPE 17.1%로
+# 2000년대(8.1%)의 두 배**였고, 다중회귀로는 아무것도 설명되지 않았다
+# (R²=0.092). 즉 남은 오차는 가중치가 아니라 **없는 정보**다. 구축 빌라 값의
+# 상당 부분은 땅이므로 **대지지분**이 가장 유력한 후보이고, 그걸 구하려면
+# 대지면적·연면적 필드가 실제로 오는지부터 확인해야 한다.
+#
+# ⚠️ 50-1절 probe_land_use()와 같은 계약을 따른다 — 다섯 가지 실패를 `None`
+#    하나로 뭉개지 않고, 무엇이 막혔는지 화면에 그대로 보여준다.
+#    **서비스 키는 절대 담지 않는다**(6절 — 이 화면은 사용자가 캡처해서 보낸다).
+
+# 대지지분을 구하려면 이 셋이 필요하다 — 이름만 모아 두고 실제 응답과 대조한다.
+WANTED_FIELDS = {
+    "platArea": "대지면적 — 대지지분 계산의 분자",
+    "totArea": "연면적 — 대지지분 계산의 분모",
+    "archArea": "건축면적",
+    "vlRat": "용적률",
+    "bcRat": "건폐율",
+    "grndFlrCnt": "지상층수 (41절이 이미 쓴다)",
+    "hhldCnt": "세대수 (20절이 이미 쓴다)",
+    "useAprDay": "사용승인일 (20절이 이미 쓴다)",
+    "rideUseElvtCnt": "승용승강기 (20절이 이미 쓴다)",
+}
+# 위 목록에 없어도 넓이처럼 보이는 필드는 따로 짚어 준다.
+_AREA_HINTS = ("area", "ar", "rat", "cnt")
+
+
+def probe_building_register(b_code: str, main_no, sub_no, is_mountain: bool = False,
+                             timeout: int = 10) -> dict:
+    """건축물대장 표제부를 조회하되 **응답에 실제로 어떤 필드가 왔는지**까지 돌려준다.
+
+    반환: `{"status", "detail", "fields", "wanted", "area_like", "item", "sample"}`
+    - `status`: no_key / bad_input / call_failed / unreadable / not_found / ok
+    - `fields`: 응답 item의 모든 키 (정렬)
+    - `wanted`: WANTED_FIELDS 중 실제로 온 것 → 값
+    - `area_like`: 목록에 없지만 넓이·비율·개수처럼 보이는 필드 → 값
+    """
+    out = {"status": "ok", "detail": "", "fields": [], "wanted": {},
+           "area_like": {}, "item": {}, "sample": "", "url_shape": ""}
+
+    service_key = os.environ.get("MOLIT_SERVICE_KEY", "").strip()
+    if not service_key:
+        out.update(status="no_key",
+                   detail="MOLIT_SERVICE_KEY 환경변수가 서버에 없습니다.")
+        return out
+    if not b_code or len(str(b_code)) < 10:
+        out.update(status="bad_input",
+                   detail=f"법정동코드 10자리를 못 만들었습니다 (받은 값: {b_code!r}).")
+        return out
+
+    sigungu_cd = str(b_code)[:5]
+    bjdong_cd = str(b_code)[5:10]
+    plat_gb_cd = "1" if is_mountain else "0"
+    bun = str(main_no or "0").zfill(4)
+    ji = str(sub_no or "0").zfill(4)
+    out["url_shape"] = (f"{BASE_URL}?serviceKey=***&sigunguCd={sigungu_cd}"
+                        f"&bjdongCd={bjdong_cd}&platGbCd={plat_gb_cd}"
+                        f"&bun={bun}&ji={ji}&numOfRows=5&pageNo=1&_type=json")
+
+    params = (
+        f"serviceKey={service_key}&sigunguCd={sigungu_cd}&bjdongCd={bjdong_cd}"
+        f"&platGbCd={plat_gb_cd}&bun={bun}&ji={ji}&numOfRows=5&pageNo=1&_type=json"
+    )
+    req = Request(f"{BASE_URL}?{params}", headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8", "replace")
+    except (OSError, ValueError) as e:      # 54절 — 타임아웃·인코딩까지
+        out.update(status="call_failed",
+                   detail=f"{type(e).__name__}: {str(e)[:160]}".replace(service_key, "***"))
+        return out
+
+    # ⚠️ 키가 응답에 에코될 수 있으니 무조건 한 번 지운다(6절).
+    out["sample"] = raw[:1500].replace(service_key, "***")
+
+    try:
+        data = json.loads(raw)
+    except ValueError as e:
+        out.update(status="unreadable",
+                   detail=f"JSON이 아닙니다 ({type(e).__name__}) — XML 오류 페이지일 수 있습니다.")
+        return out
+
+    body = (data.get("response") or {}).get("body") or {}
+    items = body.get("items")
+    item = items.get("item") if isinstance(items, dict) else items
+    if isinstance(item, list):
+        item = item[0] if item else None
+    if not isinstance(item, dict) or not item:
+        out.update(status="not_found",
+                   detail="응답은 받았는데 표제부 항목이 비어 있습니다 — "
+                          "그 지번에 건축물대장이 없거나 지번이 틀렸습니다.")
+        return out
+
+    out["item"] = item
+    out["fields"] = sorted(item.keys())
+    out["wanted"] = {k: item[k] for k in WANTED_FIELDS if k in item}
+    out["area_like"] = {
+        k: v for k, v in sorted(item.items())
+        if k not in WANTED_FIELDS and any(h in k.lower() for h in _AREA_HINTS)
+    }
+    missing = [k for k in ("platArea", "totArea") if k not in item]
+    out["detail"] = ("대지지분을 구할 수 있습니다 (대지면적·연면적이 둘 다 옵니다)."
+                     if not missing else
+                     f"대지지분 계산에 필요한 {', '.join(missing)}가 응답에 없습니다.")
+    return out

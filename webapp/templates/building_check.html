@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block content %}
+{# 72-16절 진단 페이지 — 건축물대장 응답에 어떤 필드가 실제로 오는지 본다. #}
+<h1 style="font-size:22px; margin-bottom:6px">🏗️ 건축물대장 필드 점검</h1>
+<p class="muted" style="margin-top:0">
+  지번 주소를 넣으면 건축물대장을 실제로 조회해서
+  <b>어떤 항목이 오는지 전부</b> 보여줍니다.</p>
+
+<div class="card">
+  <ul class="note-lines" style="margin-top:0">
+    <li>백테스트에서 <b>구축(1999년 이전) 물건이 2000년대보다 두 배 크게 빗나갑니다</b>(17.1% 대 8.1%).</li>
+    <li>가중치로는 안 줄어듭니다 — 여덟 가지를 한꺼번에 넣고 재봐도 설명력이 0.09뿐이었어요.</li>
+    <li>남은 건 <b>가지고 있지 않은 정보</b>이고, 구축 빌라에서 가장 유력한 후보가 <b>대지지분</b>입니다.</li>
+    <li>대지지분을 구하려면 <b>대지면적·연면적</b>이 이 응답에 와야 합니다 — 그걸 한 번 확인하는 화면이에요.</li>
+  </ul>
+  <p class="muted">
+    서버에 인증키가 들어와 있나요 →
+    {% if key_set %}<b style="color:var(--primary-dark)">✅ 있습니다</b>
+    {% else %}<b style="color:#c0392b">❌ 없습니다</b> — Render → Environment에
+    <code>MOLIT_SERVICE_KEY</code>를 넣고 재배포되었는지 확인하세요.{% endif %}
+  </p>
+  <form method="get" action="/building-check">
+    <div class="field">
+      <div class="field-icon">📍</div>
+      <div style="flex:1">
+        <label for="address">지번 주소</label>
+        <input type="text" id="address" name="address" value="{{ address }}"
+               placeholder="서울특별시 강북구 수유동 468-202" required>
+      </div>
+    </div>
+    <button type="submit" class="cta-submit" style="margin-top:12px">조회해 보기 →</button>
+  </form>
+</div>
+
+{% if result %}
+{% set ok = result.status == 'ok' %}
+<div class="card">
+  <h3 style="margin-top:0">
+    {% if ok %}✅ 조회됐습니다{% else %}❌ 조회하지 못했습니다{% endif %}
+  </h3>
+  <p class="muted" style="margin-top:0">{{ result.address }}</p>
+
+  {% if not ok %}
+  <ul class="note-lines">
+    <li><b>{{
+      {'no_key': '서버에 인증키가 없습니다',
+       'bad_input': '주소에서 법정동코드를 못 만들었습니다',
+       'no_address': '주소를 좌표로 못 바꿨습니다',
+       'call_failed': '호출 자체가 실패했습니다',
+       'unreadable': '응답이 JSON이 아닙니다',
+       'not_found': '그 지번에 건축물대장이 없습니다',
+       'crashed': '화면에서 예상 못 한 오류가 났습니다'}.get(result.status, result.status)
+    }}</b></li>
+    {% if result.detail %}<li>{{ result.detail }}</li>{% endif %}
+  </ul>
+  {% else %}
+
+  <p style="margin:12px 0 4px"><b>{{ result.detail }}</b></p>
+  {% if result.land_ratio %}
+  <p class="muted" style="margin-top:0">
+    대지면적 ÷ 연면적 = <b>{{ result.land_ratio }}</b>
+    — 여기에 전용면적을 곱하면 그 호실의 대지지분(㎡)이 나옵니다.</p>
+  {% endif %}
+
+  <h3>대지지분 계산에 필요한 항목</h3>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>항목</th><th>값</th><th>무엇인가</th></tr></thead>
+      <tbody>
+      {% for key, desc in result.wanted_desc.items() %}
+        <tr>
+          <td><code>{{ key }}</code></td>
+          <td>{% if key in result.wanted %}<b>{{ result.wanted[key] }}</b>
+              {% else %}<span class="muted">— 안 옴</span>{% endif %}</td>
+          <td class="muted">{{ desc }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if result.area_like %}
+  <h3>그 밖에 넓이·비율·개수로 보이는 항목</h3>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>항목</th><th>값</th></tr></thead>
+      <tbody>
+      {% for key, val in result.area_like.items() %}
+        <tr><td><code>{{ key }}</code></td><td>{{ val }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <details style="margin-top:14px">
+    <summary style="cursor:pointer"><b>온 항목 전부 보기 ({{ result.fields|length }}개)</b></summary>
+    <div class="table-scroll" style="margin-top:10px">
+      <table>
+        <thead><tr><th>항목</th><th>값</th></tr></thead>
+        <tbody>
+        {% for key in result.fields %}
+          <tr><td><code>{{ key }}</code></td><td>{{ result.item[key] }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+  {% endif %}
+
+  {% if result.sample %}
+  <details style="margin-top:12px">
+    <summary style="cursor:pointer" class="muted">받은 응답 앞부분 보기</summary>
+    <pre style="white-space:pre-wrap; word-break:break-all; font-size:12px;
+                background:#f6f7f8; padding:10px; border-radius:8px; margin-top:8px">{{ result.sample }}</pre>
+  </details>
+  {% endif %}
+  {% if result.url_shape %}
+  <p class="muted" style="margin-top:10px; font-size:12px; word-break:break-all">
+    보낸 요청 모양: <code>{{ result.url_shape }}</code></p>
+  {% endif %}
+</div>
+{% endif %}
+
+<p class="muted" style="margin-top:16px">
+  ⚠️ 이 화면은 인증키를 절대 보여주지 않습니다 — 그대로 캡처해서 보내주셔도 됩니다.
+  <a href="/">← 매도가 계산으로 돌아가기</a>
+</p>
+{% endblock %}

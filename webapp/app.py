@@ -217,6 +217,49 @@ def land_use_check():
                            key_set=bool(os.environ.get("VWORLD_API_KEY", "").strip()))
 
 
+@app.route("/building-check", methods=["GET", "POST"], strict_slashes=False)
+def building_check():
+    """72-16절 — 건축물대장 응답에 **어떤 필드가 실제로 오는지** 보여준다.
+
+    20절이 "검증된 필드 목록에 대지면적이 없다"고 남겨둔 것을 끝내기 위한
+    화면이다. 백테스트 139건에서 구축(1999년 이전)이 MAPE 17.1%로 2000년대
+    (8.1%)의 두 배였고 다중회귀로는 아무것도 설명되지 않았다(R²=0.092) —
+    남은 오차는 가중치가 아니라 **없는 정보**이고, 구축 빌라에서 가장 유력한
+    후보가 대지지분이다. 그걸 구할 수 있는지가 이 한 번의 조회로 갈린다.
+    """
+    address = (request.values.get("address") or "").strip()
+    result = None
+    if address:
+        result = {"address": address}
+        try:
+            from geocode import geocode_full
+            from building_register import probe_building_register, WANTED_FIELDS
+
+            detail = geocode_full(address)
+            if not detail:
+                result["status"] = "no_address"
+                result["detail"] = "이 주소를 좌표로 바꾸지 못했어요 — 지번 주소인지 확인해 주세요."
+            else:
+                probe = probe_building_register(
+                    detail.get("b_code"), detail.get("main_no"),
+                    detail.get("sub_no"), bool(detail.get("is_mountain")))
+                result.update(probe)
+                result["wanted_desc"] = WANTED_FIELDS
+                # 대지지분 = 대지면적 × (전용면적 ÷ 연면적). 둘 다 오면 미리 계산해 본다.
+                plat, tot = probe.get("item", {}).get("platArea"), probe.get("item", {}).get("totArea")
+                try:
+                    plat, tot = float(plat), float(tot)
+                    if plat > 0 and tot > 0:
+                        result["land_ratio"] = round(plat / tot, 4)
+                except (TypeError, ValueError):
+                    pass
+        except Exception as e:          # 진단 페이지가 500을 내면 본말전도다
+            result["status"] = "crashed"
+            result["detail"] = f"{type(e).__name__}: {str(e)[:200]}"
+    return render_template("building_check.html", address=address, result=result,
+                           key_set=bool(os.environ.get("MOLIT_SERVICE_KEY", "").strip()))
+
+
 # ── 구간별 소요시간 계측 ───────────────────────────────────────────────
 # ⚠️ "로딩이 느리다"를 추측으로 고치지 않기 위한 장치다. 이 서비스의 대기시간은
 #    전부 네트워크라, **어느 구간이 느린지**를 알아야 고칠 방법이 갈린다:

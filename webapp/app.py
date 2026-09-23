@@ -66,6 +66,11 @@ PREFETCH_APT = True
 # 문제가 생기면 이 값만 False로 돌리면 예전 순서 그대로다.
 PREFETCH_ROWS = True
 
+# ⚡ 72-8절 — 건축물대장(국토부 1회)도 미리 던진다. 19절 입지 체크·34절 주변
+#    지형과 서로 기다릴 이유가 없는데 예전엔 줄줄이 돌았다(실측 0.6초 손해).
+#    문제가 생기면 이 값 하나로 예전 동작(그 자리에서 조회)으로 돌아간다.
+PREFETCH_BUILDING = True
+
 
 @app.context_processor
 def _inject_version():
@@ -622,24 +627,30 @@ def estimate():
     except Exception:
         _rows_future = _apt_future = None   # 실패는 조용히 — 아래에서 직접 부른다
 
-    building = None
+    # ⚡ **건축물대장도 미리 던진다(72-8절).** 국토부 호출 1회뿐인데 메인
+    #    스레드에서 줄줄이 기다리느라 실측 3.18초 중 0.6초를 혼자 먹고 있었다.
+    #    필요한 건 좌표 조회로 이미 얻은 법정동코드·본번·부번뿐이라 아래
+    #    19절 입지 체크·34절 주변 지형과 **서로 기다릴 이유가 없다.**
+    # ⚠️ 입지·지형(둘 다 카카오)은 **서로 겹치게 만들지 않았다** — 22절이
+    #    적어둔 대로 카카오 로컬은 초당 호출 제한이 있어서, 각자 워커 8개를
+    #    쓰는 둘을 동시에 돌리면 순간 16개가 나간다. 건축물대장은 국토부라
+    #    그 걱정이 없다.
+    _building_future = None
     try:
-        from building_register import get_building_info
+        from concurrent.futures import ThreadPoolExecutor as _TPE
 
-        building_info = _timer.measure("건물대장", lambda: get_building_info(
-            subject_detail.get("b_code"), subject_detail.get("main_no"),
-            subject_detail.get("sub_no"), subject_detail.get("is_mountain", False),
-        ))
-        if building_info:
-            building = {
-                "elevator": f"있음 ({building_info['elevator_count']}대)" if building_info["has_elevator"] else "없음",
-                "has_elevator": building_info["has_elevator"],  # 41절 환금성 진단이 쓴다
-                "household_count": building_info.get("household_count"),
-                "approval_date": building_info.get("approval_date"),
-                "ground_floors": building_info.get("ground_floors"),
-            }
-    except RuntimeError:
-        building = None  # 건축물대장 조회는 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
+        from building_register import get_building_info as _get_building_info
+
+        if PREFETCH_BUILDING:
+            _bpool = _TPE(max_workers=1)
+            _building_future = _bpool.submit(
+                _get_building_info,
+                subject_detail.get("b_code"), subject_detail.get("main_no"),
+                subject_detail.get("sub_no"), subject_detail.get("is_mountain", False))
+            _bpool.shutdown(wait=False)
+    except Exception:
+        _building_future = None
+
 
     from estimate_price import (CONDITION_LABELS, CONDITION_MULTIPLIER,
                                  INSPECTION_CHECKLIST, INSPECTION_FIELDS,
@@ -685,6 +696,30 @@ def estimate():
             ]
     except RuntimeError:
         terrain_places = []  # 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
+
+    # 위에서 미리 던져 둔 건축물대장을 여기서 수거한다(72-8절).
+    building = None
+    try:
+        from building_register import get_building_info
+
+        def _building_call():
+            if _building_future is not None:
+                return _building_future.result()
+            return get_building_info(
+                subject_detail.get("b_code"), subject_detail.get("main_no"),
+                subject_detail.get("sub_no"), subject_detail.get("is_mountain", False))
+
+        building_info = _timer.measure("건물대장", _building_call)
+        if building_info:
+            building = {
+                "elevator": f"있음 ({building_info['elevator_count']}대)" if building_info["has_elevator"] else "없음",
+                "has_elevator": building_info["has_elevator"],  # 41절 환금성 진단이 쓴다
+                "household_count": building_info.get("household_count"),
+                "approval_date": building_info.get("approval_date"),
+                "ground_floors": building_info.get("ground_floors"),
+            }
+    except RuntimeError:
+        building = None  # 건축물대장 조회는 참고 정보일 뿐 — 실패해도 매도가 계산은 계속 진행한다
 
     def _direction(delta, unit="p"):
         if delta is None:

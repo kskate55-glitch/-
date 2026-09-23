@@ -2358,3 +2358,71 @@ class TestNanAndInfinityNeverReachTheCalculation(unittest.TestCase):
             self.assertFalse(ep.is_usable_number(value), f"{value}를 통과시켰습니다")
         for value in (1.0, 69.27, 1e9):
             self.assertTrue(ep.is_usable_number(value), f"{value}를 막았습니다")
+
+
+class TestTerrainLookupsRunTogether(unittest.TestCase):
+    """CLAUDE.md 72-8절 — 34절 주변 지형의 키워드 세 개는 동시에 나가야 한다.
+
+    ⚠️ 예전엔 산 → 강 → 천을 **줄줄이** 기다렸다(실측 0.45초). 서로 의존이
+    없는 호출이라 그냥 겹치면 되는데, 19절 입지 체크만 병렬로 고쳐 두고
+    여기는 빠뜨려 있었다.
+
+    ⚠️ "빠른지"를 시간으로만 재면 느린 기계에서 깜빡인다 — **동시에 떠 있는
+    호출 수**를 세서 고정한다.
+    """
+
+    def _run_with_counting_lookup(self, delay=0.05):
+        import threading
+        import time as _time
+
+        state = {"now": 0, "peak": 0}
+        lock = threading.Lock()
+
+        def fake_nearby(lat, lon, keyword, radius_m=None, name_suffix=None):
+            with lock:
+                state["now"] += 1
+                state["peak"] = max(state["peak"], state["now"])
+            _time.sleep(delay)
+            with lock:
+                state["now"] -= 1
+            return {"name": f"OO{keyword}", "distance_m": 400}
+
+        import geocode
+        saved = geocode.nearby_place
+        geocode.nearby_place = fake_nearby
+        try:
+            started = _time.monotonic()
+            result = ep.compute_terrain_check((37.638, 127.025))
+            return result, state["peak"], _time.monotonic() - started
+        finally:
+            geocode.nearby_place = saved
+
+    def test_all_three_keywords_are_in_flight_at_once(self):
+        _result, peak, _elapsed = self._run_with_counting_lookup()
+        self.assertEqual(peak, 3, f"동시에 떠 있던 호출이 {peak}개입니다 — 줄줄이 돌고 있습니다")
+
+    def test_the_result_shape_is_unchanged(self):
+        result, _peak, _elapsed = self._run_with_counting_lookup()
+        self.assertEqual(set(result), {"mountain", "mountain_error", "river", "river_error"})
+        self.assertEqual(result["mountain"]["name"], "OO산")
+        # 강·천 중 가까운 쪽이 하천/강으로 잡힌다 (둘 다 400m면 먼저 들어온 쪽)
+        self.assertIn(result["river"]["name"], ("OO강", "OO천"))
+        self.assertIsNone(result["mountain_error"])
+
+    def test_one_failing_keyword_does_not_lose_the_others(self):
+        import geocode
+
+        def flaky(lat, lon, keyword, radius_m=None, name_suffix=None):
+            if keyword == "강":
+                raise RuntimeError("카카오 조회 실패")
+            return {"name": f"OO{keyword}", "distance_m": 300}
+
+        saved = geocode.nearby_place
+        geocode.nearby_place = flaky
+        try:
+            result = ep.compute_terrain_check((37.638, 127.025))
+        finally:
+            geocode.nearby_place = saved
+        self.assertEqual(result["mountain"]["name"], "OO산")
+        self.assertEqual(result["river"]["name"], "OO천", "성공한 키워드 결과가 사라졌습니다")
+        self.assertIsNone(result["river_error"], "하나가 성공했으면 오류로 덮지 않는다")

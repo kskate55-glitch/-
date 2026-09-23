@@ -2644,23 +2644,33 @@ def compute_terrain_check(subject_coord: tuple[float, float]) -> dict:
 
     result = {"mountain": None, "mountain_error": None, "river": None, "river_error": None}
 
-    try:
-        result["mountain"] = nearby_place(subject_coord[0], subject_coord[1], "산",
-                                           radius_m=TERRAIN_SEARCH_RADIUS_M, name_suffix="산")
-    except RuntimeError as e:
-        result["mountain_error"] = str(e)
+    # ⚡ 72-8절 — 키워드 세 개를 줄줄이 기다리고 있었다(실측 0.45초). 서로
+    #    의존이 없어 19절 입지 체크와 같은 방식으로 병렬로 던진다. 같은
+    #    시점에 나가는 카카오 호출은 최대 3개라 22절이 경고한 초당 제한
+    #    관점에서도 기존(입지 체크 8개)보다 적다.
+    def _one(item):
+        keyword, suffix = item
+        try:
+            return keyword, nearby_place(subject_coord[0], subject_coord[1], keyword,
+                                          radius_m=TERRAIN_SEARCH_RADIUS_M,
+                                          name_suffix=suffix), None
+        except RuntimeError as e:
+            return keyword, None, str(e)
+
+    targets = [("산", "산"), ("강", "강"), ("천", "천")]
+    with ThreadPoolExecutor(max_workers=len(targets)) as executor:
+        found = list(executor.map(_one, targets))
 
     river_candidates = []
     river_error = None
-    for keyword, suffix in [("강", "강"), ("천", "천")]:
-        try:
-            r = nearby_place(subject_coord[0], subject_coord[1], keyword,
-                             radius_m=TERRAIN_SEARCH_RADIUS_M, name_suffix=suffix)
-        except RuntimeError as e:
-            river_error = str(e)
+    for keyword, place, error in found:
+        if keyword == "산":
+            result["mountain"], result["mountain_error"] = place, error
             continue
-        if r:
-            river_candidates.append(r)
+        if error:
+            river_error = error
+        elif place:
+            river_candidates.append(place)
     if river_candidates:
         result["river"] = min(river_candidates, key=lambda r: r["distance_m"])
     elif river_error and not river_candidates:

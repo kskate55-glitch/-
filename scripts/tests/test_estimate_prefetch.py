@@ -64,8 +64,9 @@ class TestPrefetchDoesNotChangeTheAnswer(unittest.TestCase):
          data_source.get_trade_rows, data_source.get_apt_rows,
          building_register.get_building_info) = cls._saved
 
-    def _numbers(self, rows_flag, apt_flag):
+    def _numbers(self, rows_flag, apt_flag, building_flag=True):
         self.webapp.PREFETCH_ROWS, self.webapp.PREFETCH_APT = rows_flag, apt_flag
+        self.webapp.PREFETCH_BUILDING = building_flag
         resp = self.client.post("/estimate", data=FORM)
         self.assertEqual(resp.status_code, 200)
         html = resp.get_data(as_text=True)
@@ -81,8 +82,31 @@ class TestPrefetchDoesNotChangeTheAnswer(unittest.TestCase):
 
     def test_the_flags_exist_so_this_can_be_turned_off(self):
         """문제가 생기면 코드를 되돌리지 않고 플래그만 끌 수 있어야 한다(60절 원칙)."""
-        for flag in ("PREFETCH_ROWS", "PREFETCH_APT"):
+        for flag in ("PREFETCH_ROWS", "PREFETCH_APT", "PREFETCH_BUILDING"):
             self.assertIsInstance(getattr(self.webapp, flag), bool)
+
+    def test_prefetching_the_building_register_changes_nothing(self):
+        """72-8절 — 건축물대장을 미리 던져도 화면 숫자는 그대로여야 한다."""
+        self.assertEqual(self._numbers(True, True, building_flag=True),
+                         self._numbers(True, True, building_flag=False),
+                         "건축물대장 미리받기가 숫자를 바꿨다")
+
+    def test_the_building_register_is_asked_exactly_once(self):
+        """미리 던진 것과 그 자리에서 부른 것이 **둘 다** 나가면 국토부 호출이
+        요청마다 하나씩 늘어난다 — 48-6절 한도 문제에 그대로 얹힌다."""
+        import building_register
+        saved = building_register.get_building_info
+        try:
+            for flag in (True, False):
+                calls = []
+                building_register.get_building_info = lambda *a, **k: (calls.append(a), None)[1]
+                self.webapp.PREFETCH_BUILDING = flag
+                self.assertEqual(self.client.post("/estimate", data=FORM).status_code, 200)
+                self.assertEqual(len(calls), 1,
+                                 f"PREFETCH_BUILDING={flag}인데 건축물대장을 {len(calls)}번 불렀다")
+        finally:
+            building_register.get_building_info = saved
 
     def tearDown(self):
         self.webapp.PREFETCH_ROWS = self.webapp.PREFETCH_APT = True
+        self.webapp.PREFETCH_BUILDING = True

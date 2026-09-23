@@ -10,3 +10,6 @@ services:
         sync: false
       - key: KAKAO_REST_API_KEY
         sync: false
+      # (선택) 정비구역 확인용 브이월드 키 — 50-1절. 없으면 그 카드만 생략된다.
+      - key: VWORLD_API_KEY
+        sync: false

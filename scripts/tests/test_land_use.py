@@ -92,18 +92,18 @@ class TestParseZoneNames(unittest.TestCase):
 
 
 class TestGetLandUseZonesIsSafe(unittest.TestCase):
-    """⚠️ 엔드포인트가 아직 비어 있으므로, **아무것도 안 하고 조용히 None**이어야 한다."""
+    """키가 없거나 조회가 실패해도 **조용히 None** — 계산을 절대 막지 않는다."""
 
     def setUp(self):
         self._orig_url = land_use.LAND_USE_BASE_URL
-        self._orig_key = os.environ.get("MOLIT_SERVICE_KEY")
+        self._orig_key = os.environ.get("VWORLD_API_KEY")
 
     def tearDown(self):
         land_use.LAND_USE_BASE_URL = self._orig_url
         if self._orig_key is None:
-            os.environ.pop("MOLIT_SERVICE_KEY", None)
+            os.environ.pop("VWORLD_API_KEY", None)
         else:
-            os.environ["MOLIT_SERVICE_KEY"] = self._orig_key
+            os.environ["VWORLD_API_KEY"] = self._orig_key
 
     def test_no_endpoint_means_no_call(self):
         land_use.LAND_USE_BASE_URL = ""
@@ -116,9 +116,9 @@ class TestGetLandUseZonesIsSafe(unittest.TestCase):
             from urllib.request import urlopen as real
             land_use.urlopen = real
 
-    def test_no_api_key_means_no_call(self):
+    def test_no_vworld_key_means_no_call(self):
         land_use.LAND_USE_BASE_URL = "https://example.invalid/getLandUse"
-        os.environ.pop("MOLIT_SERVICE_KEY", None)
+        os.environ.pop("VWORLD_API_KEY", None)
         called = []
         land_use.urlopen = lambda *a, **k: called.append(1)
         try:
@@ -131,7 +131,7 @@ class TestGetLandUseZonesIsSafe(unittest.TestCase):
     def test_network_failure_returns_none(self):
         from urllib.error import URLError
         land_use.LAND_USE_BASE_URL = "https://example.invalid/getLandUse"
-        os.environ["MOLIT_SERVICE_KEY"] = "test-key"
+        os.environ["VWORLD_API_KEY"] = "test-key"
 
         def boom(*a, **k):
             raise URLError("죽음")
@@ -142,6 +142,61 @@ class TestGetLandUseZonesIsSafe(unittest.TestCase):
         finally:
             from urllib.request import urlopen as real
             land_use.urlopen = real
+
+
+class TestRequestShape(unittest.TestCase):
+    """요청 URL이 브이월드 NED 규격 그대로인지 고정한다.
+
+    ⚠️ MOLIT 계열 API(`serviceKey`/`type=json`)와 파라미터 이름이 다르다 —
+    헷갈려서 바꿔 쓰면 조용히 전부 실패한다.
+    """
+
+    def setUp(self):
+        self._orig_key = os.environ.get("VWORLD_API_KEY")
+        self._orig_url = land_use.LAND_USE_BASE_URL
+        self._real = land_use.urlopen
+
+    def tearDown(self):
+        land_use.urlopen = self._real
+        land_use.LAND_USE_BASE_URL = self._orig_url
+        if self._orig_key is None:
+            os.environ.pop("VWORLD_API_KEY", None)
+        else:
+            os.environ["VWORLD_API_KEY"] = self._orig_key
+
+    def test_default_endpoint_is_vworld_ned(self):
+        self.assertEqual(land_use.DEFAULT_LAND_USE_URL,
+                         "https://api.vworld.kr/ned/data/getLandUseAttr")
+
+    def test_request_uses_vworld_parameter_names(self):
+        os.environ["VWORLD_API_KEY"] = "vw-test-key"
+        seen = {}
+
+        class _Resp:
+            def read(self):
+                return b'{"landUses": {"field": [{"prposAreaDstrcCodeNm": "\uc815\ube44\uad6c\uc5ed"}]}}'
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        def fake(req, timeout=None):
+            seen["url"] = req.full_url
+            return _Resp()
+
+        land_use.urlopen = fake
+        zones = land_use.get_land_use_zones("1126010200", "83", "8")
+
+        self.assertEqual(zones, ["\uc815\ube44\uad6c\uc5ed"])
+        url = seen["url"]
+        self.assertIn("key=vw-test-key", url)
+        self.assertIn("pnu=1126010200100830008", url)
+        self.assertIn("format=json", url)
+        # MOLIT 규격과 섞이지 않았는지
+        self.assertNotIn("serviceKey=", url)
+        self.assertNotIn("type=json", url)
 
 
 if __name__ == "__main__":

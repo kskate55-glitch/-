@@ -38,7 +38,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lawd_lookup
 from estimate_price import (SALE_CALIBRATION_FACTOR, compute_scenarios, dedupe,
                             top_weight_share,
-                            find_comparables, load_transactions, to_amount_man)
+                            find_comparables, load_transactions, to_amount_man,
+                            building_identity)
 from geocode import geocode
 
 # .env에 적어둔 키를 환경변수로 올린다 (6절) — 이미 설정된 값은 안 덮어쓴다.
@@ -153,6 +154,9 @@ def estimate_as_of(rows: list[dict], target: dict, radius_m: float,
         area_tolerance_pct=area_tolerance_pct,
         build_year_tolerance=build_year_tolerance,
         this_month=target_m,
+        # 51-1절 — 대상이 실거래 행이라 지번이 그대로 있다. 좌표 20m 폴백이
+        # 아니라 **진짜 같은 건물**만 잡는다.
+        subject_building=building_identity(target.get("umdNm"), target.get("jibun")),
     )
     if len(filtered) < MIN_COMPARABLES:
         return {"n_comparables": len(filtered), "skipped": "표본부족"}

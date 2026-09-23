@@ -507,12 +507,21 @@ def estimate():
     #    1.0 / 13개월 이상 0.4)가 이미 하고 있다.
     # ⛔ 5절 적응형 반경은 껐다(사용자 요청) — 입력한 반경이 곧 계산 범위다.
     #    자세한 이유는 estimate_price.find_comparables_adaptive() 독스트링 참고.
+    # 51-1절 — 같은 건물 판별을 좌표 20m가 아니라 지번으로 한다. 카카오
+    # 지오코딩이 이미 준 본번/부번을 재사용하므로 추가 호출이 0이고,
+    # 못 만들면 None이라 예전 폴백(20m)으로 돌아간다.
+    from estimate_price import building_identity_parts
+    subject_building = building_identity_parts(
+        target_dong, subject_detail.get("main_no"), subject_detail.get("sub_no"),
+        bool(subject_detail.get("is_mountain")))
+
     filtered = find_comparables(
         rows, subject_coord, area, floor, build_year,
         radius, year_min, this_year, gu_filter=None,
         area_tolerance_pct=area_tolerance_pct,
         build_year_tolerance=build_year_tolerance,
-        this_month=this_month)
+        this_month=this_month,
+        subject_building=subject_building)
     if not filtered:
         return render_template(
             "index.html",

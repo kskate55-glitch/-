@@ -1887,3 +1887,90 @@ class TestTiersShareTheScenarioDistribution(unittest.TestCase):
         tiers = ep.compute_price_tiers(self._rows())
         vals = [tiers[k] for k in ("urgent", "d30", "d60", "normal", "test")]
         self.assertEqual(vals, sorted(vals))
+
+
+class TestBuildingIdentity(unittest.TestCase):
+    """51-1절 — 같은 건물 판별을 좌표 20m가 아니라 지번으로."""
+
+    def test_jibun_notation_variants_normalize_together(self):
+        """5절이 지번 문자열 비교를 포기했던 이유가 이 흔들림이었다."""
+        self.assertEqual(ep.normalize_jibun("123-4"), ep.normalize_jibun("0123-0004"))
+        self.assertEqual(ep.normalize_jibun("123"), (False, 123, 0))
+        self.assertEqual(ep.normalize_jibun("123-0"), (False, 123, 0))
+
+    def test_mountain_parcel_is_a_different_place(self):
+        """⚠️ '산 123-4'와 '123-4'는 **다른 필지다** — 같은 건물로 보면 안 된다."""
+        self.assertNotEqual(ep.normalize_jibun("산 123-4"), ep.normalize_jibun("123-4"))
+
+    def test_unreadable_jibun_is_none(self):
+        for bad in (None, "", "   ", "번지없음"):
+            self.assertIsNone(ep.normalize_jibun(bad), bad)
+
+    def test_identity_includes_the_dong(self):
+        """지번 번호는 동마다 반복되므로 동 이름이 반드시 들어가야 한다."""
+        a = ep.building_identity("수유동", "468-202")
+        b = ep.building_identity("미아동", "468-202")
+        self.assertIsNotNone(a)
+        self.assertNotEqual(a, b)
+
+    def test_row_identity_matches_geocoded_subject(self):
+        """실거래 행(동+지번)과 카카오 지오코딩(본번/부번)이 같은 키를 만든다."""
+        row = ep.building_identity("수유동", "468-202")
+        subject = ep.building_identity_parts("수유동", "468", "202", False)
+        self.assertEqual(row, subject)
+
+    def test_missing_pieces_are_none(self):
+        self.assertIsNone(ep.building_identity(None, "468-202"))
+        self.assertIsNone(ep.building_identity("수유동", None))
+        self.assertIsNone(ep.building_identity_parts("수유동", "0", "0", False))
+        self.assertIsNone(ep.building_identity_parts(None, "468", "202", False))
+
+
+class TestSameBuildingUsesJibunNotDistance(unittest.TestCase):
+    """⚠️ 실제로 겪은 설계 결함 — 빌라 밀집지에서 바로 옆 동이 20m 안에
+    들어와 **남의 건물이 동일건물 보너스를 받고 있었다.**"""
+
+    def _rows(self):
+        # 같은 좌표(=거리 0m)에 있지만 지번이 다른 옆 건물 2건 + 진짜 같은 건물 2건
+        def row(jibun, amount):
+            return {"umdNm": "수유동", "jibun": jibun, "mhouseNm": "X",
+                    "dealYear": "2026", "dealMonth": "8", "dealDay": "1",
+                    "dealAmount": f"{amount:,}", "excluUseAr": "50.0", "floor": "3",
+                    "buildYear": "2010", "sggCd": "11305", "cdealType": ""}
+        return [row("468-202", 20000), row("468-202", 20500),
+                row("468-100", 21000), row("468-101", 21500)]
+
+    def _run(self, subject_building):
+        import geocode as geo
+        # ⚠️ `find_comparables()`는 호출할 때마다 함수 안에서
+        #    `from geocode import geocode`로 새로 가져온다 — 그래서 바꿔야 할 건
+        #    **`geocode` 모듈의 속성**이다(48절에 적어둔 함정).
+        # 네 건 모두 대상과 같은 좌표 — 거리로만 보면 전부 "같은 건물"이 된다.
+        orig = geo.geocode
+        geo.geocode = lambda *a, **k: (37.5, 127.0)
+        try:
+            return ep.find_comparables(
+                self._rows(), (37.5, 127.0), 50.0, 3, "2010", 400, 2025, 2026, None,
+                this_month=9, subject_building=subject_building)
+        finally:
+            geo.geocode = orig
+
+    def test_distance_fallback_marks_everything(self):
+        """폴백(지번 미지정)일 때는 예전처럼 거리로만 판정한다."""
+        out = self._run(None)
+        self.assertEqual(sum(1 for r in out if r.get("_same_building")), 4)
+
+    def test_jibun_marks_only_the_real_building(self):
+        subject = ep.building_identity("수유동", "468-202")
+        out = self._run(subject)
+        marked = [r for r in out if r.get("_same_building")]
+        self.assertEqual(len(marked), 2, "옆 건물까지 같은 건물로 잡혔다")
+        self.assertTrue(all(r["jibun"] == "468-202" for r in marked))
+
+    def test_neighbours_lose_the_bonus(self):
+        """옆 건물은 거리 점수는 그대로 받되 ×2 보너스는 못 받는다."""
+        out = self._run(ep.building_identity("수유동", "468-202"))
+        same = [r for r in out if r.get("_same_building")]
+        other = [r for r in out if not r.get("_same_building")]
+        self.assertGreater(min(r["_weight"] for r in same),
+                           max(r["_weight"] for r in other))

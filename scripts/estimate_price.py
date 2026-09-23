@@ -347,7 +347,8 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
                       amount_field: str = "dealAmount",
                       area_tolerance_pct: float = 0.15, build_year_tolerance: int = 4,
                       this_month: int | None = None,
-                      monthly_trend_rate: float | None = None) -> list[dict]:
+                      monthly_trend_rate: float | None = None,
+                      subject_building: tuple | None = None) -> list[dict]:
     """CLAUDE.md 5절 규칙: 실제 반경(기본 400m) 안의 유사면적 매물만 비교 대상으로
     삼고, 거리·면적·층·준공년도 종합 유사도(`similarity_score()`)와 계약
     시점 최근성(`weight_for_recency()`)으로 가중치를 준다.
@@ -490,7 +491,15 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             r["_similarity_score"] = score
             r["_dealing_gbn"] = dealing_gbn
             r["_weight"] = recency_weight * SIMILARITY_EMPHASIS_CURVE(score) * dealing_weight
-            if distance <= SAME_BUILDING_DISTANCE_M:
+            # 51-1절 — 같은 건물인지는 **지번으로 판별**한다. 좌표 20m는
+            # 대상 물건의 지번을 모를 때만 쓰는 폴백이다: 빌라 밀집지에서는
+            # 바로 옆 동도 20m 안에 들어와서 **남의 건물을 같은 건물로
+            # 잘못 잡는다**(설계 결함이었다).
+            if subject_building is not None:
+                is_same = building_identity(r.get("umdNm"), r.get("jibun")) == subject_building
+            else:
+                is_same = distance <= SAME_BUILDING_DISTANCE_M
+            if is_same:
                 # ⚠️ 보너스는 여기서 바로 곱하지 않는다 — **몇 건인지 다 세고 난 뒤**
                 #    아래에서 한꺼번에 적용한다(51절). 한 건뿐이면 "건물 시세"가
                 #    아니라 "그 한 호실 가격"이라 보너스를 주지 않는다.
@@ -836,6 +845,49 @@ def describe_comparable_similarity(subject_area: float, subject_floor: int | Non
     parts.append(f"{row_build_year}년식" if row_build_year.isdigit() else "준공년도 정보없음")
 
     return " · ".join(parts)
+
+
+def normalize_jibun(jibun) -> tuple[bool, int, int] | None:
+    """지번 문자열 → (산 여부, 본번, 부번). 못 읽으면 `None`.
+
+    `'123-4'` / `'산 123-4'` / `'0123-0004'` / `'123'` 을 모두 같은 형태로
+    맞춘다 — 5절이 애초에 지번 문자열 비교를 포기했던 이유가 이 표기 흔들림
+    이었는데, 숫자만 뽑아 정수로 만들면 안정적으로 잡힌다.
+    """
+    if not jibun:
+        return None
+    text = str(jibun)
+    nums = re.findall(r"\d+", text)
+    if not nums:
+        return None
+    # ⚠️ '산'은 **다른 필지다** — '산 123-4'와 '123-4'를 같은 건물로 보면 안 된다.
+    return ("산" in text, int(nums[0]), int(nums[1]) if len(nums) > 1 else 0)
+
+
+def building_identity(dong, jibun) -> tuple | None:
+    """실거래 행 하나의 건물 신원 = (동 이름, 산 여부, 본번, 부번).
+
+    ⚠️ **동 이름을 반드시 같이 넣는다** — 지번 번호는 동마다 반복된다.
+    """
+    j = normalize_jibun(jibun)
+    if not j or not dong:
+        return None
+    return (str(dong).strip(), *j)
+
+
+def building_identity_parts(dong, main_no, sub_no, is_mountain=False) -> tuple | None:
+    """대상 물건용 — 카카오 지오코딩이 준 본번/부번으로 같은 신원을 만든다
+    (`geocode_full()`의 `main_no`/`sub_no`/`is_mountain`)."""
+    if not dong:
+        return None
+    try:
+        main = int(str(main_no).strip() or 0)
+        sub = int(str(sub_no).strip() or 0)
+    except (TypeError, ValueError):
+        return None
+    if main <= 0:
+        return None
+    return (str(dong).strip(), bool(is_mountain), main, sub)
 
 
 def weighted_quantile(pairs: list[tuple[float, float]], q: float) -> float | None:
@@ -2873,12 +2925,20 @@ def main():
     # ⛔ 5절 적응형 반경도 껐다(사용자 요청) — 지정한 반경이 곧 계산 범위다.
     #    자세한 이유는 find_comparables_adaptive() 독스트링 참고.
     effective_radius = args.radius
+    # 51-1절 — 같은 건물 판별에 쓸 대상 물건의 지번 신원. 카카오 지오코딩이
+    # 이미 준 본번/부번을 그대로 쓰므로 **추가 호출이 0**이다. 못 만들면
+    # None이라 예전처럼 좌표 20m 폴백으로 돌아간다.
+    subject_building = building_identity_parts(
+        args.dong, subject_detail.get("main_no"), subject_detail.get("sub_no"),
+        bool(subject_detail.get("is_mountain")))
+
     filtered = find_comparables(
         rows, subject_coord, args.area, args.floor, args.build_year,
         args.radius, year_min, this_year, gu_filter,
         area_tolerance_pct=area_tolerance_pct,
         build_year_tolerance=args.build_year_tolerance,
-        this_month=this_month)
+        this_month=this_month,
+        subject_building=subject_building)
 
     if not filtered:
         print(f"[안내] 반경 {args.radius:.0f}m 안에서 유사면적 조건에 맞는 비교거래를 찾지 못했습니다.")

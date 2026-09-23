@@ -151,11 +151,31 @@ class _PhaseTimer:
 #    주소가 겹쳐 캐시가 차므로 두 번째 건부터는 훨씬 빠르다.
 # ⚠️ 48-5절 — "고친 게 지금 사이트에 올라간 건지" 화면에서 바로 확인하려고 둔다.
 # 사용자가 백테스트를 돌린 뒤 "이게 고치기 전 코드냐 후 코드냐"를 알 방법이
-# 전혀 없어서 실제로 옛 코드로 27분을 돌린 적이 있다. Render가 배포할 때
-# 넣어주는 커밋 해시를 그대로 읽어 화면 맨 아래에 찍는다(없으면 "로컬").
+# 전혀 없어서 실제로 옛 코드로 27분을 돌린 적이 있다. 배포할 때 들어오는
+# 커밋 해시를 읽어 화면 맨 아래에 찍는다(없으면 "local").
+#
+# ⚠️ 63절 — 호스팅마다 넣어주는 환경변수 이름이 다르다. 한 곳만 보면 **서버를
+#    옮기는 순간 버전 표시가 조용히 사라지고**, 하필 그때가 "어느 코드로 도는
+#    건지"를 제일 알아야 하는 시점이다. 아는 이름을 순서대로 훑고, 마지막
+#    수단으로 직접 넣을 수 있는 APP_VERSION도 본다.
+_VERSION_ENVS = (
+    "APP_VERSION",              # 어디서든 직접 지정 (최후의 수단)
+    "RENDER_GIT_COMMIT",        # Render
+    "RAILWAY_GIT_COMMIT_SHA",   # Railway
+    "VERCEL_GIT_COMMIT_SHA",    # Vercel
+    "FLY_IMAGE_REF",            # Fly.io
+    "HEROKU_SLUG_COMMIT",       # Heroku
+    "SOURCE_VERSION",           # 여러 빌드팩 공통
+    "GIT_COMMIT", "COMMIT_SHA",
+)
+
+
 def _deploy_version() -> str:
-    commit = (os.environ.get("RENDER_GIT_COMMIT") or "").strip()
-    return commit[:7] if commit else "local"
+    for name in _VERSION_ENVS:
+        value = (os.environ.get(name) or "").strip()
+        if value:
+            return value[-7:] if name == "FLY_IMAGE_REF" else value[:7]
+    return "local"
 
 
 BACKTEST_MAX_CASES = 20

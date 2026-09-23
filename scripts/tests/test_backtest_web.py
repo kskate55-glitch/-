@@ -201,3 +201,49 @@ class TestDeployVersion(unittest.TestCase):
     def test_blank_env_is_local(self):
         os.environ["RENDER_GIT_COMMIT"] = "   "
         self.assertEqual(self.web._deploy_version(), "local")
+
+
+class TestVersionSurvivesAHostChange(unittest.TestCase):
+    """⚠️ 63절 — 호스팅마다 커밋 해시를 넣어주는 환경변수 이름이 다르다.
+    한 곳만 보면 **서버를 옮기는 순간 버전 표시가 조용히 사라지는데**, 하필
+    그때가 "지금 어느 코드로 도는지"를 제일 알아야 하는 시점이다
+    (48-5절에서 실제로 옛 코드로 27분을 돌렸다)."""
+
+    def setUp(self):
+        import app as web
+        self.web = web
+        self._saved = {n: os.environ.get(n) for n in web._VERSION_ENVS}
+        for n in web._VERSION_ENVS:
+            os.environ.pop(n, None)
+
+    def tearDown(self):
+        for n, v in self._saved.items():
+            if v is None:
+                os.environ.pop(n, None)
+            else:
+                os.environ[n] = v
+
+    def test_each_known_host_variable_is_read(self):
+        for name in ("RENDER_GIT_COMMIT", "RAILWAY_GIT_COMMIT_SHA",
+                     "VERCEL_GIT_COMMIT_SHA", "HEROKU_SLUG_COMMIT",
+                     "SOURCE_VERSION", "GIT_COMMIT", "COMMIT_SHA"):
+            with self.subTest(host=name):
+                os.environ[name] = "abcdef1234567890"
+                try:
+                    self.assertEqual(self.web._deploy_version(), "abcdef1")
+                finally:
+                    os.environ.pop(name, None)
+
+    def test_app_version_wins_so_it_can_always_be_set_by_hand(self):
+        os.environ["RENDER_GIT_COMMIT"] = "1111111111"
+        os.environ["APP_VERSION"] = "2222222222"
+        self.assertEqual(self.web._deploy_version(), "2222222")
+
+    def test_nothing_set_still_says_local(self):
+        self.assertEqual(self.web._deploy_version(), "local")
+
+    def test_blank_values_are_skipped_not_shown(self):
+        """빈 문자열이 들어오면 그걸 버전이라고 찍으면 안 된다."""
+        os.environ["RENDER_GIT_COMMIT"] = "   "
+        os.environ["GIT_COMMIT"] = "cafebabe"
+        self.assertEqual(self.web._deploy_version(), "cafebab")

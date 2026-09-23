@@ -35,6 +35,8 @@ from urllib.request import Request
 # 호출마다 연결을 새로 맺던 예전 방식은 그 왕복을 매번 다시 치렀다.
 # HTTP_POOL=0 으로 언제든 예전 동작으로 되돌릴 수 있다.
 from http_pool import urlopen
+# 연결 재사용을 끈 원래 방식 — 아래 `_fetch_raw()`가 원인을 가르는 데 쓴다.
+from urllib.request import urlopen as urlopen_no_pool
 
 try:
     from env_file import load_env
@@ -114,6 +116,44 @@ def get_land_use_zones(b_code: str, main_no, sub_no, is_mountain: bool = False,
     return probe_land_use(b_code, main_no, sub_no, is_mountain, timeout)["zones"]
 
 
+def _fetch_raw(url: str, timeout: int) -> tuple[str, str]:
+    """응답 본문과 "어떻게 받았는지" 한 줄을 돌려준다.
+
+    ⚠️ **연결 단계에서 끊기면 연결 재사용(60절)을 끄고 한 번 더 본다.**
+    같은 요청을 두 방식으로 보내 보면 **원인이 우리 쪽인지 상대 서버인지**가
+    화면에 그대로 남는다 — 안 그러면 `RemoteDisconnected` 한 줄만 보고
+    추측할 수밖에 없다. 서버가 실제로 응답한 경우(4xx/5xx)는 다시 보내도
+    같은 답이 올 테니 재시도하지 않는다.
+    """
+    headers = {"User-Agent": "Mozilla/5.0"}
+    try:
+        with urlopen(Request(url, headers=headers), timeout=timeout) as resp:
+            return resp.read().decode("utf-8"), ""
+    except HTTPError:
+        raise                      # 상대가 답을 준 것이다 — 다시 보낼 이유가 없다
+    except (OSError, ValueError) as pooled_err:
+        try:
+            with urlopen_no_pool(Request(url, headers=headers), timeout=timeout) as resp:
+                return (resp.read().decode("utf-8"),
+                        "연결을 재사용하지 않고 새로 맺으니 받아졌습니다.")
+        except (OSError, ValueError):
+            raise pooled_err from None
+
+
+def _why_it_failed(e: Exception) -> str:
+    """예외 종류를 사람 말로 한 줄 덧붙인다 — 화면만 보고 다음 수를 정할 수 있게."""
+    name = type(e).__name__
+    if name in ("RemoteDisconnected", "ConnectionResetError", "ConnectionRefusedError"):
+        return ("  — 상대 서버가 응답을 하나도 주지 않고 연결을 끊었습니다. "
+                "요청 형식 문제였다면 오류라도 돌려주므로, 키가 아직 승인 전이거나 "
+                "이 서버(해외 리전)에서 오는 요청을 막고 있을 가능성이 큽니다.")
+    if name in ("TimeoutError", "socket.timeout"):
+        return "  — 상대 서버가 시간 안에 답하지 않았습니다. 잠시 뒤 다시 해보세요."
+    if name in ("JSONDecodeError", "UnicodeDecodeError", "ValueError"):
+        return "  — 응답은 왔는데 JSON이 아닙니다(로그인 페이지나 오류 HTML일 수 있습니다)."
+    return ""
+
+
 def probe_land_use(b_code: str, main_no, sub_no, is_mountain: bool = False,
                     timeout: int = 8) -> dict:
     """위와 같은 조회를 하되 **왜 실패했는지까지** 돌려준다 (70-2절).
@@ -156,10 +196,9 @@ def probe_land_use(b_code: str, main_no, sub_no, is_mountain: bool = False,
         params["domain"] = domain
 
     url = f"{LAND_USE_BASE_URL}?{urllib.parse.urlencode(params)}"
+    note = ""
     try:
-        req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urlopen(req, timeout=timeout) as resp:
-            raw = resp.read().decode("utf-8")
+        raw, note = _fetch_raw(url, timeout)
         payload = json.loads(raw)
     except (OSError, ValueError) as e:   # 54절 — 타임아웃·인코딩 오류까지
         # ⚠️ 이 detail은 **화면에 그대로 뜨고 사용자가 캡처해서 보낸다** —
@@ -167,13 +206,15 @@ def probe_land_use(b_code: str, main_no, sub_no, is_mountain: bool = False,
         #    (지금 쓰는 예외들은 URL을 안 담지만, 6절 원칙은 "새지 않는 걸
         #    확인했다"가 아니라 "샐 수 없게 해둔다"이다).
         out.update(status="call_failed",
-                   detail=f"{type(e).__name__}: {str(e)[:160]}".replace(service_key, "***"))
+                   detail=(f"{type(e).__name__}: {str(e)[:160]}{_why_it_failed(e)}"
+                           ).replace(service_key, "***"))
         return out
 
     # ⚠️ 응답 앞부분을 그대로 보여준다 — 50-1절이 "응답 필드명을 실측으로
     #    확인 못 했다"고 남겨둔 것을 이 한 줄로 끝낼 수 있다. 다만 **키가
     #    섞여 들어가면 안 되므로** 혹시 모를 에코를 지운다.
     out["sample"] = raw[:1200].replace(service_key, "***")
+    out["detail"] = note
     zones = parse_zone_names(payload)
     out["zones"] = zones
     if not zones:

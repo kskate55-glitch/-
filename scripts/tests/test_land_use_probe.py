@@ -200,3 +200,97 @@ class TestTheKeyNeverReachesTheScreen(unittest.TestCase):
         self.land_use.urlopen = boom
         out = self.land_use.probe_land_use("1130510200", "468", "202")
         self.assertNotIn(self.KEY, repr(out))
+
+
+class TestWeCanTellWhoseFaultItIs(unittest.TestCase):
+    """⚠️ 실사용 화면에 `RemoteDisconnected`만 한 줄 떴는데, 그것만 보고는
+    **우리 쪽 연결 재사용(60절)이 원인인지 상대 서버가 막는 것인지** 가릴 수가
+    없었다. 같은 요청을 두 방식으로 보내 보면 그 답이 화면에 남는다.
+    """
+    KEY = "TESTKEY"
+
+    def setUp(self):
+        self._orig = os.environ.get("VWORLD_API_KEY")
+        os.environ["VWORLD_API_KEY"] = self.KEY
+        import land_use
+        self.land_use = land_use
+        self._pooled = land_use.urlopen
+        self._plain = land_use.urlopen_no_pool
+
+    def tearDown(self):
+        self.land_use.urlopen = self._pooled
+        self.land_use.urlopen_no_pool = self._plain
+        if self._orig is None:
+            os.environ.pop("VWORLD_API_KEY", None)
+        else:
+            os.environ["VWORLD_API_KEY"] = self._orig
+
+    def _resp(self, body):
+        class R:
+            def read(self_inner):
+                return body.encode()
+            def __enter__(self_inner):
+                return self_inner
+            def __exit__(self_inner, *a):
+                return False
+        return R()
+
+    BODY = '{"prposAreaDstrcCodeNm": "제2종일반주거지역"}'
+
+    def test_a_dropped_connection_is_retried_without_the_pool(self):
+        import http.client
+        calls = []
+
+        def pooled(*a, **k):
+            calls.append("pooled")
+            raise http.client.RemoteDisconnected("closed without response")
+
+        def plain(*a, **k):
+            calls.append("plain")
+            return self._resp(self.BODY)
+
+        self.land_use.urlopen = pooled
+        self.land_use.urlopen_no_pool = plain
+        out = self.land_use.probe_land_use("1130510200", "468", "202")
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(calls, ["pooled", "plain"])
+        self.assertIn("연결", out["detail"], "어느 쪽으로 받았는지 화면에 안 남는다")
+
+    def test_a_real_server_answer_is_not_retried(self):
+        """4xx·5xx는 상대가 답을 준 것이다 — 다시 보내도 같은 답이 온다."""
+        from urllib.error import HTTPError
+        calls = []
+
+        def pooled(*a, **k):
+            calls.append("pooled")
+            raise HTTPError("https://x", 401, "Unauthorized", {}, None)
+
+        self.land_use.urlopen = pooled
+        self.land_use.urlopen_no_pool = lambda *a, **k: calls.append("plain")
+        out = self.land_use.probe_land_use("1130510200", "468", "202")
+        self.assertEqual(out["status"], "call_failed")
+        self.assertEqual(calls, ["pooled"], "답을 준 서버에 또 보냈다")
+
+    def test_when_both_ways_fail_the_first_error_is_what_we_report(self):
+        import http.client
+
+        def boom(*a, **k):
+            raise http.client.RemoteDisconnected("closed without response")
+
+        self.land_use.urlopen = boom
+        self.land_use.urlopen_no_pool = boom
+        out = self.land_use.probe_land_use("1130510200", "468", "202")
+        self.assertEqual(out["status"], "call_failed")
+        self.assertIn("RemoteDisconnected", out["detail"])
+
+    def test_the_message_says_what_that_error_means_in_plain_korean(self):
+        import http.client
+
+        def boom(*a, **k):
+            raise http.client.RemoteDisconnected("closed without response")
+
+        self.land_use.urlopen = boom
+        self.land_use.urlopen_no_pool = boom
+        detail = self.land_use.probe_land_use("1130510200", "468", "202")["detail"]
+        self.assertIn("연결을 끊었습니다", detail)
+        self.assertNotIn("**", detail, "화면은 마크다운을 렌더링하지 않는다")

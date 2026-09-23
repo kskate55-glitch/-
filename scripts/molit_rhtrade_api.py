@@ -124,6 +124,15 @@ def fetch_rhtrade(lawd_cd: str, deal_ymd: str, page_no: int = 1,
         # ⚠️ 읽기 타임아웃은 TimeoutError(OSError)라 URLError로는 안 잡힌다 —
         #    그래서 **재시도조차 못 하고** 예외가 그대로 올라갔다(54절).
         #    OSError가 HTTPError·URLError·TimeoutError를 전부 덮는다.
+        except HTTPError as e:
+            # ⚠️ 58절 — 429(Too Many Requests)는 **일일 한도 초과**다. 여기서
+            #    재시도하면 한도를 3배로 더 쓰고도 똑같이 실패한다 — 순회처럼
+            #    수백 번 도는 작업에서 이 낭비가 그대로 곱해진다. 즉시 멈추고
+            #    사람이 읽을 수 있는 문구로 바꾼다.
+            if e.code == 429:
+                raise RuntimeError(QUOTA_MESSAGE) from None
+            last_err = e
+            time.sleep(1.5 * attempt)
         except OSError as e:
             last_err = e
             time.sleep(1.5 * attempt)
@@ -137,6 +146,10 @@ def fetch_rhtrade(lawd_cd: str, deal_ymd: str, page_no: int = 1,
             raise
     raise RuntimeError(f"API 호출 {retries}회 실패: {last_err}")
 
+
+# 58절 — 국토부 일일 트래픽 한도를 넘기면 HTTP 429가 온다. 재시도로는
+# 절대 풀리지 않으므로(하루가 지나야 한다) 문구를 하나로 두고 즉시 멈춘다.
+QUOTA_MESSAGE = ("국토부 API 일일 조회 한도를 넘겼습니다(429). 재시도로는 풀리지 않고 하루가 지나야 복구됩니다 — 내일 다시 시도해 주세요.")
 
 def _parse_response(raw_bytes: bytes) -> list[dict]:
     # ⚠️ 응답이 XML이 아닐 수 있다 — 일일 트래픽 초과·점검·차단 시 data.go.kr은

@@ -446,6 +446,7 @@
     out.innerHTML = '';
 
     var i = 0;
+    var quotaStopped = false;
     function step() {
       if (!running) { finish('중지했습니다 — 여기까지 모은 ' + cases.length + '건은 아래에 그대로 남아 있어요.'); return; }
       if (i >= list.length) {
@@ -478,6 +479,12 @@
           } else {
             regionRows.push({ok: false, gu: r.sido + ' ' + r.gu,
                              why: (d.error || '결과 없음').slice(0, 40)});
+            // 일일 한도를 넘겼으면 남은 지역을 더 두들겨봐야 전부 실패한다.
+            // 계속 돌면 내일 몫까지 미리 까먹으므로 여기서 멈춘다.
+            if (d.quota_exhausted) {
+              running = false;
+              quotaStopped = true;
+            }
           }
         })
         .catch(function (e) {
@@ -486,6 +493,13 @@
         .then(function () {
           i++;
           if (cases.length) render();       // 도는 동안에도 중간 결과를 계속 갱신
+          if (quotaStopped) {
+            status.innerHTML = '\u26a0\ufe0f 국토부 일일 조회 한도를 넘겨서 여기서 멈췄습니다. ' +
+              '<b>' + cases.length + '건</b>까지의 결과는 아래에 그대로 남아 있어요 — ' +
+              '내일 이어서 돌리시면 됩니다.';
+            stopBtn.style.display = 'none';
+            return;
+          }
           setTimeout(step, 300);            // 카카오 초당 호출 제한을 감안한 짧은 숨고르기
         });
     }

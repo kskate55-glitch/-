@@ -317,8 +317,14 @@ def backtest_one():
 
     out = _run_region_backtest(lawd_cd, n_cases, months)
     if out.get("error"):
+        # 58절 — 일일 한도를 넘긴 거면 브라우저가 **순회를 즉시 멈추도록** 알린다.
+        # 예전엔 남은 지역을 전부 두들겨서, 이미 바닥난 한도를 수백 번 더
+        # 긁고도 전부 실패로 끝났다(한 번 돌 때마다 다음 날 몫까지 까먹는다).
+        from molit_rhtrade_api import QUOTA_MESSAGE
+
+        quota = QUOTA_MESSAGE[:20] in out["error"] or "429" in out["error"]
         return jsonify({"ok": False, "lawd_cd": lawd_cd, "gu": out.get("gu"),
-                        "error": out["error"]})
+                        "error": out["error"], "quota_exhausted": quota})
 
     cases = [{
         "gu": out["gu"], "name": r["name"], "date": r["date_label"],

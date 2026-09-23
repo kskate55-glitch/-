@@ -529,8 +529,21 @@ def estimate():
                                 detect_redevelopment_signal)
     # 50절 — 정비구역 신호. 지오코딩을 안 해서 추가 API 호출이 0이다.
     redevelopment = detect_redevelopment_signal(rows, target_dong, this_year)
+    # 50-1절 — 토지이용계획으로 정비구역을 **직접** 확인한다. 엔드포인트
+    # (LAND_USE_API_URL)가 아직 안 채워져 있으면 조용히 None이라 아무 일도
+    # 일어나지 않는다 — 20절/26절과 같은 "없으면 생략" 원칙.
+    zone_check = None
+    if subject_detail:
+        try:
+            from estimate_price import is_redevelopment_zone
+            from land_use import get_land_use_zones
+            zone_check = is_redevelopment_zone(get_land_use_zones(
+                subject_detail.get("b_code"), subject_detail.get("main_no"),
+                subject_detail.get("sub_no"), bool(subject_detail.get("is_mountain"))))
+        except Exception:
+            zone_check = None       # 참고 정보라 실패해도 계산을 막지 않는다
     estimate_warnings = compute_estimate_warnings(
-        filtered, scen.get("model_divergence_pct"), redevelopment)
+        filtered, scen.get("model_divergence_pct"), redevelopment, zone_check)
     conservative = scen["p25"]
     realistic = scen["median"]
     upper = scen["p75"]

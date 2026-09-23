@@ -2786,9 +2786,19 @@ def main():
         print_apt_gap(apt_gap)
 
     # 49절 — 이 추정치를 얼마나 믿어도 되는지(경고등). 새로 계산하는 게 없다.
+    # 50-1절 — 토지이용계획으로 정비구역 직접 확인(엔드포인트 미설정이면 생략).
+    zone_check = None
+    if subject_detail:
+        try:
+            from land_use import get_land_use_zones
+            zone_check = is_redevelopment_zone(get_land_use_zones(
+                subject_detail.get("b_code"), subject_detail.get("main_no"),
+                subject_detail.get("sub_no"), bool(subject_detail.get("is_mountain"))))
+        except Exception:
+            zone_check = None
     print_estimate_warnings(compute_estimate_warnings(
         filtered, scen.get("model_divergence_pct"),
-        detect_redevelopment_signal(rows, args.dong, this_year)))
+        detect_redevelopment_signal(rows, args.dong, this_year), zone_check))
 
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
     print_marketability_report(build_marketability_report(

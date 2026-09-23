@@ -523,6 +523,11 @@ def estimate():
 
     scen = compute_scenarios(filtered, radius, this_year, subject_area=area,
                              calibration=SALE_CALIBRATION_FACTOR)
+    # 49절 — 이 추정치를 얼마나 믿어도 되는지 경고등. 새로 계산하는 게 없고
+    # 이미 구한 값(괴리율·가중치·동일건물 플래그)만 읽는다.
+    from estimate_price import compute_estimate_warnings
+    estimate_warnings = compute_estimate_warnings(
+        filtered, scen.get("model_divergence_pct"))
     conservative = scen["p25"]
     realistic = scen["median"]
     upper = scen["p75"]
@@ -925,6 +930,7 @@ def estimate():
     for item in marketability["items"]:
         item["icon"] = MARKETABILITY_ICONS.get(item["verdict"], "·")
     result["marketability"] = marketability
+    result["estimate_warnings"] = estimate_warnings
 
     monthly_deposit = _optional_float("monthly_deposit")
     if monthly_deposit is not None:

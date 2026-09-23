@@ -959,6 +959,98 @@ PRICE_TIER_LABELS = {
 }
 
 
+# ── 49절 추정 경고등 ──────────────────────────────────────────────────
+# ⚠️ 실측 44건(경기 빌라, 48절 백테스트)으로 잡은 **1차 기준**이다. 세 경고
+#    중 하나라도 걸린 건과 안 걸린 건의 성적이 이렇게 갈렸다:
+#      경고 없음 19건 → 평균 오차  6.8% · ±10% 79% · 25% 넘게 틀린 건  5%
+#      경고 있음 25건 → 평균 오차 17.1% · ±10% 44% · 25% 넘게 틀린 건 20%
+#    크게 틀린 7건 중 6건이 이 경고에 걸렸다(나머지 한 건은 어떤 지표로도
+#    미리 못 걸렀다 — 그래서 "경고 없음"이 정확을 보장하지는 않는다).
+# ⚠️ 세 기준 전부 **먼저 이유를 알고 나서 데이터로 확인한 것**이지, 숫자만
+#    맞춰 고른 게 아니다(각 항목 설명 참고).
+ESTIMATE_WARN_DIVERGENCE_PCT = 3.0   # 7-1절 모델 괴리율
+ESTIMATE_WARN_TOP_SHARE_PCT = 45.0   # 한 건이 전체 가중치에서 차지하는 지분
+
+
+def top_weight_share(filtered: list[dict]) -> float | None:
+    """가장 큰 비교거래 한 건이 전체 가중치에서 차지하는 지분(%).
+
+    7절 가중 중앙값은 가중치에 비례해 표를 복제하므로, 이 값이 크면 **그 한
+    건이 사실상 답을 정한다**(동일건물 보너스 2.0 × 최근성 1.6이 겹치면
+    표본 3건에서 80%까지 간다 — 실측 확인)."""
+    weights = [r.get("_weight") or 0 for r in filtered]
+    total = sum(weights)
+    return round(max(weights) / total * 100, 1) if total > 0 else None
+
+
+def compute_estimate_warnings(filtered: list[dict],
+                               model_divergence_pct: float | None) -> list[dict]:
+    """이 추정치를 얼마나 믿어도 되는지 경고등으로 돌려준다 (49절).
+
+    ⚠️ **7절 시세 신뢰도 점수를 대체하는 게 아니라 보완한다.** 48절 실측에서
+    신뢰도 점수는 빌라 데이터에서 정확도를 거의 구별하지 못했다(80점 이상
+    10.3% vs 60점 미만 10.6% — 단조 관계가 아니다). 신뢰도 89점짜리가 55%
+    틀린 사례도 있었다. 반면 아래 세 가지는 오차를 뚜렷하게 갈랐다.
+    """
+    warnings = []
+
+    # ① 두 계산 방식이 갈린다 = 표본이 대상 물건과 어긋났다는 신호.
+    #    7-1절 50:50 블렌딩이 가격 편향 자체는 상쇄하므로, 이 어긋남은
+    #    **가격이 아니라 괴리율로만** 드러난다(48-2-1절에서 시뮬레이션으로
+    #    먼저 확인하고, 실측에서 1% 미만 8.8% vs 6% 이상 24.5%로 재확인).
+    if model_divergence_pct is not None and model_divergence_pct >= ESTIMATE_WARN_DIVERGENCE_PCT:
+        warnings.append({
+            "key": "divergence",
+            "label": "두 계산 방식의 답이 갈립니다",
+            "detail": (f"총액 기준과 ㎡당가 기준 추정이 {model_divergence_pct:.1f}% 차이 납니다 — "
+                       "비교거래의 면적 구성이 이 물건과 치우쳐 있다는 신호예요."),
+            "advice": "면적 허용범위를 좁히거나 반경을 조정해 다시 계산해 보세요.",
+        })
+
+    # ② 한 건이 답을 독점한다 — "가중 중앙값"이라는 이름이 무색해진다.
+    share = top_weight_share(filtered)
+    if share is not None and share >= ESTIMATE_WARN_TOP_SHARE_PCT:
+        warnings.append({
+            "key": "share",
+            "label": "비교거래 한 건이 결과를 좌우합니다",
+            "detail": (f"가장 비중 큰 거래 하나가 전체의 {share:.0f}%를 차지합니다 — "
+                       "여러 건의 중앙값이 아니라 사실상 그 한 건의 가격이에요."),
+            "advice": "그 거래가 정상인지 아래 '핵심 비교거래' 맨 위에서 직접 확인하세요.",
+        })
+
+    # ③ 같은 건물 거래가 **딱 한 건**일 때가 제일 위험하다. 동일건물 보너스
+    #    (×2.0)를 그 한 건이 독차지하는데 견제할 같은 건물 거래가 없어서다.
+    #    실측: 0건 14.5% · 1건 18.9% · 2~3건 11.0% · 4건 이상 3.1%.
+    #    (48-2-2절 몬테카를로가 "동일건물 거래가 대표성 없으면 그대로
+    #     끌려간다"고 예측했던 것이 그대로 나왔다.)
+    same_building = sum(1 for r in filtered if r.get("_same_building"))
+    if same_building == 1:
+        warnings.append({
+            "key": "same_building",
+            "label": "같은 건물 거래가 딱 한 건뿐입니다",
+            "detail": ("같은 건물 거래는 가중치를 2배로 받는데, 한 건뿐이면 "
+                       "그 거래가 유별난 값이어도 걸러줄 다른 거래가 없어요."),
+            "advice": "그 한 건이 시세와 동떨어지지 않았는지 꼭 확인하세요.",
+        })
+
+    return warnings
+
+
+def print_estimate_warnings(warnings: list[dict]):
+    """49절 경고등 — 걸린 게 없으면 아무것도 찍지 않는다."""
+    if not warnings:
+        return
+    print()
+    print("[⚠️ 이 추정치, 그대로 믿기 전에 확인하세요]")
+    print("  비슷한 신호가 뜬 추정치는 평균 오차가 2배 이상 컸습니다"
+          " (실측 44건: 신호 없음 6.8% · 있음 17.1%).")
+    for w in warnings:
+        print(f"  · {w['label']}")
+        print(f"      {w['detail']}")
+        print(f"      → {w['advice']}")
+    print("  ※ 신호가 떴다고 틀린 값이라는 뜻은 아닙니다 — 한 번 더 확인하라는 표시입니다.")
+
+
 def compute_price_tiers(filtered: list[dict], calibration: float = 1.0) -> dict:
     """CLAUDE.md 29절: 8절과 같은 가중 복제 분포를 5단계 백분위수(10/30/50/70/92)로
     더 세분화해서 "얼마나 빨리 팔릴 만한 가격대인지" 참고용 라벨을 붙인다.
@@ -2517,6 +2609,10 @@ def main():
                                    args.area, auction_price, this_year, year_min,
                                    subject_coord=subject_coord)
         print_apt_gap(apt_gap)
+
+    # 49절 — 이 추정치를 얼마나 믿어도 되는지(경고등). 새로 계산하는 게 없다.
+    print_estimate_warnings(compute_estimate_warnings(
+        filtered, scen.get("model_divergence_pct")))
 
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
     print_marketability_report(build_marketability_report(

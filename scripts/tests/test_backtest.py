@@ -13,6 +13,7 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 import backtest as bt  # noqa: E402
+from estimate_price import top_weight_share as ep_top_share  # noqa: E402
 import geocode as geo  # noqa: E402
 import lawd_lookup  # noqa: E402
 
@@ -232,7 +233,7 @@ class TestDivergenceIsCarried(unittest.TestCase):
 
 
 class TestTopWeightShare(unittest.TestCase):
-    """48-2-2절 — 한 건이 전체 가중치에서 차지하는 지분.
+    """49절 — 한 건이 전체 가중치에서 차지하는 지분(`estimate_price` 공용 함수).
 
     시뮬레이션이 "오차를 가르는 건 표본 수가 아니라 **한 건의 지배력**"이라고
     지목한 지표라, 값이 실제로 그 뜻대로 나오는지 고정한다.
@@ -240,21 +241,21 @@ class TestTopWeightShare(unittest.TestCase):
 
     def test_equal_weights_split_evenly(self):
         rows = [{"_weight": 1.0} for _ in range(4)]
-        self.assertAlmostEqual(bt._top_weight_share(rows), 25.0)
+        self.assertAlmostEqual(ep_top_share(rows), 25.0)
 
     def test_one_dominant_row_shows_up(self):
         rows = [{"_weight": 8.0}, {"_weight": 1.0}, {"_weight": 1.0}]
-        self.assertAlmostEqual(bt._top_weight_share(rows), 80.0)
+        self.assertAlmostEqual(ep_top_share(rows), 80.0)
 
     def test_single_row_is_total_dominance(self):
-        self.assertAlmostEqual(bt._top_weight_share([{"_weight": 0.3}]), 100.0)
+        self.assertAlmostEqual(ep_top_share([{"_weight": 0.3}]), 100.0)
 
     def test_empty_or_zero_weights_is_none(self):
-        self.assertIsNone(bt._top_weight_share([]))
-        self.assertIsNone(bt._top_weight_share([{"_weight": 0}, {"_weight": 0}]))
+        self.assertIsNone(ep_top_share([]))
+        self.assertIsNone(ep_top_share([{"_weight": 0}, {"_weight": 0}]))
 
     def test_missing_weight_key_is_treated_as_zero(self):
-        self.assertAlmostEqual(bt._top_weight_share([{"_weight": 3.0}, {}]), 100.0)
+        self.assertAlmostEqual(ep_top_share([{"_weight": 3.0}, {}]), 100.0)
 
 
 class TestDiagnosticFieldsAreCarried(unittest.TestCase):

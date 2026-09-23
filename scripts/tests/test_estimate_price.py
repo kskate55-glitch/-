@@ -1439,3 +1439,78 @@ class TestBasementSymmetry(unittest.TestCase):
         scen = ep.compute_scenarios(filtered, 400, 2026, subject_area=40.0)
         self.assertLess(scen["median"], 20000,
                         "반지하 대상인데 지상층 시세(3억)로 끌려 올라갔다")
+
+
+class TestEstimateWarnings(unittest.TestCase):
+    """CLAUDE.md 49절 — 추정 경고등.
+
+    실측 44건(경기 빌라)에서 세 경고 중 하나라도 걸린 건과 안 걸린 건의
+    성적이 이렇게 갈렸다: 없음 19건 6.8% / 있음 25건 17.1%.
+    """
+
+    @staticmethod
+    def _rows(n=10, same_building=0, top_share=None):
+        if top_share is None:
+            rows = [{"_weight": 1.0} for _ in range(n)]
+        else:
+            rest = (100 - top_share) / max(1, n - 1)
+            rows = [{"_weight": top_share}] + [{"_weight": rest} for _ in range(n - 1)]
+        for i in range(same_building):
+            rows[i]["_same_building"] = True
+        return rows
+
+    def _keys(self, rows, divergence):
+        return {w["key"] for w in ep.compute_estimate_warnings(rows, divergence)}
+
+    def test_clean_sample_has_no_warning(self):
+        self.assertEqual(self._keys(self._rows(12, same_building=3), 0.5), set())
+
+    def test_high_divergence_warns(self):
+        self.assertIn("divergence", self._keys(self._rows(12), 9.0))
+
+    def test_divergence_threshold_boundary(self):
+        self.assertNotIn("divergence", self._keys(self._rows(12), 2.9))
+        self.assertIn("divergence", self._keys(self._rows(12), 3.0))
+
+    def test_missing_divergence_does_not_warn(self):
+        """괴리율을 못 구한 경우(대상 면적 미입력 등)는 경고하지 않는다."""
+        self.assertNotIn("divergence", self._keys(self._rows(12), None))
+
+    def test_dominant_single_row_warns(self):
+        self.assertIn("share", self._keys(self._rows(10, top_share=60.0), 0.0))
+
+    def test_evenly_spread_weights_do_not_warn(self):
+        self.assertNotIn("share", self._keys(self._rows(10, top_share=20.0), 0.0))
+
+    def test_exactly_one_same_building_warns(self):
+        """⚠️ 실측에서 **1건일 때가 제일 나빴다**(18.9%) — 0건(14.5%)·
+        2~3건(11.0%)·4건 이상(3.1%)보다 나쁘다. 견제할 같은 건물 거래 없이
+        동일건물 보너스(×2.0)를 그 한 건이 독차지하기 때문이다."""
+        self.assertIn("same_building", self._keys(self._rows(12, same_building=1), 0.0))
+
+    def test_zero_or_many_same_building_do_not_warn(self):
+        self.assertNotIn("same_building", self._keys(self._rows(12, same_building=0), 0.0))
+        self.assertNotIn("same_building", self._keys(self._rows(12, same_building=4), 0.0))
+
+    def test_warnings_can_stack(self):
+        keys = self._keys(self._rows(10, same_building=1, top_share=70.0), 12.0)
+        self.assertEqual(keys, {"divergence", "share", "same_building"})
+
+    def test_every_warning_carries_text_for_the_screen(self):
+        for w in ep.compute_estimate_warnings(self._rows(10, same_building=1, top_share=70.0), 12.0):
+            for field in ("key", "label", "detail", "advice"):
+                self.assertTrue(w.get(field), f"{w.get('key')}에 {field}가 비었다")
+
+    def test_empty_sample_is_safe(self):
+        self.assertEqual(ep.compute_estimate_warnings([], None), [])
+
+
+class TestTopWeightShareShared(unittest.TestCase):
+    """49절 — `backtest.py`와 같은 구현을 쓰는지(중복 구현이 갈리면 화면과
+    백테스트 숫자가 어긋난다)."""
+
+    def test_backtest_uses_the_shared_function(self):
+        import inspect
+        import backtest as bt
+        self.assertIs(bt.top_weight_share, ep.top_weight_share)
+        self.assertNotIn("def _top_weight_share", inspect.getsource(bt))

@@ -971,6 +971,86 @@ PRICE_TIER_LABELS = {
 ESTIMATE_WARN_DIVERGENCE_PCT = 3.0   # 7-1절 모델 괴리율
 ESTIMATE_WARN_TOP_SHARE_PCT = 45.0   # 한 건이 전체 가중치에서 차지하는 지분
 
+# ── 50절 정비구역(재개발) 신호 탐지 ────────────────────────────────────
+# ⚠️ **프리미엄을 가격에 더하지 않는다. 있을 수 있다고 알리기만 한다.**
+#    이유는 50절 참고 — 구역 경계 한 블록 차이로 0이 되고, 단계별로 0~수억까지
+#    갈리는 값이라 자동 반영하면 전 물건이 과대평가된다.
+REDEV_AGE_MIN = 25            # 재개발 기대는 구축에 붙는다 — 신축이 비싼 건 정상
+REDEV_PRICE_RATIO = 1.8       # 구 전체 ㎡당가 중앙값 대비 몇 배부터 이상으로 볼지
+REDEV_MIN_COUNT = 2           # 한 건은 우연일 수 있어 2건 이상 몰려야 신호로 본다
+REDEV_MIN_BASELINE_SAMPLE = 20  # 기준선(구 중앙값)을 믿으려면 이만큼은 필요
+
+
+def _unit_price(row: dict) -> float | None:
+    """㎡당가(만원). 금액이나 면적을 못 읽으면 None."""
+    try:
+        amount = to_amount_man(row.get("dealAmount", ""))
+        area = float(row.get("excluUseAr"))
+    except (TypeError, ValueError):
+        return None
+    if not amount or not area:
+        return None
+    return amount / area
+
+
+def detect_redevelopment_signal(rows: list[dict], dong: str | None,
+                                 this_year: int) -> dict | None:
+    """같은 동에 "구축인데 유별나게 비싼" 거래가 몰려 있는지 본다 (50절).
+
+    정비구역 빌라는 건물이 아니라 **대지지분** 값으로 팔린다. 그래서 전용면적
+    대비 가격이 동네 시세의 두세 배까지 뛰는데, 국토부 실거래가에는 정비구역
+    여부도 대지지분도 필드가 없어 **계산기가 원리적으로 못 맞힌다**(실측:
+    광명 `한보주택` 34㎡가 6.5억 — 동네 ㎡당가 중앙값의 2.81배, 오차 −48.5%).
+
+    ⚠️ **지오코딩을 하지 않는다** — 40절 인근 아파트 대비와 같은 이유로 같은
+    법정동(`umdNm`)으로 근사한다. 추가 API 호출이 0이다.
+
+    ⚠️ 기준선은 **구 전체** ㎡당가 중앙값이다. 동 중앙값을 쓰면 그 동이 통째로
+    정비구역일 때 기준선까지 같이 올라가 신호가 사라진다.
+    """
+    if not dong:
+        return None
+
+    all_units = [u for u in (_unit_price(r) for r in rows) if u]
+    if len(all_units) < REDEV_MIN_BASELINE_SAMPLE:
+        return None
+    baseline = statistics.median(all_units)
+    if baseline <= 0:
+        return None
+
+    hits = []
+    for r in rows:
+        if (r.get("umdNm") or "").strip() != dong:
+            continue
+        build_year = (r.get("buildYear") or "").strip()
+        if not build_year.isdigit():
+            continue
+        if this_year - int(build_year) < REDEV_AGE_MIN:
+            continue                       # 신축이 비싼 건 정비구역 신호가 아니다
+        unit = _unit_price(r)
+        if unit and unit >= baseline * REDEV_PRICE_RATIO:
+            hits.append({
+                "name": (r.get("mhouseNm") or "").strip() or "(단지명없음)",
+                "area": float(r["excluUseAr"]),
+                "amount_man": to_amount_man(r.get("dealAmount", "")),
+                "build_year": int(build_year),
+                "ratio": round(unit / baseline, 2),
+            })
+
+    if len(hits) < REDEV_MIN_COUNT:
+        return None
+
+    hits.sort(key=lambda h: -h["ratio"])
+    return {
+        "dong": dong,
+        "count": len(hits),
+        "baseline_unit": round(baseline, 1),
+        "max_ratio": hits[0]["ratio"],
+        "examples": hits[:3],
+    }
+
+
+
 
 def top_weight_share(filtered: list[dict]) -> float | None:
     """가장 큰 비교거래 한 건이 전체 가중치에서 차지하는 지분(%).
@@ -984,7 +1064,8 @@ def top_weight_share(filtered: list[dict]) -> float | None:
 
 
 def compute_estimate_warnings(filtered: list[dict],
-                               model_divergence_pct: float | None) -> list[dict]:
+                               model_divergence_pct: float | None,
+                               redevelopment: dict | None = None) -> list[dict]:
     """이 추정치를 얼마나 믿어도 되는지 경고등으로 돌려준다 (49절).
 
     ⚠️ **7절 시세 신뢰도 점수를 대체하는 게 아니라 보완한다.** 48절 실측에서
@@ -1031,6 +1112,22 @@ def compute_estimate_warnings(filtered: list[dict],
             "detail": ("같은 건물 거래는 가중치를 2배로 받는데, 한 건뿐이면 "
                        "그 거래가 유별난 값이어도 걸러줄 다른 거래가 없어요."),
             "advice": "그 한 건이 시세와 동떨어지지 않았는지 꼭 확인하세요.",
+        })
+
+    # ④ 50절 — 정비구역(재개발) 의심. 프리미엄을 가격에 더하지는 않는다.
+    if redevelopment:
+        ex = redevelopment["examples"][0]
+        warnings.append({
+            "key": "redevelopment",
+            "label": "이 동네에 정비구역(재개발)이 있을 수 있습니다",
+            "detail": (f"{redevelopment['dong']}에 지은 지 오래됐는데 시세의 "
+                       f"{redevelopment['max_ratio']:.1f}배까지 거래된 빌라가 "
+                       f"{redevelopment['count']}건 있어요 "
+                       f"(예: {ex['name']} {ex['area']:.0f}㎡ {ex['amount_man'] / 10000:.2f}억, "
+                       f"{ex['build_year']}년식). "
+                       "정비구역 빌라는 건물이 아니라 대지지분 값으로 팔려서 "
+                       "이 계산기가 못 맞힙니다."),
+            "advice": "대상 물건이 정비구역 안인지 먼저 확인하세요 — 안이면 이 매도가는 쓰지 마세요.",
         })
 
     return warnings
@@ -2612,7 +2709,8 @@ def main():
 
     # 49절 — 이 추정치를 얼마나 믿어도 되는지(경고등). 새로 계산하는 게 없다.
     print_estimate_warnings(compute_estimate_warnings(
-        filtered, scen.get("model_divergence_pct")))
+        filtered, scen.get("model_divergence_pct"),
+        detect_redevelopment_signal(rows, args.dong, this_year)))
 
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
     print_marketability_report(build_marketability_report(

@@ -1514,3 +1514,123 @@ class TestTopWeightShareShared(unittest.TestCase):
         import backtest as bt
         self.assertIs(bt.top_weight_share, ep.top_weight_share)
         self.assertNotIn("def _top_weight_share", inspect.getsource(bt))
+
+
+class TestRedevelopmentSignal(unittest.TestCase):
+    """CLAUDE.md 50절 — 정비구역(재개발) 신호 탐지.
+
+    ⚠️ **프리미엄을 가격에 더하지 않는다.** 구역 경계 한 블록 차이로 0이 되고
+    단계별로 0~수억까지 갈리는 값이라, 자동 반영하면 전 물건이 과대평가된다.
+    "있을 수 있으니 확인하라"고 알리기만 한다.
+
+    실측 근거: 광명 `한보주택` 34㎡가 6.5억(동네 ㎡당가 중앙값의 2.81배,
+    1991년식)에 팔렸고 계산기는 −48.5% 빗나갔다.
+    """
+
+    @staticmethod
+    def _row(dong, name, area, amount_man, build_year):
+        return {"umdNm": dong, "mhouseNm": name, "excluUseAr": str(area),
+                "dealAmount": f"{amount_man:,}", "buildYear": str(build_year)}
+
+    def _baseline_rows(self, n=30):
+        """㎡당가 300만원 언저리의 평범한 거래들 — 기준선을 만든다."""
+        return [self._row("평범동", f"빌라{i}", 50.0, 15000 + i * 100, 2010)
+                for i in range(n)]
+
+    def test_clusters_of_expensive_old_units_are_flagged(self):
+        rows = self._baseline_rows() + [
+            self._row("재개발동", "한보주택", 34.0, 30600, 1991),
+            self._row("재개발동", "낡은빌라", 40.0, 34000, 1988),
+        ]
+        sig = ep.detect_redevelopment_signal(rows, "재개발동", 2026)
+        self.assertIsNotNone(sig)
+        self.assertEqual(sig["count"], 2)
+        self.assertGreater(sig["max_ratio"], ep.REDEV_PRICE_RATIO)
+
+    def test_new_buildings_are_not_a_signal(self):
+        """⚠️ 신축이 비싼 건 정상이다 — 재개발 기대는 구축에 붙는다."""
+        rows = self._baseline_rows() + [
+            self._row("신축동", "새빌라A", 40.0, 34000, 2024),
+            self._row("신축동", "새빌라B", 40.0, 33000, 2023),
+        ]
+        self.assertIsNone(ep.detect_redevelopment_signal(rows, "신축동", 2026))
+
+    def test_single_expensive_unit_is_not_enough(self):
+        """한 건은 우연(업거래·특수관계)일 수 있어 신호로 보지 않는다."""
+        rows = self._baseline_rows() + [
+            self._row("한건동", "혼자비쌈", 34.0, 30600, 1991)]
+        self.assertIsNone(ep.detect_redevelopment_signal(rows, "한건동", 2026))
+
+    def test_ordinary_neighbourhood_is_quiet(self):
+        self.assertIsNone(
+            ep.detect_redevelopment_signal(self._baseline_rows(), "평범동", 2026))
+
+    def test_small_sample_gives_no_verdict(self):
+        """기준선(구 중앙값)을 못 믿을 만큼 표본이 적으면 판단하지 않는다."""
+        rows = self._baseline_rows(n=5) + [
+            self._row("재개발동", "한보주택", 34.0, 30600, 1991),
+            self._row("재개발동", "낡은빌라", 40.0, 34000, 1988),
+        ]
+        self.assertIsNone(ep.detect_redevelopment_signal(rows, "재개발동", 2026))
+
+    def test_missing_dong_is_safe(self):
+        self.assertIsNone(ep.detect_redevelopment_signal(self._baseline_rows(), None, 2026))
+
+    def test_unparseable_rows_do_not_crash(self):
+        rows = self._baseline_rows() + [
+            {"umdNm": "재개발동", "mhouseNm": "깨진행", "excluUseAr": "",
+             "dealAmount": "", "buildYear": "abcd"},
+            self._row("재개발동", "한보주택", 34.0, 30600, 1991),
+            self._row("재개발동", "낡은빌라", 40.0, 34000, 1988),
+        ]
+        sig = ep.detect_redevelopment_signal(rows, "재개발동", 2026)
+        self.assertEqual(sig["count"], 2, "못 읽는 행은 조용히 건너뛰어야 한다")
+
+    def test_signal_becomes_a_warning(self):
+        rows = self._baseline_rows() + [
+            self._row("재개발동", "한보주택", 34.0, 30600, 1991),
+            self._row("재개발동", "낡은빌라", 40.0, 34000, 1988),
+        ]
+        sig = ep.detect_redevelopment_signal(rows, "재개발동", 2026)
+        keys = {w["key"] for w in ep.compute_estimate_warnings(
+            [{"_weight": 1.0} for _ in range(12)], 0.0, sig)}
+        self.assertIn("redevelopment", keys)
+
+    def test_no_signal_means_no_warning(self):
+        keys = {w["key"] for w in ep.compute_estimate_warnings(
+            [{"_weight": 1.0} for _ in range(12)], 0.0, None)}
+        self.assertNotIn("redevelopment", keys)
+
+    def test_price_is_never_changed_by_the_signal(self):
+        """⚠️ 이 절의 핵심 보증 — 신호가 떠도 **가격은 한 푼도 안 바뀐다.**
+
+        입력 행을 건드리지 않는지 실제로 돌려서 확인한다(소스 검사로 하면
+        `to_amount_man` 같은 함수 이름에 걸려 오탐이 난다)."""
+        import copy
+        rows = self._baseline_rows() + [
+            self._row("재개발동", "한보주택", 34.0, 30600, 1991),
+            self._row("재개발동", "낡은빌라", 40.0, 34000, 1988),
+        ]
+        before = copy.deepcopy(rows)
+        sig = ep.detect_redevelopment_signal(rows, "재개발동", 2026)
+        self.assertIsNotNone(sig, "신호가 떠야 의미 있는 테스트다")
+        self.assertEqual(rows, before, "탐지가 입력 행을 고쳤다")
+
+    def test_warning_does_not_touch_the_scenarios(self):
+        """경고를 만들어도 8절 산출값은 그대로여야 한다."""
+        import copy
+        filtered = [{"_amount_man": 30000.0, "excluUseAr": "50.0", "_weight": 1.0,
+                     "_distance_m": 100.0, "dealYear": "2026",
+                     "_similarity_score": 80} for _ in range(8)]
+        before_scen = ep.compute_scenarios(copy.deepcopy(filtered), 400, 2026,
+                                            subject_area=50.0)
+        ep.compute_estimate_warnings(filtered, 0.0,
+                                     {"dong": "재개발동", "count": 2, "max_ratio": 2.5,
+                                      "baseline_unit": 300.0,
+                                      "examples": [{"name": "한보주택", "area": 34.0,
+                                                    "amount_man": 30600.0,
+                                                    "build_year": 1991, "ratio": 2.5}]})
+        after_scen = ep.compute_scenarios(filtered, 400, 2026, subject_area=50.0)
+        self.assertEqual(before_scen["median"], after_scen["median"])
+        self.assertEqual(before_scen["p25"], after_scen["p25"])
+        self.assertEqual(before_scen["p75"], after_scen["p75"])

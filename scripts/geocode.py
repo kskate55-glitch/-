@@ -20,6 +20,8 @@ from math import atan2, cos, radians, sin, sqrt
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from json_cache import read_json, write_json
+
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
 CACHE_PATH = os.path.join(_DATA_DIR, "geocode_cache.json")
 KAKAO_URL = "https://dapi.kakao.com/v2/local/search/address.json"
@@ -32,16 +34,13 @@ _cache_lock = threading.Lock()
 
 
 def _load_cache() -> dict:
-    if os.path.exists(CACHE_PATH):
-        with open(CACHE_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+    # 53절 — 깨진 캐시는 없는 것으로 친다. 예전엔 json.load를 그대로 불러서
+    # 파일이 한 번 깨지면 이후 모든 조회가 JSONDecodeError로 죽었다.
+    return read_json(CACHE_PATH)
 
 
 def _save_cache(cache: dict) -> None:
-    os.makedirs(os.path.dirname(CACHE_PATH), exist_ok=True)
-    with open(CACHE_PATH, "w", encoding="utf-8") as f:
-        json.dump(cache, f, ensure_ascii=False, indent=2)
+    write_json(CACHE_PATH, cache)      # 53절 — 원자적 교체
 
 
 def _get_api_key() -> str:
@@ -141,16 +140,11 @@ def geocode_full(address: str) -> dict | None:
 
 
 def _load_cache_file(path: str) -> dict:
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+    return read_json(path)             # 53절
 
 
 def _save_cache_file(path: str, cache: dict) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(cache, f, ensure_ascii=False, indent=2)
+    write_json(path, cache)            # 53절
 
 
 NEARBY_CACHE_PATH = os.path.join(_DATA_DIR, "nearby_place_cache.json")

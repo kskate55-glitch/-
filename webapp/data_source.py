@@ -13,6 +13,8 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
+from json_cache import read_json, write_json
+
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
 
 # 달마다 국토부 API를 한 번씩 부르는데, 기본 조회 기간이 21개월이라 순차로
@@ -87,13 +89,12 @@ def get_trade_rows(lawd_cd: str, year_min: int) -> list[dict]:
 
         cache_path = os.path.join(cache_dir, f"{ym}.json")
         if os.path.exists(cache_path):
-            with open(cache_path, encoding="utf-8") as f:
-                return _checked(json.load(f))
+            cached = read_json(cache_path, default=None)   # 53절 — 깨진 캐시는 없는 것으로
+            if cached is not None:
+                return _checked(cached)
 
         rows = _checked(fetch_all_pages(lawd_cd, ym))
-        os.makedirs(cache_dir, exist_ok=True)
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(rows, f, ensure_ascii=False)
+        write_json(cache_path, rows)                      # 53절 — 원자적 교체
         return rows
 
     return _fetch_months(_month_range(year_min, now.year, now.month), one_month)
@@ -117,8 +118,9 @@ def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
     def one_month(ym):
         cache_path = os.path.join(cache_dir, f"{ym}.json")
         if ym != this_ym and os.path.exists(cache_path):
-            with open(cache_path, encoding="utf-8") as f:
-                return json.load(f)
+            cached = read_json(cache_path, default=None)   # 53절
+            if cached is not None:
+                return cached
         try:
             rows = fetch_all_pages(lawd_cd, ym)
         except Exception:
@@ -126,8 +128,7 @@ def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
         rows = [r for r in (normalize_apt_row(r) for r in rows) if r]
         if ym != this_ym:
             os.makedirs(cache_dir, exist_ok=True)
-            with open(cache_path, "w", encoding="utf-8") as f:
-                json.dump(rows, f, ensure_ascii=False)
+            write_json(cache_path, rows)                  # 53절
         return rows
 
     return _fetch_months(_month_range(year_min, now.year, now.month), one_month)

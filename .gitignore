@@ -11,3 +11,5 @@ __pycache__/
 *.pyc
 thumbnail_248x93.png
 공유데이터_*.csv
+
+data/building_cache.json

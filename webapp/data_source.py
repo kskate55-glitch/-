@@ -11,6 +11,7 @@ data/raw/에 저장)과 달리, 웹 서버가 방문자 대신 그때그때 호�
 import json
 import os
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
@@ -34,8 +35,13 @@ FETCH_WORKERS = 8
 #    그대로**다 — 겹치기의 이득만 가져오고 위험은 안 늘린다.
 _MOLIT_SLOTS = threading.BoundedSemaphore(FETCH_WORKERS)
 
+# ⛔ **아파트에만 더 좁은 슬롯을 주는 안은 실측으로 기각했다(72-5절).**
+#    "빌라가 급하니 아파트를 조이면 빌라가 먼저 끝난다"고 봤는데, 실제로는
+#    아파트가 **꼬리**라 조일수록 페이지 전체가 늦어졌다(3.17→3.78→4.98초).
+#    빌라는 이미 충분히 빨리 끝나고 있었다.
 
-def _fetch_months(months: list[str], fetch_one) -> list[dict]:
+
+def _fetch_months(months: list[str], fetch_one, extra_slots=None) -> list[dict]:
     """달 목록을 병렬로 받아 **원래 순서대로** 이어붙인다.
 
     `fetch_one(ym)`은 그 달의 행 목록을 돌려준다(캐시 읽기/쓰기 포함).
@@ -45,11 +51,41 @@ def _fetch_months(months: list[str], fetch_one) -> list[dict]:
     if not months:
         return []
     def _one(ym):
+        if extra_slots is not None:     # 우선순위가 낮은 쪽(아파트)은 한 칸 더 통과해야 한다
+            with extra_slots, _MOLIT_SLOTS:
+                return fetch_one(ym)
         with _MOLIT_SLOTS:          # 전체 동시 호출 수를 FETCH_WORKERS로 묶는다
             return fetch_one(ym)
 
     with ThreadPoolExecutor(max_workers=FETCH_WORKERS) as executor:
         return [row for rows in executor.map(_one, months) for row in rows]
+
+
+# ⚠️ **이번 달도 아주 짧게는 캐시한다(72-5절).** 22절이 "이번 달은 신고가
+#    계속 들어오므로 캐시하지 않는다"고 정한 건 맞지만, **실거래 신고기한이
+#    30일**이라 몇 분 사이에 바뀔 일이 사실상 없다. 그런데 그 한 달 때문에
+#    재방문 요청이 매번 국토부를 기다렸다 — 캐시가 다 찬 재방문 0.63초 중
+#    0.6초가 이것이었다. 10분이면 "거의 실시간"과 구분이 안 되면서 재방문이
+#    사실상 공짜가 된다.
+CURRENT_MONTH_TTL_SEC = 600
+
+
+def _read_fresh(path: str, ttl: int = CURRENT_MONTH_TTL_SEC):
+    """TTL 안이면 저장된 행 목록, 아니면 None. 깨진 파일은 53절대로 무시된다."""
+    blob = read_json(path, default=None)
+    if not isinstance(blob, dict) or "ts" not in blob:
+        return None
+    if time.time() - blob["ts"] > ttl:
+        return None
+    rows = blob.get("rows")
+    return rows if isinstance(rows, list) else None
+
+
+def _write_fresh(path: str, rows: list) -> None:
+    try:
+        write_json(path, {"ts": time.time(), "rows": rows})
+    except OSError:
+        pass          # 못 써도 조회 자체는 이미 성공했다
 
 
 def _month_range(year_min: int, this_year: int, this_month: int) -> list[str]:
@@ -119,7 +155,15 @@ def get_trade_rows(lawd_cd: str, year_min: int) -> list[dict]:
 
     def one_month(ym):
         if ym == this_ym:
-            return _checked(fetch_all_pages(lawd_cd, ym))  # 이번 달은 신고가 계속 들어와 캐시 안 함
+            # 이번 달은 완료된 달과 달리 **짧은 TTL**로만 들고 있는다(위 주석).
+            cur_path = os.path.join(cache_dir, f"{ym}.current.json")
+            fresh = _read_fresh(cur_path)
+            if fresh is not None:
+                return _checked(fresh)
+            rows = _checked(fetch_all_pages(lawd_cd, ym))
+            os.makedirs(cache_dir, exist_ok=True)
+            _write_fresh(cur_path, rows)
+            return rows
 
         cache_path = os.path.join(cache_dir, f"{ym}.json")
         if os.path.exists(cache_path):
@@ -163,6 +207,11 @@ def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
 
     def one_month(ym):
         cache_path = os.path.join(cache_dir, f"{ym}.json")
+        if ym == this_ym:
+            # 빌라와 같은 처리 — 이번 달은 짧은 TTL로만 들고 있는다(72-5절).
+            fresh = _read_fresh(os.path.join(cache_dir, f"{ym}.current.json"))
+            if fresh is not None:
+                return fresh
         if ym != this_ym and os.path.exists(cache_path):
             cached = read_json(cache_path, default=None)   # 53절
             if cached is not None:
@@ -178,6 +227,9 @@ def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
         except Exception:
             return []  # 한 달 실패해도 나머지 달로 계속 간다
         rows = [r for r in (normalize_apt_row(r) for r in rows) if r]
+        if ym == this_ym:
+            os.makedirs(cache_dir, exist_ok=True)
+            _write_fresh(os.path.join(cache_dir, f"{ym}.current.json"), rows)
         if ym != this_ym:
             os.makedirs(cache_dir, exist_ok=True)
             write_json(cache_path, rows)                  # 53절

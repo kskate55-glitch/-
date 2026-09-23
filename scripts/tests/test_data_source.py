@@ -63,8 +63,10 @@ class TestMonthlyFetch(unittest.TestCase):
         first = len(self.calls)
         self.calls.clear()
         self.D.get_trade_rows("11305", 2025)
-        # 이번 달은 신고가 계속 들어와 캐시하지 않으므로 딱 한 번만 다시 부른다.
-        self.assertEqual(len(self.calls), 1)
+        # ⚠️ 72-5절 이후로는 **이번 달도 짧은 TTL로 캐시**하므로 곧바로 다시
+        #    부르면 0회다(예전엔 이번 달 한 건만 다시 받아 1회였다).
+        #    TTL이 지난 뒤의 동작은 `TestCurrentMonthHasAShortTtl`이 따로 본다.
+        self.assertEqual(len(self.calls), 0)
         self.assertGreater(first, 1)
 
     def test_apt_fetch_failure_on_one_month_does_not_break_the_rest(self):
@@ -165,3 +167,77 @@ class TestMolitCallsShareOneConcurrencyBudget(unittest.TestCase):
         months = [f"2026{m:02d}" for m in range(1, 13)]
         got = ds._fetch_months(months, lambda ym: [{"ym": ym}])
         self.assertEqual([r["ym"] for r in got], months)
+
+
+class TestCurrentMonthHasAShortTtl(unittest.TestCase):
+    """72-5절 — 이번 달도 **짧게는** 캐시한다.
+
+    ⚠️ 22절이 "이번 달은 신고가 계속 들어오므로 캐시하지 않는다"고 정한 건
+    맞지만, 실거래 **신고기한이 30일**이라 몇 분 사이에 바뀔 일이 없다.
+    그 한 달 때문에 재방문 요청이 매번 국토부를 기다렸다(캐시가 다 찬
+    재방문 0.63초 중 0.6초). 10분 TTL로 재방문이 0.04초가 됐다.
+    """
+
+    def setUp(self):
+        import data_source as ds
+        self.D = ds
+        self.tmp = tempfile.mkdtemp()
+        self._cache_dir = ds.CACHE_DIR
+        ds.CACHE_DIR = self.tmp
+        self.calls = []
+        sys.modules["molit_rhtrade_api"] = _fake_module("molit_rhtrade_api", self.calls)
+        sys.modules["molit_apt_api"] = _fake_module("molit_apt_api", self.calls)
+
+    def tearDown(self):
+        self.D.CACHE_DIR = self._cache_dir
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _this_ym(self):
+        now = self.D.datetime.now()
+        return f"{now.year}{now.month:02d}"
+
+    def test_the_current_month_is_not_refetched_within_the_ttl(self):
+        self.D.get_trade_rows("11305", 2025)
+        self.calls.clear()
+        self.D.get_trade_rows("11305", 2025)
+        self.assertEqual(self.calls, [], "이번 달을 또 받아왔다")
+
+    def test_it_is_refetched_once_the_ttl_passes(self):
+        self.D.get_trade_rows("11305", 2025)
+        path = os.path.join(self.tmp, self.D.TRADE_CACHE_DIR, "11305",
+                            f"{self._this_ym()}.current.json")
+        blob = self.D.read_json(path, default={})
+        blob["ts"] = blob["ts"] - self.D.CURRENT_MONTH_TTL_SEC - 1
+        self.D.write_json(path, blob)
+        self.calls.clear()
+        self.D.get_trade_rows("11305", 2025)
+        self.assertEqual(self.calls, [self._this_ym()], "TTL이 지났는데 안 받아왔다")
+
+    def test_completed_months_still_use_the_permanent_cache(self):
+        """짧은 TTL은 **이번 달에만** 걸려야 한다 — 지난 달까지 매번 다시
+        받으면 48-6절 한도 문제가 도로 나빠진다."""
+        self.D.get_trade_rows("11305", 2025)
+        path = os.path.join(self.tmp, self.D.TRADE_CACHE_DIR, "11305",
+                            f"{self._this_ym()}.current.json")
+        os.remove(path)                      # 이번 달만 만료시킨다
+        self.calls.clear()
+        self.D.get_trade_rows("11305", 2025)
+        self.assertEqual(self.calls, [self._this_ym()])
+
+    def test_a_broken_current_cache_is_ignored_not_fatal(self):
+        """53절 보장이 여기에도 적용돼야 한다."""
+        self.D.get_trade_rows("11305", 2025)
+        path = os.path.join(self.tmp, self.D.TRADE_CACHE_DIR, "11305",
+                            f"{self._this_ym()}.current.json")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("{깨진 파일")
+        self.calls.clear()
+        rows = self.D.get_trade_rows("11305", 2025)
+        self.assertTrue(rows)
+        self.assertEqual(self.calls, [self._this_ym()])
+
+    def test_apt_gets_the_same_treatment(self):
+        self.D.get_apt_rows("11305", 2025)
+        self.calls.clear()
+        self.D.get_apt_rows("11305", 2025)
+        self.assertEqual(self.calls, [], "아파트 이번 달을 또 받아왔다")

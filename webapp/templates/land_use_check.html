@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+{# 70-2절 진단 페이지 — 키가 안 먹는 것과 정비구역이 아닌 것을 가른다. #}
+<h1 style="font-size:22px; margin-bottom:6px">🔎 정비구역 조회 점검</h1>
+<p class="muted" style="margin-top:0">
+  지번 주소를 넣으면 그 땅의 <b>지역·지구</b>를 실제로 조회해 보고,
+  안 되면 <b>왜 안 되는지</b> 알려줍니다.</p>
+
+<div class="card">
+  <p class="muted" style="margin-top:0">
+    서버에 키가 들어와 있나요 →
+    {% if key_set %}<b style="color:var(--primary-dark)">✅ 있습니다</b>
+    {% else %}<b style="color:#c0392b">❌ 없습니다</b> — Render → Environment에
+    <code>VWORLD_API_KEY</code>를 넣고 재배포되었는지 확인하세요.{% endif %}
+  </p>
+  <form method="get" action="/land-use-check">
+    <div class="field">
+      <div class="field-icon">📍</div>
+      <div style="flex:1">
+        <label for="address">지번 주소</label>
+        <input type="text" id="address" name="address" value="{{ address }}"
+               placeholder="서울특별시 강북구 수유동 468-202" required>
+      </div>
+    </div>
+    <button type="submit" class="cta-submit" style="margin-top:12px">조회해 보기 →</button>
+  </form>
+</div>
+
+{% if result %}
+{% set ok = result.status == 'ok' %}
+<div class="card" style="border-left:4px solid {{ '#03c75a' if ok else '#e8a33d' }}">
+  <h3 style="margin-top:0">
+    {% if ok %}✅ 조회 성공
+    {% elif result.status == 'no_key' %}❌ 서버에 키가 없습니다
+    {% elif result.status == 'bad_pnu' %}⚠️ 필지번호(PNU)를 못 만들었습니다
+    {% elif result.status == 'no_address' %}⚠️ 주소를 못 찾았습니다
+    {% elif result.status == 'call_failed' %}❌ API 호출이 실패했습니다
+    {% elif result.status == 'unreadable' %}⚠️ 응답은 왔는데 못 읽었습니다
+    {% else %}⚠️ 문제가 있습니다{% endif %}
+  </h3>
+  {% if result.detail %}<p class="muted">{{ result.detail }}</p>{% endif %}
+  {% if result.pnu %}<p class="muted">필지번호(PNU): <code>{{ result.pnu }}</code></p>{% endif %}
+
+  {% if ok %}
+  <p style="margin:8px 0"><b>지정된 지역·지구</b></p>
+  <ul class="ref-list">{% for z in result.zones %}<li>{{ z }}</li>{% endfor %}</ul>
+  <p style="margin:10px 0 0; font-weight:700;
+            color:{{ '#c0392b' if result.is_redev else 'var(--primary-dark)' }}">
+    {% if result.is_redev %}→ 정비구역으로 판정됩니다 (결과 화면에 경고가 뜹니다)
+    {% else %}→ 정비구역은 아닙니다{% endif %}</p>
+  {% endif %}
+
+  {% if result.sample %}
+  <details style="margin-top:14px">
+    <summary class="muted" style="cursor:pointer">받은 응답 앞부분 보기 (필드명 확인용)</summary>
+    <pre style="white-space:pre-wrap; word-break:break-all; font-size:12px;
+                background:#f6f7f8; padding:10px; border-radius:8px; margin-top:8px">{{ result.sample }}</pre>
+    <p class="muted" style="margin:6px 0 0">※ 인증키는 가려서 표시됩니다.</p>
+  </details>
+  {% endif %}
+</div>
+{% endif %}
+
+<p class="muted" style="margin-top:14px">
+  ⚠️ 이 조회는 <b>매도가 계산에 영향을 주지 않습니다</b> — 정비구역 여부를 알려주기만 합니다.
+  <a href="/">← 계산기로 돌아가기</a></p>
+{% endblock %}

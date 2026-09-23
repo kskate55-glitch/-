@@ -107,7 +107,47 @@ def index():
 #    가로채 자기가 응답해 버려서 **요청이 서버까지 오지 않고, 따라서 안 깨어난다.**
 @app.route("/healthz", methods=["GET"])
 def healthz():
-    return {"ok": True, "version": _deploy_version()}, 200
+    # 70-2절 — 선택 키가 서버에 **도착했는지**만 알려준다(값은 절대 안 싣는다).
+    #    대시보드에 넣었는데 재배포가 안 돼서 반영이 안 된 경우를 여기서 가린다.
+    return {"ok": True, "version": _deploy_version(),
+            "optional_keys": {k: bool(os.environ.get(k, "").strip())
+                              for k in ("VWORLD_API_KEY", "KAKAO_JS_KEY",
+                                        "SUPABASE_URL", "SUPABASE_SERVICE_KEY")}}, 200
+
+
+# ── 70-2절 정비구역 조회 진단 ──────────────────────────────────────────
+# ⚠️ `get_land_use_zones()`는 다섯 가지 실패를 전부 None 하나로 뭉갠다 —
+#    화면에서 "키가 안 먹는 것"과 "정비구역이 아닌 것"을 구분할 수가 없었다
+#    (48-4절이 제일 비싸게 배운 "조용히 틀리는" 패턴). 이 페이지가 그걸 가른다.
+# ⚠️ 50-1절이 "응답 필드명을 실측으로 확인 못 했다"고 남겨둔 것도, 여기서
+#    실제 응답 앞부분을 보여주므로 한 번 돌려보면 확정된다.
+@app.route("/land-use-check", methods=["GET"])
+def land_use_check():
+    address = (request.args.get("address") or "").strip()
+    result = None
+    if address:
+        result = {"address": address}
+        try:
+            from geocode import geocode_full
+            from estimate_price import is_redevelopment_zone
+            from land_use import probe_land_use
+
+            detail = geocode_full(address)
+            if not detail:
+                result["status"] = "no_address"
+                result["detail"] = "이 주소를 좌표로 바꾸지 못했어요 — 지번 주소인지 확인해 주세요."
+            else:
+                probe = probe_land_use(detail.get("b_code"), detail.get("main_no"),
+                                       detail.get("sub_no"),
+                                       bool(detail.get("is_mountain")))
+                result.update(probe)
+                if probe["status"] == "ok":
+                    result["is_redev"] = bool(is_redevelopment_zone(probe["zones"]))
+        except Exception as e:          # 진단 페이지가 500을 내면 본말전도다
+            result["status"] = "crashed"
+            result["detail"] = f"{type(e).__name__}: {str(e)[:200]}"
+    return render_template("land_use_check.html", address=address, result=result,
+                           key_set=bool(os.environ.get("VWORLD_API_KEY", "").strip()))
 
 
 # ── 구간별 소요시간 계측 ───────────────────────────────────────────────

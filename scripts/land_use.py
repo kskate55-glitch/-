@@ -107,15 +107,41 @@ def get_land_use_zones(b_code: str, main_no, sub_no, is_mountain: bool = False,
     ⚠️ **실패해도 절대 예외를 던지지 않는다** — 20절/26절과 같은 "참고 정보는
     실패해도 계산을 막지 않는다" 원칙. 키가 없거나, 엔드포인트가 죽었거나,
     네트워크가 끊겨도 매도가 계산은 그대로 간다.
+
+    ⚠️ 그래서 **왜 못 가져왔는지는 여기서 알 수 없다** — 진단이 필요하면
+    `probe_land_use()`를 쓴다(70-2절).
     """
+    return probe_land_use(b_code, main_no, sub_no, is_mountain, timeout)["zones"]
+
+
+def probe_land_use(b_code: str, main_no, sub_no, is_mountain: bool = False,
+                    timeout: int = 8) -> dict:
+    """위와 같은 조회를 하되 **왜 실패했는지까지** 돌려준다 (70-2절).
+
+    `get_land_use_zones()`는 다섯 가지 실패를 전부 `None` 하나로 뭉개서,
+    화면에서 "키가 안 먹는 것"과 "정비구역이 아닌 것"을 **구분할 수가 없었다**
+    — 48-4절이 제일 비싸게 배운 "조용히 틀리는" 패턴이다.
+
+    반환: `{"status", "detail", "zones", "pnu", "sample"}`
+    - `status`: no_endpoint / no_key / bad_pnu / call_failed / unreadable / ok
+    - `sample`: 실제 응답 앞부분(필드명 확인용). ⚠️ **키는 절대 담지 않는다.**
+    """
+    out = {"status": "ok", "detail": "", "zones": None, "pnu": None, "sample": ""}
     if not LAND_USE_BASE_URL:
-        return None
+        out.update(status="no_endpoint", detail="엔드포인트가 비어 있습니다.")
+        return out
     service_key = os.environ.get("VWORLD_API_KEY", "").strip()
     if not service_key:
-        return None
+        out.update(status="no_key",
+                   detail="VWORLD_API_KEY 환경변수가 서버에 없습니다.")
+        return out
     pnu = build_pnu(b_code, main_no, sub_no, is_mountain)
     if not pnu:
-        return None
+        out.update(status="bad_pnu",
+                   detail=f"PNU를 만들지 못했습니다 (b_code={b_code!r}, "
+                          f"본번={main_no!r}, 부번={sub_no!r}).")
+        return out
+    out["pnu"] = pnu
 
     params = {
         "key": service_key,
@@ -133,7 +159,22 @@ def get_land_use_zones(b_code: str, main_no, sub_no, is_mountain: bool = False,
     try:
         req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urlopen(req, timeout=timeout) as resp:
-            payload = json.loads(resp.read().decode("utf-8"))
-    except (OSError, ValueError):   # 54절 — 타임아웃·인코딩 오류까지
-        return None
-    return parse_zone_names(payload)
+            raw = resp.read().decode("utf-8")
+        payload = json.loads(raw)
+    except (OSError, ValueError) as e:   # 54절 — 타임아웃·인코딩 오류까지
+        out.update(status="call_failed",
+                   detail=f"{type(e).__name__}: {str(e)[:160]}")
+        return out
+
+    # ⚠️ 응답 앞부분을 그대로 보여준다 — 50-1절이 "응답 필드명을 실측으로
+    #    확인 못 했다"고 남겨둔 것을 이 한 줄로 끝낼 수 있다. 다만 **키가
+    #    섞여 들어가면 안 되므로** 혹시 모를 에코를 지운다.
+    out["sample"] = raw[:1200].replace(service_key, "***")
+    zones = parse_zone_names(payload)
+    out["zones"] = zones
+    if not zones:
+        out.update(status="unreadable",
+                   detail="응답은 받았는데 아는 필드명으로 지역지구를 찾지 "
+                          "못했습니다 — 필드명이 다르거나 이 필지에 지정된 "
+                          "지역지구가 없습니다.")
+    return out

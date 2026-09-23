@@ -14,6 +14,7 @@ CLAUDE.md 33절 — scripts/estimate_price.py의 핵심 계산 함수(7~8절 가
 `test_find_comparables_does_not_mutate_input_rows`)가 실제로 있었다.
 """
 
+import math
 import os
 import random
 import re
@@ -2280,3 +2281,80 @@ class TestZeroToleranceDoesNotCrash(unittest.TestCase):
         v = ep.similarity_score(100, 400, 60, 60, 0.15, 3, 3, None, 2012, 4)
         self.assertGreater(v, 0)
         self.assertLessEqual(v, 100)
+
+
+class TestNanAndInfinityNeverReachTheCalculation(unittest.TestCase):
+    """CLAUDE.md 72-7절 — 실거래 응답에 `nan`·`inf` 문자열이 섞여도 계산에
+    들어오면 안 된다.
+
+    ⚠️ **NaN은 모든 비교가 False다.** 그래서 예전 가드(`not row_area`)와
+    면적 허용범위 검사(`abs(차이)/면적 > 허용범위`)를 **둘 다 그냥
+    통과했다** — 그 행이 비교거래로 들어와 7-1절 ㎡당가 모델과 7-2절 월별
+    추세를 NaN으로 오염시키는데, 화면에는 아무 표시도 안 난다(48-4절 아파트
+    오염과 같은 "조용히 틀리는" 유형이다).
+
+    `float("nan")`·`float("inf")`는 파이썬이 아무 불평 없이 만들어 주므로
+    "설마 그런 값이 오겠나"가 아니라 **가드가 실제로 막는지**를 고정한다.
+    """
+
+    def _rows(self, poison_area="69.0", poison_amount=30000):
+        rows = [_fake_row(f"빌{i}", f"{i}-1", 67 + i * 0.4, 2 + i % 3, 2012,
+                          2026, 5, 28000 + i * 400) for i in range(8)]
+        bad = _fake_row("독", "9-9", 69.0, 3, 2012, 2026, 5, 30000)
+        bad["excluUseAr"] = poison_area
+        bad["dealAmount"] = (poison_amount if isinstance(poison_amount, str)
+                             else f"{poison_amount:,}")
+        return rows + [bad]
+
+    def _comparables(self, rows):
+        with patch("geocode.geocode", return_value=(37.6380, 127.0250)):
+            return ep.find_comparables(
+                rows, subject_coord=(37.6380, 127.0250), area=69.0, floor=3,
+                build_year="2012", radius_m=400, year_min=2025, this_year=2026,
+                gu_filter=None, this_month=9)
+
+    def test_a_nan_area_is_not_treated_as_a_matching_area(self):
+        comparables = self._comparables(self._rows(poison_area="nan"))
+        self.assertNotIn("독", [r["mhouseNm"] for r in comparables],
+                         "면적이 NaN인 거래가 면적 허용범위 검사를 통과했습니다")
+
+    def test_infinite_and_negative_values_are_rejected(self):
+        for label, area, amount in (("무한대 면적", "inf", 30000),
+                                    ("음의 무한대 면적", "-Infinity", 30000),
+                                    ("자리수 넘침 면적", "1e400", 30000),
+                                    ("음수 면적", "-69", 30000),
+                                    ("무한대 금액", "69.0", "inf"),
+                                    ("NaN 금액", "69.0", "nan"),
+                                    ("음수 금액", "69.0", "-30,000"),
+                                    ("0원 금액", "69.0", "0")):
+            with self.subTest(label):
+                comparables = self._comparables(self._rows(area, amount))
+                self.assertNotIn("독", [r["mhouseNm"] for r in comparables],
+                                 f"{label}인 거래가 계산에 들어왔습니다")
+
+    def test_the_results_stay_finite(self):
+        for area in ("nan", "inf", "1e400"):
+            with self.subTest(area):
+                comparables = self._comparables(self._rows(poison_area=area))
+                scenarios = ep.compute_scenarios(comparables, radius_m=400,
+                                                 this_year=2026, subject_area=69.0)
+                for key in ("p25", "median", "p75"):
+                    self.assertTrue(math.isfinite(scenarios[key]),
+                                    f"{key}가 유한한 값이 아닙니다: {scenarios[key]}")
+
+    def test_the_monthly_trend_series_ignores_them_too(self):
+        """7-2절 월별 추세도 같은 구멍이 있었다 — 여기가 오염되면 추세 보정이
+        통째로 NaN이 되어 **매도가까지 번진다**."""
+        rows = [_fake_row(f"빌{i}", f"{i}-1", 69.0, 3, 2012, 2026, 1 + i, 30000 + i * 300)
+                for i in range(6)]
+        poisoned = _fake_row("독", "9-9", 69.0, 3, 2012, 2026, 4, 30000)
+        poisoned["excluUseAr"] = "nan"
+        series, _label = ep._price_trend_monthly_series(rows + [poisoned], "수유동")
+        for _y, _m, value in series:
+            self.assertTrue(math.isfinite(value), f"월별 평당가에 NaN이 섞였습니다: {value}")
+
+    def test_is_usable_number_itself(self):
+        for value in (float("nan"), float("inf"), float("-inf"), 0.0, -1.0):
+            self.assertFalse(ep.is_usable_number(value), f"{value}를 통과시켰습니다")
+        for value in (1.0, 69.27, 1e9):
+            self.assertTrue(ep.is_usable_number(value), f"{value}를 막았습니다")

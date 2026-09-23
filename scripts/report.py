@@ -113,6 +113,18 @@ def _e(value) -> str:
     return _html.escape(str(value))
 
 
+def _safe_url(url: str) -> str:
+    """http(s)로 시작하는 주소만 통과시킨다.
+
+    ⚠️ 지금 이 리포트에 들어오는 주소는 전부 `naver_link.py`가 좌표·검색어로
+    직접 만든 것이라 `javascript:` 같은 게 낄 길이 없다. 그래도 거르는 건
+    이 프로젝트가 반복해 데인 게 **"없을 줄 알았던 경로"**여서다 — 나중에
+    누가 사용자 입력에서 온 주소를 여기 넘겨도 링크가 코드로 바뀌지 않는다.
+    """
+    text = (url or "").strip()
+    return text if text[:7].lower() == "http://" or text[:8].lower() == "https://" else ""
+
+
 def _comparables_table_html(comparables: list[dict]) -> str:
     if not comparables:
         return '<p class="muted">비교거래가 없습니다.</p>'
@@ -125,8 +137,9 @@ def _comparables_table_html(comparables: list[dict]) -> str:
         name_cell = _e(r["name"])
         for key, icon, tip in (("map_url", "🗺️", "네이버부동산 지도에서 위치 보기"),
                                ("search_url", "🔍", "네이버에서 검색")):
-            if r.get(key):
-                name_cell += (f' <a href="{_e(r[key])}" target="_blank" rel="noopener" '
+            safe = _safe_url(r.get(key))
+            if safe:
+                name_cell += (f' <a href="{_e(safe)}" target="_blank" rel="noopener" '
                               f'style="text-decoration:none;font-size:12px" title="{tip}">{icon}</a>')
         rows.append(
             "<tr>"
@@ -249,7 +262,7 @@ def render_report(*, building, dong, area, period, generated, confidence,
         title=_e(f"{building} 매도가 분석"),
         building=_e(building), dong=_e(dong), area=_e(area),
         period=_e(period), generated=_e(generated),
-        naver_url=_e(naver_url),
+        naver_url=_e(_safe_url(naver_url)),
         confidence=confidence,
         conservative=fmt_eok(conservative), realistic=fmt_eok(realistic),
         upper=fmt_eok(upper), ai_base=fmt_eok(ai_base), listing=fmt_eok(listing),

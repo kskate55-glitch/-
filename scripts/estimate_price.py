@@ -214,6 +214,19 @@ def estimate_conversion_rate(rent_dir: str, subject_coord: tuple[float, float], 
     return {"rate": median_rate, "n": n, "reference_deposit": reference_deposit}
 
 
+def is_usable_number(value: float) -> bool:
+    """실거래 응답에서 읽은 숫자가 계산에 써도 되는 값인지.
+
+    ⚠️ **NaN은 모든 비교가 False라 `if x <= 0` 같은 가드를 그냥 통과한다.**
+    `float("nan")`·`float("inf")`는 파이썬이 아무 불평 없이 만들어 주므로,
+    응답에 그런 문자열이 하나 섞이면 면적 필터도 허용범위 검사도 통째로
+    비켜가서 **그 행이 계산에 그대로 들어온다**(72-7절에서 실제로 확인했다).
+    그러면 ㎡당가 모델이나 월별 추세가 NaN으로 오염되는데, 화면에는 아무
+    표시도 안 난다 — 48-4절 아파트 오염과 같은 "조용히 틀리는" 유형이다.
+    """
+    return value == value and -math.inf < value < math.inf and value > 0
+
+
 def to_amount_man(s: str) -> float:
     """'36,900' (만원 단위 문자열) -> 36900.0 (만원, float)"""
     try:
@@ -416,7 +429,10 @@ def find_comparables(rows: list[dict], subject_coord: tuple[float, float], area:
             amount = to_amount_man(r.get(amount_field, ""))
         except (ValueError, TypeError):
             continue
-        if amount != amount or not row_area:
+        # 72-7절 — NaN/무한대가 섞이면 아래 면적 허용범위 검사를 **그냥
+        # 통과한다**(NaN은 모든 비교가 False다). 여기가 매매·전세가 함께
+        # 쓰는 단 하나의 관문이라 여기서 막는다.
+        if not is_usable_number(amount) or not is_usable_number(row_area):
             continue
         if abs(row_area - area) / area > area_tolerance_pct:
             continue  # 반경 안이라도 면적이 많이 다르면 비교 대상에서 제외
@@ -2272,7 +2288,8 @@ def _price_trend_monthly_series(all_rows: list[dict], dong: str,
             amount = to_amount_man(r.get("dealAmount", ""))
         except (ValueError, TypeError):
             continue
-        if not y or not 1 <= m <= 12 or amount != amount or not area:
+        if not y or not 1 <= m <= 12 or not is_usable_number(amount) \
+                or not is_usable_number(area):
             continue
         buckets[(y, m)].append(amount / area)
 
@@ -2848,7 +2865,7 @@ def compute_distance_premium(filtered: list[dict], keyword: str = "지하철역"
             if place is None:
                 continue
             area = float(r.get("excluUseAr", "nan") or "nan")
-            if area != area or not area:
+            if not is_usable_number(area) or not is_usable_number(r["_amount_man"]):
                 continue
             points.append((place["distance_m"], r["_amount_man"] / area))
 

@@ -139,6 +139,16 @@ def looks_like_apartment_rows(rows: list[dict]) -> bool:
     return any("aptNm" in r for r in rows)
 
 
+def _drop_current(cache_dir: str, ym: str) -> None:
+    """달이 넘어가 정식 캐시(`<ym>.json`)가 생기면 `<ym>.current.json`은 쓸모가
+    없어진다 — 영구 디스크에 올리면(63절) 지역·달마다 하나씩 무한정 쌓이므로
+    그 자리에서 치운다. 못 지워도 그냥 넘어간다(정식 캐시가 이미 우선한다)."""
+    try:
+        os.remove(os.path.join(cache_dir, f"{ym}.current.json"))
+    except OSError:
+        pass
+
+
 def get_trade_rows(lawd_cd: str, year_min: int) -> list[dict]:
     from molit_rhtrade_api import fetch_all_pages
 
@@ -184,6 +194,7 @@ def get_trade_rows(lawd_cd: str, year_min: int) -> list[dict]:
 
         rows = _checked(fetch_all_pages(lawd_cd, ym))
         write_json(cache_path, rows)                      # 53절 — 원자적 교체
+        _drop_current(cache_dir, ym)                      # 달이 넘어간 뒤 남는 찌꺼기
         supabase_cache.put(f"trade:{lawd_cd}", ym, rows)  # 다음 배포 뒤를 위해
         return rows
 
@@ -233,6 +244,7 @@ def get_apt_rows(lawd_cd: str, year_min: int) -> list[dict]:
         if ym != this_ym:
             os.makedirs(cache_dir, exist_ok=True)
             write_json(cache_path, rows)                  # 53절
+            _drop_current(cache_dir, ym)                  # 달이 넘어간 뒤 남는 찌꺼기
             supabase_cache.put(f"apt:{lawd_cd}", ym, rows)
         return rows
 

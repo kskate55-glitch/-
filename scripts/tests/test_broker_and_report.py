@@ -150,3 +150,57 @@ class TestHtmlReportRenders(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestOnlyHttpUrlsBecomeLinks(unittest.TestCase):
+    """CLAUDE.md 72-7절 — `href`에 들어가는 주소는 http(s)만 통과한다.
+
+    ⚠️ 지금 이 리포트에 들어오는 주소는 전부 `naver_link.py`가 좌표·검색어로
+    만든 것이라 실제로 뚫릴 길은 없다. 그래도 고정해 두는 건, 나중에 누가
+    사용자 입력에서 온 주소를 여기 넘겨도 **링크가 코드로 바뀌지 않게**
+    하기 위해서다.
+    """
+
+    def _render(self, search_url, map_url, naver_url):
+        from report import render_report      # 이 파일의 다른 테스트와 같은 방식
+
+        return render_report(
+            building="빌라", dong="수유동", area="69.0", period="2025.01~2026.09",
+            generated="2026-09-23", confidence=88,
+            conservative=28000, realistic=30000, upper=32000, ai_base=30000,
+            listing=33000, auction_price=29000, n_total=1, n_close=1,
+            comparables=[{"name": "A", "area": "69.0", "date": "2026.5",
+                          "amount": 30000.0, "label": "120m",
+                          "search_url": search_url, "map_url": map_url}],
+            season={"scope_label": "수유동", "index": {m: 100 for m in range(1, 13)},
+                    "busy": [3], "slow": [8]},
+            trend={"scope_label": "수유동", "series": [(2026, 1, 450.0)], "change_pct": 2.2},
+            filtered=None, naver_url=naver_url, this_year=2026, this_month=9)
+
+    def test_dangerous_schemes_never_become_hrefs(self):
+        import re
+
+        for bad in ("javascript:alert(1)", "JaVaScRiPt:alert(1)", "data:text/html,<b>",
+                    "vbscript:x", "  javascript:alert(1)"):
+            with self.subTest(bad):
+                html_out = self._render(bad, bad, bad)
+                hrefs = re.findall(r'href="([^"]*)"', html_out)
+                for href in hrefs:
+                    self.assertTrue(href == "" or href.lower().startswith("http"),
+                                    f"위험한 주소가 링크로 나갔습니다: {href}")
+
+    def test_normal_links_still_work(self):
+        html_out = self._render("https://search.naver.com/?query=x",
+                                "https://new.land.naver.com/houses?ms=1,2,19",
+                                "https://new.land.naver.com/houses?ms=3,4,17")
+        self.assertIn("search.naver.com", html_out)
+        self.assertIn("new.land.naver.com/houses?ms=1,2,19", html_out)
+        self.assertIn("new.land.naver.com/houses?ms=3,4,17", html_out)
+
+    def test_the_helper_itself(self):
+        import report
+
+        self.assertEqual(report._safe_url("https://a/b"), "https://a/b")
+        self.assertEqual(report._safe_url("http://a"), "http://a")
+        for bad in ("javascript:x", "//evil.com", "ftp://a", "", None, "   "):
+            self.assertEqual(report._safe_url(bad), "", f"{bad!r}를 통과시켰습니다")

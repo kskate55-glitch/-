@@ -35,6 +35,7 @@ KAKAO_JS_KEY 환경변수(선택)를 설정하면 27절 결과 페이지에 대�
 
 import os
 import sys
+import time
 from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
@@ -107,6 +108,36 @@ def index():
 @app.route("/healthz", methods=["GET"])
 def healthz():
     return {"ok": True, "version": _deploy_version()}, 200
+
+
+# ── 구간별 소요시간 계측 ───────────────────────────────────────────────
+# ⚠️ "로딩이 느리다"를 추측으로 고치지 않기 위한 장치다. 이 서비스의 대기시간은
+#    전부 네트워크라, **어느 구간이 느린지**를 알아야 고칠 방법이 갈린다:
+#      - 실거래 조회가 느리다  → 국토부까지의 거리(리전) 또는 캐시가 빈 것
+#      - 비교거래 찾기가 느리다 → 카카오 지오코딩 호출 수(캐시 적중률)
+#      - 둘 다 빠른데 체감이 느리다 → 콜드 스타트(서버가 자고 있었음)
+#    화면 맨 아래에 한 줄로 찍어서, 사용자가 캡처만 보내도 원인이 좁혀지게 한다.
+class _PhaseTimer:
+    def __init__(self):
+        self._start = time.monotonic()
+        self._phases: list[tuple[str, float]] = []
+
+    def measure(self, label: str, fn):
+        """fn()을 실행하고 걸린 시간을 기록한 뒤 결과를 그대로 돌려준다."""
+        t0 = time.monotonic()
+        try:
+            return fn()
+        finally:
+            self._phases.append((label, time.monotonic() - t0))
+
+    def summary(self) -> dict:
+        total = time.monotonic() - self._start
+        known = sum(d for _, d in self._phases)
+        parts = [{"label": l, "sec": round(d, 2)} for l, d in self._phases if d >= 0.05]
+        rest = total - known
+        if rest >= 0.05:
+            parts.append({"label": "나머지", "sec": round(rest, 2)})
+        return {"total": round(total, 2), "parts": parts}
 
 
 # ── 48절 정확도 백테스트 (웹) ────────────────────────────────────────────
@@ -425,8 +456,9 @@ def estimate():
 
     from geocode import geocode_full
 
+    _timer = _PhaseTimer()
     try:
-        subject_detail = geocode_full(address)
+        subject_detail = _timer.measure("주소→좌표", lambda: geocode_full(address))
     except RuntimeError as e:
         return render_template("index.html", error=f"카카오 API 설정을 확인해 주세요: {e}",
                                 form=form, last_year=this_year - 1)
@@ -581,7 +613,8 @@ def estimate():
     target_dong_early = find_dong_in_address(address)
 
     try:
-        rows = dedupe(get_trade_rows(lawd_cd, year_min))
+        rows = _timer.measure("실거래 조회",
+                              lambda: dedupe(get_trade_rows(lawd_cd, year_min)))
     except RuntimeError as e:
         return render_template("index.html", error=f"국토부 API 조회 중 문제가 발생했습니다: {e}",
                                 form=form, last_year=this_year - 1)
@@ -641,13 +674,13 @@ def estimate():
         target_dong, subject_detail.get("main_no"), subject_detail.get("sub_no"),
         bool(subject_detail.get("is_mountain")))
 
-    filtered = find_comparables(
+    filtered = _timer.measure("비교거래 찾기", lambda: find_comparables(
         rows, subject_coord, area, floor, build_year,
         radius, year_min, this_year, gu_filter=None,
         area_tolerance_pct=area_tolerance_pct,
         build_year_tolerance=build_year_tolerance,
         this_month=this_month,
-        subject_building=subject_building)
+        subject_building=subject_building))
     if not filtered:
         return render_template(
             "index.html",
@@ -1112,6 +1145,8 @@ def estimate():
             "deposit": f"{monthly_deposit:.0f}", "rate": f"{conversion_rate:.1f}",
             "amount": f"{monthly_rent:.0f}",
         }
+
+    result["timings"] = _timer.summary()
 
     return render_template("result.html", result=result)
 

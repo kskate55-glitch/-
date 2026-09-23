@@ -108,7 +108,8 @@
 
 
 <h1>🏠 주영이의 빌라 경매 매도가 계산기 — 결과</h1>
-<p class="muted">{{ result.address }} · 분석기간 {{ result.period }}</p>
+<p class="subject-line">{{ result.address }}</p>
+<p class="subject-period">분석기간 {{ result.period }}</p>
 {% if result.naver_land_url %}
 <a href="{{ result.naver_land_url }}" target="_blank" rel="noopener" class="naver-cta">
   <span class="naver-cta-icon">🗺️</span>
@@ -688,4 +689,18 @@
 {% endif %}
 
 <a class="back" href="/">← 다시 계산하기</a>
+{% if result.timings %}
+{# ⚠️ 추측으로 서버를 옮기지 않기 위한 계측 줄이다. 어느 구간이 느린지 보이면
+   원인이 갈린다 — 실거래 조회가 느리면 데이터 서버까지의 거리(또는 캐시가 빈 것),
+   비교거래 찾기가 느리면 좌표 변환 호출 수, 둘 다 빠른데 체감이 느렸다면
+   서버가 자고 있다가 깨어난 것이다. #}
+<p class="muted" style="text-align:center; margin-top:18px; font-size:12.5px">
+  ⏱ 이번 조회 {{ result.timings.total }}초
+  {%- if result.timings.parts %} (
+    {%- for p in result.timings.parts %}{{ p.label }} {{ p.sec }}초{% if not loop.last %} · {% endif %}{% endfor -%}
+  ){%- endif %}
+  · 같은 지역을 다시 조회하면 저장된 값을 써서 훨씬 빨라집니다
+</p>
+{% endif %}
+
 {% endblock %}

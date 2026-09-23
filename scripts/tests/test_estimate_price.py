@@ -2015,16 +2015,52 @@ class TestPredictionInterval(unittest.TestCase):
     def test_each_risk_widens_the_band(self):
         """위험요인이 늘수록 구간이 좁아지는 일은 없어야 한다(단조)."""
         widths = []
-        for area, div in [(70.0, 0.5), (70.0, 9.0), (40.0, 9.0)]:
-            r = ep.compute_prediction_interval(20000, self._rows(10), area, div)
+        for area, div, year in [(70.0, 0.5, 2015), (70.0, 9.0, 2015),
+                                (40.0, 9.0, 2015), (40.0, 9.0, 1990)]:
+            r = ep.compute_prediction_interval(20000, self._rows(10), area, div, year)
             widths.append(r["pct"])
         self.assertEqual(widths, sorted(widths), f"구간 폭이 단조가 아니다: {widths}")
 
-    def test_both_risks_land_in_the_top_tier(self):
-        """남은 위험요인은 둘뿐이라, 둘 다 걸리면 곧 최상위 칸이다(67절)."""
-        r = ep.compute_prediction_interval(20000, self._rows(10), 40.0, 9.0)
-        self.assertEqual(r["risks"], 2)
-        self.assertEqual(r["tier"], 2)
+    def test_three_risks_land_in_the_top_tier(self):
+        """72-17절 — 연식이 들어와 위험요인이 셋이 됐다."""
+        r = ep.compute_prediction_interval(20000, self._rows(10), 40.0, 9.0, 1990)
+        self.assertEqual(r["risks"], 3)
+        self.assertEqual(r["tier"], 3)
+
+    def test_an_old_building_is_a_risk_on_its_own(self):
+        """⭐ 72-17절 — 지금까지 중 근거가 가장 센 위험요인이다.
+
+        실측 139건(경기 86 + 서울 53): 구축 MAPE 17.1% vs 2000년 이후 10.3%,
+        차이 +6.8%p [+2.4, +11.4]. 소형·괴리율 칸 안에서 따로 봐도 전부
+        갈린다(+5.7 / +3.0 / +11.4%p) — 교란이 아니다.
+        """
+        new_build = ep.compute_prediction_interval(20000, self._rows(10), 70.0, 0.5, 2015)
+        old_build = ep.compute_prediction_interval(20000, self._rows(10), 70.0, 0.5, 1995)
+        self.assertEqual(new_build["risks"], 0)
+        self.assertEqual(old_build["risks"], 1)
+        self.assertGreater(old_build["pct"], new_build["pct"])
+
+    def test_the_cutoff_year_is_where_the_data_splits(self):
+        """경계 바로 앞뒤가 실제로 갈리는지 — 2000년이 기준이다."""
+        boundary = ep.PREDICTION_RISK_OLD_BUILD_YEAR
+        self.assertEqual(
+            ep.compute_prediction_interval(20000, self._rows(10), 70.0, 0.5, boundary)["risks"], 0)
+        self.assertEqual(
+            ep.compute_prediction_interval(20000, self._rows(10), 70.0, 0.5, boundary - 1)["risks"], 1)
+
+    def test_a_string_build_year_still_counts(self):
+        """⚠️ CLI `--build-year`는 문자열이다(65절 ③에서 실제로 터졌다)."""
+        self.assertEqual(
+            ep.compute_prediction_interval(20000, self._rows(10), 70.0, 0.5, "1991")["risks"], 1)
+        self.assertEqual(
+            ep.compute_prediction_interval(20000, self._rows(10), 70.0, 0.5, " 2015 ")["risks"], 0)
+
+    def test_an_unreadable_build_year_is_simply_skipped(self):
+        """숫자로 못 읽으면 **그 요인만** 빼고 나머지를 센다 — 터지지 않는다."""
+        for bad in (None, "", "몰라요", "abc", float("nan"), float("inf"), []):
+            r = ep.compute_prediction_interval(20000, self._rows(10), 70.0, 0.5, bad)
+            self.assertIsNotNone(r, f"{bad!r}에서 구간이 사라졌다")
+            self.assertEqual(r["risks"], 0, f"{bad!r}가 위험요인으로 세어졌다")
 
     def test_same_building_count_no_longer_changes_the_band(self):
         """⛔ 67절 — 동일건물 건수는 더 이상 위험요인이 아니다.
@@ -2059,30 +2095,46 @@ class TestPredictionInterval(unittest.TestCase):
         그대로 거짓말이 되고, 그만큼 입찰가를 잘못 쓰게 된다.
         **좁아서 틀리는 쪽이 넓어서 싱거운 쪽보다 훨씬 해롭다.**
 
-        아래 수치는 67절에서 위험요인을 둘로 줄인 뒤 다시 잰 값이다
-        (경기 65건 + 서울 53건 = 118건).
+        아래 수치는 72-17절에서 연식을 넣어 4칸으로 다시 잰 값이다
+        (경기 86 + 서울 53 = 139건).
 
-        ⚠️ **표본이 얇은 칸은 기준에서 뺀다.** 경기 위험2개는 14건뿐이라
-        80% 분위(37%)가 한두 건에 좌우된다 — 그런 꼬리에 폭을 맞추는 건
-        48-2절 0.97과 같은 과적합이다.
+        ⚠️ **표본이 얇은 칸은 지역 대신 전체를 기준 삼는다.** 위험 0개와
+        3개는 지역별로 5~8건뿐이라 80% 분위가 한두 건에 좌우된다 —
+        그런 꼬리에 폭을 맞추는 건 48-2절 0.97과 같은 과적합이다.
         """
         MIN_N = 15
-        measured = [  # (tier, 경기 80%분위, 경기 n, 서울 80%분위, 서울 n)
-            (0, 13.0, 30, 18.0, 11),
-            (1, 14.0, 21, 31.0, 25),
-            (2, 37.0, 14, 25.0, 17),
+        # (칸, 경기 분위, 경기 n, 서울 분위, 서울 n, 전체 분위)
+        measured = [
+            (0, 11.4, 29,  None,  5, 12.2),
+            (1, 14.8, 26,  25.0, 20, 17.9),
+            (2, 17.1, 23,  24.2, 21, 23.8),
+            (3, 22.8,  8,  None,  7, 27.0),
         ]
-        for tier, gg, gg_n, seoul, seoul_n in measured:
-            thick = [q for q, n in ((gg, gg_n), (seoul, seoul_n)) if n >= MIN_N]
-            self.assertTrue(thick, f"위험 {tier}개 칸에 기준 삼을 표본이 없다")
-            self.assertGreaterEqual(ep.PREDICTION_INTERVAL_PCT[tier], max(thick) * 0.95,
+        for tier, gg, gg_n, seoul, seoul_n, pooled in measured:
+            thick = [q for q, n in ((gg, gg_n), (seoul, seoul_n))
+                     if q is not None and n >= MIN_N]
+            target = max(thick) if thick else pooled
+            self.assertGreaterEqual(ep.PREDICTION_INTERVAL_PCT[tier], target * 0.95,
                                      f"위험 {tier}개 구간이 실측 꼬리보다 좁다")
+
+    def test_the_widths_are_not_the_narrowest_that_fit_this_sample(self):
+        """⚠️ **최소값을 쓰면 안 된다** — 이 표본에만 딱 맞는 폭은
+        부트스트랩에서 깨질 확률이 18% → 41%로 뛴다(48-2절 과적합).
+        채택값은 "지금보다 위태롭지 않은 선에서 가장 좁게"다.
+        """
+        narrowest = {0: 16.0, 1: 18.0, 2: 28.0, 3: 34.0}
+        self.assertNotEqual(dict(ep.PREDICTION_INTERVAL_PCT), narrowest)
+        self.assertGreater(sum(ep.PREDICTION_INTERVAL_PCT.values()), sum(narrowest.values()))
 
     def test_widths_never_shrink_as_risk_grows(self):
         """위험이 늘수록 구간이 좁아지면 등급 자체가 말이 안 된다."""
         w = ep.PREDICTION_INTERVAL_PCT
-        self.assertLessEqual(w[0], w[1])
-        self.assertLessEqual(w[1], w[2])
+        tiers = sorted(w)
+        for a, b in zip(tiers, tiers[1:]):
+            self.assertLessEqual(w[a], w[b], f"위험 {a}→{b}에서 구간이 좁아진다")
+        # 라벨·표본수 표가 폭 표와 칸 수가 같아야 한다 (하나만 고치면 KeyError)
+        self.assertEqual(set(w), set(ep.PREDICTION_INTERVAL_LABEL))
+        self.assertEqual(set(w), set(ep.PREDICTION_INTERVAL_SAMPLE_N))
 
 
 class TestWeightedQuantile(unittest.TestCase):

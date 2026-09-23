@@ -1002,7 +1002,7 @@ def estimate():
     # 매도가에 그대로 붙이면 근거 없는 숫자가 된다.
     from estimate_price import compute_prediction_interval
     _pi = compute_prediction_interval(
-        realistic, filtered, area, scen.get("model_divergence_pct"))
+        realistic, filtered, area, scen.get("model_divergence_pct"), build_year)
     prediction_interval = None
     if _pi:
         prediction_interval = {

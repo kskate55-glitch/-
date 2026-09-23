@@ -1419,7 +1419,16 @@ def top_weight_share(filtered: list[dict]) -> float | None:
 #
 # 위험요인 세 가지를 **세기만 한다**(가중치를 새로 만들지 않는다):
 PREDICTION_RISK_DIVERGENCE_PCT = 3.0    # 7-1절 두 모델 괴리율
-PREDICTION_RISK_SMALL_AREA_SQM = 50.0   # 소형 — 유일하게 통계적으로 튼튼한 신호
+PREDICTION_RISK_SMALL_AREA_SQM = 50.0   # 소형
+# ⭐ 72-17절에서 셋째로 들어왔다 — **지금까지 중 근거가 가장 센 위험요인이다.**
+#    실측 139건(경기 86 + 서울 53): 구축 MAPE 17.1% vs 2000년 이후 10.3%,
+#    차이 +6.8%p 부트스트랩 95%[+2.4, +11.4] — 전체·경기 둘 다 0을 넘고
+#    서울도 같은 방향(+4.8%p)이다. 소형·괴리율 칸 안에서 따로 봐도 전부
+#    갈려(+5.7 / +3.0 / +11.4%p) **교란이 아니다.**
+#    ⚠️ 경계 2000년은 실측에서 끊긴 자리다 — 1999 이전 17.1% / 2000~2009
+#    8.1% / 2010 이후 11.0%로 **2000년대가 가장 정확하다**(신축이 아니라
+#    구축이 문제라는 뜻이다).
+PREDICTION_RISK_OLD_BUILD_YEAR = 2000
 # ⛔ `PREDICTION_RISK_SAME_BUILDING_ONE`(같은 건물 거래 1건)은 **뺐다** — 67절.
 #    118건(경기 65 + 서울 53)으로 재보니 +1.1%p [−3.8, +6.8]로 0을 못 넘는다.
 
@@ -1436,32 +1445,43 @@ PREDICTION_INTERVAL_LEVEL = 80          # %
 # ⚠️ 67절에서 위험요인을 셋 → 둘로 줄였는데 **폭은 그대로 뒀다** — 새 등급에
 #    그대로 씌워도 경기 89% · 서울 83% · 합계 86%로 약속을 지킨다. 여기서 더
 #    조이면(예: ±20/32/35) 서울 위험1개 칸 한 건에 맞추는 과적합이 된다.
-PREDICTION_INTERVAL_PCT = {0: 20.0, 1: 30.0, 2: 35.0}
+# ⭐ 72-17절 — 연식이 들어오며 3칸 → 4칸이 됐다. 폭은 **"지금보다 위태롭지
+#    않은 선에서 가장 좁게"** 골랐다(부트스트랩 1,200회에서 두 지역 중 낮은
+#    쪽이 80% 미만일 확률이 예전 ±20/30/35와 똑같이 18%다).
+#    실측 80% 분위 12.2 / 17.9 / 23.8 / 27.0 보다 전부 넓다.
+#    적중: 전체 90% · 경기 93% · 서울 85% (예전 89 / 92 / 85).
+#    ⚠️ **최소값(±16/18/28/34)은 일부러 안 썼다** — 그건 이 표본에만 딱 맞아
+#    깨질 확률이 41%로 뛴다(48-2절 0.97과 같은 과적합).
+PREDICTION_INTERVAL_PCT = {0: 20.0, 1: 24.0, 2: 28.0, 3: 34.0}
 # 화면에 "비슷한 조건의 과거 물건 N건 중 80%가…"로 나가는 표본 수 —
 # 67절에서 위험요인을 둘로 줄인 뒤 다시 센 값이다(경기 65 + 서울 53 = 118건).
-PREDICTION_INTERVAL_SAMPLE_N = {0: 41, 1: 46, 2: 31}
+PREDICTION_INTERVAL_SAMPLE_N = {0: 34, 1: 46, 2: 44, 3: 15}
 PREDICTION_INTERVAL_LABEL = {
     0: "안정적인 편",
     1: "보통",
-    2: "불안정 — 넓게 잡으세요",
+    2: "조금 불안정",
+    3: "불안정 — 넓게 잡으세요",
 }
 
 
 def count_prediction_risks(filtered: list[dict],
                             subject_area: float | None,
-                            model_divergence_pct: float | None) -> int:
-    """이 추정이 흔들릴 위험요인이 몇 개인지 센다 (0~2). 49-2절 · 67절.
+                            model_divergence_pct: float | None,
+                            build_year=None) -> int:
+    """이 추정이 흔들릴 위험요인이 몇 개인지 센다 (0~3). 49-2절 · 67절 · 72-17절.
 
-    ⚠️ **원래 세 개였는데 하나를 뺐다**(67절). 독립 표본 118건
-    (경기 65 + 서울 53) 부트스트랩 95% 신뢰구간:
-      - 소형(<50㎡)    +5.2%p [+0.6, +10.0] → ✅ 합쳐야 유의
-      - 괴리율 ≥3%     +4.2%p [−0.3, +8.9]  → 경기만 유의, 서울은 역방향
-      - ~~같은 건물 1건~~ +1.1%p [−3.8, +6.8] → ⛔ **어디서도 유의하지 않아 뺐다**
-    둘만 남겨도 구간이 단조로 갈라지고(합계 9.4 / 15.9 / 16.8%) 갈라내는
-    폭은 오히려 커진다(경기 +9.5%p → +10.8%p) — **하나하나를 독립된
-    근거로 내세우지 않는다는 원칙은 그대로다.**
+    | 요인 | 실측 차이 | 95% 범위 |
+    |---|---|---|
+    | **구축(2000년 이전)** | **+6.8%p** | **[+2.4, +11.4]** ⭐ 가장 셈 |
+    | 소형(<50㎡) | +5.2%p | [+0.6, +10.0] |
+    | 괴리율 ≥3% | +4.2%p | [−0.3, +8.9] — 경기만 |
+    | ~~같은 건물 1건~~ | +1.1%p | [−3.8, +6.8] ⛔ 67절에서 뺐다 |
 
-    `filtered`는 더 이상 읽지 않지만 인자로 남겨 둔다 — 호출부가 세 군데라
+    ⚠️ **`build_year`는 문자열로 올 수 있다** — 5절 하드필터가 문자열 비교를
+    쓰기 때문에 CLI `--build-year`는 문자열 그대로다(65절 ③에서 이것 때문에
+    실제로 터졌다). 숫자로 못 읽으면 **이 요인만 조용히 빼고** 나머지를 센다.
+
+    `filtered`는 더 이상 읽지 않지만 인자로 남겨 둔다 — 호출부가 여러 군데라
     시그니처를 바꾸면 그쪽이 조용히 깨진다.
     """
     risks = 0
@@ -1469,13 +1489,17 @@ def count_prediction_risks(filtered: list[dict],
         risks += 1
     if subject_area is not None and subject_area < PREDICTION_RISK_SMALL_AREA_SQM:
         risks += 1
+    year = _as_int(build_year)
+    if year is not None and year < PREDICTION_RISK_OLD_BUILD_YEAR:
+        risks += 1
     return risks
 
 
 def compute_prediction_interval(center_man: float | None,
                                  filtered: list[dict],
                                  subject_area: float | None,
-                                 model_divergence_pct: float | None) -> dict | None:
+                                 model_divergence_pct: float | None,
+                                 build_year=None) -> dict | None:
     """현실적 체결가 기준 예측구간. 계산할 수 없으면 `None`.
 
     "비슷한 조건의 과거 물건 N건 중 80%가 이 범위 안에서 팔렸다"는 뜻이지,
@@ -1483,8 +1507,9 @@ def compute_prediction_interval(center_man: float | None,
     """
     if not center_man or center_man <= 0 or not filtered:
         return None
-    risks = count_prediction_risks(filtered, subject_area, model_divergence_pct)
-    tier = min(risks, 2)          # 3개짜리는 표본이 8건뿐이라 2개 칸에 합친다
+    risks = count_prediction_risks(filtered, subject_area, model_divergence_pct,
+                                   build_year)
+    tier = min(risks, 3)
     pct = PREDICTION_INTERVAL_PCT[tier]
     return {
         "level": PREDICTION_INTERVAL_LEVEL,
@@ -3285,7 +3310,8 @@ def main():
     # 49-2절 — 백테스트 잔차 기반 예측구간. 신뢰도 점수와 달리 실측으로
     # 검증된 숫자라, 화면에서는 이쪽을 주된 신호로 읽는다.
     interval = compute_prediction_interval(
-        realistic, filtered, args.area, scen.get("model_divergence_pct"))
+        realistic, filtered, args.area, scen.get("model_divergence_pct"),
+        args.build_year)
     if interval:
         print(f"[예측구간] 현실적 체결가 {fmt(realistic)} 기준 — {interval['label']}")
         print(f"{interval['level']}% 구간: {fmt(interval['low_man'])} ~ {fmt(interval['high_man'])} (±{interval['pct']:.0f}%)")

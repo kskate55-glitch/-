@@ -3009,6 +3009,7 @@ def main():
     ap.add_argument("--monthly-deposit", type=float, default=None, help="예상 월세 추정용 월세보증금(만원) — 주면 23절 예상 월세 추정을 같이 보여준다")
     ap.add_argument("--conversion-rate", type=float, default=None, help="전월세전환율(연 %%) — 생략하면 반경 안 실제 월세 거래로 역산한 실측치를 쓰고, 그것도 없으면 6.0(참고용 기본값)으로 폴백한다")
     ap.add_argument("--no-market-trend", action="store_true", help="24절 시장 동향 참고 지표(매수우위지수 등)를 건너뛴다")
+    ap.add_argument("--no-buyer-age", action="store_true", help="69절 매입자 연령대 참고 지표를 건너뛴다")
     ap.add_argument("--no-dong-compare", action="store_true", help="25절 인근 동 비교(거래활발도/가격상승률)를 건너뛴다")
     ap.add_argument("--station-premium", action="store_true", help="26절 역세권 프리미엄 참고(거리-가격 회귀)를 계산한다 — 카카오 키워드 검색을 비교거래마다 추가로 호출해서 기본은 꺼져 있다")
     ap.add_argument("--condition", choices=list(CONDITION_MULTIPLIER), default=None,
@@ -3072,12 +3073,16 @@ def main():
     if not args.no_market_trend:
         print_market_trend(args.address)
 
+    # 69절 — 매입자 연령대. 파일만 읽으므로 API 호출이 0이다.
+    if not args.no_buyer_age:
+        try:
+            from buyer_age import compute_buyer_age, print_buyer_age
+            print_buyer_age(compute_buyer_age(args.address))
+        except (OSError, ValueError, KeyError, ImportError):
+            pass          # 참고 지표라 실패해도 매도가 계산을 막지 않는다
+
     gu_filter = find_gu_in_address(args.address)
 
-    # ⚠️ 7-2절 시계열 가격보정은 껐다 — 어차피 기준연도 이후(보통 2년치)
-    #    데이터만 쓰는데 그 안에서 다시 "지금 시세로 환산"하는 건 얻는
-    #    것보다 헷갈리게 하는 쪽이 크다는 사용자 판단이다. 오래된 거래를
-    #    덜 반영하는 건 7절 계약 시점 가중치가 이미 하고 있다.
     area_tolerance_pct = args.area_tolerance / 100
     # ⛔ 5절 적응형 반경도 껐다(사용자 요청) — 지정한 반경이 곧 계산 범위다.
     #    자세한 이유는 find_comparables_adaptive() 독스트링 참고.

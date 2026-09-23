@@ -610,7 +610,7 @@
 </div>
 {% endif %}
 
-{% if result.villa_market_trend or result.dong_compare or result.station_premium %}
+{% if result.villa_market_trend or result.buyer_age or result.dong_compare or result.station_premium %}
 <div class="section-divider">참고 정보</div>
 {% endif %}
 
@@ -635,6 +635,46 @@
   <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 시/도 단위(구/동 단위 신호 아님) 참고용입니다. 매도가 계산에 자동 반영되지 않습니다.</p>
   {% endif %}
   <p class="muted">2025년 11월부터 모은 스냅샷이라 '작년 대비' 계산은 아직 안 됩니다 — 최신 수치는 한국부동산원 R-ONE에서 확인하세요.</p>
+</div>
+{% endif %}
+
+{% if result.buyer_age %}
+{# 69절 — 매입자 연령대. 연령은 순서가 있는 구간이라 한 가지 색의 연→진 램프를
+   쓴다(무지개색 금지). 어떤 색이 어느 구간인지는 아래 범례가 글자로 말해주므로
+   색만으로 식별하게 두지 않는다. #}
+{% set age_colors = ['#d7f2e2', '#a9e4c4', '#74d3a2', '#43bf80', '#21a366', '#0d7a4a'] %}
+<div class="card">
+  <h3>이 동네에서 집을 사는 사람 ({{ result.buyer_age.region }}{% if result.buyer_age.is_sido_only %} 전체{% endif %}, {{ result.buyer_age.year }}년)</h3>
+  <p style="margin:6px 0 12px"><strong style="font-size:22px; color:var(--primary-dark)">30~40대 {{ '%.1f'|format(result.buyer_age.young_pct) }}%</strong>
+    {% if result.buyer_age.nationwide_young_pct %}<span class="muted">· 전국 평균 {{ '%.1f'|format(result.buyer_age.nationwide_young_pct) }}% 대비 {{ '%+.1f'|format(result.buyer_age.young_pct - result.buyer_age.nationwide_young_pct) }}%p</span>{% endif %}
+  </p>
+
+  <div style="display:flex; height:24px; border-radius:6px; overflow:hidden; background:#eef1f3">
+    {% for b in result.buyer_age.breakdown %}
+    <div style="flex:{{ '%.4f'|format(b.pct) }} 0 0; background:{{ age_colors[loop.index0] }};{% if not loop.last %} border-right:2px solid #fff;{% endif %}"
+         title="{{ b.age }} {{ '%.1f'|format(b.pct) }}% ({{ '{:,}'.format(b.count) }}건)"></div>
+    {% endfor %}
+  </div>
+  <div style="display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px">
+    {% for b in result.buyer_age.breakdown %}
+    <span class="muted" style="display:inline-flex; align-items:center; gap:5px">
+      <i style="width:10px; height:10px; border-radius:3px; background:{{ age_colors[loop.index0] }}; display:inline-block"></i>{{ b.age }} {{ '%.0f'|format(b.pct) }}%</span>
+    {% endfor %}
+  </div>
+
+  {% if result.buyer_age.rank %}
+  <p class="muted" style="margin-top:12px">{{ result.buyer_age.sido 
+    }} {{ result.buyer_age.rank.total }}개 시군구 중 <strong>{{ result.buyer_age.rank.rank }}위</strong> (30~40대 비중 높은 순)</p>
+  {% endif %}
+  {% if result.buyer_age.volume_series|length >= 2 %}
+  <p class="muted">매입 거래량: {{ result.buyer_age.volume_series[0][0] }}년 {{ '{:,}'.format(result.buyer_age.volume_series[0][1]) }}건 → {{ result.buyer_age.volume_series[-1][0] }}년 {{ '{:,}'.format(result.buyer_age.volume_series[-1][1]) }}건</p>
+  {% endif %}
+
+  <ul class="note-lines" style="margin-top:12px">
+    <li>30~40대는 실거주 목적으로 사는 주력 매수층이에요 — 이 비중이 높으면 팔 때 사줄 사람이 두껍다는 뜻으로 읽습니다.</li>
+    <li>⚠️ 주택유형이 구분되지 않은 전체 주택 통계라 아파트 거래가 섞여 있어요.</li>
+    <li>⚠️ 연 단위 스냅샷이고, 매도가 계산이나 환금성 점수에는 반영되지 않는 참고 정보입니다.</li>
+  </ul>
 </div>
 {% endif %}
 

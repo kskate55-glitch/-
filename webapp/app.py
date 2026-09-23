@@ -631,6 +631,15 @@ def estimate():
             "is_zone": villa_is_zone,
         }
 
+    # 69절 — 매입자 연령대. CSV 한 번 읽는 게 전부라 API 호출도, 비용도 0이다.
+    # ⚠️ 실패해도 카드만 생략한다 — 20·21·26·50-1절과 같은 원칙.
+    buyer_age = None
+    try:
+        from buyer_age import compute_buyer_age
+        buyer_age = compute_buyer_age(address)
+    except (OSError, ValueError, KeyError, ImportError):
+        buyer_age = None
+
     from data_source import get_trade_rows
     from estimate_price import (FIRST_FLOOR_PRICE_RATIO, SALE_CALIBRATION_FACTOR,
                                 compute_scenarios, dedupe,
@@ -1022,6 +1031,7 @@ def estimate():
         "resubmit_fields_no_inspection": resubmit_fields_no_inspection,
         "condition_adjustment": condition_display,
         "villa_market_trend": villa_market_trend,
+        "buyer_age": buyer_age,
         "dong_compare": dong_compare,
         "station_premium": station_premium,
         "price_chart_html": price_chart_html,

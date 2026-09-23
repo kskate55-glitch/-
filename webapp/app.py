@@ -184,6 +184,16 @@ BACKTEST_DEFAULT_CASES = 10
 # 단건 기본값(10)보다 낮게 잡았다. 구가 많아 총 표본은 오히려 훨씬 크다.
 BACKTEST_SWEEP_CASES = 6
 
+# 70절 — ⚠️ **표본 번호(시드)를 화면에서 바꿀 수 있어야 한다.** 예전엔 여기
+#    42가 박혀 있어서, 같은 지역을 다시 돌리면 **항상 같은 물건이 다시
+#    뽑혔다**(49-2절). 그래서 순회를 아무리 여러 번 돌려도 새 표본이 안
+#    생겼고, 67절·70절이 둘 다 "다음 독립 표본에서 확인한다"로 끝나 놓고
+#    정작 그 독립 표본을 만들 방법이 없었다 — 84건을 받았는데 처음 보는
+#    물건이 9건뿐인 일이 실제로 있었다.
+#    같은 번호를 쓰면 예전처럼 재현되고(코드 변경의 A/B 비교에 필요하다),
+#    번호를 바꾸면 같은 지역에서 **다른 물건**이 뽑힌다.
+BACKTEST_DEFAULT_SEED = 42
+
 
 def _backtest_regions() -> list[dict]:
     """`data/lawd_codes.md` 표를 드롭다운용 목록으로. 시도 → 구 순으로 정렬."""
@@ -220,7 +230,16 @@ def _lawd_from_kakao(stale_code: str) -> str | None:
         return None
 
 
-def _run_region_backtest(lawd_cd: str, n_cases: int, months: int) -> dict:
+def _backtest_seed(raw) -> int:
+    """표본 번호. 숫자가 아니면 기본값으로 돌아간다 — 순회가 멈추면 안 된다."""
+    try:
+        return max(0, min(int(raw), 9999))
+    except (TypeError, ValueError):
+        return BACKTEST_DEFAULT_SEED
+
+
+def _run_region_backtest(lawd_cd: str, n_cases: int, months: int,
+                          seed: int = BACKTEST_DEFAULT_SEED) -> dict:
     """구 하나를 백테스트한다. HTML 화면과 48-3절 전체순회 JSON이 **같은 함수**를
     쓴다 — 두 경로가 갈리면 "화면 숫자와 순회 숫자가 다른" 문제가 생긴다.
 
@@ -267,7 +286,7 @@ def _run_region_backtest(lawd_cd: str, n_cases: int, months: int) -> dict:
                     "코드가 낡았을 수 있습니다)")
         return {"error": f"이 지역의 실거래 데이터를 찾지 못했어요.{hint}", "gu": gu}
 
-    targets, pool = bt.pick_targets(rows, months=months, n=n_cases, gu=None, seed=42)
+    targets, pool = bt.pick_targets(rows, months=months, n=n_cases, gu=None, seed=seed)
     if not targets:
         return {"error": f"최근 {months}개월 안에 검증할 거래가 없어요. 기간을 늘려보세요.",
                 "gu": gu}
@@ -335,10 +354,11 @@ def backtest_page():
         months = max(1, min(int(form.get("months") or 1), 6))
     except ValueError:
         pass
+    seed = _backtest_seed(form.get("seed"))
 
     base = {"regions": regions, "lawd_cd": lawd_cd, "n_cases": n_cases,
             "months": months, "max_cases": BACKTEST_MAX_CASES,
-            "sweep_cases": BACKTEST_SWEEP_CASES}
+            "sweep_cases": BACKTEST_SWEEP_CASES, "seed": seed}
 
     if request.method == "GET" or not lawd_cd:
         return render_template("backtest.html", **base)
@@ -378,8 +398,9 @@ def backtest_one():
         months = max(1, min(int(request.form.get("months") or 1), 6))
     except ValueError:
         months = 1
+    seed = _backtest_seed(request.form.get("seed"))
 
-    out = _run_region_backtest(lawd_cd, n_cases, months)
+    out = _run_region_backtest(lawd_cd, n_cases, months, seed)
     if out.get("error"):
         # 58절 — 일일 한도를 넘긴 거면 브라우저가 **순회를 즉시 멈추도록** 알린다.
         # 예전엔 남은 지역을 전부 두들겨서, 이미 바닥난 한도를 수백 번 더
@@ -411,11 +432,15 @@ def backtest_one():
     #    버전을 찍어뒀는데도, 내려받은 CSV만 보고는 "어느 코드로 돌린
     #    결과인지" 알 방법이 없어 64절 1층 보정의 효과를 판정하지 못했다.
     #    순회는 오래 걸려서 다시 돌리기도 비싸다 — 결과에 붙여 두는 게 맞다.
+    #    같은 이유로 **표본 번호도 함께 싣는다**(70절) — 시드가 다르면 다른
+    #    물건이 뽑히므로, 이 값이 없으면 두 CSV가 독립 표본인지 같은 표본을
+    #    다시 잰 것인지 사후에 가릴 수가 없다.
     version = _deploy_version()
     for c in cases:
         c["version"] = version
+        c["seed"] = seed
     return jsonify({"ok": True, "lawd_cd": lawd_cd, "gu": out["gu"],
-                    "version": version,
+                    "version": version, "seed": seed,
                     "pool": out["pool"], "skipped": out["skipped"],
                     "cases": cases})
 

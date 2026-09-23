@@ -139,8 +139,13 @@ def _run_region_backtest(lawd_cd: str, n_cases: int, months: int) -> dict:
     for target in targets:
         try:
             out = bt.estimate_as_of(rows, target, 400, 2, 0.15, 4)
-        except Exception:
-            skipped["오류"] = skipped.get("오류", 0) + 1
+        except Exception as e:
+            # ⚠️ 예전엔 그냥 "오류"로만 셌는데, 서울 19개 구가 전부 "오류 6건"으로
+            #    죽었을 때 **무엇이 터졌는지 알 방법이 전혀 없었다**(48-6절).
+            #    예외 종류와 메시지 앞부분을 그대로 남긴다 — 화면에 뜨는 사유가
+            #    곧 다음 수정의 단서다.
+            label = f"오류({type(e).__name__}: {str(e)[:60]})" if str(e) else f"오류({type(e).__name__})"
+            skipped[label] = skipped.get(label, 0) + 1
             continue
         if out is None:
             skipped["주소 인식 실패"] = skipped.get("주소 인식 실패", 0) + 1

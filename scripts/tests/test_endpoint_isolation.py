@@ -122,3 +122,62 @@ class TestApartmentCanary(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTransientGeocodeFailureIsNotCached(unittest.TestCase):
+    """CLAUDE.md 48-7절 — 카카오 일시적 실패(할당량 소진·네트워크)를 캐시하면 안 된다.
+
+    ⚠️ 예전엔 `HTTPError`가 나도 그 주소를 `None`으로 **영구 저장**했다.
+    카카오 일일 할당량이 떨어지는 순간 그때 조회하던 주소가 전부
+    "지오코딩 불가"로 굳어버리고, 다음 날 할당량이 돌아와도 캐시가 먼저
+    걸려 다시 물어보지 않는다 — 그 주소들은 영영 비교거래에서 빠지는데
+    화면에는 "비교거래가 적네"로만 보여 알아챌 방법이 없다.
+    """
+
+    def setUp(self):
+        import geocode as geo
+        self.geo = geo
+        self._orig_urlopen = geo.urlopen
+        self._orig_load = geo._load_cache
+        self._orig_save = geo._save_cache
+        self.cache = {}
+        geo._load_cache = lambda: dict(self.cache)
+        geo._save_cache = lambda c: self.cache.update(c)
+
+    def tearDown(self):
+        self.geo.urlopen = self._orig_urlopen
+        self.geo._load_cache = self._orig_load
+        self.geo._save_cache = self._orig_save
+
+    def _fail_with(self, exc):
+        def boom(req, timeout=None):
+            raise exc
+        self.geo.urlopen = boom
+
+    def test_http_error_is_not_cached(self):
+        from urllib.error import HTTPError
+        self._fail_with(HTTPError("u", 429, "Too Many Requests", {}, None))
+        self.assertIsNone(self.geo.geocode("서울특별시 강북구 수유동 1-1"))
+        self.assertEqual(self.cache, {},
+                         "할당량 소진을 캐시하면 다음 날에도 영영 못 찾는다")
+
+    def test_network_error_is_not_cached(self):
+        from urllib.error import URLError
+        self._fail_with(URLError("네트워크 끊김"))
+        self.assertIsNone(self.geo.geocode("서울특별시 강북구 수유동 2-2"))
+        self.assertEqual(self.cache, {})
+
+    def test_genuine_no_result_is_still_cached(self):
+        """진짜 '그런 주소 없음'은 캐시해야 한다 — 안 그러면 매번 다시 묻는다."""
+        class _Resp:
+            def read(self):
+                return b'{"documents": []}'
+            def __enter__(self):
+                return self
+            def __exit__(self, *a):
+                return False
+
+        self.geo.urlopen = lambda req, timeout=None: _Resp()
+        self.assertIsNone(self.geo.geocode("없는주소 999-999"))
+        self.assertIn("없는주소 999-999", self.cache)
+        self.assertIsNone(self.cache["없는주소 999-999"])

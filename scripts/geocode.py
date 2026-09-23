@@ -69,10 +69,14 @@ def geocode(address: str) -> tuple[float, float] | None:
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
     except (HTTPError, URLError, json.JSONDecodeError):
-        with _cache_lock:
-            cache = _load_cache()
-            cache[address] = None
-            _save_cache(cache)
+        # ⚠️ **일시적 실패는 절대 캐시하지 않는다** (CLAUDE.md 48-7절).
+        #    예전엔 여기서도 `cache[address] = None`을 썼는데, 카카오 일일
+        #    할당량이 소진되면 HTTPError가 나므로 **그때 조회한 주소가 전부
+        #    "지오코딩 불가"로 영구 저장됐다.** 다음 날 할당량이 돌아와도
+        #    캐시가 먼저 걸려 다시 물어보지 않으니, 그 주소들은 영영 비교거래에서
+        #    빠진다 — 화면에는 그냥 "비교거래가 적네"로만 보여서 알아챌 방법이
+        #    없다. 할당량 소진·네트워크 오류는 **주소 문제가 아니므로** 다음
+        #    호출 때 다시 시도하게 둔다.
         return None
 
     docs = data.get("documents", [])
@@ -114,13 +118,11 @@ def geocode_full(address: str) -> dict | None:
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
     except (HTTPError, URLError, json.JSONDecodeError):
-        cache[address] = None
-        _save_cache_file(DETAIL_CACHE_PATH, cache)
-        return None
+        return None  # 일시적 실패는 캐시하지 않는다 — 48-7절
 
     docs = data.get("documents", [])
     if not docs:
-        cache[address] = None
+        cache[address] = None          # "주소는 멀쩡히 물어봤는데 결과가 없다"만 캐시
         _save_cache_file(DETAIL_CACHE_PATH, cache)
         return None
 

@@ -3,7 +3,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&family=Do+Hyeon&display=swap">
 <style>
 :root{
   --paper:#F2F4F3; --sheet:#FFFFFF; --sheet2:#F8FAF9;
@@ -1252,6 +1252,67 @@ html.kfs-on #hubToasts{top:62px;left:14px;right:auto;bottom:auto}
   .cp-lock b{font-size:18px}
   .cp-card{padding:20px 16px}.cp-card h2{font-size:21px}.cp-rows{grid-template-columns:1fr}
 }
+/* ===== ✨ 마이크로 폴리시 ===== */
+/* 폰트 역할: 본문 = IBM Plex Sans KR · 큰 연출(CASE/DAY/낙찰/엔딩) = Do Hyeon · 돈 = 본문 폰트 + 고정폭 숫자 */
+:root{--px-disp:"Do Hyeon","IBM Plex Sans KR",var(--sans),sans-serif;--px-ease:cubic-bezier(.22,1,.36,1)}
+.px-disp,.ke-open-h,.ke-verdict,.ke-day b,.gx-big,.cp-card h2,.kc-reveal-in p:first-child,.kp-solo > b{font-family:var(--px-disp);font-weight:400;letter-spacing:.3px}
+.px-cash,.ke-cash,.ke-est,.kfs-sub,.ke-count,.ke-float,.ke-rows b,.kp-cmp b,.cp-rows dd,.qa-bid,.lf-cond,.kc-money,#kBid{font-variant-numeric:tabular-nums}
+.px-cash{font-weight:700;color:inherit}
+/* 버튼 손맛 — 빠르게 눌리고 부드럽게 돌아온다 */
+#kfsRoot button,#main .arena button,.cp-card button,.lf-sel button{transition:transform 120ms var(--px-ease),filter 120ms ease-out,box-shadow 120ms ease-out}
+#kfsRoot button:active:not(:disabled):not([aria-disabled="true"]),.cp-card button:active,.lf-sel button:active:not([aria-disabled="true"]){transform:translateY(1px) scale(.97);transition-duration:70ms;filter:brightness(.96)}
+@media (hover:hover){#kfsRoot .btn:hover:not(:disabled),#kfsRoot .of-spot:hover,#kfsRoot .ag-act:hover{filter:brightness(1.05)}#kfsRoot .of-spot:hover{transform:translateY(-1px)}}
+#kfsRoot .btn.pri{min-height:46px}
+@media (max-width:640px){#kfsRoot .btn,.cp-card .btn{min-height:48px}#kfsRoot .btn + .btn{margin-left:0}}
+#kfsRoot button:focus-visible,.cp-card button:focus-visible{outline:2px solid #f2b33d;outline-offset:2px}
+/* 표정 교체 — 80ms 살짝 겹치기 */
+.vn-player{transition:opacity 80ms ease-out}.vn-player.px-swap{opacity:.35}
+.vn-player.px-hop{animation:pxHop .26s var(--px-ease)!important}
+@keyframes pxHop{30%{transform:translateY(-3px)}}
+/* 땀 · 놀람 · 핏대 — 도트 */
+.px-fx{position:absolute;z-index:9450;pointer-events:none;image-rendering:pixelated}
+.px-fx svg{display:block}
+.px-sweat{animation:pxSweat .95s ease-out both}
+@keyframes pxSweat{0%{opacity:0;transform:scale(.4)}18%{opacity:1;transform:scale(1.15)}30%{transform:scale(1)}80%{opacity:1;transform:translateY(6px)}100%{opacity:0;transform:translateY(8px)}}
+.px-shock{animation:pxBang .7s var(--px-ease) both}
+@keyframes pxBang{0%{opacity:0;transform:translateY(4px) scale(.5)}25%{opacity:1;transform:translateY(-2px) scale(1.1)}40%{transform:none}85%{opacity:1}100%{opacity:0}}
+.px-vein{animation:pxVein .8s ease-out both}
+@keyframes pxVein{0%,100%{opacity:0;transform:scale(.6)}20%,40%{opacity:1;transform:scale(1.1)}30%{transform:scale(.95)}}
+.px-fx.still{animation:pxStill .9s linear both}@keyframes pxStill{0%,85%{opacity:1}100%{opacity:0}}
+/* 휴대폰 진동 알림 */
+.px-phone{position:fixed;top:60px;right:18px;z-index:9550;font-size:22px;opacity:0;pointer-events:none;background:#1b1f28;border:1px solid #3a4150;border-radius:10px;padding:4px 8px;box-shadow:0 4px 10px rgba(0,0,0,.35)}
+.px-phone.on{animation:pxPhone 1.1s ease-out both}
+@keyframes pxPhone{0%{opacity:0;transform:translateY(-6px)}10%{opacity:1;transform:none}15%,35%{transform:translateX(-2px)}25%,45%{transform:translateX(2px)}55%{transform:none}85%{opacity:1}100%{opacity:0}}
+/* 장면 카드 */
+.px-card{position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center;background:rgba(8,10,16,.84);animation:cpFade .22s ease-out;cursor:pointer}
+.px-card.out{opacity:0;transition:opacity .22s ease-out}
+.px-card-in{text-align:center;color:#eef1f5}
+.px-folder{position:relative;width:min(340px,80vw);padding:30px 24px 22px;background:#e9dcc1;color:#2b2418;border-radius:3px 6px 6px 6px;box-shadow:0 2px 0 #b9a47c,0 10px 24px rgba(0,0,0,.45);animation:pxFold .5s var(--px-ease) both;transform-origin:50% 100%}
+.px-card.still .px-folder,.px-card.still .px-stamp,.px-card.still .px-key{animation:none!important}
+.px-tab{position:absolute;top:-18px;left:0;background:#e9dcc1;padding:2px 14px;border-radius:5px 5px 0 0;font-size:11px;font-weight:800;letter-spacing:1px;color:#6a5a3a}
+.px-folder b{display:block;font-size:40px;line-height:1.1}
+.px-folder small{display:block;margin-top:6px;font-size:14px;opacity:.8}
+.px-folder em{display:inline-block;margin-top:12px;font-style:normal;font-size:12px;letter-spacing:1px;border-top:1px solid #b9a47c;padding-top:6px;opacity:.75}
+@keyframes pxFold{0%{opacity:0;transform:perspective(600px) rotateX(35deg) translateY(12px)}100%{opacity:1;transform:none}}
+.px-stamp{position:absolute;right:16px;bottom:12px;font-style:normal;font-family:var(--px-disp);font-size:28px;color:#b3261e;border:3px solid #b3261e;border-radius:4px;padding:0 8px;transform:rotate(-12deg);animation:pxStamp .35s .4s cubic-bezier(.3,1.6,.5,1) both;mix-blend-mode:multiply}
+@keyframes pxStamp{0%{opacity:0;transform:rotate(-12deg) scale(2.2)}100%{opacity:.92;transform:rotate(-12deg) scale(1)}}
+.px-empty .px-key{display:block;font-size:40px;animation:pxKey .6s var(--px-ease) both}
+@keyframes pxKey{0%{opacity:0;transform:translateY(-14px) rotate(-20deg)}60%{transform:translateY(2px) rotate(8deg)}100%{opacity:1;transform:none}}
+.px-empty p{margin:6px 0;font-size:26px}.px-empty .px-dots{font-size:20px;opacity:.7;letter-spacing:4px}.px-empty small{opacity:.8;font-size:14px}
+.px-card.empty{background:#050608}
+.px-folder.shut{padding-bottom:60px}.px-folder .px-profit{display:block;margin-top:8px;font-family:var(--px-disp);font-weight:400;font-size:24px;color:#1f7a45;font-variant-numeric:tabular-nums}.px-folder .px-profit.down{color:#b3261e}
+/* 돈 떠오름 */
+.ke-float.px-in{color:#7fd3a0}.ke-float.px-out{color:#ff9b8f}
+/* 숨쉬기 · 피곤 · 스트레스 */
+.lf-me{transform-origin:50% 100%;animation:pxBreath 4.4s ease-in-out infinite}
+.vn-player{animation:pxBreath2 3.9s ease-in-out infinite}
+@keyframes pxBreath{0%,100%{transform:none}50%{transform:scaleY(1.008) translateY(-1px)}}
+@keyframes pxBreath2{0%,100%{translate:0 0}50%{translate:0 -1.5px}}
+.lf-stage.px-tired .lf-me{animation-duration:6.5s;filter:brightness(.9) drop-shadow(0 6px 10px rgba(0,0,0,.4))}
+.lf-stage.px-stress::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;box-shadow:inset 0 0 90px rgba(90,0,0,.28)}
+.lf-stage.px-stress2::after{box-shadow:inset 0 0 120px rgba(110,0,0,.42)}
+html.px-still .lf-me,html.px-still .vn-player{animation:none}
+@media (prefers-reduced-motion:reduce){.lf-me,.vn-player,.vn-sprite,.px-folder,.px-stamp,.px-key{animation:none!important}}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -40141,7 +40202,7 @@ function gxAfterRender(){
   if(N.tab === "life" && P.tab === "life" && N.life != null && P.life != null && N.life - P.life >= 360) gxBanner("day", {top:"──── " + (N.bn && P.bn && N.bn > P.bn ? `${N.bn}주차` : "다음 날") + " ────", big:gxDateLine(LF_EPOCH + N.life * 60000), sub:esc(lfClock())});
   if(N.tab !== "king" || !K) return;
   // C. CASE 열기
-  if(N.seed !== P.seed && !N.intro) gxBanner("case", {top:"CASE FILE", big:`📁 CASE ${String(KP.no || 1).padStart(3, "0")}`, sub:esc(KP.title)});
+  if(typeof pxCaseOpen !== "function" && N.seed !== P.seed && !N.intro) gxBanner("case", {top:"CASE FILE", big:`📁 CASE ${String(KP.no || 1).padStart(3, "0")}`, sub:esc(KP.title)});
   if(N.seed === P.seed){
     // D. 조사: 장소 이동 · 다음 날
     if(N.rday !== P.rday && N.rday != null) gxBanner("day", {top:`──── 조사 ${N.rday + 1}일차 ────`, big:gxDateLine(LF_EPOCH + (K.lf.day0 + N.rday * 1440) * 60000), sub:esc(bdClock().txt)});
@@ -40150,9 +40211,9 @@ function gxAfterRender(){
     if(N.sealed && !P.sealed) gxBanner("big", {top:"입찰기일", big:"⚖️ 법원 입찰법정", sub:K.cal0 ? gxDateLine(K.cal0) : ""});
     if(N.step !== P.step){
       if(N.step === "move" || (N.step === "cross" && KP.id !== "k2")) gxBanner("move", {big:"🚪 점유자를 만나러 간다", sub:""});
-      if(N.step === "defect") gxBanner("big", {top:"명도 완료", big:"🔑 드디어, 문을 연다", sub:`DAY ${K.day}`});
+      if(typeof pxCaseOpen !== "function" && N.step === "defect") gxBanner("big", {top:"명도 완료", big:"🔑 드디어, 문을 연다", sub:`DAY ${K.day}`});
       if(N.step === "sell") gxBanner("move", {big:"🏢 중개사무소에 매물을 내놓았다", sub:""});
-      if(N.step === "result") gxBanner("case", {top:"CASE CLOSED", big:`📁 CASE ${String(KP.no || 1).padStart(3, "0")} 종료`, sub:K.final ? `${K.final.profit >= 0 ? "+" : "−"}${kMan(Math.abs(Math.round(K.final.profit)))}` : ""});
+      if(typeof pxCaseOpen !== "function" && N.step === "result") gxBanner("case", {top:"CASE CLOSED", big:`📁 CASE ${String(KP.no || 1).padStart(3, "0")} 종료`, sub:K.final ? `${K.final.profit >= 0 ? "+" : "−"}${kMan(Math.abs(Math.round(K.final.profit)))}` : ""});
     }
     // F. 시간 경과 몽타주(많음) — 공사·명도 기다림·매도 기다림
     if(N.step === P.step && N.day != null && P.day != null && N.day - P.day >= 3 && ["move","defect","list","sell"].includes(N.step) && !N.rev){
@@ -40762,6 +40823,215 @@ lfPanel = function(id){
   if(lfOn() && lfRec().mode !== "career" && lfPathDue() && id !== "board") h = h.replace('<small class="note">한 번 고르면 되돌릴 수 없어요 — 인생이니까요.</small>', '<small class="note">한 번 고르면 되돌릴 수 없어요 — 이 선택으로 이 인생의 엔딩이 정해져요.</small>');
   return h;
 };
+
+/* ================= ✨ 마이크로 폴리시 — 표정·땀·손맛·돈 움직임·정적·열쇠·CASE OPEN/CLOSED·숨쉬기 =================
+   새 시스템이 아니다. 이미 있는 장면이 '살아서 반응'하게 만드는 얇은 층.
+   원칙: 짧게(대부분 1초 안), 정보를 가리지 않게, 클릭하면 바로 걷힌다.
+   연출 설정(gxLevel: max/mid/min)과 OS '동작 줄이기'를 따른다 — min이면 움직임 없이 모양만. */
+function pxLv(){ return typeof gxLevel === "function" ? gxLevel() : "mid"; }
+function pxMin(){ return pxLv() === "min"; }
+
+/* ---------- 🔊 효과음: 같은 소리 겹침 방지 + 새 소리 몇 개 ---------- */
+const PX_SFX_LAST = {};
+const PX_SYN = {
+  tap(ac, t, tone, noise){ noise(t, 0.018, 0.16, 2200, 1.6); },                                     // 버튼 — 마른 딸깍
+  keypad(ac, t, tone){ tone(1180 * (0.97 + Math.random() * 0.06), t, 0.035, "square", 0.05); },   // 숫자 입력
+  envelope(ac, t, tone, noise){ noise(t, 0.28, 0.32, 1500, 0.7); noise(t + 0.2, 0.09, 0.4, 700, 1); tone(95, t + 0.24, 0.12, "sine", 0.35, 60); },   // 봉투 밀어 넣기
+  jingle(ac, t, tone){ [2400, 3150, 2780, 3500, 2600].forEach((f, i) => tone(f * (0.96 + Math.random() * 0.08), t + i * 0.055 + Math.random() * 0.02, 0.11, "triangle", 0.09)); },   // 열쇠 짤랑
+  bzz(ac, t, tone){ tone(150, t, 0.12, "square", 0.06); tone(150, t + 0.18, 0.12, "square", 0.06); },   // 휴대폰 진동
+  door(ac, t, tone, noise){ noise(t, 0.35, 0.18, 380, 0.8); tone(210, t + 0.05, 0.3, "sine", 0.12, 150); },
+  folder(ac, t, tone, noise){ noise(t, 0.16, 0.3, 1800, 0.8); noise(t + 0.14, 0.2, 0.22, 2600, 0.7); },   // CASE 파일철
+  deep(ac, t, tone){ tone(62, t, 0.4, "sine", 0.45, 40); }};                                         // 돈 빠져나갈 때 낮은 한 번
+function pxSyn(kind){
+  if(typeof kcSfxOn === "function" && !kcSfxOn()) return;
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
+    KC_AC = KC_AC || new AC(); const ac = KC_AC, t0 = ac.currentTime + 0.01; if(ac.state === "suspended") ac.resume();
+    const out = ac.createGain(); out.gain.value = 0.35 * (0.95 + Math.random() * 0.1); out.connect(ac.destination);   // ±5% 볼륨 흔들기
+    const tone = (f, t, d, type, vol, f2) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = type || "sine"; o.frequency.setValueAtTime(f, t); if(f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.3, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g); g.connect(out); o.start(t); o.stop(t + d + 0.02); };
+    const noise = (t, d, vol, fq, q, type) => { const n = Math.max(1, Math.floor(ac.sampleRate * d)), buf = ac.createBuffer(1, n, ac.sampleRate), a = buf.getChannelData(0); for(let i = 0; i < n; i++) a[i] = (Math.random() * 2 - 1) * (1 - i / n); const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = buf; f.type = type || "bandpass"; f.frequency.value = fq * (0.96 + Math.random() * 0.08); f.Q.value = q || 1; g.gain.value = vol; s.connect(f); f.connect(g); g.connect(out); s.start(t); };
+    PX_SYN[kind](ac, t0, tone, noise);
+  }catch(e){}
+}
+const _px_sfx = kcSfx;
+kcSfx = function(kind){
+  const now = performance.now();
+  if(PX_SFX_LAST[kind] && now - PX_SFX_LAST[kind] < (kind === "keypad" ? 45 : 100)) return;   // 빠른 클릭에 20개씩 겹치지 않게
+  PX_SFX_LAST[kind] = now;
+  if(kind === "message" || kind === "msg") pxBuzz();
+  if(PX_SYN[kind]) return pxSyn(kind);
+  return _px_sfx(kind);
+};
+// 짧게 BGM·환경음을 낮춘다(개찰 직전 정적, 큰 순간)
+let PX_DUCK_T = null;
+function pxDuck(level, ms){
+  if(typeof SN_DUCK === "undefined" || typeof kaApplyVol !== "function") return;
+  SN_DUCK = level; kaApplyVol(); clearTimeout(PX_DUCK_T);
+  PX_DUCK_T = setTimeout(() => { SN_DUCK = 1; kaApplyVol(); }, ms);
+}
+
+/* ---------- 📳 휴대폰 진동 — 화면 전체가 아니라 작은 폰 알림만 ---------- */
+function pxBuzz(){
+  try{ if(navigator.vibrate) navigator.vibrate([22, 40, 22]); }catch(e){}
+  let el = document.getElementById("pxPhone");
+  if(!el){ el = document.createElement("div"); el.id = "pxPhone"; el.className = "px-phone"; el.setAttribute("aria-hidden", "true"); el.textContent = "📳"; document.body.appendChild(el); }
+  el.classList.remove("on"); void el.offsetWidth; el.classList.add("on");
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("on"), 1100);
+  pxSyn("bzz");
+}
+
+/* ---------- 😰 반응 API — 표정 교체 · 땀 · 놀람 · 핏대 ----------
+   pxReact({face:"shocked", fx:"sweat", n:2, sound:"…", delay:900})
+   얼굴은 주인공 초상(.vn-player) → 없으면 거점 전신(.lf-me). 그림이 없으면 조용히 넘어간다. */
+function pxTarget(){ return document.querySelector(".vn-player") || document.querySelector(".lf-me"); }
+function pxFace(img, face){
+  if(!img || img.tagName !== "IMG" || !img.classList.contains("vn-player")) return;
+  const u = typeof artUrl === "function" && artUrl("npc_playerf_" + face); if(!u || img.src.endsWith(u)) return;
+  if(pxMin()){ img.src = u; return; }
+  img.classList.add("px-swap"); setTimeout(() => { img.src = u; img.classList.remove("px-swap"); }, 80);   // 딱 끊지 않고 80ms 살짝 겹쳐 바꾼다
+}
+// 픽셀 물방울 — 게임 그림과 같은 도트 느낌(이모지 아님)
+const PX_DROP = (() => {
+  const rows = ["...o....", "..oxo...", "..oxo...", ".oxxxo..", ".oxwxxo.", "oxwxxxo.", "oxxxxxo.", ".oxxxo..", "..ooo..."], col = {o:"#1f5d93", x:"#8fd0ff", w:"#ffffff"};
+  let r = ""; rows.forEach((row, y) => [...row].forEach((c, x) => { if(col[c]) r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${col[c]}"/>`; }));
+  return `<svg viewBox="0 0 8 9" width="15" height="17" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+})();
+const PX_BANG = (() => {
+  const rows = [".oo.", "oxxo", "oxxo", "oxxo", "oxxo", ".oo.", "....", ".oo.", "oxxo", ".oo."], col = {o:"#3a1d05", x:"#ffcf4a"};
+  let r = ""; rows.forEach((row, y) => [...row].forEach((c, x) => { if(col[c]) r += `<rect x="${x}" y="${y}" width="1" height="1" fill="${col[c]}"/>`; }));
+  return `<svg viewBox="0 0 4 10" width="12" height="30" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+})();
+const PX_VEIN = `<svg viewBox="0 0 7 7" width="16" height="16" shape-rendering="crispEdges" aria-hidden="true"><g fill="#d8433b"><rect x="1" y="0" width="1" height="3"/><rect x="0" y="1" width="3" height="1"/><rect x="5" y="0" width="1" height="3"/><rect x="4" y="1" width="3" height="1"/><rect x="1" y="4" width="1" height="3"/><rect x="0" y="5" width="3" height="1"/><rect x="5" y="4" width="1" height="3"/><rect x="4" y="5" width="3" height="1"/></g></svg>`;
+function pxFx(el, fx, n){
+  if(!el) return; const r = el.getBoundingClientRect(); if(!r.width) return;
+  const front = el.classList.contains("vn-player") && el.classList.contains("front");
+  // 관자놀이 쯤 — 앞모습 초상은 얼굴이 크고, 전신은 머리가 위쪽 15% 안에 있다
+  const fx0 = r.left + r.width * (front ? 0.68 : 0.62), fy0 = r.top + r.height * (front ? 0.15 : 0.08);
+  for(let i = 0; i < (n || 1); i++){
+    const d = document.createElement("div"); d.className = `px-fx px-${fx}${pxMin() ? " still" : ""}`;
+    d.innerHTML = fx === "sweat" ? PX_DROP : fx === "shock" ? PX_BANG : PX_VEIN;
+    d.style.left = (fx0 + scrollX + (fx === "shock" ? -r.width * 0.15 : i * 9)) + "px";
+    d.style.top = (fy0 + scrollY + (fx === "shock" ? -r.height * 0.21 : i * 6)) + "px";
+    d.style.animationDelay = (i * 0.16) + "s";
+    document.body.appendChild(d); setTimeout(() => d.remove(), 1300 + i * 160);
+  }
+  if(fx === "shock" && !pxMin()){ el.classList.remove("px-hop"); void el.offsetWidth; el.classList.add("px-hop"); }
+}
+function pxReact(o){
+  const run = () => { const el = o.el || pxTarget(); if(o.face) pxFace(el, o.face); if(o.fx) pxFx(el, o.fx, o.n); if(o.sound) kcSfx(o.sound); if(o.duck) pxDuck(o.duck, o.duckMs || 900); };
+  if(o.delay) setTimeout(run, o.delay); else run();
+}
+
+/* ---------- 🎞️ 짧은 장면 카드(CASE OPEN · 빈집 · CASE CLOSED) — 클릭하면 바로 걷힌다 ---------- */
+function pxCard(html, ms, cls){
+  const old = document.getElementById("pxCard"); if(old) old.remove();
+  const el = document.createElement("div"); el.id = "pxCard"; el.className = "px-card " + (cls || "") + (pxMin() ? " still" : "");
+  el.innerHTML = `<div class="px-card-in">${html}</div>`; el.setAttribute("aria-hidden", "true");
+  const close = () => { if(!el.isConnected) return; el.classList.add("out"); setTimeout(() => el.remove(), 220); };
+  el.addEventListener("pointerdown", close); document.body.appendChild(el);
+  setTimeout(close, pxMin() ? Math.min(ms, 600) : ms);
+  return el;
+}
+function pxCaseNo(){ return String((typeof KP !== "undefined" && KP && KP.no) || 1).padStart(3, "0"); }
+function pxCaseOpen(){
+  const R = arenaRec(); R.pxOpens = (R.pxOpens || 0) + 1;
+  const short = R.pxOpens > 3;   // 몇 번 본 뒤로는 짧게
+  kcSfx("folder");
+  pxCard(`<div class="px-folder"><span class="px-tab">CASE</span><b class="px-disp">CASE ${pxCaseNo()}</b><small>${esc((KP && KP.title) || "")}</small><em>조사 시작</em></div>`, short ? 650 : 1150, "open");
+}
+function pxEmptyHouse(){
+  kcSfx("jingle"); setTimeout(() => kcSfx("door"), 380);
+  pxCard(`<div class="px-empty"><span class="px-key">🔑</span><p class="px-disp">열쇠를 받았다</p><p class="px-dots">……</p><small>명도 완료 · DAY ${K ? K.day : 0}<br>빈집이다. 이제 진짜 내 집.</small></div>`, 1500, "empty");
+  pxDuck(0.45, 1600);
+}
+function pxCaseClosed(){
+  pxDuck(0.4, 1400);
+  pxCard(`<div class="px-folder shut"><span class="px-tab">CASE</span><b class="px-disp">CASE ${pxCaseNo()}</b><small>${esc((KP && KP.title) || "")}</small>${K && K.final ? `<strong class="px-profit ${K.final.profit < 0 ? "down" : ""}">${K.final.profit >= 0 ? "+" : "−"}${kMan(Math.abs(Math.round(K.final.profit)))}</strong>` : ""}<i class="px-stamp">CLOSED</i></div>`, 1350, "closed");
+  setTimeout(() => kcSfx("stamp"), pxMin() ? 0 : 420);
+}
+
+/* ---------- 🧭 장면 전환 감지 — 이전 렌더와 비교해서 한 번씩만 ---------- */
+let PX_SIG = {};
+function pxAfterKing(){
+  if(typeof page === "undefined" || page !== "arena" || arenaTab !== "king" || !K){ PX_SIG = {}; return; }
+  const s = {seed:K.seed, step:K.step, rev:!!K.revealing, intro:!!K.intro, sealed:!!K.sealed}, P = PX_SIG, same = P.seed === s.seed;
+  // CASE OPEN — 새 사건의 첫 조사 화면
+  if(s.step === "brief" && !s.intro && !s.rev && (!same || P.intro)) pxCaseOpen();
+  if(same){
+    if(s.sealed && !P.sealed) kcSfx("envelope");                             // 봉투 넣는 소리
+    if(s.rev && !P.rev){                                                    // 개찰 직전 정적 — BGM 크게 낮춤
+      const n = K.result ? K.result.bids.length : 3, T = typeof keRevealTimes === "function" ? keRevealTimes(n) : {total:3};
+      pxDuck(0.18, Math.round(T.total * 1000));
+    }
+    const justShown = (P.rev && !s.rev) || (!s.rev && s.step !== P.step);
+    if(justShown && K.result){
+      const R = K.result;
+      if(s.step === "won" && R.solo){ pxReact({face:"happy"}); pxReact({fx:"sweat", n:1, delay:950}); }       // 좋아했다가… 입찰자 1명
+      else if(s.step === "won" && R.gap >= Math.max(300, K.bid * 0.05)){                                       // 과입찰 — 웃음이 굳는다
+        pxReact({face:"happy"}); pxReact({face:"shocked", fx:"sweat", n:2, delay:850, duck:0.25, duckMs:1300}); pxReact({fx:"shock", delay:850});
+      }
+      else if(s.step === "lost" && R.gap <= 10){ pxReact({face:"shocked", delay:500}); pxReact({fx:"sweat", n:1, delay:1100}); }   // 10만원의 비극 — 멍
+    }
+    if(!s.rev && s.step !== P.step){
+      if(s.step === "defect" && P.step === "move") pxEmptyHouse();
+      if(s.step === "defect" && (K.defects || []).some(d => !d.known)) pxReact({face:"shocked", fx:"sweat", n:1, delay:pxMin() ? 0 : 1650});
+      if(s.step === "result") pxCaseClosed();
+    }
+  }
+  PX_SIG = s;
+}
+
+/* ---------- 💸 돈이 실제로 움직인다(거점 머리줄) ---------- */
+let PX_CASH = null;
+function pxCashStr(v){ return v < 0 ? "대출 " + kMan(-v) : kMan(v); }
+const _px_kfsHeader = kfsHeader;
+kfsHeader = function(){
+  let h = _px_kfsHeader();
+  if(typeof lfOn === "function" && lfOn() && arenaTab === "life"){
+    const v = kcRec().cash, str = pxCashStr(v);
+    h = h.replace(`· ${str}</span>`, `· <b class="px-cash" data-v="${v}">${str}</b></span>`);
+  }
+  return h;
+};
+function pxAfterCash(){
+  const el = document.querySelector(".px-cash"); if(!el){ return; }
+  const v = +el.dataset.v, prev = PX_CASH; PX_CASH = v;
+  if(prev == null || Math.abs(v - prev) < 10) return;                     // 10만원 미만 변화는 조용히
+  const d = v - prev;
+  if(typeof keFloat === "function") keFloat(el, (d > 0 ? "+" : "−") + kMan(Math.abs(d)), d > 0 ? "px-in" : "px-out");
+  kcSfx(d > 0 ? "coin" : "deep");
+  if(pxMin() || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const t0 = performance.now(), dur = Math.min(1100, 600 + Math.abs(d) / 20);
+  const step = now => { if(!el.isConnected) return; const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3); el.textContent = pxCashStr(Math.round((prev + d * e) / 10) * 10); if(p < 1) requestAnimationFrame(step); else el.textContent = pxCashStr(v); };
+  el.textContent = pxCashStr(prev); requestAnimationFrame(step);
+}
+
+/* ---------- 🫁 숨쉬기 · 피곤 · 스트레스 ---------- */
+function pxAfterLife(){
+  const st = document.querySelector(".lf-stage"); if(!st || typeof lfRec !== "function") return;
+  const L = lfRec(); if(!L) return;
+  st.classList.toggle("px-tired", (L.sta || 0) < 20);
+  st.classList.toggle("px-stress", L.stress >= 70);
+  st.classList.toggle("px-stress2", L.stress >= 88);
+}
+function pxRoot(){ document.documentElement.classList.toggle("px-still", pxMin()); }
+
+const _px_render = renderArena;
+renderArena = function(){
+  _px_render();
+  queueMicrotask(() => { try{ pxRoot(); pxAfterKing(); pxAfterCash(); pxAfterLife(); }catch(e){} });
+};
+
+/* ---------- 👆 버튼 손맛 — 눌림 모양은 CSS, 소리는 주요 버튼만 ---------- */
+document.addEventListener("touchstart", () => {}, {passive:true});        // iOS에서 :active가 먹게
+document.addEventListener("pointerdown", e => {
+  const b = e.target.closest && e.target.closest(".btn, .ag-act, .of-spot, [data-cp]");
+  if(!b || b.disabled || b.getAttribute("aria-disabled") === "true") return;
+  if(typeof page !== "undefined" && page !== "arena" && !b.closest("#cpEnd")) return;
+  kcSfx("tap");
+}, true);
+// 입찰가 숫자 입력 — 키패드 딸깍
+document.addEventListener("input", e => { const t = e.target; if(t && t.matches && t.matches("#kBid")) kcSfx("keypad"); }, true);
 
 /* ================= 🖥️ 전체 화면 게임 레이아웃 — 페이지 스크롤 없이 한 화면에 (프린세스메이커식) =================
    경매왕 한 판·홈 화면을 화면 전체를 덮는 '게임 창'으로 띄운다.

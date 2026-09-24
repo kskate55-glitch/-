@@ -1028,3 +1028,64 @@ html.kfs-on #hubToasts{top:62px;left:14px;right:auto;bottom:auto}
   .cp-lock b{font-size:18px}
   .cp-card{padding:20px 16px}.cp-card h2{font-size:21px}.cp-rows{grid-template-columns:1fr}
 }
+/* ===== ✨ 마이크로 폴리시 ===== */
+/* 폰트 역할: 본문 = IBM Plex Sans KR · 큰 연출(CASE/DAY/낙찰/엔딩) = Do Hyeon · 돈 = 본문 폰트 + 고정폭 숫자 */
+:root{--px-disp:"Do Hyeon","IBM Plex Sans KR",var(--sans),sans-serif;--px-ease:cubic-bezier(.22,1,.36,1)}
+.px-disp,.ke-open-h,.ke-verdict,.ke-day b,.gx-big,.cp-card h2,.kc-reveal-in p:first-child,.kp-solo > b{font-family:var(--px-disp);font-weight:400;letter-spacing:.3px}
+.px-cash,.ke-cash,.ke-est,.kfs-sub,.ke-count,.ke-float,.ke-rows b,.kp-cmp b,.cp-rows dd,.qa-bid,.lf-cond,.kc-money,#kBid{font-variant-numeric:tabular-nums}
+.px-cash{font-weight:700;color:inherit}
+/* 버튼 손맛 — 빠르게 눌리고 부드럽게 돌아온다 */
+#kfsRoot button,#main .arena button,.cp-card button,.lf-sel button{transition:transform 120ms var(--px-ease),filter 120ms ease-out,box-shadow 120ms ease-out}
+#kfsRoot button:active:not(:disabled):not([aria-disabled="true"]),.cp-card button:active,.lf-sel button:active:not([aria-disabled="true"]){transform:translateY(1px) scale(.97);transition-duration:70ms;filter:brightness(.96)}
+@media (hover:hover){#kfsRoot .btn:hover:not(:disabled),#kfsRoot .of-spot:hover,#kfsRoot .ag-act:hover{filter:brightness(1.05)}#kfsRoot .of-spot:hover{transform:translateY(-1px)}}
+#kfsRoot .btn.pri{min-height:46px}
+@media (max-width:640px){#kfsRoot .btn,.cp-card .btn{min-height:48px}#kfsRoot .btn + .btn{margin-left:0}}
+#kfsRoot button:focus-visible,.cp-card button:focus-visible{outline:2px solid #f2b33d;outline-offset:2px}
+/* 표정 교체 — 80ms 살짝 겹치기 */
+.vn-player{transition:opacity 80ms ease-out}.vn-player.px-swap{opacity:.35}
+.vn-player.px-hop{animation:pxHop .26s var(--px-ease)!important}
+@keyframes pxHop{30%{transform:translateY(-3px)}}
+/* 땀 · 놀람 · 핏대 — 도트 */
+.px-fx{position:absolute;z-index:9450;pointer-events:none;image-rendering:pixelated}
+.px-fx svg{display:block}
+.px-sweat{animation:pxSweat .95s ease-out both}
+@keyframes pxSweat{0%{opacity:0;transform:scale(.4)}18%{opacity:1;transform:scale(1.15)}30%{transform:scale(1)}80%{opacity:1;transform:translateY(6px)}100%{opacity:0;transform:translateY(8px)}}
+.px-shock{animation:pxBang .7s var(--px-ease) both}
+@keyframes pxBang{0%{opacity:0;transform:translateY(4px) scale(.5)}25%{opacity:1;transform:translateY(-2px) scale(1.1)}40%{transform:none}85%{opacity:1}100%{opacity:0}}
+.px-vein{animation:pxVein .8s ease-out both}
+@keyframes pxVein{0%,100%{opacity:0;transform:scale(.6)}20%,40%{opacity:1;transform:scale(1.1)}30%{transform:scale(.95)}}
+.px-fx.still{animation:pxStill .9s linear both}@keyframes pxStill{0%,85%{opacity:1}100%{opacity:0}}
+/* 휴대폰 진동 알림 */
+.px-phone{position:fixed;top:60px;right:18px;z-index:9550;font-size:22px;opacity:0;pointer-events:none;background:#1b1f28;border:1px solid #3a4150;border-radius:10px;padding:4px 8px;box-shadow:0 4px 10px rgba(0,0,0,.35)}
+.px-phone.on{animation:pxPhone 1.1s ease-out both}
+@keyframes pxPhone{0%{opacity:0;transform:translateY(-6px)}10%{opacity:1;transform:none}15%,35%{transform:translateX(-2px)}25%,45%{transform:translateX(2px)}55%{transform:none}85%{opacity:1}100%{opacity:0}}
+/* 장면 카드 */
+.px-card{position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center;background:rgba(8,10,16,.84);animation:cpFade .22s ease-out;cursor:pointer}
+.px-card.out{opacity:0;transition:opacity .22s ease-out}
+.px-card-in{text-align:center;color:#eef1f5}
+.px-folder{position:relative;width:min(340px,80vw);padding:30px 24px 22px;background:#e9dcc1;color:#2b2418;border-radius:3px 6px 6px 6px;box-shadow:0 2px 0 #b9a47c,0 10px 24px rgba(0,0,0,.45);animation:pxFold .5s var(--px-ease) both;transform-origin:50% 100%}
+.px-card.still .px-folder,.px-card.still .px-stamp,.px-card.still .px-key{animation:none!important}
+.px-tab{position:absolute;top:-18px;left:0;background:#e9dcc1;padding:2px 14px;border-radius:5px 5px 0 0;font-size:11px;font-weight:800;letter-spacing:1px;color:#6a5a3a}
+.px-folder b{display:block;font-size:40px;line-height:1.1}
+.px-folder small{display:block;margin-top:6px;font-size:14px;opacity:.8}
+.px-folder em{display:inline-block;margin-top:12px;font-style:normal;font-size:12px;letter-spacing:1px;border-top:1px solid #b9a47c;padding-top:6px;opacity:.75}
+@keyframes pxFold{0%{opacity:0;transform:perspective(600px) rotateX(35deg) translateY(12px)}100%{opacity:1;transform:none}}
+.px-stamp{position:absolute;right:16px;bottom:12px;font-style:normal;font-family:var(--px-disp);font-size:28px;color:#b3261e;border:3px solid #b3261e;border-radius:4px;padding:0 8px;transform:rotate(-12deg);animation:pxStamp .35s .4s cubic-bezier(.3,1.6,.5,1) both;mix-blend-mode:multiply}
+@keyframes pxStamp{0%{opacity:0;transform:rotate(-12deg) scale(2.2)}100%{opacity:.92;transform:rotate(-12deg) scale(1)}}
+.px-empty .px-key{display:block;font-size:40px;animation:pxKey .6s var(--px-ease) both}
+@keyframes pxKey{0%{opacity:0;transform:translateY(-14px) rotate(-20deg)}60%{transform:translateY(2px) rotate(8deg)}100%{opacity:1;transform:none}}
+.px-empty p{margin:6px 0;font-size:26px}.px-empty .px-dots{font-size:20px;opacity:.7;letter-spacing:4px}.px-empty small{opacity:.8;font-size:14px}
+.px-card.empty{background:#050608}
+.px-folder.shut{padding-bottom:60px}.px-folder .px-profit{display:block;margin-top:8px;font-family:var(--px-disp);font-weight:400;font-size:24px;color:#1f7a45;font-variant-numeric:tabular-nums}.px-folder .px-profit.down{color:#b3261e}
+/* 돈 떠오름 */
+.ke-float.px-in{color:#7fd3a0}.ke-float.px-out{color:#ff9b8f}
+/* 숨쉬기 · 피곤 · 스트레스 */
+.lf-me{transform-origin:50% 100%;animation:pxBreath 4.4s ease-in-out infinite}
+.vn-player{animation:pxBreath2 3.9s ease-in-out infinite}
+@keyframes pxBreath{0%,100%{transform:none}50%{transform:scaleY(1.008) translateY(-1px)}}
+@keyframes pxBreath2{0%,100%{translate:0 0}50%{translate:0 -1.5px}}
+.lf-stage.px-tired .lf-me{animation-duration:6.5s;filter:brightness(.9) drop-shadow(0 6px 10px rgba(0,0,0,.4))}
+.lf-stage.px-stress::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;box-shadow:inset 0 0 90px rgba(90,0,0,.28)}
+.lf-stage.px-stress2::after{box-shadow:inset 0 0 120px rgba(110,0,0,.42)}
+html.px-still .lf-me,html.px-still .vn-player{animation:none}
+@media (prefers-reduced-motion:reduce){.lf-me,.vn-player,.vn-sprite,.px-folder,.px-stamp,.px-key{animation:none!important}}

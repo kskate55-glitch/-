@@ -401,7 +401,7 @@ function gxAfterRender(){
   if(N.tab === "life" && P.tab === "life" && N.life != null && P.life != null && N.life - P.life >= 360) gxBanner("day", {top:"──── " + (N.bn && P.bn && N.bn > P.bn ? `${N.bn}주차` : "다음 날") + " ────", big:gxDateLine(LF_EPOCH + N.life * 60000), sub:esc(lfClock())});
   if(N.tab !== "king" || !K) return;
   // C. CASE 열기
-  if(N.seed !== P.seed && !N.intro) gxBanner("case", {top:"CASE FILE", big:`📁 CASE ${String(KP.no || 1).padStart(3, "0")}`, sub:esc(KP.title)});
+  if(typeof pxCaseOpen !== "function" && N.seed !== P.seed && !N.intro) gxBanner("case", {top:"CASE FILE", big:`📁 CASE ${String(KP.no || 1).padStart(3, "0")}`, sub:esc(KP.title)});
   if(N.seed === P.seed){
     // D. 조사: 장소 이동 · 다음 날
     if(N.rday !== P.rday && N.rday != null) gxBanner("day", {top:`──── 조사 ${N.rday + 1}일차 ────`, big:gxDateLine(LF_EPOCH + (K.lf.day0 + N.rday * 1440) * 60000), sub:esc(bdClock().txt)});
@@ -410,9 +410,9 @@ function gxAfterRender(){
     if(N.sealed && !P.sealed) gxBanner("big", {top:"입찰기일", big:"⚖️ 법원 입찰법정", sub:K.cal0 ? gxDateLine(K.cal0) : ""});
     if(N.step !== P.step){
       if(N.step === "move" || (N.step === "cross" && KP.id !== "k2")) gxBanner("move", {big:"🚪 점유자를 만나러 간다", sub:""});
-      if(N.step === "defect") gxBanner("big", {top:"명도 완료", big:"🔑 드디어, 문을 연다", sub:`DAY ${K.day}`});
+      if(typeof pxCaseOpen !== "function" && N.step === "defect") gxBanner("big", {top:"명도 완료", big:"🔑 드디어, 문을 연다", sub:`DAY ${K.day}`});
       if(N.step === "sell") gxBanner("move", {big:"🏢 중개사무소에 매물을 내놓았다", sub:""});
-      if(N.step === "result") gxBanner("case", {top:"CASE CLOSED", big:`📁 CASE ${String(KP.no || 1).padStart(3, "0")} 종료`, sub:K.final ? `${K.final.profit >= 0 ? "+" : "−"}${kMan(Math.abs(Math.round(K.final.profit)))}` : ""});
+      if(typeof pxCaseOpen !== "function" && N.step === "result") gxBanner("case", {top:"CASE CLOSED", big:`📁 CASE ${String(KP.no || 1).padStart(3, "0")} 종료`, sub:K.final ? `${K.final.profit >= 0 ? "+" : "−"}${kMan(Math.abs(Math.round(K.final.profit)))}` : ""});
     }
     // F. 시간 경과 몽타주(많음) — 공사·명도 기다림·매도 기다림
     if(N.step === P.step && N.day != null && P.day != null && N.day - P.day >= 3 && ["move","defect","list","sell"].includes(N.step) && !N.rev){

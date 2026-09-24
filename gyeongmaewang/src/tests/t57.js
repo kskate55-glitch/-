@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch(); const errs=[]; const ok=(c,m)=>{console.log((c?'✅':'❌')+' '+m); if(!c) errs.push(m);};
 for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{width:w,height:h}}); p.on('pageerror',e=>errs.push(e.message));
  await p.addInitScript(()=>{ window.confirm = ()=>false; });   // 샌드박스처럼 즉시 '취소'
- await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(600);
+ await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(300); await p.evaluate(()=>{try{cpUnlockAll()}catch(e){}}); await p.waitForTimeout(600);
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; c.cases=3; K=null; arenaTab='life'; LF_PICK='seoyun'; renderArena(); }); await p.waitForTimeout(400);
  await p.screenshot({path:`sc_sel_${w}.png`});
  const col = await p.evaluate(()=>{ const x=document.querySelector('[data-lfdetail]'), s=getComputedStyle(x); return [s.color, s.backgroundColor]; }); console.log(w,col);

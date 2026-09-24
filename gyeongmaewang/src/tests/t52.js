@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch(); const errs=[]; const ok=(c,m)=>{console.log((c?'✅':'❌')+' '+m); if(!c) errs.push(m);};
 for(const [w,h] of [[1280,800],[390,844]]){
  const p=await b.newPage({viewport:{width:w,height:h}}); p.on('pageerror',e=>errs.push(w+' pageerror '+e.message)); p.on('dialog',d=>d.accept());
- await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(700);
+ await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(300); await p.evaluate(()=>{try{cpUnlockAll()}catch(e){}}); await p.waitForTimeout(700);
  const bad = async tag => { const t = await p.evaluate(()=>(document.getElementById('kfsRoot')||document.getElementById('main')).innerText); const m=t.match(/undefined|NaN|\[object|Infinity/); if(m) errs.push(w+' '+tag+' '+m[0]+' :: '+t.slice(Math.max(0,t.indexOf(m[0])-40), t.indexOf(m[0])+20)); };
  await p.evaluate(()=>{ arenaTab='home'; renderArena(); }); await p.waitForTimeout(300);
  ok(!!(await p.$('[data-lfgo]')), w+' 홈: 투자자 고르기 버튼');

@@ -4,7 +4,7 @@ const { chromium } = require('playwright');
 const IDS=['seoyun','dohyun','mijeong','jaehoon','eunkyung','taesik'];
 for(const [w,h] of [[1280,800],[390,844]]){
  const p=await b.newPage({viewport:{width:w,height:h}}); p.on('pageerror',e=>errs.push(w+' pageerror '+e.message)); p.on('dialog',d=>d.accept());
- await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(700);
+ await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(300); await p.evaluate(()=>{try{cpUnlockAll()}catch(e){}}); await p.waitForTimeout(700);
  const bad = async tag => { const t = await p.evaluate(()=>document.body.innerText); const m=t.match(/undefined|NaN|\[object|Infinity/); if(m) errs.push(w+' '+tag+' '+m[0]+' :: '+t.slice(Math.max(0,t.indexOf(m[0])-50), t.indexOf(m[0])+20)); };
  for(const id of IDS){
   await p.evaluate(()=>{ const c=kcRec(); delete c.life; K=null; arenaTab='life'; LF_PICK=null; renderArena(); });

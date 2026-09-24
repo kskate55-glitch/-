@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch(); const errs=[]; const ok=(c,m)=>{console.log((c?'✅':'❌')+' '+m); if(!c) errs.push(m);};
 for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{width:w,height:h}}); p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept());
  const broken=[]; p.on('response',r=>{ if(/_blob/.test(r.url()) && r.status()>=400) broken.push(r.url()); });
- await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(600);
+ await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(300); await p.evaluate(()=>{try{cpUnlockAll()}catch(e){}}); await p.waitForTimeout(600);
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; K=null; arenaTab='life'; LF_PICK='seoyun'; renderArena(); }); await p.waitForTimeout(900);
  ok(await p.evaluate(()=>!!document.querySelector('.lf-focus-art') && document.querySelectorAll('.lf-card .lf-face img').length>=1), w+' 선택: 서윤 얼굴·세로 일러스트');
  await p.screenshot({path:`ca_sel_${w}.png`});

@@ -42,6 +42,7 @@ from estimate_price import (FIRST_FLOOR_PRICE_RATIO, estimate_monthly_trend_rate
                             find_comparables, load_transactions, to_amount_man,
                             building_identity)
 from geocode import geocode
+from land_share import land_share_ratio
 
 # .env에 적어둔 키를 환경변수로 올린다 (6절) — 이미 설정된 값은 안 덮어쓴다.
 try:
@@ -121,6 +122,22 @@ def pick_targets(rows: list[dict], months: int, n: int, gu: str | None,
     return pool[:n], len(pool)
 
 
+def _round(value, digits):
+    return None if value is None else round(value, digits)
+
+
+def _land_gap(target: dict, comparables: list[dict]):
+    """대상의 대지지분율 ÷ 비교거래 중앙값. 한쪽이라도 없으면 None."""
+    mine = land_share_ratio(target)
+    if mine is None:
+        return None
+    theirs = [r for r in (land_share_ratio(c) for c in comparables) if r is not None]
+    if not theirs:
+        return None
+    mid = statistics.median(theirs)
+    return (mine / mid) if mid > 0 else None
+
+
 def estimate_as_of(rows: list[dict], target: dict, radius_m: float,
                    year_window: int, area_tolerance_pct: float,
                    build_year_tolerance: int) -> dict | None:
@@ -198,6 +215,15 @@ def estimate_as_of(rows: list[dict], target: dict, radius_m: float,
         "same_building_n": sum(1 for r in filtered if r.get("_same_building")),
         "outlier_n": sum(1 for r in filtered if r.get("_price_outlier")),
         "top_weight_share": top_weight_share(filtered),
+        # 72-39절 — 대지지분. **추가 API 호출이 0이다**(실거래 행에 이미 들어
+        # 있는 `landAr`을 읽을 뿐이다). 값이 안 오면 둘 다 None이라 기존 열에
+        # 아무 영향이 없다.
+        #  · land_ratio     : 대상 물건의 전용 1㎡당 대지지분
+        #  · land_ratio_gap : 대상 ÷ 비교거래 중앙값 — **이쪽이 진짜 가설이다.**
+        #    "땅을 많이 낀 집인데 덜 낀 집들로 값을 매겼다"가 오차의 원인이라면
+        #    절대값이 아니라 **대상과 비교군의 차이**가 오차를 가려야 한다.
+        "land_ratio": _round(land_share_ratio(target), 3),
+        "land_ratio_gap": _round(_land_gap(target, filtered), 3),
         "n_comparables": len(filtered),
         "skipped": None,
     }
@@ -350,7 +376,8 @@ def main() -> None:
         cols = ["ymd", "name", "address", "area", "floor", "build_year",
                 "actual", "p25", "median", "p75", "error_pct",
                 "n_comparables", "confidence", "divergence",
-                "same_building_n", "outlier_n", "top_weight_share"]
+                "same_building_n", "outlier_n", "top_weight_share",
+                "land_ratio", "land_ratio_gap"]
         with open(args.csv, "w", newline="", encoding="utf-8-sig") as f:
             w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
             w.writeheader()

@@ -120,6 +120,46 @@
     보낸 요청 모양: <code>{{ result.url_shape }}</code></p>
   {% endif %}
 </div>
+
+{# ── 두 번째 질문 — 비교거래에도 같은 값을 붙일 수 있나 ─────────────
+   위 카드가 "대상 물건 하나"를 답했다면, 이 카드는 "비교거래 수십 건"을
+   답한다. 실거래 응답의 대지권면적이 채워져 오면 추가 호출 0으로 끝나고,
+   안 오면 비교거래마다 건축물대장을 따로 조회해야 해서 요청당 국토부
+   호출이 두 배가 된다 — 할지 말지가 이 숫자 하나로 갈린다. #}
+{% set lf = result.land_field %}
+{% if lf %}
+<div class="card">
+  <h3 style="margin-top:0">
+    {% if lf.verdict == 'varies' %}✅{% elif lf.verdict in ('flat', 'no_field') %}⛔{% else %}➖{% endif %}
+    비교거래에도 대지지분을 붙일 수 있나
+  </h3>
+  <p class="muted" style="margin-top:2px">
+    이 구의 실거래 응답에 대지권면적(<code>landAr</code>)이 채워져 오는지 확인한 결과예요.
+    온다면 비교거래 수십 건에 대지지분을 붙이는 데 <b>추가 조회가 한 번도 필요 없습니다.</b></p>
+
+  <ul class="note-lines">
+    <li>조회한 실거래 <b>{{ lf.total }}건</b> 중 대지권면적이 있는 것 <b>{{ lf.with_land }}건</b>
+        ({{ lf.fill_pct }}%)</li>
+    {% if lf.p50 is not none %}
+    <li>전용 1㎡당 대지지분: 하위 10% <b>{{ lf.p10 }}㎡</b> · 중앙 <b>{{ lf.p50 }}㎡</b> ·
+        상위 10% <b>{{ lf.p90 }}㎡</b>{% if lf.spread %} (상위/하위 <b>{{ lf.spread }}배</b>){% endif %}</li>
+    {% endif %}
+    {% if lf.note %}<li>{{ lf.note }}</li>{% endif %}
+  </ul>
+
+  <p class="muted" style="margin-top:10px; font-size:13px">
+    ⚠️ 값이 온다고 해서 자동으로 쓸모가 있는 건 아닙니다 — 한 동네 빌라가 전부 비슷한
+    밀도로 지어졌다면 이 값이 거의 상수라 비교거래를 가려내지 못합니다. 그래서 채워져
+    오는 비율과 <b>흩어짐</b>을 같이 봅니다. 흩어짐이 있어도 그다음은
+    “실제로 오차를 예측하는가”를 백테스트로 재야 하고, <b>그 전까지 매도가는 한 글자도
+    바뀌지 않습니다.</b></p>
+</div>
+{% elif result.land_field_error %}
+<div class="card">
+  <h3 style="margin-top:0">➖ 비교거래 쪽은 확인하지 못했습니다</h3>
+  <p class="muted" style="margin-top:2px">{{ result.land_field_error }}</p>
+</div>
+{% endif %}
 {% endif %}
 
 <p class="muted" style="margin-top:16px">

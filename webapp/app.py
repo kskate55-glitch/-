@@ -379,6 +379,25 @@ def building_check():
                         result["land_ratio"] = round(plat / tot, 4)
                 except (TypeError, ValueError):
                     pass
+
+                # ── 같은 화면에서 **두 번째 질문**도 답한다 ──────────────
+                # 위까지로 "대상 물건 하나의 대지지분은 구할 수 있다"가
+                # 확인됐다. 그런데 매도가를 바꾸려면 **비교거래 수십 건**도
+                # 같은 값을 가져야 하고, 그걸 건축물대장으로 하나씩 조회하면
+                # 요청당 국토부 호출이 두 배가 된다(72-8절 임계경로·48-6절
+                # 한도). 실거래 응답의 `landAr`이 채워져 온다면 그 비용이
+                # 통째로 0이 되므로, **그것부터 확인한다.**
+                # ⚠️ 이미 받아 둔 행만 읽는다 — 이 구를 한 번이라도
+                #    계산해 봤다면 추가 호출이 0이다.
+                try:
+                    from land_share import summarize as _land_summary
+                    from data_source import get_trade_rows
+                    lawd = (detail.get("b_code") or "")[:5]
+                    if lawd:
+                        rows = get_trade_rows(lawd, datetime.now().year)
+                        result["land_field"] = _land_summary(rows)
+                except Exception as e:      # 이 칸이 실패해도 위 결과는 살린다
+                    result["land_field_error"] = f"{type(e).__name__}: {str(e)[:160]}"
         except Exception as e:          # 진단 페이지가 500을 내면 본말전도다
             result["status"] = "crashed"
             result["detail"] = f"{type(e).__name__}: {str(e)[:200]}"

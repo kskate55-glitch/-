@@ -235,7 +235,7 @@ function gxScene(i){
   const img = document.createElement("div"); img.className = "gx-bgimg"; img.style.backgroundImage = u ? `url("${u}")` : "none";
   bg.appendChild(img); requestAnimationFrame(() => img.classList.add("on"));
   [...bg.children].slice(0, -1).forEach(x => { x.classList.remove("on"); setTimeout(() => x.remove(), 900); });
-  O.el.querySelector(".gx-ui-slot").innerHTML = gxUiHTML(sc.ui);
+  const slot = O.el.querySelector(".gx-ui-slot"); slot.innerHTML = gxUiHTML(sc.ui); slot.classList.toggle("low", sc.uiPos === "low"); img.style.backgroundPosition = sc.pos || "center";
   if(sc.amb && typeof snAmbWant === "function"){ GX_AMB = sc.amb; snAmbWant(kaCfg().mute ? null : sc.amb); }
   if(sc.sfx) setTimeout(() => { if(sc.sfx === "chime" && typeof snChime === "function") snChime(); else if(typeof kcSfx === "function") kcSfx(sc.sfx); }, 350);
   O.el.querySelector(".gx-box").hidden = true;

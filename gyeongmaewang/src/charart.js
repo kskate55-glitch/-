@@ -8,13 +8,19 @@ const LF_CHAR_ART = {
   dohyun:{face:{normal:"2c6dcfc46662cb715ae6a15bbcb25796", happy:"6ad1f3e3a51585e063731fc107434ba1", shocked:"20537e78fcf156713f9a98c031ee3b05",
                 worried:"dea59f40e8e31a7876829a6909258f04", angry:"97343c701731a1677db55b0a34d4cc2b", tired:"d5e227dbe4e6c139a123621d0833a616"},
           front:"460763b38132f69631dd9afc8b97c96b", back:"36d71073cf13f01299b6f6fe40f591d4", select:"b9c749443dc4065d593447850e605cbc",
-          commute:"3ff68bb122421084c31b3ab96ebbc1ea", room:"4e6edd4052a125094a0b506b7c91866e"}};
+          commute:"3ff68bb122421084c31b3ab96ebbc1ea", room:"4e6edd4052a125094a0b506b7c91866e"},
+  mijeong:{face:{normal:"32c523858c5681e224be52caca502f9a", happy:"07b53544fd6eb5e854a37666ebd60b07", shocked:"ae54bf011d86fe7d8828789b6a8e39e6",
+                worried:"9f745640e94952c8a3167e2c152be3ea", angry:"6bc9e8d46f35a9f734bd19eda16d4ff3", tired:"8a469b739b8d34d2e81b8f257146eaa9"},
+          front:"7908e88b677af08faafdfb68a56fe6dc", back:"3f5ff0ba1b1ee0e30979aa50d1fd5dae", select:"07908fc86a73109107d59cf8e4479263",
+          shop:"80fa4024531bc6844278f4a1bec404ec", room:"3d69a0468b0060ad25ce8910b4093d4b"}};
 const LF_FACE_ALIAS = {soft:"happy", neutral:"normal", troubled:"worried", furious:"angry"};
 // 배경·컷 칸으로도 등록해 둔다(그림 관리 화면·오프닝이 같은 이름으로 찾게)
 Object.assign(ART_DEFAULT, {bg_base_sillim:LF_CHAR_ART.seoyun.room, cut_seoyun_found:LF_CHAR_ART.seoyun.found,
-  bg_base_hwagok:LF_CHAR_ART.dohyun.room, cut_dohyun_commute:LF_CHAR_ART.dohyun.commute});
+  bg_base_hwagok:LF_CHAR_ART.dohyun.room, cut_dohyun_commute:LF_CHAR_ART.dohyun.commute,
+  bg_base_yeongdeungpo:LF_CHAR_ART.mijeong.room, cut_mijeong_shop:LF_CHAR_ART.mijeong.shop});
 if(LF_BASES.sillim) LF_BASES.sillim.bg = "bg_base_sillim";
 if(LF_BASES.hwagok) LF_BASES.hwagok.bg = "bg_base_hwagok";
+if(LF_BASES.yeongdeungpo) LF_BASES.yeongdeungpo.bg = "bg_base_yeongdeungpo";
 function lfArt(id){ id = id || (lfOn() ? lfRec().char : null); return id ? LF_CHAR_ART[id] || null : null; }
 function lfBlob(a){ return window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a; }
 function lfArtUrl(id, k){ const A = lfArt(id); return A && A[k] ? lfBlob(A[k]) : null; }
@@ -33,6 +39,8 @@ if(typeof keMyFace === "function"){ const _ca_face = keMyFace; keMyFace = functi
 if(LF_OPENINGS.seoyun){ LF_OPENINGS.seoyun[0].bg = "bg_base_sillim"; LF_OPENINGS.seoyun[1].bg = "bg_base_sillim"; LF_OPENINGS.seoyun[2].bg = "cut_seoyun_found"; }
 // 도현: 화곡역 퇴근길 → (현관) → 자기 원룸
 if(LF_OPENINGS.dohyun){ LF_OPENINGS.dohyun[0].bg = "cut_dohyun_commute"; [2,3,4].forEach(i => { if(LF_OPENINGS.dohyun[i]) LF_OPENINGS.dohyun[i].bg = "bg_base_hwagok"; }); }
+// 미정: 가게 마감(그림 속 본인) → 집 거실 → 중개사무소(그대로)
+if(LF_OPENINGS.mijeong){ LF_OPENINGS.mijeong[0].bg = "cut_mijeong_shop"; LF_OPENINGS.mijeong[0].uiPos = "low"; LF_OPENINGS.mijeong[0].pos = "58% 50%"; LF_OPENINGS.mijeong[1].pos = "58% 50%"; LF_OPENINGS.mijeong[1].bg = "cut_mijeong_shop"; LF_OPENINGS.mijeong[2].bg = "bg_base_yeongdeungpo"; }
 // 거점: 방 안에 내가 서 있다
 const _ca_base = lfBaseHTML; lfBaseHTML = function(){
   const h = _ca_base(), u = lfArtUrl(null, "front"); if(!u) return h;

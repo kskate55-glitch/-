@@ -1132,6 +1132,53 @@ html.kfs-on #hubToasts{top:62px;left:14px;right:auto;bottom:auto}
 .lf-sel .btn.pri{background:#e8b04a;color:#1a1204;border-color:#e8b04a;font-weight:800}
 .lf-sel .btn.pri:hover{background:#f0bf5e}
 .sc-toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:9600;max-width:min(520px,92vw);background:#2b1512;color:#fff;border:1px solid #c0392b;border-radius:12px;padding:12px 16px;font-size:14.5px;box-shadow:0 12px 30px rgba(0,0,0,.4);animation:gxLine .3s ease both}
+/* 🗂️ 조사 화면: 그림 위 서류 · 접는 행동 묶음 */
+.kfs-head{position:relative;z-index:30}
+.kfs-tools .kc-audio-in{z-index:9700;max-width:calc(100vw - 20px)}
+.gx-veil{z-index:9300}
+.stg-dock{position:absolute;inset:0;pointer-events:none;z-index:6}
+.stg-dock *{pointer-events:auto}
+.stg-col{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;width:min(340px,calc(100% - 28px));max-height:calc(100% - 28px)}
+.stg-tabs{display:flex;gap:8px}
+.stg-tab{position:relative;background:#f5ecd6;color:#3a2a10;border:1px solid #c9a86a;border-radius:10px;padding:9px 14px;font-weight:800;font-size:14.5px;box-shadow:0 6px 18px rgba(0,0,0,.35);cursor:pointer;min-height:44px;white-space:nowrap}
+.stg-tab small{font-weight:600;opacity:.75;margin-left:4px}
+.stg-tab.on{background:#3a2a10;color:#f5ecd6}
+.stg-tab.new{animation:stgPulse 1.2s ease-in-out infinite}
+.stg-tab i{position:absolute;top:-8px;right:-8px;background:#c0392b;color:#fff;font-style:normal;font-size:10.5px;border-radius:999px;padding:2px 6px}
+@keyframes stgPulse{50%{box-shadow:0 0 0 6px rgba(232,176,74,.45),0 6px 18px rgba(0,0,0,.35)}}
+.stg-paper{position:absolute;top:12px;right:14px;bottom:14px;width:min(560px,calc(100% - 28px));overflow-y:auto;overscroll-behavior:contain;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.55);animation:gxLine .25s ease both;z-index:3}
+.stg-paper>.ke-case{margin:0;min-height:100%}
+.stg-x{position:sticky;top:8px;float:right;margin:8px 8px 0 0;z-index:2;width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:16px;cursor:pointer}
+.stg-sheet{position:relative;width:100%;margin:0!important;padding:12px 14px!important;box-shadow:0 14px 36px rgba(0,0,0,.5);overflow-y:auto;min-height:0}
+.stg-sheet .note{font-size:12px}
+.stg-sheet .ke-amt{font-size:14px}
+.stg-grp{margin:8px 0;border:1px solid var(--line,#e3e6ea);border-radius:12px;background:#fff}
+.stg-grp>summary{list-style:none;cursor:pointer;padding:11px 14px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:6px}
+.stg-grp>summary::-webkit-details-marker{display:none}
+.stg-grp>summary::after{content:"▾";margin-left:auto;transition:transform .2s;opacity:.6}
+.stg-grp:not([open])>summary::after{transform:rotate(-90deg)}
+.stg-grp>.ag-acts,.stg-grp>p{margin:0 10px 10px!important}
+.stg-cnt{background:#eef2f7;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700;color:#4a5566}
+.stg-goals>summary{cursor:pointer;font-weight:800}
+.stg-goals>.kc-goals{margin-top:8px;border:none;padding:0;background:none}
+@media (max-width:900px){
+  .stg-col{right:8px;bottom:8px;width:min(236px,64%);gap:6px}
+  .stg-tab{padding:6px 10px;font-size:13px;min-height:38px}
+  .stg-sheet{padding:8px 10px!important}
+  .stg-sheet .ke-sheet-head .note,.stg-sheet>.note,.stg-sheet .ke-hangul{display:none}
+  .stg-sheet .ke-sheet-head{margin-bottom:2px}
+  .stg-sheet .ke-amt input{width:8.5ch!important;min-width:0;font-size:17px!important;padding:4px 6px!important}
+  .stg-sheet .btn{padding:7px 12px}
+  .stg-paper{top:8px;right:8px;left:8px;bottom:8px;width:auto}
+}
+/* 🖼️ 시트 그림 */
+.bd-thumb{height:132px;margin:-14px -16px 10px;border-radius:12px 12px 0 0;background-size:cover;background-position:center 40%}
+.bd-card.wait .bd-thumb,.bd-card.watch .bd-thumb{filter:saturate(.8)}
+.ke-card .ke-photo{display:block;height:74px;margin:-4px -4px 6px;border-radius:8px;background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.stg-wx{height:84px;border-radius:12px;margin:8px 0 4px;background-size:cover;background-position:center 60%;box-shadow:inset 0 -30px 40px rgba(0,0,0,.25)}
+.lf-wtab{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:14.5px}.lf-wtab th{text-align:left;font-weight:700;padding:6px 8px 6px 0;white-space:nowrap}.lf-wtab td{padding:6px 4px;font-variant-numeric:tabular-nums}.lf-wtab td.note{text-align:right;white-space:nowrap}.lf-wtab tr+tr{border-top:1px solid var(--line,#e6e8ec)}
+.gx-ui-slot.low{top:auto;bottom:calc(6% + 120px)}
+@media (max-width:720px){.lf-sel .lf-card{overflow:hidden;padding-left:8px;padding-right:8px}.lf-stars{grid-template-columns:1fr;font-size:11px;gap:0}.lf-stars li{justify-content:space-between;gap:4px}}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -39102,6 +39149,14 @@ const LF_WINDOW = {
 function lfEkTarget(){ const L = lfRec(); return L && L.path === "safe" ? 1000 : L && L.path === "expand" ? 300 : 600; }   // 최은경 계산기 기준선(인생 갈림길로 바뀐다)
 const LF_RESEARCH_DAYS = 2;       // 입찰 이틀 전부터 조사 — 입찰 당일은 법원
 function lfResearchDayCount(){ const L = lfRec(); return L && (L.char === "seoyun" || (L.path === "fulltime")) ? 3 : LF_RESEARCH_DAYS; }   // 시간 많은 사람은 하루 더 판다
+// 요일별 조사 가능 시간 — 같은 시간대인 요일끼리 묶어 표로
+function lfWindowTable(){
+  const hm = m => `${String(Math.floor(m / 60) % 24).padStart(2,"0")}:${String(m % 60).padStart(2,"0")}`;
+  const rows = []; [1,2,3,4,5,6,0].forEach(d => { const [s, len] = lfWindow(d), k = s + "|" + len, last = rows[rows.length - 1]; if(last && last.k === k) last.d.push(d); else rows.push({k, s, len, d:[d]}); });
+  const name = ds => ds.length === 5 && ds[0] === 1 && ds[4] === 5 ? "평일(월~금)" : ds.length === 2 && ds[0] === 6 && ds[1] === 0 ? "주말(토·일)" : ds.length === 7 ? "매일" : ds.length > 2 ? `${SN_DOW[ds[0]]}~${SN_DOW[ds[ds.length - 1]]}` : ds.map(d => SN_DOW[d]).join("·");
+  const L = lfRec(), note = L && L.char === "dohyun" && L.path !== "quit" ? `<small class="note">🏢 평일 입찰일엔 반차(0.5일)를 써요 · 남은 연차 ${L.leave}일</small>` : "";
+  return `<table class="lf-wtab">${rows.map(r => `<tr><th>${name(r.d)}</th><td>${hm(r.s)} ~ ${hm(r.s + r.len)}</td><td class="note">${krFmt(r.len)}</td></tr>`).join("")}</table>${note}`;
+}
 function lfWindow(dow){
   const L = lfRec(); let w = LF_WINDOW[L.char](dow);
   const P = LF_PATHS[L.char] && L.path ? LF_PATHS[L.char].opts.find(o => o.id === L.path) : null;
@@ -39485,7 +39540,7 @@ function lfPanel(id){
     const M = lfMonthly();
     return `<h3>📅 달력</h3><ul class="of-contacts">${rows.join("")}</ul>
       <div class="panel"><b>매달 1일</b> — ${M.income ? `수입 +${kMan(M.income)} · ` : ""}생활비·고정비 −${kMan(M.rent)}${M.upkeep ? ` · 장비 −${kMan(M.upkeep)}` : ""}${M.interest ? ` · 대출 이자 −${kMan(M.interest)}` : ""} = <b class="${M.net >= 0 ? "up" : "down"}">${kcSigned(M.net)}</b></div>
-      <div class="panel"><b>🕒 ${esc(C.name)}가 조사할 수 있는 시간</b><br><small class="note">${[1,2,3,4,5,6,0].map(d => { const [s, len] = lfWindow(d); return `${SN_DOW[d]} ${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}~ ${krFmt(len)}`; }).join(" · ")}</small></div>`;
+      <div class="panel"><b>🕒 ${esc(C.name)}가 조사할 수 있는 시간</b>${lfWindowTable()}</div>`;
   }
   if(id === "shelf") return `<h3>📚 책장</h3>${L.fx && L.fx.book ? `<p class="note">📦 새로 온 경매책 — 다음 공부 효율 +50%</p>` : ""}${lfActBtns("shelf")}`;
   if(id === "bed") return `<h3>🛏️ 침대</h3>${lfActBtns("bed")}`;
@@ -39847,7 +39902,7 @@ function gxScene(i){
   const img = document.createElement("div"); img.className = "gx-bgimg"; img.style.backgroundImage = u ? `url("${u}")` : "none";
   bg.appendChild(img); requestAnimationFrame(() => img.classList.add("on"));
   [...bg.children].slice(0, -1).forEach(x => { x.classList.remove("on"); setTimeout(() => x.remove(), 900); });
-  O.el.querySelector(".gx-ui-slot").innerHTML = gxUiHTML(sc.ui);
+  const slot = O.el.querySelector(".gx-ui-slot"); slot.innerHTML = gxUiHTML(sc.ui); slot.classList.toggle("low", sc.uiPos === "low"); img.style.backgroundPosition = sc.pos || "center";
   if(sc.amb && typeof snAmbWant === "function"){ GX_AMB = sc.amb; snAmbWant(kaCfg().mute ? null : sc.amb); }
   if(sc.sfx) setTimeout(() => { if(sc.sfx === "chime" && typeof snChime === "function") snChime(); else if(typeof kcSfx === "function") kcSfx(sc.sfx); }, 350);
   O.el.querySelector(".gx-box").hidden = true;
@@ -40050,13 +40105,19 @@ const LF_CHAR_ART = {
   dohyun:{face:{normal:"2c6dcfc46662cb715ae6a15bbcb25796", happy:"6ad1f3e3a51585e063731fc107434ba1", shocked:"20537e78fcf156713f9a98c031ee3b05",
                 worried:"dea59f40e8e31a7876829a6909258f04", angry:"97343c701731a1677db55b0a34d4cc2b", tired:"d5e227dbe4e6c139a123621d0833a616"},
           front:"460763b38132f69631dd9afc8b97c96b", back:"36d71073cf13f01299b6f6fe40f591d4", select:"b9c749443dc4065d593447850e605cbc",
-          commute:"3ff68bb122421084c31b3ab96ebbc1ea", room:"4e6edd4052a125094a0b506b7c91866e"}};
+          commute:"3ff68bb122421084c31b3ab96ebbc1ea", room:"4e6edd4052a125094a0b506b7c91866e"},
+  mijeong:{face:{normal:"32c523858c5681e224be52caca502f9a", happy:"07b53544fd6eb5e854a37666ebd60b07", shocked:"ae54bf011d86fe7d8828789b6a8e39e6",
+                worried:"9f745640e94952c8a3167e2c152be3ea", angry:"6bc9e8d46f35a9f734bd19eda16d4ff3", tired:"8a469b739b8d34d2e81b8f257146eaa9"},
+          front:"7908e88b677af08faafdfb68a56fe6dc", back:"3f5ff0ba1b1ee0e30979aa50d1fd5dae", select:"07908fc86a73109107d59cf8e4479263",
+          shop:"80fa4024531bc6844278f4a1bec404ec", room:"3d69a0468b0060ad25ce8910b4093d4b"}};
 const LF_FACE_ALIAS = {soft:"happy", neutral:"normal", troubled:"worried", furious:"angry"};
 // 배경·컷 칸으로도 등록해 둔다(그림 관리 화면·오프닝이 같은 이름으로 찾게)
 Object.assign(ART_DEFAULT, {bg_base_sillim:LF_CHAR_ART.seoyun.room, cut_seoyun_found:LF_CHAR_ART.seoyun.found,
-  bg_base_hwagok:LF_CHAR_ART.dohyun.room, cut_dohyun_commute:LF_CHAR_ART.dohyun.commute});
+  bg_base_hwagok:LF_CHAR_ART.dohyun.room, cut_dohyun_commute:LF_CHAR_ART.dohyun.commute,
+  bg_base_yeongdeungpo:LF_CHAR_ART.mijeong.room, cut_mijeong_shop:LF_CHAR_ART.mijeong.shop});
 if(LF_BASES.sillim) LF_BASES.sillim.bg = "bg_base_sillim";
 if(LF_BASES.hwagok) LF_BASES.hwagok.bg = "bg_base_hwagok";
+if(LF_BASES.yeongdeungpo) LF_BASES.yeongdeungpo.bg = "bg_base_yeongdeungpo";
 function lfArt(id){ id = id || (lfOn() ? lfRec().char : null); return id ? LF_CHAR_ART[id] || null : null; }
 function lfBlob(a){ return window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a; }
 function lfArtUrl(id, k){ const A = lfArt(id); return A && A[k] ? lfBlob(A[k]) : null; }
@@ -40075,6 +40136,8 @@ if(typeof keMyFace === "function"){ const _ca_face = keMyFace; keMyFace = functi
 if(LF_OPENINGS.seoyun){ LF_OPENINGS.seoyun[0].bg = "bg_base_sillim"; LF_OPENINGS.seoyun[1].bg = "bg_base_sillim"; LF_OPENINGS.seoyun[2].bg = "cut_seoyun_found"; }
 // 도현: 화곡역 퇴근길 → (현관) → 자기 원룸
 if(LF_OPENINGS.dohyun){ LF_OPENINGS.dohyun[0].bg = "cut_dohyun_commute"; [2,3,4].forEach(i => { if(LF_OPENINGS.dohyun[i]) LF_OPENINGS.dohyun[i].bg = "bg_base_hwagok"; }); }
+// 미정: 가게 마감(그림 속 본인) → 집 거실 → 중개사무소(그대로)
+if(LF_OPENINGS.mijeong){ LF_OPENINGS.mijeong[0].bg = "cut_mijeong_shop"; LF_OPENINGS.mijeong[0].uiPos = "low"; LF_OPENINGS.mijeong[0].pos = "58% 50%"; LF_OPENINGS.mijeong[1].pos = "58% 50%"; LF_OPENINGS.mijeong[1].bg = "cut_mijeong_shop"; LF_OPENINGS.mijeong[2].bg = "bg_base_yeongdeungpo"; }
 // 거점: 방 안에 내가 서 있다
 const _ca_base = lfBaseHTML; lfBaseHTML = function(){
   const h = _ca_base(), u = lfArtUrl(null, "front"); if(!u) return h;
@@ -40090,6 +40153,129 @@ const _ca_sel = lfSelectHTML; lfSelectHTML = function(){
   }
   return h;
 };
+
+/* ================= 🗂️ 조사 화면 정리 — 서류는 그림 위에, 행동은 접어서 =================
+   오른쪽 패널이 한없이 길어지던 걸 줄인다: 사건 파일·입찰표는 왼쪽 그림 위 종이로 겹쳐 띄우고,
+   조사 행동은 묶음별로 접는다. 렌더 뒤 DOM만 옮기므로 계산·클릭 처리(문서 위임)는 그대로다. */
+// 📝 내 판단 기록 — 게임에 안 맞는 입력칸이라 뺐다(결과 비교표도 같이)
+kcPredInputs = function(){ return ""; };
+kcPredTable = function(){ return ""; };
+let STG = {seed:null, file:false, grp:{}, fresh:false};
+function stgActive(){ return typeof page !== "undefined" && page === "arena" && arenaTab === "king" && K && !K.intro && K.step === "brief" && !K.sealed && !K.revealing; }
+function stgGrpKey(t){ return t.replace(/\s+/g, " ").trim().slice(0, 12); }
+function stgApply(){
+  const root = document.getElementById("kfsRoot"); if(!root || !stgActive()) return;
+  const stage = root.querySelector(".kfs-stage"), panel = root.querySelector(".kfs-panel"); if(!stage || !panel) return;
+  const nOn = typeof keCards === "function" ? keCards().filter(keHas).length : 0;
+  if(STG.seed !== K.seed){ STG = {seed:K.seed, file:false, grp:{}, fresh:false, n:nOn}; }
+  if(nOn > (STG.n || 0) && !STG.file) STG.fresh = true;   // 새로 드러난 조사 결과 — 사건 파일을 열 때까지 표시
+  STG.n = nOn;
+  // 1) 사건 파일 · 입찰표 → 그림 위로
+  const kcase = panel.querySelector(".ke-case"), sheet = panel.querySelector(".ke-sheet");
+  if(kcase || sheet){
+    stage.querySelectorAll(".stg-dock").forEach(x => x.remove());
+    const dock = document.createElement("div"); dock.className = "stg-dock";
+    const n = typeof keCards === "function" ? keCards().filter(keHas).length : 0, tot = typeof keCards === "function" ? keCards().length : 0;
+    const fresh = STG.fresh && !STG.file;
+    dock.innerHTML = `<div class="stg-col"><div class="stg-tabs"><button type="button" class="stg-tab ${STG.file ? "on" : ""} ${fresh ? "new" : ""}" data-stg="file" aria-expanded="${STG.file}">📁 사건 파일 <small>조사 ${n}/${tot}</small>${fresh ? `<i>NEW</i>` : ""}</button></div></div>`;
+    if(kcase){ const w = document.createElement("div"); w.className = "stg-paper stg-file"; w.hidden = !STG.file; w.innerHTML = `<button type="button" class="stg-x" data-stg="file" aria-label="사건 파일 닫기">✕</button>`; w.appendChild(kcase); dock.appendChild(w); }
+    if(sheet){ sheet.classList.add("stg-sheet"); dock.querySelector(".stg-col").appendChild(sheet); }
+    stage.appendChild(dock);
+  }
+  // 2) 조사 행동 묶음 → 접기
+  const heads = [...panel.querySelectorAll(":scope > h4.kr-grp")];
+  heads.forEach((h, i) => {
+    const key = stgGrpKey(h.textContent), site = /현장/.test(h.textContent);
+    const want = STG.grp[key] != null ? STG.grp[key] : (K.loc === "site" ? site : !site);
+    const d = document.createElement("details"); d.className = "stg-grp"; d.open = !!want; d.dataset.grp = key;
+    const s = document.createElement("summary"); s.innerHTML = h.innerHTML;
+    let cnt = 0, nx = h.nextElementSibling; const move = [];
+    while(nx && !(nx.matches && (nx.matches("h4.kr-grp") || nx.matches(".panel, details.panel")))){ move.push(nx); if(nx.querySelectorAll) cnt += nx.querySelectorAll("[data-kres]:not([disabled])").length; nx = nx.nextElementSibling; }
+    if(cnt) s.insertAdjacentHTML("beforeend", ` <small class="stg-cnt">${cnt}</small>`);
+    d.appendChild(s); h.replaceWith(d); move.forEach(m => d.appendChild(m));
+  });
+  // 3) 이번 판 도전 → 접기(진행 상황만 보이게)
+  const goals = panel.querySelector(":scope > .kc-goals");
+  if(goals && !goals.closest("details")){
+    const d = document.createElement("details"); d.className = "panel stg-goals"; d.open = !!STG.grp.__goals;
+    const done = goals.querySelectorAll(".done, .ok").length, tot = Math.max(1, (goals.textContent.match(/⬜|✅/g) || []).length);
+    d.innerHTML = `<summary>🎯 이번 판 도전 <small>(${done}/${tot})</small></summary>`; goals.replaceWith(d); d.appendChild(goals); goals.classList.remove("panel");
+  }
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("[data-stg]"); if(!b || !stgActive()) return;
+  STG.file = !STG.file; if(STG.file) STG.fresh = false;
+  const dock = document.querySelector(".stg-dock"); if(!dock) return;
+  const f = dock.querySelector(".stg-file"); if(f) f.hidden = !STG.file;
+  const t = dock.querySelector(".stg-tab"); if(t){ t.classList.toggle("on", STG.file); t.classList.remove("new"); const i = t.querySelector("i"); if(i) i.remove(); t.setAttribute("aria-expanded", STG.file); }
+  if(typeof kcSfx === "function") kcSfx("paper");
+});
+document.addEventListener("toggle", e => { const d = e.target; if(!d || !d.classList) return; if(d.classList.contains("stg-grp")) STG.grp[d.dataset.grp] = d.open; if(d.classList.contains("stg-goals")) STG.grp.__goals = d.open; }, true);
+document.addEventListener("keydown", e => { if(e.key === "Escape" && STG.file && stgActive()){ const b = document.querySelector(".stg-x"); if(b) b.click(); } });
+const _stg_render = renderArena; renderArena = function(){ _stg_render(); queueMicrotask(stgApply); };
+
+/* ================= 🖼️ 시트 그림 — 게시판 건물 사진 · 조사 파일 증거 사진 · 오늘 날씨 · 다음 물건용 보관함 =================
+   GPT 시트 5장에서 잘라 올린 그림. 지금 게임에 있는 자리에 바로 쓰고, 아직 없는 물건(상가·오피스텔·공장 등)
+   그림은 그림 보관함에 칸으로만 등록해 둔다. */
+const SH_ART = {
+  ext_k1:"8da97d931981eacf7bc89f159d5ecc0d", ext_k2:"efc08f93c5f08b61f1131e7459cf8123", ext_tenant:"f8827b45287483e93de2935e8df096cb", ext_share:"b93fcb75df93465f28328ceda110434c",
+  ext_lien:"f9c4caa71bf52b93182680a78ecd0f06", ext_land:"9d4666e0e392d8aaa647731fc97bef7f", ext_shop:"c0eec95cbb8b0f0a0637dd5bc4ac4872", ext_officetel:"e0c4425bf81ca76c4c1e56e744e60194",
+  ext_factory:"0706878fb4c16a27c93627cd6adef425", ext_shopbldg:"8e6510a6bcb46a5af83db26b655d2010",
+  wx_clear:"ed4df530449ca5cf199b65f0bb39480d", wx_cloud:"e1adf5935aa061063669da62172e5b1a", wx_rain:"49bf19d616f81c13bd10dfb515505bf7", wx_snow:"7e76e5eb47d99c38aeb5e78db6c695de", wx_dusk:"974fff7c9e566c2927ca8fc9fbe028cc",
+  ev_docs:"ff767ac5dbbd9e93ee908da4474f9498", ev_lease:"0fe73324241a41ff7c0e5702bdca7f58", ev_resid:"d72d0ffa51e2c57d90b8fc7de8e7bf7a", ev_photos:"d6e4124a4b3292ff15a665a0af6bb4a0",
+  ev_fee:"7d19fff0c3d81c25a3ad947461f35142", ev_chat:"43cf1d7ce9b432ba5f0b57932a55a8d2", ev_bank:"284ecb37976c0d22f247e0f294d5c6c5", ev_keys:"4f5ab57802a7f77c3d58b22e3ab0f4ed",
+  ev_bill:"ffad517e701a58c9a04d730bf383e900", ev_contract:"15db3d3601fb92a4eef07aabe7dece30", ev_doorlock:"c044c3e55f9ad1f203de6b4813d4a21b", ev_chat2:"03077c03e0c9715f42cf86620d7f5d6e",
+  ev_trash:"ef53f0164fbd19986dcf450ca13246a0", ev_meter:"0bf141a58cca11893beee9f6bd9548e1", ev_cctv:"581da2bc7bdf7e88f1ef9bef8bc39dbf", ev_note:"c552a317e593c940a8346faf5b1aee1f",
+  ev_housekey:"4d922b74ee3dde167182fbcdf860c3e6", ev_bath:"ea838f451360127aa80b26f25e3d4de2",
+  bg_int_hall:"4ccd049d6bb6b2a8fcd541deae04c4f9", bg_int_goshi:"2fe334e85e925e6921d705ddf9dc5264", bg_int_shop:"e389b67fabd84d1ae23d859989800b1d", bg_int_factory:"5439c1dfe058fea4ce8c8b97e6564bd2",
+  npc_type_debtor:"cb71ca6cbb2f43d341d8138707dbde58", npc_type_family:"b7c23a356895afae4f1dca7edb911479", npc_type_lien:"194718427e4c2d014d0b6a3383389a4c", npc_type_haggler:"f872d3ba1d7353e59976099c497f688a", npc_type_absent:"b36f62e99666879e384fb58e7145bbb3",
+  npc_granny_normal:"ab4678eaa26e2df4ae8f694dde4c8fd9", npc_granny_angry:"1f9f4f82c8ea695fd2a89d432801866c", npc_granny_worried:"d1a74be8163ba9efd08e71dd7b090ec3", npc_granny_happy:"d5f28a25f930d2806b9064c44f5049a7", npc_granny_shocked:"351ed791c1e8d018056f7bd41f4082d9", npc_granny_soft:"58473e34d9a4cb9479858fbaa87285ca",
+  npc_hoodie_normal:"d8402b5cbf631eb7ec8bb6bbf466a6e4", npc_hoodie_happy:"206a2609f976cb60b219c847f68e2f3f", npc_hoodie_angry:"e6633297593bc8e4456a8a23c0b2cd10", npc_hoodie_worried:"463e594b119c8170f58048a646b68407", npc_hoodie_shocked:"04243175e040e6114ab5c34263f72c16", npc_hoodie_soft:"a4ac273fec5001000502a72e022ab049"};
+Object.assign(ART_DEFAULT, SH_ART);
+// 그림 보관함 목록(그림 탭)에도 올린다
+[["ext_k1","bg","1번 물건 외관 — 오래된 빌라","게시판"],["ext_k2","bg","2번 물건 외관 — 은평구 빌라","게시판"],["ext_tenant","bg","투룸(선순위 임차인) 외관","게시판"],["ext_share","bg","지분 빌라 외관","게시판"],
+ ["ext_lien","bg","유치권 신축 빌라 외관","게시판"],["ext_land","bg","대지권 미등기 빌라 외관","게시판"],["ext_shop","bg","상가 외관","다음 물건(준비)"],["ext_officetel","bg","오피스텔 외관","다음 물건(준비)"],
+ ["ext_factory","bg","공장·창고 외관","다음 물건(준비)"],["ext_shopbldg","bg","상가 건물 외관","다음 물건(준비)"],["bg_int_hall","bg","다가구 복도","다음 물건(준비)"],["bg_int_goshi","bg","고시원형 방","다음 물건(준비)"],
+ ["bg_int_shop","bg","폐업 상가 내부","다음 물건(준비)"],["bg_int_factory","bg","공장 내부","다음 물건(준비)"],["wx_clear","bg","골목 — 맑음","오늘 날씨"],["wx_cloud","bg","골목 — 흐림","오늘 날씨"],
+ ["wx_rain","bg","골목 — 비","오늘 날씨"],["wx_snow","bg","골목 — 눈","오늘 날씨"],["wx_dusk","bg","골목 — 노을","오늘 날씨"]].forEach(([id,k,t,u]) => A_(id, k, t, t, u));
+Object.keys(SH_ART).filter(k => /^ev_/.test(k)).forEach(k => A_(k, "prop", "증거 — " + k.slice(3), "증거 카드", "조사 파일"));
+[["npc_type_debtor","채무자 본인(버티는 유형)"],["npc_type_family","아이 있는 가족"],["npc_type_lien","유치권 주장(공사대금)"],["npc_type_haggler","이사비 협상꾼"],["npc_type_absent","폐문부재·잠적"]].forEach(([id,t]) => A_(id, "npc", t, t, "다음 물건(준비)"));
+["normal","angry","worried","happy","shocked","soft"].forEach(e => { A_("npc_granny_" + e, "npc", "고령 임차인 할머니 — " + e, "고령 임차인", "다음 물건(준비)"); A_("npc_hoodie_" + e, "npc", "후드티 청년 — " + e, "청년 점유자", "다음 물건(준비)"); });
+
+function shUrl(k){ const a = SH_ART[k]; return a ? (window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a) : null; }
+// 조사 파일 카드 id → 증거 사진
+const SH_EV = {docs:"ev_docs", elec:"ev_meter", flip:"npc_granny_normal", price:"ev_chat", fee:"ev_fee", kim:"ev_chat2", leak:"ev_bath", dump:"ev_photos", loan:"ev_bank"};
+function shEvKey(c){ if(c.id === "inside") return KP && KP.id === "k2" ? "ev_doorlock" : "ev_housekey"; return SH_EV[c.id] || null; }
+// 게시판 물건 → 건물 사진
+function shBoardKey(it){ if(!it) return null; if(it.kind === "case") return "ext_" + it.prop; return "ext_" + it.decoy; }
+function shWxKey(){
+  const N = typeof snNow === "function" ? snNow() : null, id = N && N.W ? N.W.id : "clear";
+  if(id === "rain" || id === "monsoon") return "wx_rain"; if(id === "snow") return "wx_snow"; if(id === "cloudy") return "wx_cloud";
+  if(K && K.lf){ const d = K.lf.days[K.lf.rday]; if(d){ const h = Math.floor((d.s + (d.len - (K.timeLeft || 0))) / 60); if(h >= 17) return "wx_dusk"; } }
+  return "wx_clear";
+}
+function shApply(){
+  // 게시판(거점·사무실 어디서 열든)
+  document.querySelectorAll(".bd-card").forEach(card => {
+    if(card.querySelector(".bd-thumb")) return;
+    const b = card.querySelector("[data-bdplay],[data-bdread],[data-bddecoy],[data-bdwait],[data-bdwatch]"); if(!b || typeof bdRec !== "function") return;
+    const key = b.dataset.bdplay || b.dataset.bdread || b.dataset.bddecoy || b.dataset.bdwait || b.dataset.bdwatch;
+    const it = bdRec().items.find(x => String(x.key) === String(key)), u = shUrl(shBoardKey(it)); if(!u) return;
+    const top = card.querySelector(".bd-top"); if(top) top.insertAdjacentHTML("beforebegin", `<div class="bd-thumb" style="background-image:url('${u}')" aria-hidden="true"></div>`);
+  });
+  if(typeof stgActive !== "function" || !stgActive()) return;
+  // 조사 파일 카드
+  const cards = typeof keCards === "function" ? keCards() : [];
+  document.querySelectorAll(".ke-cards .ke-card").forEach((el, i) => {
+    const c = cards[i]; if(!c || !el.classList.contains("on") || el.querySelector(".ke-photo")) return;
+    const u = shUrl(shEvKey(c)); if(!u) return;
+    const ic = el.querySelector(".ke-ic"); if(ic) ic.outerHTML = `<span class="ke-photo" style="background-image:url('${u}')" aria-hidden="true"></span>`;
+  });
+  // 오늘 날씨 그림 — 날짜 칩 위에
+  const chip = document.querySelector(".kfs-panel .sn-chip");
+  if(chip && !document.querySelector(".kfs-panel .stg-wx")){ const u = shUrl(shWxKey()); if(u) chip.insertAdjacentHTML("beforebegin", `<div class="stg-wx" style="background-image:url('${u}')" aria-hidden="true"></div>`); }
+}
+const _sh_render = renderArena; renderArena = function(){ _sh_render(); queueMicrotask(shApply); };
 
 /* ================= 🖥️ 전체 화면 게임 레이아웃 — 페이지 스크롤 없이 한 화면에 (프린세스메이커식) =================
    경매왕 한 판·홈 화면을 화면 전체를 덮는 '게임 창'으로 띄운다.

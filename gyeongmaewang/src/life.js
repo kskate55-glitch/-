@@ -70,6 +70,14 @@ const LF_WINDOW = {
 function lfEkTarget(){ const L = lfRec(); return L && L.path === "safe" ? 1000 : L && L.path === "expand" ? 300 : 600; }   // 최은경 계산기 기준선(인생 갈림길로 바뀐다)
 const LF_RESEARCH_DAYS = 2;       // 입찰 이틀 전부터 조사 — 입찰 당일은 법원
 function lfResearchDayCount(){ const L = lfRec(); return L && (L.char === "seoyun" || (L.path === "fulltime")) ? 3 : LF_RESEARCH_DAYS; }   // 시간 많은 사람은 하루 더 판다
+// 요일별 조사 가능 시간 — 같은 시간대인 요일끼리 묶어 표로
+function lfWindowTable(){
+  const hm = m => `${String(Math.floor(m / 60) % 24).padStart(2,"0")}:${String(m % 60).padStart(2,"0")}`;
+  const rows = []; [1,2,3,4,5,6,0].forEach(d => { const [s, len] = lfWindow(d), k = s + "|" + len, last = rows[rows.length - 1]; if(last && last.k === k) last.d.push(d); else rows.push({k, s, len, d:[d]}); });
+  const name = ds => ds.length === 5 && ds[0] === 1 && ds[4] === 5 ? "평일(월~금)" : ds.length === 2 && ds[0] === 6 && ds[1] === 0 ? "주말(토·일)" : ds.length === 7 ? "매일" : ds.length > 2 ? `${SN_DOW[ds[0]]}~${SN_DOW[ds[ds.length - 1]]}` : ds.map(d => SN_DOW[d]).join("·");
+  const L = lfRec(), note = L && L.char === "dohyun" && L.path !== "quit" ? `<small class="note">🏢 평일 입찰일엔 반차(0.5일)를 써요 · 남은 연차 ${L.leave}일</small>` : "";
+  return `<table class="lf-wtab">${rows.map(r => `<tr><th>${name(r.d)}</th><td>${hm(r.s)} ~ ${hm(r.s + r.len)}</td><td class="note">${krFmt(r.len)}</td></tr>`).join("")}</table>${note}`;
+}
 function lfWindow(dow){
   const L = lfRec(); let w = LF_WINDOW[L.char](dow);
   const P = LF_PATHS[L.char] && L.path ? LF_PATHS[L.char].opts.find(o => o.id === L.path) : null;
@@ -453,7 +461,7 @@ function lfPanel(id){
     const M = lfMonthly();
     return `<h3>📅 달력</h3><ul class="of-contacts">${rows.join("")}</ul>
       <div class="panel"><b>매달 1일</b> — ${M.income ? `수입 +${kMan(M.income)} · ` : ""}생활비·고정비 −${kMan(M.rent)}${M.upkeep ? ` · 장비 −${kMan(M.upkeep)}` : ""}${M.interest ? ` · 대출 이자 −${kMan(M.interest)}` : ""} = <b class="${M.net >= 0 ? "up" : "down"}">${kcSigned(M.net)}</b></div>
-      <div class="panel"><b>🕒 ${esc(C.name)}가 조사할 수 있는 시간</b><br><small class="note">${[1,2,3,4,5,6,0].map(d => { const [s, len] = lfWindow(d); return `${SN_DOW[d]} ${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}~ ${krFmt(len)}`; }).join(" · ")}</small></div>`;
+      <div class="panel"><b>🕒 ${esc(C.name)}가 조사할 수 있는 시간</b>${lfWindowTable()}</div>`;
   }
   if(id === "shelf") return `<h3>📚 책장</h3>${L.fx && L.fx.book ? `<p class="note">📦 새로 온 경매책 — 다음 공부 효율 +50%</p>` : ""}${lfActBtns("shelf")}`;
   if(id === "bed") return `<h3>🛏️ 침대</h3>${lfActBtns("bed")}`;

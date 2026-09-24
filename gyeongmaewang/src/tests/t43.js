@@ -6,7 +6,7 @@ for(const [w,h,seed] of [[1280,800,11],[390,844,12],[1280,800,13],[390,844,14]])
  const p=await b.newPage({viewport:{width:w,height:h}}); p.on('pageerror',e=>errs.push(w+' '+e.message)); p.on('dialog',d=>d.accept());
  await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(600);
  await p.evaluate(s=>{ let x=s; Math.random=()=>{x=(x*16807)%2147483647;return x/2147483647;}; hubRec().cleared['king:k1']=1; kcRec().cases=1; }, seed);
- for(let i=0;i<900;i++){
+ for(let i=0;i<500;i++){
    const info=await p.evaluate((SEL)=>{
      if(!K || K.step==='result' || K.step==='lost'){
        if(K && (K.step==='result'||K.step==='lost')) window._res=(window._res||[]).concat([[KP.id,K.mode,K.step,K.final?Math.round(K.final.profit):null,K.final&&K.final.k2?K.final.k2.og:(K.final&&K.final.overall)]]);

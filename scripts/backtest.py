@@ -194,6 +194,8 @@ def estimate_as_of(rows: list[dict], target: dict, radius_m: float,
     return {
         "address": subject_address,
         "name": (target.get("mhouseNm") or "").strip() or "(단지명없음)",
+        # 73-1절 — 시세 맞히기 게임이 "동네를 직접 조사"하려면 동이 필요하다.
+        "dong": (target.get("umdNm") or "").strip() or None,
         "ymd": target_ymd,
         "area": area,
         "floor": _int_or_none(target.get("floor")),

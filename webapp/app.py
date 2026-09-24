@@ -755,10 +755,12 @@ def backtest_one():
                         "error": out["error"], "quota_exhausted": quota})
 
     cases = [{
-        "gu": out["gu"], "name": r["name"], "date": r["date_label"],
+        "gu": out["gu"], "dong": r.get("dong"), "name": r["name"],
+        "date": r["date_label"],
         "area": round(r["area"], 1), "floor": r["floor"],
         "build_year": r.get("build_year"),
         "actual": r["actual"], "median": r["median"],
+        "p25": r.get("p25"), "p75": r.get("p75"),
         "err": round(r["error_pct"], 2), "conf": r["confidence"],
         "n": r["n_comparables"], "in_band": bool(r["in_band"]),
         "divergence": (round(r["divergence"], 1)

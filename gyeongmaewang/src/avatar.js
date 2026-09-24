@@ -140,7 +140,7 @@ function avatarEditHTML(P){
 document.addEventListener("change", async e => {
   const inp = e.target.closest("[data-avup]"); if(!inp || !inp.files || !inp.files[0]) return;
   try{ const d = await pixelizePhoto(inp.files[0]); const R = arenaRec(); if(!R.pics) R.pics = {}; R.pics[inp.dataset.avup] = d; save(); renderArena(); }
-  catch(err){ alert("사진을 바꾸지 못했어요: " + (err && err.message || "")); }
+  catch(err){ safeAlert("사진을 바꾸지 못했어요: " + (err && err.message || "")); }
 });
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-avdel]"); if(!b) return;

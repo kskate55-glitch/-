@@ -1123,6 +1123,15 @@ html.kfs-on #hubToasts{top:62px;left:14px;right:auto;bottom:auto}
 .lf-stage{position:relative}
 .lf-me{position:absolute;right:22%;bottom:31%;height:46%;max-height:340px;z-index:1;pointer-events:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4))}
 @media (max-width:720px){.lf-me{height:33%;bottom:37%;right:5%}}
+/* ✋ 한 번 더 누르기 */
+.sc-armed{background:#c0392b!important;color:#fff!important;border-color:#c0392b!important}
+.sc-note{display:block;width:100%;margin:6px 0;padding:8px 10px;border-radius:8px;background:#fdecea;color:#8a1f16;font-size:13px;line-height:1.5}
+/* 선택 화면 버튼 — 어두운 배경 위에서 보이게 */
+.lf-sel .btn{background:rgba(255,255,255,.08);color:#eef0f4;border:1px solid rgba(255,255,255,.28)}
+.lf-sel .btn:hover{background:rgba(255,255,255,.16)}
+.lf-sel .btn.pri{background:#e8b04a;color:#1a1204;border-color:#e8b04a;font-weight:800}
+.lf-sel .btn.pri:hover{background:#f0bf5e}
+.sc-toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:9600;max-width:min(520px,92vw);background:#2b1512;color:#fff;border:1px solid #c0392b;border-radius:12px;padding:12px 16px;font-size:14.5px;box-shadow:0 12px 30px rgba(0,0,0,.4);animation:gxLine .3s ease both}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -33022,7 +33031,7 @@ function avatarEditHTML(P){
 document.addEventListener("change", async e => {
   const inp = e.target.closest("[data-avup]"); if(!inp || !inp.files || !inp.files[0]) return;
   try{ const d = await pixelizePhoto(inp.files[0]); const R = arenaRec(); if(!R.pics) R.pics = {}; R.pics[inp.dataset.avup] = d; save(); renderArena(); }
-  catch(err){ alert("사진을 바꾸지 못했어요: " + (err && err.message || "")); }
+  catch(err){ safeAlert("사진을 바꾸지 못했어요: " + (err && err.message || "")); }
 });
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-avdel]"); if(!b) return;
@@ -35563,7 +35572,7 @@ document.addEventListener("click", e => {
   if(e.target.closest("[data-kquit]")){ K = null; renderArena(); return; }
   if(!K) return;
   if((b = e.target.closest("[data-kres]"))){ kResearch(b.dataset.kres); renderArena(); return; }
-  if(e.target.closest("[data-kbid]")){ const v = +((document.getElementById("kBid")||{}).value||0); if(v < KP.minBid){ alert(`최저가 ${kMan(KP.minBid)} 이상 적어야 해요.`); return; } kBid(v); renderArena(); window.scrollTo(0,0); return; }
+  if(e.target.closest("[data-kbid]")){ const v = +((document.getElementById("kBid")||{}).value||0); if(v < KP.minBid){ safeAlert(`최저가 ${kMan(KP.minBid)} 이상 적어야 해요.`); return; } kBid(v); renderArena(); window.scrollTo(0,0); return; }
   if((b = e.target.closest("[data-kgo]"))){ K.step = b.dataset.kgo; K.scene = null; renderArena(); return; }
   if((b = e.target.closest("[data-kmove]"))){ kMove(b.dataset.kmove); renderArena(); return; }
   if((b = e.target.closest("[data-koffer]"))){ kOffer(+b.dataset.koffer); renderArena(); return; }
@@ -37335,7 +37344,7 @@ document.addEventListener("click", e => {
   let b;
   if(e.target.closest("[data-kcsfx]")){ try{ localStorage.setItem("sfx_off", kcSfxOn() ? "1" : "0"); }catch(x){} if(kcSfxOn()) kcSfx("coin"); renderArena(); return; }
   if(e.target.closest("[data-kcpractice]")){ const el = document.getElementById("kcPractice"); if(el) el.scrollIntoView({behavior:"smooth"}); return; }
-  if(e.target.closest("[data-kcreset]")){ if(confirm("커리어(보유자금·경매 기록)를 1억 5천으로 되돌릴까요? 레벨·도감·업적은 남아요.")){ delete arenaRec().career; if(typeof save==="function") save(); renderArena(); } return; }
+  if(e.target.closest("[data-kcreset]")){ if(safeConfirm("커리어(보유자금·경매 기록)를 1억 5천으로 되돌릴까요? 레벨·도감·업적은 남아요.")){ delete arenaRec().career; if(typeof save==="function") save(); renderArena(); } return; }
   if(!K || arenaTab !== "king") return;
   if(e.target.closest("[data-kintro]")){ K.intro = false; kcSfx("paper"); renderArena(); window.scrollTo(0,0); return; }
   if(e.target.closest("[data-kreveal]")){ K.revealing = false; clearTimeout(K._revT); K._revT = null; renderArena(); return; }
@@ -38629,15 +38638,15 @@ document.addEventListener("click", e => {
   if((b = e.target.closest("[data-ofspot]"))){ OF_SPOT = b.dataset.ofspot; if(typeof kcSfx === "function") kcSfx("paper"); arenaTab = "office"; renderArena(); return; }
   if(arenaTab !== "office") return;
   const find = k => bdRec().items.find(x => String(x.key) === String(k));
-  if((b = e.target.closest("[data-bdplay]"))){ const it = find(b.dataset.bdplay); if(!it || bdRunning()) return; if(kcRec().cash < bdDeposit(it)){ alert("입찰보증금이 모자라요."); return; } bdPlay(it); arenaTab = "king"; renderArena(); window.scrollTo(0,0); return; }
+  if((b = e.target.closest("[data-bdplay]"))){ const it = find(b.dataset.bdplay); if(!it || bdRunning()) return; if(kcRec().cash < bdDeposit(it)){ safeAlert("입찰보증금이 모자라요."); return; } bdPlay(it); arenaTab = "king"; renderArena(); window.scrollTo(0,0); return; }
   if((b = e.target.closest("[data-bdread]"))){ const it = find(b.dataset.bdread); if(it){ bdDecoyRead(it); if(typeof kcSfx === "function") kcSfx("paper"); if(typeof save==="function") save(); } renderArena(); return; }
   if((b = e.target.closest("[data-bddecoy]"))){ const it = find(b.dataset.bddecoy); if(!it) return;
-    if(!it.read && !confirm("서류를 아직 안 봤어요. 그래도 입찰할까요?")) return;
+    if(!it.read && !safeConfirm("서류를 아직 안 봤어요. 그래도 입찰할까요?")) return;
     const r = bdDecoyBid(it); BD_MSG = `<b>${r.amt >= 0 ? "🔨" : "💸"} ${esc(bdName(it))}</b><br>${esc(r.t)} <b class="${r.amt>=0?"up":"down"}">${kcSigned(r.amt)}</b>`;
     if(typeof kcSfx === "function") kcSfx(r.amt >= 0 ? "coin" : "shock"); renderArena(); return; }
   if((b = e.target.closest("[data-bdwait]"))){ const it = find(b.dataset.bdwait); if(it && it.extra < 2){ it.status = "wait"; if(typeof save==="function") save(); } renderArena(); return; }
   if((b = e.target.closest("[data-bdwatch]"))){ const it = find(b.dataset.bdwatch); if(it){ it.status = it.status === "watch" ? "open" : "watch"; if(typeof save==="function") save(); } renderArena(); return; }
-  if((b = e.target.closest("[data-bddrop]"))){ const it = find(b.dataset.bddrop); if(it && confirm(`${bdName(it)} — 포기할까요?`)){ bdDrop(it); } renderArena(); return; }
+  if((b = e.target.closest("[data-bddrop]"))){ const it = find(b.dataset.bddrop); if(it && safeConfirm(`${bdName(it)} — 포기할까요?`)){ bdDrop(it); } renderArena(); return; }
   if(e.target.closest("[data-bdnext]")){ if(bdRunning()) return; bdAdvance(); const L = bdRec().log[0]; BD_MSG = `<b>📰 ${L.n}주차가 지났어요</b><ul>${L.lines.map(x=>`<li>${esc(x)}</li>`).join("") || "<li>손대지 않은 물건이 없었어요.</li>"}</ul>`; if(typeof kcSfx === "function") kcSfx("paper"); renderArena(); return; }
 });
 
@@ -39570,21 +39579,22 @@ document.addEventListener("click", e => {
   if(e.target.closest("[data-lfgo]")){ e.stopImmediatePropagation(); arenaTab = "life"; renderArena(); window.scrollTo(0,0); return; }
   if((b = e.target.closest("[data-lfpick]"))){ LF_PICK = b.dataset.lfpick; if(typeof kcSfx === "function") kcSfx("click"); renderArena(); return; }
   if((b = e.target.closest("[data-lfstart]"))){
-    if(kcRec().cases && !confirm("지금 커리어(보유자금·경매 기록)를 새 인생으로 바꿀까요? 레벨·도감·업적은 남아요.")) return;
+    if(kcRec().cases && !safeConfirm("지금 커리어(보유자금·경매 기록)를 새 인생으로 바꿀까요? 레벨·도감·업적은 남아요.")) return;
     lfNew(b.dataset.lfstart); K = null; LF_SPOT = "laptop"; arenaTab = "life"; if(typeof kcSfx === "function") kcSfx("fanfare"); renderArena(); window.scrollTo(0,0); return; }
   if(e.target.closest("[data-lfbegin]")){ const L = lfRec(); if(L){ L.intro = false; lfLog(`🌱 ${lfChar().name}의 경매 인생 시작 — ${lfBaseInfo().t}`); if(typeof save === "function") save(); } renderArena(); return; }
   if(arenaTab !== "life" || !lfOn()) return;
-  if(e.target.closest("[data-lfreset]")){ if(confirm("지금 인생을 끝내고 새 캐릭터를 고를까요?")){ const c = kcRec(); delete c.life; delete c.board; K = null; LF_PICK = null; if(typeof save==="function") save(); } renderArena(); return; }
+  if(e.target.closest("[data-lfreset]")){ if(safeConfirm("지금 인생을 끝내고 새 캐릭터를 고를까요?")){ const c = kcRec(); delete c.life; delete c.board; K = null; LF_PICK = null; if(typeof save==="function") save(); } renderArena(); return; }
   if((b = e.target.closest("[data-lfspot]"))){ LF_SPOT = b.dataset.lfspot; if(typeof kcSfx === "function") kcSfx("click"); renderArena(); return; }
   if((b = e.target.closest("[data-lfdo]"))){ lfDo(b.dataset.lfdo); renderArena(); return; }
   if((b = e.target.closest("[data-lfbuy]"))){ const E = LF_EQUIP.find(x => x.id === b.dataset.lfbuy), c = kcRec(), L = lfRec(); if(E && !L.equip[E.id] && c.cash >= E.cost){ c.cash -= E.cost; L.equip[E.id] = L.t; LF_MSG = `${E.ic} ${E.t} 구입 — ${E.d}`; lfLog(LF_MSG); if(typeof kcSfx === "function") kcSfx("money_out"); if(typeof save==="function") save(); } renderArena(); return; }
-  if((b = e.target.closest("[data-lfmove]"))){ const k = b.dataset.lfmove, Bn = LF_BASES[k], c = kcRec(), L = lfRec(); if(Bn && c.cash >= Bn.need && confirm(`${Bn.t}(으)로 옮길까요? 이사비 ${kMan(Math.round(Bn.rent * 2))} · 월 ${kMan(Bn.rent)}`)){ c.cash -= Math.round(Bn.rent * 2); L.base = k; lfAdvance(240); LF_MSG = `🚚 ${Bn.t}(으)로 이사했다. 공간이 넓어지니 일이 잘 된다.`; lfLog(LF_MSG); if(typeof kcSfx === "function") kcSfx("fanfare"); if(typeof save==="function") save(); } renderArena(); return; }
+  if((b = e.target.closest("[data-lfmove]"))){ const k = b.dataset.lfmove, Bn = LF_BASES[k], c = kcRec(), L = lfRec(); if(Bn && c.cash >= Bn.need && safeConfirm(`${Bn.t}(으)로 옮길까요? 이사비 ${kMan(Math.round(Bn.rent * 2))} · 월 ${kMan(Bn.rent)}`)){ c.cash -= Math.round(Bn.rent * 2); L.base = k; lfAdvance(240); LF_MSG = `🚚 ${Bn.t}(으)로 이사했다. 공간이 넓어지니 일이 잘 된다.`; lfLog(LF_MSG); if(typeof kcSfx === "function") kcSfx("fanfare"); if(typeof save==="function") save(); } renderArena(); return; }
 });
 // 게시판 버튼은 거점 안에서도 그대로 — week.js 핸들러는 office 탭에서만 듣는다
 document.addEventListener("click", e => {
   if(typeof page === "undefined" || page !== "arena" || arenaTab !== "life" || !lfOn()) return;
   if(e.target.closest("[data-bdplay],[data-bdread],[data-bddecoy],[data-bdwait],[data-bdwatch],[data-bddrop],[data-bdnext]")){
     arenaTab = "office"; OF_SPOT = "board";            // week.js 핸들러가 이어서 처리하고, 렌더가 다시 거점으로 돌려놓는다
+    setTimeout(() => { if(arenaTab === "office" && lfOn()) arenaTab = "life"; }, 0);   // 렌더 없이 끝난 경우(확인 대기 등)에도 거점으로
   }
 }, true);
 // 조사 화면: "오늘은 여기까지"
@@ -39603,6 +39613,38 @@ const _lf_kingHTML = kingHTML; kingHTML = function(){
 /* ================= 🎬 여섯 개의 인생 — 캐릭터 오프닝 · 전용 음악 · 인생 조건 이벤트 · 인생 갈림길 · 화면 전환 엔진 =================
    캐릭터 선택은 '스탯 고르기'가 아니라 '누구의 인생을 살 것인가'.
    화면이 "띡" 바뀌지 않게 — 전환 효과는 전부 겉모습(pointer-events 없음)이라 게임 로직·클릭 순서는 그대로다. */
+
+/* ---------- ✋ 확인창 대신 '한 번 더 누르기' ----------
+   아티팩트처럼 샌드박스 안에서는 브라우저가 confirm()을 막아 조용히 '취소'로 돌려준다(사람은 그렇게 빨리 누를 수 없다).
+   그럴 때는 누른 버튼을 빨갛게 바꾸고 질문을 버튼 밑에 띄운 뒤, 6초 안에 한 번 더 누르면 '예'로 친다. */
+let SC_ARM = null, SC_OBS = null;          // {msg, at, sel} — 질문 기준으로 기억한다(버튼은 다시 그려지면 새 요소가 되니까)
+function scSel(btn){ for(const at of btn.attributes){ if(at.name.startsWith("data-")) return `[${at.name}="${String(at.value).replace(/"/g, '\\"')}"]`; } return null; }
+function scPaint(){
+  if(!SC_ARM) return; const btn = SC_ARM.sel ? document.querySelector(SC_ARM.sel) : null; if(!btn || btn.classList.contains("sc-armed")) return;
+  btn._lab = btn.innerHTML; btn.innerHTML = "⚠ 한 번 더 누르면 진행"; btn.classList.add("sc-armed");
+  const note = document.createElement("small"); note.className = "sc-note"; note.textContent = SC_ARM.msg; btn.insertAdjacentElement("afterend", note);
+}
+function scClear(){
+  SC_ARM = null; if(SC_OBS){ SC_OBS.disconnect(); SC_OBS = null; }
+  document.querySelectorAll(".sc-armed").forEach(b => { if(b._lab != null) b.innerHTML = b._lab; b.classList.remove("sc-armed"); });
+  document.querySelectorAll(".sc-note").forEach(n => n.remove());
+}
+function safeAlert(msg){
+  try{ const t = performance.now(); window.alert(msg); if(performance.now() - t > 60) return; }catch(e){}
+  const old = document.getElementById("scToast"); if(old) old.remove();
+  const el = document.createElement("div"); el.id = "scToast"; el.className = "sc-toast"; el.setAttribute("role", "alert"); el.textContent = "⚠ " + msg;
+  document.body.appendChild(el); setTimeout(() => { if(el.parentNode) el.remove(); }, 4200);
+}
+function safeConfirm(msg){
+  try{ const t = performance.now(), r = window.confirm(msg); if(r) return true; if(performance.now() - t > 60) return false; }catch(e){}
+  if(SC_ARM && SC_ARM.msg === msg && Date.now() - SC_ARM.at < 6000){ scClear(); return true; }
+  const ev = window.event, btn = ev && ev.target && ev.target.closest ? ev.target.closest("button,a,[role=button]") : null;
+  scClear(); SC_ARM = {msg, at:Date.now(), sel:btn ? scSel(btn) : null};
+  scPaint(); queueMicrotask(scPaint); setTimeout(scPaint, 0);
+  if(typeof MutationObserver === "function"){ SC_OBS = new MutationObserver(() => scPaint()); SC_OBS.observe(document.body, {childList:true, subtree:true}); }
+  const at = SC_ARM.at; setTimeout(() => { if(SC_ARM && SC_ARM.at === at) scClear(); }, 6000);
+  return false;
+}
 
 /* ---------- 🎵 캐릭터 전용 음악 (같은 엔진, 다른 편곡) ---------- */
 Object.assign(KA_TRACKS, {
@@ -39896,7 +39938,7 @@ document.addEventListener("click", e => {
   if((b = e.target.closest("[data-lfstart]"))){
     e.stopImmediatePropagation();
     const id = b.dataset.lfstart;
-    if(kcRec().cases && !confirm("지금 커리어(보유자금·경매 기록)를 새 인생으로 바꿀까요? 레벨·도감·업적은 남아요.")) return;
+    if(kcRec().cases && !safeConfirm("지금 커리어(보유자금·경매 기록)를 새 인생으로 바꿀까요? 레벨·도감·업적은 남아요.")) return;
     const want = (document.querySelector("[data-gxopt=alwaysOp]") || {}).checked !== false;
     lfNew(id); K = null; LF_SPOT = "laptop"; LF_PICK = null;
     if(want || !lfOpsSeen()[id]){ gxOpStart(id); }

@@ -2,6 +2,38 @@
    캐릭터 선택은 '스탯 고르기'가 아니라 '누구의 인생을 살 것인가'.
    화면이 "띡" 바뀌지 않게 — 전환 효과는 전부 겉모습(pointer-events 없음)이라 게임 로직·클릭 순서는 그대로다. */
 
+/* ---------- ✋ 확인창 대신 '한 번 더 누르기' ----------
+   아티팩트처럼 샌드박스 안에서는 브라우저가 confirm()을 막아 조용히 '취소'로 돌려준다(사람은 그렇게 빨리 누를 수 없다).
+   그럴 때는 누른 버튼을 빨갛게 바꾸고 질문을 버튼 밑에 띄운 뒤, 6초 안에 한 번 더 누르면 '예'로 친다. */
+let SC_ARM = null, SC_OBS = null;          // {msg, at, sel} — 질문 기준으로 기억한다(버튼은 다시 그려지면 새 요소가 되니까)
+function scSel(btn){ for(const at of btn.attributes){ if(at.name.startsWith("data-")) return `[${at.name}="${String(at.value).replace(/"/g, '\\"')}"]`; } return null; }
+function scPaint(){
+  if(!SC_ARM) return; const btn = SC_ARM.sel ? document.querySelector(SC_ARM.sel) : null; if(!btn || btn.classList.contains("sc-armed")) return;
+  btn._lab = btn.innerHTML; btn.innerHTML = "⚠ 한 번 더 누르면 진행"; btn.classList.add("sc-armed");
+  const note = document.createElement("small"); note.className = "sc-note"; note.textContent = SC_ARM.msg; btn.insertAdjacentElement("afterend", note);
+}
+function scClear(){
+  SC_ARM = null; if(SC_OBS){ SC_OBS.disconnect(); SC_OBS = null; }
+  document.querySelectorAll(".sc-armed").forEach(b => { if(b._lab != null) b.innerHTML = b._lab; b.classList.remove("sc-armed"); });
+  document.querySelectorAll(".sc-note").forEach(n => n.remove());
+}
+function safeAlert(msg){
+  try{ const t = performance.now(); window.alert(msg); if(performance.now() - t > 60) return; }catch(e){}
+  const old = document.getElementById("scToast"); if(old) old.remove();
+  const el = document.createElement("div"); el.id = "scToast"; el.className = "sc-toast"; el.setAttribute("role", "alert"); el.textContent = "⚠ " + msg;
+  document.body.appendChild(el); setTimeout(() => { if(el.parentNode) el.remove(); }, 4200);
+}
+function safeConfirm(msg){
+  try{ const t = performance.now(), r = window.confirm(msg); if(r) return true; if(performance.now() - t > 60) return false; }catch(e){}
+  if(SC_ARM && SC_ARM.msg === msg && Date.now() - SC_ARM.at < 6000){ scClear(); return true; }
+  const ev = window.event, btn = ev && ev.target && ev.target.closest ? ev.target.closest("button,a,[role=button]") : null;
+  scClear(); SC_ARM = {msg, at:Date.now(), sel:btn ? scSel(btn) : null};
+  scPaint(); queueMicrotask(scPaint); setTimeout(scPaint, 0);
+  if(typeof MutationObserver === "function"){ SC_OBS = new MutationObserver(() => scPaint()); SC_OBS.observe(document.body, {childList:true, subtree:true}); }
+  const at = SC_ARM.at; setTimeout(() => { if(SC_ARM && SC_ARM.at === at) scClear(); }, 6000);
+  return false;
+}
+
 /* ---------- 🎵 캐릭터 전용 음악 (같은 엔진, 다른 편곡) ---------- */
 Object.assign(KA_TRACKS, {
   select:     {bpm:78,  root:43, prog:[[0,"m7"],[5,"m7"],[10,"M7"],[3,"M7"]], bass:"1.......5.......", arp:"0...2...1...3...", arpOct:2, arpWave:"sine", lp:1600, kick:"", hat:"........1.......", snare:"", pad:0.05, arpV:0.06},
@@ -294,7 +326,7 @@ document.addEventListener("click", e => {
   if((b = e.target.closest("[data-lfstart]"))){
     e.stopImmediatePropagation();
     const id = b.dataset.lfstart;
-    if(kcRec().cases && !confirm("지금 커리어(보유자금·경매 기록)를 새 인생으로 바꿀까요? 레벨·도감·업적은 남아요.")) return;
+    if(kcRec().cases && !safeConfirm("지금 커리어(보유자금·경매 기록)를 새 인생으로 바꿀까요? 레벨·도감·업적은 남아요.")) return;
     const want = (document.querySelector("[data-gxopt=alwaysOp]") || {}).checked !== false;
     lfNew(id); K = null; LF_SPOT = "laptop"; LF_PICK = null;
     if(want || !lfOpsSeen()[id]){ gxOpStart(id); }

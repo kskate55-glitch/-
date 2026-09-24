@@ -188,7 +188,7 @@
     });
   }
   function logout(anon){
-    if(anon && !confirm("체험 기록이 사라져요. 계속할까요?")) return;
+    if(anon && !safeConfirm("체험 기록이 사라져요. 계속할까요?")) return;
     var done = function(){
       sb.auth.signOut().finally(function(){
         try{ localStorage.removeItem(LS_KEY); }catch(e){}

@@ -317,14 +317,14 @@ document.addEventListener("click", e => {
   if((b = e.target.closest("[data-ofspot]"))){ OF_SPOT = b.dataset.ofspot; if(typeof kcSfx === "function") kcSfx("paper"); arenaTab = "office"; renderArena(); return; }
   if(arenaTab !== "office") return;
   const find = k => bdRec().items.find(x => String(x.key) === String(k));
-  if((b = e.target.closest("[data-bdplay]"))){ const it = find(b.dataset.bdplay); if(!it || bdRunning()) return; if(kcRec().cash < bdDeposit(it)){ alert("입찰보증금이 모자라요."); return; } bdPlay(it); arenaTab = "king"; renderArena(); window.scrollTo(0,0); return; }
+  if((b = e.target.closest("[data-bdplay]"))){ const it = find(b.dataset.bdplay); if(!it || bdRunning()) return; if(kcRec().cash < bdDeposit(it)){ safeAlert("입찰보증금이 모자라요."); return; } bdPlay(it); arenaTab = "king"; renderArena(); window.scrollTo(0,0); return; }
   if((b = e.target.closest("[data-bdread]"))){ const it = find(b.dataset.bdread); if(it){ bdDecoyRead(it); if(typeof kcSfx === "function") kcSfx("paper"); if(typeof save==="function") save(); } renderArena(); return; }
   if((b = e.target.closest("[data-bddecoy]"))){ const it = find(b.dataset.bddecoy); if(!it) return;
-    if(!it.read && !confirm("서류를 아직 안 봤어요. 그래도 입찰할까요?")) return;
+    if(!it.read && !safeConfirm("서류를 아직 안 봤어요. 그래도 입찰할까요?")) return;
     const r = bdDecoyBid(it); BD_MSG = `<b>${r.amt >= 0 ? "🔨" : "💸"} ${esc(bdName(it))}</b><br>${esc(r.t)} <b class="${r.amt>=0?"up":"down"}">${kcSigned(r.amt)}</b>`;
     if(typeof kcSfx === "function") kcSfx(r.amt >= 0 ? "coin" : "shock"); renderArena(); return; }
   if((b = e.target.closest("[data-bdwait]"))){ const it = find(b.dataset.bdwait); if(it && it.extra < 2){ it.status = "wait"; if(typeof save==="function") save(); } renderArena(); return; }
   if((b = e.target.closest("[data-bdwatch]"))){ const it = find(b.dataset.bdwatch); if(it){ it.status = it.status === "watch" ? "open" : "watch"; if(typeof save==="function") save(); } renderArena(); return; }
-  if((b = e.target.closest("[data-bddrop]"))){ const it = find(b.dataset.bddrop); if(it && confirm(`${bdName(it)} — 포기할까요?`)){ bdDrop(it); } renderArena(); return; }
+  if((b = e.target.closest("[data-bddrop]"))){ const it = find(b.dataset.bddrop); if(it && safeConfirm(`${bdName(it)} — 포기할까요?`)){ bdDrop(it); } renderArena(); return; }
   if(e.target.closest("[data-bdnext]")){ if(bdRunning()) return; bdAdvance(); const L = bdRec().log[0]; BD_MSG = `<b>📰 ${L.n}주차가 지났어요</b><ul>${L.lines.map(x=>`<li>${esc(x)}</li>`).join("") || "<li>손대지 않은 물건이 없었어요.</li>"}</ul>`; if(typeof kcSfx === "function") kcSfx("paper"); renderArena(); return; }
 });

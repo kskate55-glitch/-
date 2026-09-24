@@ -346,7 +346,7 @@ document.addEventListener("click", e => {
   if(e.target.closest("[data-kquit]")){ K = null; renderArena(); return; }
   if(!K) return;
   if((b = e.target.closest("[data-kres]"))){ kResearch(b.dataset.kres); renderArena(); return; }
-  if(e.target.closest("[data-kbid]")){ const v = +((document.getElementById("kBid")||{}).value||0); if(v < KP.minBid){ alert(`최저가 ${kMan(KP.minBid)} 이상 적어야 해요.`); return; } kBid(v); renderArena(); window.scrollTo(0,0); return; }
+  if(e.target.closest("[data-kbid]")){ const v = +((document.getElementById("kBid")||{}).value||0); if(v < KP.minBid){ safeAlert(`최저가 ${kMan(KP.minBid)} 이상 적어야 해요.`); return; } kBid(v); renderArena(); window.scrollTo(0,0); return; }
   if((b = e.target.closest("[data-kgo]"))){ K.step = b.dataset.kgo; K.scene = null; renderArena(); return; }
   if((b = e.target.closest("[data-kmove]"))){ kMove(b.dataset.kmove); renderArena(); return; }
   if((b = e.target.closest("[data-koffer]"))){ kOffer(+b.dataset.koffer); renderArena(); return; }

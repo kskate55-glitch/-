@@ -547,21 +547,22 @@ document.addEventListener("click", e => {
   if(e.target.closest("[data-lfgo]")){ e.stopImmediatePropagation(); arenaTab = "life"; renderArena(); window.scrollTo(0,0); return; }
   if((b = e.target.closest("[data-lfpick]"))){ LF_PICK = b.dataset.lfpick; if(typeof kcSfx === "function") kcSfx("click"); renderArena(); return; }
   if((b = e.target.closest("[data-lfstart]"))){
-    if(kcRec().cases && !confirm("지금 커리어(보유자금·경매 기록)를 새 인생으로 바꿀까요? 레벨·도감·업적은 남아요.")) return;
+    if(kcRec().cases && !safeConfirm("지금 커리어(보유자금·경매 기록)를 새 인생으로 바꿀까요? 레벨·도감·업적은 남아요.")) return;
     lfNew(b.dataset.lfstart); K = null; LF_SPOT = "laptop"; arenaTab = "life"; if(typeof kcSfx === "function") kcSfx("fanfare"); renderArena(); window.scrollTo(0,0); return; }
   if(e.target.closest("[data-lfbegin]")){ const L = lfRec(); if(L){ L.intro = false; lfLog(`🌱 ${lfChar().name}의 경매 인생 시작 — ${lfBaseInfo().t}`); if(typeof save === "function") save(); } renderArena(); return; }
   if(arenaTab !== "life" || !lfOn()) return;
-  if(e.target.closest("[data-lfreset]")){ if(confirm("지금 인생을 끝내고 새 캐릭터를 고를까요?")){ const c = kcRec(); delete c.life; delete c.board; K = null; LF_PICK = null; if(typeof save==="function") save(); } renderArena(); return; }
+  if(e.target.closest("[data-lfreset]")){ if(safeConfirm("지금 인생을 끝내고 새 캐릭터를 고를까요?")){ const c = kcRec(); delete c.life; delete c.board; K = null; LF_PICK = null; if(typeof save==="function") save(); } renderArena(); return; }
   if((b = e.target.closest("[data-lfspot]"))){ LF_SPOT = b.dataset.lfspot; if(typeof kcSfx === "function") kcSfx("click"); renderArena(); return; }
   if((b = e.target.closest("[data-lfdo]"))){ lfDo(b.dataset.lfdo); renderArena(); return; }
   if((b = e.target.closest("[data-lfbuy]"))){ const E = LF_EQUIP.find(x => x.id === b.dataset.lfbuy), c = kcRec(), L = lfRec(); if(E && !L.equip[E.id] && c.cash >= E.cost){ c.cash -= E.cost; L.equip[E.id] = L.t; LF_MSG = `${E.ic} ${E.t} 구입 — ${E.d}`; lfLog(LF_MSG); if(typeof kcSfx === "function") kcSfx("money_out"); if(typeof save==="function") save(); } renderArena(); return; }
-  if((b = e.target.closest("[data-lfmove]"))){ const k = b.dataset.lfmove, Bn = LF_BASES[k], c = kcRec(), L = lfRec(); if(Bn && c.cash >= Bn.need && confirm(`${Bn.t}(으)로 옮길까요? 이사비 ${kMan(Math.round(Bn.rent * 2))} · 월 ${kMan(Bn.rent)}`)){ c.cash -= Math.round(Bn.rent * 2); L.base = k; lfAdvance(240); LF_MSG = `🚚 ${Bn.t}(으)로 이사했다. 공간이 넓어지니 일이 잘 된다.`; lfLog(LF_MSG); if(typeof kcSfx === "function") kcSfx("fanfare"); if(typeof save==="function") save(); } renderArena(); return; }
+  if((b = e.target.closest("[data-lfmove]"))){ const k = b.dataset.lfmove, Bn = LF_BASES[k], c = kcRec(), L = lfRec(); if(Bn && c.cash >= Bn.need && safeConfirm(`${Bn.t}(으)로 옮길까요? 이사비 ${kMan(Math.round(Bn.rent * 2))} · 월 ${kMan(Bn.rent)}`)){ c.cash -= Math.round(Bn.rent * 2); L.base = k; lfAdvance(240); LF_MSG = `🚚 ${Bn.t}(으)로 이사했다. 공간이 넓어지니 일이 잘 된다.`; lfLog(LF_MSG); if(typeof kcSfx === "function") kcSfx("fanfare"); if(typeof save==="function") save(); } renderArena(); return; }
 });
 // 게시판 버튼은 거점 안에서도 그대로 — week.js 핸들러는 office 탭에서만 듣는다
 document.addEventListener("click", e => {
   if(typeof page === "undefined" || page !== "arena" || arenaTab !== "life" || !lfOn()) return;
   if(e.target.closest("[data-bdplay],[data-bdread],[data-bddecoy],[data-bdwait],[data-bdwatch],[data-bddrop],[data-bdnext]")){
     arenaTab = "office"; OF_SPOT = "board";            // week.js 핸들러가 이어서 처리하고, 렌더가 다시 거점으로 돌려놓는다
+    setTimeout(() => { if(arenaTab === "office" && lfOn()) arenaTab = "life"; }, 0);   // 렌더 없이 끝난 경우(확인 대기 등)에도 거점으로
   }
 }, true);
 // 조사 화면: "오늘은 여기까지"

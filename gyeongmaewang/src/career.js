@@ -338,7 +338,7 @@ document.addEventListener("click", e => {
   let b;
   if(e.target.closest("[data-kcsfx]")){ try{ localStorage.setItem("sfx_off", kcSfxOn() ? "1" : "0"); }catch(x){} if(kcSfxOn()) kcSfx("coin"); renderArena(); return; }
   if(e.target.closest("[data-kcpractice]")){ const el = document.getElementById("kcPractice"); if(el) el.scrollIntoView({behavior:"smooth"}); return; }
-  if(e.target.closest("[data-kcreset]")){ if(confirm("커리어(보유자금·경매 기록)를 1억 5천으로 되돌릴까요? 레벨·도감·업적은 남아요.")){ delete arenaRec().career; if(typeof save==="function") save(); renderArena(); } return; }
+  if(e.target.closest("[data-kcreset]")){ if(safeConfirm("커리어(보유자금·경매 기록)를 1억 5천으로 되돌릴까요? 레벨·도감·업적은 남아요.")){ delete arenaRec().career; if(typeof save==="function") save(); renderArena(); } return; }
   if(!K || arenaTab !== "king") return;
   if(e.target.closest("[data-kintro]")){ K.intro = false; kcSfx("paper"); renderArena(); window.scrollTo(0,0); return; }
   if(e.target.closest("[data-kreveal]")){ K.revealing = false; clearTimeout(K._revT); K._revT = null; renderArena(); return; }

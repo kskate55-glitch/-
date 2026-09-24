@@ -40003,12 +40003,18 @@ const _gx_sfxBtn = kcSfxBtn; kcSfxBtn = function(){ return _gx_sfxBtn().replace(
 const LF_CHAR_ART = {
   seoyun:{face:{normal:"1c566d13d8960c9915dad1cbb8b3feb8", happy:"6fd30bc8295c83a97fba61c22e67dc0d", shocked:"e0891f9ee8d6ed107b3751fc34348477",
                 worried:"4dbe6d8a4b9d28b69eee59b6ae1fd549", angry:"1713778c5f75972a617d6706b2224e72", tired:"34da9dccb585a20029ee6b6add14173c"},
-          front:"62cae5e03a2a8cafb6b597fdd46a10be", back:"fb967929266348b78f10a1365f06409d", select:"0f505ffb62f59a667fcb89e54ee1d3d9",
-          found:"a6aa2aefe97342b2e6f47aeff0af5ec5", room:"6c5608542f69436fa41610b5486fb480"}};
+          front:"ce46abcdcb5282ab782ebe27ac9867cb", back:"f2aa59258e202df3373f640fd354579c", select:"0f505ffb62f59a667fcb89e54ee1d3d9",
+          found:"a6aa2aefe97342b2e6f47aeff0af5ec5", room:"6c5608542f69436fa41610b5486fb480"},
+  dohyun:{face:{normal:"2c6dcfc46662cb715ae6a15bbcb25796", happy:"6ad1f3e3a51585e063731fc107434ba1", shocked:"20537e78fcf156713f9a98c031ee3b05",
+                worried:"dea59f40e8e31a7876829a6909258f04", angry:"97343c701731a1677db55b0a34d4cc2b", tired:"d5e227dbe4e6c139a123621d0833a616"},
+          front:"460763b38132f69631dd9afc8b97c96b", back:"36d71073cf13f01299b6f6fe40f591d4", select:"b9c749443dc4065d593447850e605cbc",
+          commute:"3ff68bb122421084c31b3ab96ebbc1ea", room:"4e6edd4052a125094a0b506b7c91866e"}};
 const LF_FACE_ALIAS = {soft:"happy", neutral:"normal", troubled:"worried", furious:"angry"};
 // 배경·컷 칸으로도 등록해 둔다(그림 관리 화면·오프닝이 같은 이름으로 찾게)
-Object.assign(ART_DEFAULT, {bg_base_sillim:LF_CHAR_ART.seoyun.room, cut_seoyun_found:LF_CHAR_ART.seoyun.found});
+Object.assign(ART_DEFAULT, {bg_base_sillim:LF_CHAR_ART.seoyun.room, cut_seoyun_found:LF_CHAR_ART.seoyun.found,
+  bg_base_hwagok:LF_CHAR_ART.dohyun.room, cut_dohyun_commute:LF_CHAR_ART.dohyun.commute});
 if(LF_BASES.sillim) LF_BASES.sillim.bg = "bg_base_sillim";
+if(LF_BASES.hwagok) LF_BASES.hwagok.bg = "bg_base_hwagok";
 function lfArt(id){ id = id || (lfOn() ? lfRec().char : null); return id ? LF_CHAR_ART[id] || null : null; }
 function lfBlob(a){ return window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a; }
 function lfArtUrl(id, k){ const A = lfArt(id); return A && A[k] ? lfBlob(A[k]) : null; }
@@ -40025,6 +40031,8 @@ const _ca_artUrl = artUrl; artUrl = function(id){
 if(typeof keMyFace === "function"){ const _ca_face = keMyFace; keMyFace = function(){ const f = _ca_face(), A = lfArt(), L = lfRec(); if(A && A.face.tired && L && L.sta < 20 && K && ["brief","research"].includes(K.step)) return "tired"; return f; }; }
 // 오프닝: 서윤 첫 두 장면은 자기 방, 세 번째(발견)는 발견 컷
 if(LF_OPENINGS.seoyun){ LF_OPENINGS.seoyun[0].bg = "bg_base_sillim"; LF_OPENINGS.seoyun[1].bg = "bg_base_sillim"; LF_OPENINGS.seoyun[2].bg = "cut_seoyun_found"; }
+// 도현: 화곡역 퇴근길 → (현관) → 자기 원룸
+if(LF_OPENINGS.dohyun){ LF_OPENINGS.dohyun[0].bg = "cut_dohyun_commute"; [2,3,4].forEach(i => { if(LF_OPENINGS.dohyun[i]) LF_OPENINGS.dohyun[i].bg = "bg_base_hwagok"; }); }
 // 거점: 방 안에 내가 서 있다
 const _ca_base = lfBaseHTML; lfBaseHTML = function(){
   const h = _ca_base(), u = lfArtUrl(null, "front"); if(!u) return h;

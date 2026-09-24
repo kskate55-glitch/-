@@ -4,15 +4,22 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  const broken=[]; p.on('response',r=>{ if(/_blob/.test(r.url()) && r.status()>=400) broken.push(r.url()); });
  await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(600);
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; K=null; arenaTab='life'; LF_PICK='seoyun'; renderArena(); }); await p.waitForTimeout(900);
- ok(await p.evaluate(()=>!!document.querySelector('.lf-focus-art') && document.querySelectorAll('.lf-card .lf-face img').length===1), w+' 선택: 서윤 얼굴·세로 일러스트');
+ ok(await p.evaluate(()=>!!document.querySelector('.lf-focus-art') && document.querySelectorAll('.lf-card .lf-face img').length>=1), w+' 선택: 서윤 얼굴·세로 일러스트');
  await p.screenshot({path:`ca_sel_${w}.png`});
  await p.click('[data-lfstart="seoyun"]'); await p.waitForTimeout(9500); await p.screenshot({path:`ca_op_${w}.png`});
  await p.click('[data-gxskip]'); await p.waitForTimeout(300); await p.click('[data-gxskip]'); await p.waitForTimeout(1300);
  ok(await p.evaluate(()=>!!document.querySelector('.lf-me') && /6c5608542f/.test(document.body.innerHTML)), w+' 거점: 방 배경 + 서 있는 서윤');
  await p.screenshot({path:`ca_base_${w}.png`});
- ok(await p.evaluate(()=>artUrl('npc_playerf_soft')==='/_blob/6fd30bc8295c83a97fba61c22e67dc0d' && artUrl('npc_player_neutral')==='/_blob/fb967929266348b78f10a1365f06409d'), w+' 얼굴·뒷모습 슬롯이 서윤으로');
+ ok(await p.evaluate(()=>artUrl('npc_playerf_soft')==='/_blob/6fd30bc8295c83a97fba61c22e67dc0d' && artUrl('npc_player_neutral')==='/_blob/f2aa59258e202df3373f640fd354579c'), w+' 얼굴·뒷모습 슬롯이 서윤으로');
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; lfNew('dohyun'); lfRec().intro=false; renderArena(); });
- ok(await p.evaluate(()=>artUrl('npc_player_neutral')!=='/_blob/fb967929266348b78f10a1365f06409d' && !document.querySelector('.lf-me')), w+' 도현은 공용 그림(서윤 그림 안 섞임)');
+ ok(await p.evaluate(()=>artUrl('npc_player_neutral')==='/_blob/36d71073cf13f01299b6f6fe40f591d4' && /4e6edd4052/.test(document.body.innerHTML) && document.querySelector('.lf-me').src.includes('460763b3')), w+' 도현: 뒷모습·원룸·앞모습(서윤 그림 안 섞임)');
+ await p.evaluate(()=>{ const c=kcRec(); delete c.life; lfNew('mijeong'); lfRec().intro=false; renderArena(); });
+ ok(await p.evaluate(()=>!document.querySelector('.lf-me') && !/36d71073|f2aa5925/.test(artUrl('npc_player_neutral')||'')), w+' 미정은 아직 공용 그림');
+ await p.evaluate(()=>{ const c=kcRec(); delete c.life; K=null; LF_PICK='dohyun'; renderArena(); }); await p.waitForTimeout(500);
+ ok(await p.evaluate(()=>document.querySelectorAll('.lf-card .lf-face img').length===2 && /b9c749/.test(document.querySelector('.lf-focus-art').src)), w+' 선택: 두 명 얼굴·도현 일러스트');
+ await p.click('[data-lfstart="dohyun"]'); await p.waitForTimeout(1500); await p.click('#gxOp'); await p.waitForTimeout(1500); await p.screenshot({path:`ca_op_dh_${w}.png`});
+ ok(await p.evaluate(()=>/3ff68bb1/.test(document.querySelector('#gxOp .gx-bgimg.on').style.backgroundImage)), w+' 도현 오프닝 첫 장면 = 퇴근길');
+ await p.click('[data-gxskip]'); await p.waitForTimeout(300); await p.click('[data-gxskip]'); await p.waitForTimeout(1300); await p.screenshot({path:`ca_base_dh_${w}.png`});
  ok(broken.length===0, w+' 깨진 그림 없음 '+broken.join(','));
  ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), w+' 가로 스크롤 없음');
  await p.evaluate(()=>localStorage.clear()); await p.close(); }

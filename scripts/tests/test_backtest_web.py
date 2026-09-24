@@ -102,6 +102,20 @@ class TestBacktestOne(BacktestWebBase):
                     "conf", "n", "in_band", "divergence"):
             self.assertIn(key, data["cases"][0], f"{key}가 빠지면 원인 분석을 못 한다")
 
+    def test_cases_carry_the_dong_for_the_price_game(self):
+        """73-1절 — 시세 맞히기 게임은 플레이어가 **그 동네를 직접 조사**한다.
+        동이 빠지면 조사 범위가 구 전체로 넓어져 게임이 성립하지 않는다."""
+        self._serve(self._sample_rows())
+        data = self.client.post("/backtest/one",
+                                data={"lawd_cd": "11305", "n_cases": "4", "months": "1"}).get_json()
+        self.assertTrue(data["ok"], data.get("error"))
+        for c in data["cases"]:
+            self.assertEqual(c["dong"], "수유동")
+            self.assertIn("p25", c)
+            self.assertIn("p75", c)
+            self.assertLessEqual(c["p25"], c["median"])
+            self.assertLessEqual(c["median"], c["p75"])
+
     def test_error_pct_sign_matches_html_route(self):
         """양수 = 계산기가 실제보다 높게 부름. 부호가 뒤집히면 보정 방향이 반대가 된다."""
         self._serve(self._sample_rows())
@@ -193,6 +207,8 @@ class TestVersionIsStampedOnEveryCase(unittest.TestCase):
             html = f.read()
         cols = html.split("var cols = [", 1)[1].split("]", 1)[0]
         self.assertIn("'version'", cols, "CSV 내보내기에 version 열이 없다")
+        for col in ("'dong'", "'p25'", "'p75'"):
+            self.assertIn(col, cols, f"CSV 내보내기에 {col} 열이 없다 (73-1절 게임용)")
 
 
 def _app_source() -> str:

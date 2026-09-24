@@ -2684,3 +2684,66 @@ class TestMonthIndexRoundTrip(unittest.TestCase):
                          "rank_areas가 자기 인코딩을 다시 정의했다 — 짝이 갈린다")
         self.assertNotIn("divmod(latest", src,
                          "divmod로 되돌리면 12월에서 어긋난다 (decode_month_index를 쓸 것)")
+
+
+class TestRegionIsNotAFactor(unittest.TestCase):
+    """72-24절 — **지역별 보정을 측정하고 기각한 판단을 고정한다.**
+
+    깨끗한 표본 131건(경기 86 + 서울 45)으로 재본 결과:
+
+    | | 서울 | 경기 | 차이 |
+    |---|---|---|---|
+    | 편향 | +0.58% ➖ | −0.37% ➖ | +0.95%p [−6.05, +8.13] ➖ |
+    | MAPE | 15.55% | 10.43% | +5.12%p [+0.42, +10.31] ⭐ |
+
+    ① **편향 차이가 없다** → 가격 보정 계수(48-2절 `SALE_CALIBRATION_FACTOR`
+       같은 것)를 지역별로 둘 근거가 0이다. 68절 시계열 보정이 서울 −5.2%를
+       이미 0 근처로 데려왔다.
+    ② 산포 차이는 있지만 **위험요인 세 개가 이미 잡아낸다** — 지역을 네 번째로
+       넣으면 갈라내는 폭이 13.5 → 11.6%p로 나빠진다(72-19절 "구축×얇음"
+       상호작용을 기각한 것과 같은 형태).
+    ③ 서울은 이미 적중 82%로 목표(80%)를 지킨다 — 넓힐 이유가 없다.
+    ④ 표본에 서울·경기뿐이라 **"비서울"이 일반화되지 않는다**(55절 버그 ①이
+       지역을 잘못 판정해 남의 동네 지수를 보여준 사고였다).
+
+    나중에 누가 지역 보정을 다시 넣으려 하면 여기서 걸린다.
+    """
+
+    def test_no_region_specific_calibration_constant_exists(self):
+        names = [n for n in dir(ep)
+                 if "CALIBRATION" in n.upper() or "REGION_FACTOR" in n.upper()]
+        self.assertEqual(names, ["SALE_CALIBRATION_FACTOR"],
+                         f"지역별 보정 상수가 새로 생겼다: {names}")
+        self.assertEqual(ep.SALE_CALIBRATION_FACTOR, 1.0,
+                         "48-4절에서 1.0으로 되돌린 값이다 — 깨끗한 표본에서도 "
+                         "편향이 0 근처라 다시 켤 근거가 없다")
+
+    def test_the_risk_count_does_not_look_at_region(self):
+        """`count_prediction_risks()`가 지역·주소를 아예 안 받는다는 것 자체를 고정."""
+        import inspect
+        params = set(inspect.signature(ep.count_prediction_risks).parameters)
+        for banned in ("region", "sido", "address", "gu", "lawd_cd", "is_seoul"):
+            self.assertNotIn(banned, params,
+                             f"지역 정보({banned})가 위험요인 계산에 들어왔다 — 72-24절 참고")
+        # ⚠️ `ast`로 **독스트링 노드를 떼고 본문만** 본다 — 주석만 걷어내면
+        #    내 설명 표의 "괴리율 ≥3% … 경기만" 같은 글자가 걸려 오탐이 난다
+        #    (72-13절 교훈 #5가 여기서 또 재발했다). `inspect.getdoc()`은
+        #    들여쓰기를 없애서 원문과 안 맞으므로 문자열 치환으로는 안 된다.
+        import ast as _ast, textwrap as _tw
+        fn = _ast.parse(_tw.dedent(
+            inspect.getsource(ep.count_prediction_risks))).body[0]
+        body = fn.body
+        if (isinstance(body[0], _ast.Expr) and isinstance(body[0].value, _ast.Constant)
+                and isinstance(body[0].value.value, str)):
+            body = body[1:]          # 독스트링 제거
+        code = "\n".join(_ast.unparse(n) for n in body)
+        for banned in ("서울", "경기", "region"):
+            self.assertNotIn(banned, code, f"본문에 지역 판정({banned})이 들어왔다")
+
+    def test_the_interval_table_has_one_set_of_widths_not_per_region(self):
+        """폭 표가 지역별로 갈라지지 않았는지 — 갈라지면 서울 45건짜리 잡음에
+        맞추는 것이 된다(실측 80분위가 ±24/±28/±23/±37로 단조도 아니었다)."""
+        self.assertEqual(set(ep.PREDICTION_INTERVAL_PCT), {0, 1, 2, 3})
+        for v in ep.PREDICTION_INTERVAL_PCT.values():
+            self.assertIsInstance(v, float,
+                                  "폭이 숫자 하나가 아니라 지역별 표로 바뀌었다")

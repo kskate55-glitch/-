@@ -233,8 +233,16 @@ def geocode(address: str) -> tuple[float, float] | None:
 DETAIL_CACHE_PATH = os.path.join(_DATA_DIR, "geocode_detail_cache.json")
 
 
+# 72-31절 — geocode_full 이 돌려주는 값의 판(schema) 번호. 늘어날 때마다
+# 올린다 — 옛 캐시를 그대로 쓰면 새 키가 없어 조용히 옛 동작으로 돌아간다.
+_DETAIL_SCHEMA = 2
+
+
 def geocode_full(address: str) -> dict | None:
-    """지번 주소 -> {lat, lon, b_code(법정동코드 10자리), main_no, sub_no, is_mountain}.
+    """주소 -> {lat, lon, b_code, main_no, sub_no, is_mountain, jibun, road, sido, sigungu, dong}.
+
+    ⭐ **도로명주소를 넣어도 된다** — 카카오가 지번(address) 쪽을 같이 채워
+    주므로 `jibun`에 지번 주소가 그대로 담긴다(72-31절). 호출은 안 는다.
     건축물대장 조회(scripts/building_register.py, CLAUDE.md 20절)에 필요한
     구조화된 값을 카카오 주소 검색 응답에서 그대로 뽑아 쓴다 — 별도 주소
     표준화 API 없이 지오코딩 한 번으로 해결한다.
@@ -243,7 +251,12 @@ def geocode_full(address: str) -> dict | None:
     필드명에 기반한 것으로, 실제 응답과 다르면 여기를 고쳐야 한다."""
     cache = _load_cache_file(DETAIL_CACHE_PATH)
     if address in cache:
-        return cache[address] if cache[address] else None
+        hit = cache[address]
+        # ⚠️ 72-31절에서 돌려주는 값이 늘었다. 예전 캐시에는 새 키가 없으므로
+        #    **없는 것으로 치고 다시 물어본다** — 그대로 쓰면 도로명 변환과
+        #    지역 판정이 조용히 옛 동작으로 돌아간다(화면으로는 알 수 없다).
+        if hit is None or hit.get("v") == _DETAIL_SCHEMA:
+            return hit if hit else None
 
     api_key = _get_api_key()
     url = f"{KAKAO_URL}?query={urllib.parse.quote(address)}"
@@ -262,13 +275,23 @@ def geocode_full(address: str) -> dict | None:
         return None
 
     addr = docs[0].get("address") or {}
+    road = docs[0].get("road_address") or {}
     result = {
+        "v": _DETAIL_SCHEMA,
         "lat": float(docs[0]["y"]),
         "lon": float(docs[0]["x"]),
         "b_code": addr.get("b_code"),
         "main_no": addr.get("main_address_no"),
         "sub_no": addr.get("sub_address_no"),
         "is_mountain": addr.get("mountain_yn") == "Y",
+        # 72-31절 — 이미 받아오던 응답에서 **읽지 않고 버리던** 값들이다.
+        # 카카오가 도로명주소로 검색해도 지번(address) 쪽을 같이 채워 주므로,
+        # 이것만 꺼내 쓰면 도로명→지번 변환이 공짜로 된다(호출이 안 는다).
+        "jibun": addr.get("address_name") or None,
+        "road": road.get("address_name") or None,
+        "sido": addr.get("region_1depth_name") or None,
+        "sigungu": addr.get("region_2depth_name") or None,
+        "dong": addr.get("region_3depth_name") or None,
     }
     cache[address] = result
     _save_cache_file(DETAIL_CACHE_PATH, cache)

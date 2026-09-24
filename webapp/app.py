@@ -73,6 +73,32 @@ PREFETCH_ROWS = True
 PREFETCH_BUILDING = True
 
 
+def _address_differs(typed: str, canonical: str) -> bool:
+    """72-31절 — 사용자가 친 주소와 카카오가 돌려준 지번 주소가 **의미 있게**
+    다른지. 시/도 긴 표기·띄어쓰기 차이는 같은 것으로 본다."""
+    from market_index import SIDO_ALIAS
+
+    # ⚠️ SIDO_ALIAS 는 24절 CSV 표기에 맞춘 표라 "경기도"를 그대로 둔다.
+    #    카카오는 "경기"를 주므로, 별칭을 적용한 뒤 **남은 시/도 접미사도**
+    #    떼야 둘이 맞는다.
+    _SUFFIX = ("특별자치시", "특별자치도", "특별시", "광역시", "자치도", "도")
+
+    def norm(t: str) -> str:
+        t = (t or "").strip()
+        for long, short in SIDO_ALIAS.items():
+            if t.startswith(long):
+                t = short + t[len(long):]
+                break
+        head, sep, rest = t.partition(" ")
+        for suf in _SUFFIX:
+            if len(head) > len(suf) and head.endswith(suf):
+                head = head[: -len(suf)]
+                break
+        return (head + sep + rest).replace(" ", "")
+
+    return bool(canonical) and norm(typed) != norm(canonical)
+
+
 @app.context_processor
 def _inject_version():
     """모든 화면 푸터에 배포 버전을 꽂는다 — 48-5절.
@@ -682,6 +708,20 @@ def estimate():
 
     subject_coord = (subject_detail["lat"], subject_detail["lon"])
 
+    # 72-31절 — 지역 판정(24·25·69절)은 **사용자가 친 글자가 아니라 카카오가
+    # 정규화해 준 지번 주소**로 한다. 그래야:
+    #   ① 도로명주소를 넣어도 된다 (카카오가 지번 쪽을 같이 채워 준다)
+    #   ② "홍은동 265-218"처럼 시/군/구를 빼도 된다 (카카오가 채워 준다)
+    # 카카오가 못 주면(옛 캐시 등) 예전처럼 입력 글자를 그대로 쓴다.
+    canon_parts = [subject_detail.get(k) for k in ("sido", "sigungu", "dong")]
+    canonical_address = (subject_detail.get("jibun")
+                         or " ".join(p for p in canon_parts if p)
+                         or address)
+    # 화면에 "이 주소로 알아들었어요"를 보여줄지 — 의미 있게 다를 때만.
+    # ⚠️ 시/도 표기 차이("서울특별시"↔"서울")와 띄어쓰기만 다른 경우는 숨긴다.
+    #    제대로 쓴 주소에도 매번 뜨면 그냥 잡음이다.
+    address_normalized = _address_differs(address, canonical_address)
+
     from naver_link import naver_land_url, naver_search_url
 
     naver_url = naver_land_url(*subject_coord)
@@ -833,7 +873,7 @@ def estimate():
         seoul_zone_from_address,
     )
 
-    villa_zone = seoul_zone_from_address(address)
+    villa_zone = seoul_zone_from_address(canonical_address)
     villa_trend = None
     villa_label = None
     villa_is_zone = False
@@ -846,13 +886,13 @@ def estimate():
             villa_is_zone = True
 
     if villa_trend is None:
-        villa_region = region_from_address(address, VILLA_SIDO_ALIAS)
+        villa_region = region_from_address(canonical_address, VILLA_SIDO_ALIAS)
         if villa_region is None:
             # 72-30절 — 시/도를 안 쓴 주소("고양시 덕양구 화정동 123")면
             # 전국 시군구 표로 시/도를 되찾는다. 없으면 조용히 생략(원래 동작).
             try:
                 from buyer_age import sido_for_address
-                villa_region = sido_for_address(address)
+                villa_region = sido_for_address(canonical_address)
             except Exception:
                 villa_region = None
         if villa_region is not None:
@@ -891,12 +931,12 @@ def estimate():
     buyer_age_missing = None
     try:
         from buyer_age import compute_buyer_age, unavailable_reason
-        buyer_age = compute_buyer_age(address)
+        buyer_age = compute_buyer_age(canonical_address)
         # 72-29절 — 안 뜰 때는 **왜 없는지** 한 줄로 말한다. 사용자가 찾다가
         #           못 찾았는데("연령대 뭐 그건 어디 간 거임") 아무 말 없이
         #           사라지면 고장인지 원래 없는 건지 구별할 방법이 없다.
         if not buyer_age:
-            buyer_age_missing = unavailable_reason(address)
+            buyer_age_missing = unavailable_reason(canonical_address)
     except Exception:
         buyer_age = None       # 참고 정보라 무엇이 터지든 계산을 막지 않는다
         buyer_age_missing = None
@@ -913,7 +953,7 @@ def estimate():
 
     # 40절 아파트 조회를 미리 던지려면 동 이름이 먼저 필요하다(주소 문자열만
     # 보면 되는 순수 함수라 앞으로 당겨도 아무 부작용이 없다).
-    target_dong_early = find_dong_in_address(address)
+    target_dong_early = find_dong_in_address(canonical_address)
 
     try:
         # 위에서 미리 던져 뒀으면 결과만 받는다 — 여기 찍히는 시간은 "다운로드에
@@ -1294,6 +1334,11 @@ def estimate():
         "inspection_clean": inspection_clean,
         "resubmit_fields_no_inspection": resubmit_fields_no_inspection,
         "resubmit_fields_no_zone": resubmit_fields_no_zone,
+        # 72-31절 — 도로명주소나 짧은 주소를 넣었을 때 "무엇으로 알아들었는지"
+        #            보여준다. 조용히 바꿔 계산하면 사용자가 확인할 방법이 없다.
+        "resolved_address": canonical_address,
+        "resolved_road": subject_detail.get("road"),
+        "address_normalized": address_normalized,
         # 정비구역 관련 경고가 떴고 아직 사용자가 답하지 않았을 때만 되묻는다.
         "zone_ask": (not user_zone.strip()
                      and any(w["key"] in ("redevelopment", "zone")

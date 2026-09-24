@@ -55,9 +55,10 @@
   <div class="field">
     <span class="field-icon" aria-hidden="true">📍</span>
     <div class="field-body">
-      <label for="f_address">지번 주소</label>
-      <input type="text" id="f_address" name="address" placeholder="서울특별시 강북구 수유동 468-202"
+      <label for="f_address">주소 <span class="field-tag">도로명도 OK</span></label>
+      <input type="text" id="f_address" name="address" placeholder="예: 강북구 수유동 468-202 / 수유로 123"
              value="{{ form.address if form else '' }}" required>
+      <p class="hint" style="margin:5px 0 0">지번·도로명 <b>아무거나</b> 괜찮아요. 시/도를 빼도 되고요 — 알아서 지번 주소로 바꿔서 계산합니다.</p>
     </div>
   </div>
   <div class="row">

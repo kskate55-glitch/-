@@ -183,6 +183,13 @@ def _pct_to_float(text) -> float:
         return 0.0
 
 
+# 72-36절 — 정적 파일(app.css·app.js·일러스트)은 **1년** 캐시한다.
+# ⚠️ 안전한 이유는 `base.html`이 `?v=<배포 커밋>`을 붙이기 때문이다 — 배포할
+#    때마다 URL이 바뀌어 브라우저가 새로 받는다. 버스터 없이 이 값을 길게
+#    주면 고친 CSS가 며칠씩 반영 안 되는 사고가 난다.
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60 * 24 * 365
+
+
 @app.context_processor
 def _inject_version():
     """모든 화면 푸터에 배포 버전을 꽂는다 — 48-5절.

@@ -165,7 +165,7 @@ class ThePaletteHasMoreThanGreen(unittest.TestCase):
 
     def _css(self):
         path = os.path.join(os.path.dirname(__file__), "..", "..",
-                            "webapp", "templates", "base.html")
+                            "webapp", "static", "app.css")
         with open(path, encoding="utf-8") as f:
             return f.read()
 

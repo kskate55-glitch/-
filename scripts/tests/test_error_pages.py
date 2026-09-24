@@ -123,7 +123,9 @@ class TestFormsKeepTheirOwnMethod(unittest.TestCase):
     _ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 
     def _base_html(self):
-        with open(os.path.join(self._ROOT, "webapp/templates/base.html"),
+        # ⚠️ 72-36절에서 제출 핸들러 JS 가 base.html 인라인 →
+        #    webapp/static/app.js 로 옮겨졌다. 계약은 그대로다.
+        with open(os.path.join(self._ROOT, "webapp/static/app.js"),
                   encoding="utf-8") as f:
             return f.read()
 

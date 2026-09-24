@@ -78,6 +78,12 @@ def sido_token(address: str) -> str | None:
     return _SIDO_TOKEN.get(first[0]) if first else None
 
 
+# 72-30절 — 서울 25개 구 이름 중 **다른 시/도에도 있는** 것. 전국 시군구
+# 표(data/buyer_age_by_region.csv, 274개)로 확인한 결과 이 둘뿐이다
+# (나머지 겹치는 이름 동구·남구·북구·서구·고성군은 서울에 없다).
+AMBIGUOUS_GU_NAMES = frozenset({"중구", "강서구"})
+
+
 def seoul_zone_from_address(address: str) -> str | None:
     """주소에 서울 구 이름이 있으면 해당 생활권(도심권 등)을 반환. 없으면 None.
 
@@ -98,6 +104,13 @@ def seoul_zone_from_address(address: str) -> str | None:
         return None
     for gu, zone in SEOUL_GU_TO_ZONE.items():
         if gu in address:
+            # 72-30절 — 시/도를 안 쓴 주소에서 **다른 시/도에도 있는 구 이름**은
+            #   서울이라고 단정하지 않는다. 위 55절 수정은 "부산광역시 중구"처럼
+            #   시/도가 **적혀 있는** 경우만 막았는데, "중구 신당동"처럼 안 적으면
+            #   그대로 서울로 잡혔다. 같은 화면에서 69절 연령대는 "어디인지 고를
+            #   수 없다"고 하는데 여기만 "서울 도심권"이라고 하면 어긋난다.
+            if sido is None and gu in AMBIGUOUS_GU_NAMES:
+                continue
             return zone
     return None
 

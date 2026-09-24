@@ -847,6 +847,14 @@ def estimate():
 
     if villa_trend is None:
         villa_region = region_from_address(address, VILLA_SIDO_ALIAS)
+        if villa_region is None:
+            # 72-30절 — 시/도를 안 쓴 주소("고양시 덕양구 화정동 123")면
+            # 전국 시군구 표로 시/도를 되찾는다. 없으면 조용히 생략(원래 동작).
+            try:
+                from buyer_age import sido_for_address
+                villa_region = sido_for_address(address)
+            except Exception:
+                villa_region = None
         if villa_region is not None:
             villa_rows = load_villa_market_index()
             villa_trend = compute_villa_market_trend(villa_rows, villa_region)

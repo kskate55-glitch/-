@@ -75,6 +75,46 @@ def load_buyer_age(path: str = CSV_PATH) -> dict:
     return table
 
 
+def _unique_sigungu_names(table: dict) -> dict:
+    """시군구 이름 → 그 이름을 가진 시/도가 딱 하나일 때만 그 시/도."""
+    owners: dict[str, set] = {}
+    for sido, gu in table:
+        if gu:
+            owners.setdefault(gu, set()).add(sido)
+    return {gu: next(iter(v)) for gu, v in owners.items() if len(v) == 1}
+
+
+def ambiguous_sigungu_in(address: str, table: dict) -> str | None:
+    """시/도 없이 쓴 주소에서 **여러 시/도에 겹치는** 시군구 이름을 찾는다.
+
+    못 알아들은 이유를 사용자에게 말해주려고 쓴다(72-29절) — "중구"라고만
+    쓰면 다섯 곳 중 어디인지 알 수 없다고 짚어 준다.
+    """
+    owners: dict[str, set] = {}
+    for sido, gu in table:
+        if gu:
+            owners.setdefault(gu, set()).add(sido)
+    hits = [gu for gu, v in owners.items() if len(v) > 1 and gu in (address or "")]
+    return max(hits, key=len) if hits else None
+
+
+def _region_without_sido(address: str, table: dict) -> tuple | None:
+    """시/도가 없는 주소 — 이름이 전국에서 유일한 시군구만 받아들인다."""
+    unique = _unique_sigungu_names(table)
+    hits = []
+    for gu, sido in unique.items():
+        i = address.find(gu)
+        if i >= 0:
+            hits.append((i, i + len(gu), gu, sido))
+    if not hits:
+        return None
+    # region_for_address 와 같은 두 규칙을 그대로 쓴다.
+    kept = [h for h in hits
+            if not any(o is not h and o[0] <= h[0] and h[1] <= o[1] for o in hits)]
+    best = max(kept or hits)
+    return (best[3], best[2])
+
+
 def region_for_address(address: str, table: dict) -> tuple | None:
     """주소에서 (시도, 시군구) 키를 찾는다. 못 찾으면 시도 합계, 그것도 없으면 None.
 
@@ -89,7 +129,13 @@ def region_for_address(address: str, table: dict) -> tuple | None:
         return None
     sido = sido_token(address)
     if not sido:
-        return None
+        # 72-30절 — 시/도를 안 쓴 주소("서대문구 홍은동 265-218")가 흔한데
+        # 예전엔 여기서 그냥 포기했다. 시군구 이름이 **전국에서 유일할
+        # 때만** 받아들인다(253개 중 246개, 97%).
+        # ⚠️ 겹치는 7개(중구·동구·남구·북구·서구·강서구·고성군)는 여전히
+        #    거절한다 — 이걸 추측하는 순간 55절 버그 ①이 되살아난다
+        #    (구 이름만 보고 판정해서 부산 중구가 서울 지수를 받았다).
+        return _region_without_sido(address, table)
     sido = SIDO_ALIAS.get(sido, sido)
     # 시/도 안에서만 시군구 이름을 찾는다.
     hits = []
@@ -110,6 +156,24 @@ def region_for_address(address: str, table: dict) -> tuple | None:
         #    갖고 있고, 좁은 쪽이 대상 물건에 더 가깝다).
         return (sido, max(kept or hits)[2])
     return (sido, "") if (sido, "") in table else None
+
+
+def sido_for_address(address: str, table: dict | None = None) -> str | None:
+    """주소의 시/도만 돌려준다 (예: "서울", "경기").
+
+    72-30절 — 시/도를 안 쓴 주소에서 **다른 절도 같은 이유로 깨지고 있었다.**
+    24절 시장 동향은 서울이면 권역 폴백이 받아 주지만, 경기 주소
+    ("고양시 덕양구 화정동 123")는 카드가 통째로 사라졌다.
+    이 CSV가 이 프로젝트에서 **유일한 전국 시군구 표**(274개)라
+    (`data/lawd_codes.md`는 서울·경기만 있다) 여기에 둔다.
+
+    ⚠️ 표본 수(MIN_TOTAL)는 보지 않는다 — 지역을 고르는 것과 그 지역
+    통계를 믿을 수 있느냐는 별개다(군위군은 지역은 멀쩡히 잡히지만
+    표본이 70건이라 연령 카드는 안 뜬다).
+    """
+    table = load_buyer_age() if table is None else table
+    key = region_for_address(address, table)
+    return key[0] if key else None
 
 
 def compute_buyer_age(address: str, table: dict | None = None) -> dict | None:
@@ -183,7 +247,14 @@ def unavailable_reason(address: str, table: dict | None = None) -> str:
         if any(w in address for w in ("광주", "전남", "전라남")):
             return ("이 통계는 원본이 광주광역시와 전라남도를 한 항목으로 묶어 "
                     "내려보내서 둘을 가를 수 없어요 — 그래서 이 지역만 지원하지 않습니다.")
-        return "주소에서 시/군/구를 찾지 못해 이 지역 통계를 고르지 못했어요."
+        dup = ambiguous_sigungu_in(address, table)
+        if dup:
+            owners = sorted({sd for sd, g in table if g == dup})
+            return (f"'{dup}'는 {' · '.join(owners)} 등 {len(owners)}곳에 있어서 "
+                    f"어디인지 고를 수 없어요 — 주소 앞에 시/도를 같이 적어 주세요 "
+                    f"(예: 서울특별시 {dup} …).")
+        return ("주소에서 시/군/구를 찾지 못해 이 지역 통계를 고르지 못했어요 — "
+                "지번 주소를 시/군/구까지 포함해서 적어 주세요.")
     ages = table.get(key) or {}
     name = key[1] or key[0]
     totals = ages.get("합계") or {}

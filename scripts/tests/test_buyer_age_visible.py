@@ -125,3 +125,86 @@ class MostRegionsStillShowTheCard(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AddressesWithoutAProvinceStillWork(unittest.TestCase):
+    """72-30절 — "서대문구 홍은동 265-218"처럼 시/도를 안 쓴 주소.
+
+    사용자가 실제로 그렇게 쳤고 "주소에서 시/군/구를 찾지 못했어요"만 떴다.
+    시군구 이름이 **전국에서 유일할 때만** 받아들인다(253개 중 246개).
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.table = B.load_buyer_age()
+
+    def test_common_short_forms_resolve(self):
+        for addr, want in (("서대문구 홍은동 265-218", ("서울", "서대문구")),
+                           ("강북구 수유동 468-202", ("서울", "강북구")),
+                           ("고양시 덕양구 화정동 123", ("경기", "덕양구")),
+                           ("성남시 분당구 정자동 1", ("경기", "분당구")),
+                           ("김포시 사우동 1309", ("경기", "김포시")),
+                           ("해운대구 우동 1", ("부산", "해운대구"))):
+            self.assertEqual(B.region_for_address(addr, self.table), want, addr)
+
+    def test_ambiguous_names_are_still_refused(self):
+        """⚠️ 55절 버그 ①을 되살리면 안 된다 — 부산 중구가 서울 지수를 받았다."""
+        for addr in ("중구 신당동 1", "서구 화정동 1", "강서구 화곡동 1",
+                     "북구 어딘가 1", "고성군 어딘가 1"):
+            self.assertIsNone(B.region_for_address(addr, self.table), addr)
+
+    def test_an_explicit_province_still_wins(self):
+        self.assertEqual(B.region_for_address("부산광역시 중구 남포동 1", self.table),
+                         ("부산", "중구"))
+        self.assertEqual(B.region_for_address("서울특별시 중구 신당동 1", self.table),
+                         ("서울", "중구"))
+
+    def test_the_ambiguity_message_names_the_candidates(self):
+        r = B.unavailable_reason("중구 신당동 1", self.table)
+        self.assertIn("중구", r)
+        self.assertIn("시/도", r)
+        for sido in ("서울", "부산"):
+            self.assertIn(sido, r)
+
+    def test_a_bare_dong_is_not_enough(self):
+        self.assertIsNone(B.region_for_address("홍은동 265-218", self.table))
+
+    def test_sido_for_address_ignores_the_sample_size(self):
+        """지역을 고르는 것과 그 통계를 믿을 수 있느냐는 별개다."""
+        self.assertEqual(B.sido_for_address("대구광역시 군위군 군위읍 1", self.table), "대구")
+        self.assertIsNone(B.compute_buyer_age("대구광역시 군위군 군위읍 1", self.table))
+
+
+class TheTwoRegionCardsNeverDisagree(unittest.TestCase):
+    """72-30절 — 같은 화면에서 69절이 "어디인지 모르겠다"는데
+    24절이 "서울 도심권"이라고 하면 안 된다."""
+
+    def test_ambiguous_short_address_is_refused_by_both(self):
+        import market_index as M
+        table = B.load_buyer_age()
+        for addr in ("중구 신당동 1", "강서구 화곡동 1"):
+            self.assertIsNone(M.seoul_zone_from_address(addr), addr)
+            self.assertIsNone(B.sido_for_address(addr, table), addr)
+
+    def test_unambiguous_short_address_is_accepted_by_both(self):
+        import market_index as M
+        table = B.load_buyer_age()
+        for addr in ("서대문구 홍은동 265-218", "강북구 수유동 468-202"):
+            self.assertIsNotNone(M.seoul_zone_from_address(addr), addr)
+            self.assertEqual(B.sido_for_address(addr, table), "서울", addr)
+
+    def test_an_explicit_province_is_unaffected(self):
+        import market_index as M
+        self.assertEqual(M.seoul_zone_from_address("서울특별시 중구 신당동 1"), "도심권")
+        self.assertIsNone(M.seoul_zone_from_address("부산광역시 중구 남포동 1"))
+
+    def test_the_ambiguous_list_matches_the_nationwide_table(self):
+        """서울 구 이름 중 다른 시/도에도 있는 것만 들어 있어야 한다."""
+        import market_index as M
+        table = B.load_buyer_age()
+        owners = {}
+        for sido, gu in table:
+            if gu:
+                owners.setdefault(gu, set()).add(sido)
+        real = {gu for gu in M.SEOUL_GU_TO_ZONE if len(owners.get(gu, set())) > 1}
+        self.assertEqual(set(M.AMBIGUOUS_GU_NAMES), real)

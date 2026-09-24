@@ -1,0 +1,23 @@
+const { chromium } = require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const out=[];
+for(const w of [390,1280]){const p=await b.newPage({viewport:{width:w,height:900}});p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(()=>{window.claude={use:async n=>{ if(n!=="sample") return null; const f=async(t,o)=>{const txt="호가는 3.3억 정도 나와 있어요~ 실거래는 좀 더 낮죠.";o&&o.onText&&o.onText({text:txt});return {text:txt};}; f.limits=async()=>({images:false}); return f;}};});
+await p.goto('file://'+process.cwd()+'/rights-study.html#arena');await p.waitForTimeout(500);
+await p.evaluate(()=>{localStorage.clear();});
+await p.click('[data-atab="guess"]');
+await p.setInputFiles('#gqFile','t_bt.csv'); await p.waitForTimeout(200);
+out.push(w+' imp '+(await p.textContent('details.sg-open')).match(/✅[^⚠]*⚠?/)[0]);
+await p.click('[data-gqnew]');
+out.push(w+' card '+(await p.textContent('.panel.ag-top')).replace(/\s+/g,' ').slice(0,90));
+await p.fill('#gqIn','요즘 얼마해요?'); await p.click('#gqChatF button'); await p.waitForTimeout(200);
+out.push(w+' chat '+(await p.textContent('#gqChat')).slice(0,40));
+await p.click('[data-gqhint="calc"]'); await p.fill('#gqMemo','호가 3.3억');
+if(w===390) await p.screenshot({path:'g1.png',fullPage:true});
+await p.fill('#gqAns','2.95'); await p.click('#gqAnsF button');
+out.push(w+' res '+(await p.textContent('.ag-end')).replace(/\s+/g,' ').replace(/[🎉🔑🏠✨🎊]/gu,'').slice(0,160));
+if(w===390) await p.screenshot({path:'g2.png',fullPage:true});
+await p.click('[data-gqnew]'); await p.fill('#gqAns','20000'); await p.click('#gqAnsF button');
+out.push(w+' res2 '+(await p.textContent('.ag-tips')).slice(0,120));
+await p.click('[data-gqquit]'); out.push(w+' stat '+(await p.textContent('.panel.ag-top >> nth=1')).replace(/\s+/g,' '));
+out.push(w+' sw '+await p.evaluate(()=>document.documentElement.scrollWidth));}
+console.log(out.join('\n'));console.log('errors',errs);await b.close();})();

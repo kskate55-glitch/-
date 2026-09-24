@@ -1089,3 +1089,36 @@ html.kfs-on #hubToasts{top:62px;left:14px;right:auto;bottom:auto}
 .lf-stage.px-stress2::after{box-shadow:inset 0 0 120px rgba(110,0,0,.42)}
 html.px-still .lf-me,html.px-still .vn-player{animation:none}
 @media (prefers-reduced-motion:reduce){.lf-me,.vn-player,.vn-sprite,.px-folder,.px-stamp,.px-key{animation:none!important}}
+/* ===== 🏠 딥 이머전 ===== */
+.dp-card{position:fixed;inset:0;z-index:9420;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(8,10,16,.72);animation:cpFade .25s}
+.dp-news{max-width:440px;background:#f3ead7;color:#2b2418;border-radius:4px;padding:20px 22px 16px;box-shadow:0 2px 0 #c8b58c,0 12px 28px rgba(0,0,0,.4);border-top:4px solid #6a5a3a;animation:cpUp .4s var(--px-ease)}
+.dp-news.regret{border-top-color:#b3261e}.dp-news.relief{border-top-color:#1f7a45}
+.dp-news b{display:block;font-family:var(--px-disp);font-weight:400;font-size:21px;margin:4px 0 8px}
+.dp-news p{margin:5px 0;font-size:14.5px;line-height:1.65}.dp-news p:last-of-type{font-weight:700;margin-top:10px}
+.dp-news .btn{margin-top:10px;min-height:44px;background:#2b2418;color:#f3ead7;border-color:#2b2418}
+.dp-kick{font-size:12px;letter-spacing:.4px;opacity:.7}
+.dp-thought{position:absolute;z-index:40;max-width:min(280px,70%);background:#fffdf6;color:#2b2418;border:2px solid #2b2418;border-radius:12px;padding:8px 12px;font-size:14px;line-height:1.5;box-shadow:0 3px 0 rgba(0,0,0,.25);animation:dpPop .35s var(--px-ease);cursor:pointer}
+.dp-thought.fixed{position:fixed;left:16px;top:70px}
+.dp-thought i{font-style:normal;margin-right:4px}
+.dp-thought.out{opacity:0;transition:opacity .3s}
+@keyframes dpPop{0%{opacity:0;transform:translateY(6px) scale(.9)}100%{opacity:1;transform:none}}
+.dp-call{position:fixed;right:16px;top:64px;z-index:9440;width:min(300px,calc(100vw - 32px));background:#141821;color:#eef1f5;border:1px solid #3a4150;border-radius:14px;padding:12px 14px;box-shadow:0 8px 20px rgba(0,0,0,.4);animation:dpSlide .22s var(--px-ease);cursor:pointer}
+.dp-call-top{display:flex;justify-content:space-between;align-items:baseline}.dp-call-top small{opacity:.7}
+.dp-ring{margin:6px 0 0;letter-spacing:2px;opacity:.75;font-size:13px}.dp-call.on .dp-ring{display:none}
+.dp-say{margin:6px 0 0;font-size:14px;line-height:1.55;min-height:0}.dp-bg{display:block;margin-top:4px;opacity:.5;font-size:11px}
+.dp-call.out{opacity:0;transform:translateX(12px);transition:.24s}
+@keyframes dpSlide{from{opacity:0;transform:translateX(24px)}}
+.dp-visit{max-width:420px;padding:0 16px}.dp-visit ol{list-style:none;padding:0;margin:12px 0}
+.dp-visit li,.dp-visit .dp-react{opacity:0;animation:dpIn .4s var(--px-ease) both;font-size:16px;margin:8px 0}
+.dp-visit .dp-react{font-size:19px;margin-top:14px}.dp-visit .dp-react small{display:block;font-size:13px;opacity:.75;margin-top:4px}
+.px-card.still .dp-visit li,.px-card.still .dp-react{animation:none;opacity:1}
+@keyframes dpIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.dp-props{position:absolute;left:3%;bottom:34%;z-index:3;display:flex;gap:4px;align-items:flex-end}
+.dp-prop{background:rgba(20,22,28,.35);border:0;border-radius:8px;min-width:44px;min-height:44px;padding:2px 6px;font-size:22px;line-height:1;cursor:pointer;filter:saturate(.8) drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+.dp-prop:hover{background:rgba(20,22,28,.55)}
+.dp-prop.wet{position:relative}.dp-prop.wet::after{content:"";position:absolute;left:50%;bottom:2px;width:24px;height:5px;margin-left:-12px;border-radius:50%;background:rgba(120,180,230,.55)}
+.dp-say-bubble{position:absolute;bottom:52px;min-width:150px;max-width:240px;background:#fffdf6;color:#2b2418;border:2px solid #2b2418;border-radius:10px;padding:6px 10px;font-size:13px;line-height:1.45;animation:dpPop .25s var(--px-ease)}
+.dp-newslist{list-style:none;padding:0;margin:6px 0}.dp-newslist li{padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)}.dp-newslist small{display:block;opacity:.8}
+.dp-newslist li.regret b{color:#b3261e}.dp-newslist li.relief b{color:#1f7a45}
+@media (max-width:640px){.dp-props{bottom:36%;left:2%}.dp-prop{font-size:18px;min-width:44px}}
+@media (prefers-reduced-motion:reduce){.dp-visit li,.dp-visit .dp-react{animation:none;opacity:1}}

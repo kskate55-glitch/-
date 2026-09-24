@@ -880,11 +880,18 @@ def estimate():
     # 69절 — 매입자 연령대. CSV 한 번 읽는 게 전부라 API 호출도, 비용도 0이다.
     # ⚠️ 실패해도 카드만 생략한다 — 20·21·26·50-1절과 같은 원칙.
     buyer_age = None
+    buyer_age_missing = None
     try:
-        from buyer_age import compute_buyer_age
+        from buyer_age import compute_buyer_age, unavailable_reason
         buyer_age = compute_buyer_age(address)
-    except (OSError, ValueError, KeyError, ImportError):
-        buyer_age = None
+        # 72-29절 — 안 뜰 때는 **왜 없는지** 한 줄로 말한다. 사용자가 찾다가
+        #           못 찾았는데("연령대 뭐 그건 어디 간 거임") 아무 말 없이
+        #           사라지면 고장인지 원래 없는 건지 구별할 방법이 없다.
+        if not buyer_age:
+            buyer_age_missing = unavailable_reason(address)
+    except Exception:
+        buyer_age = None       # 참고 정보라 무엇이 터지든 계산을 막지 않는다
+        buyer_age_missing = None
 
     from data_source import get_trade_rows
     from estimate_price import (FIRST_FLOOR_PRICE_RATIO, SALE_CALIBRATION_FACTOR,
@@ -1286,6 +1293,7 @@ def estimate():
         "condition_adjustment": condition_display,
         "villa_market_trend": villa_market_trend,
         "buyer_age": buyer_age,
+        "buyer_age_missing": buyer_age_missing,
         "dong_compare": dong_compare,
         "station_premium": station_premium,
         "price_chart_html": price_chart_html,

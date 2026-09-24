@@ -156,6 +156,51 @@ def compute_buyer_age(address: str, table: dict | None = None) -> dict | None:
     }
 
 
+def _eun_neun(word: str) -> str:
+    """받침이 있으면 '은', 없으면 '는'. 지역명이 그대로 문장에 들어가서
+    '군위군는'처럼 어색해지는 걸 막는다."""
+    if not word:
+        return "는"
+    last = word[-1]
+    if not ("\uac00" <= last <= "\ud7a3"):
+        return "는"
+    return "은" if (ord(last) - 0xAC00) % 28 else "는"
+
+
+def unavailable_reason(address: str, table: dict | None = None) -> str:
+    """72-29절 — 카드가 안 뜰 때 **왜 없는지** 한 문장으로 돌려준다.
+
+    ⚠️ 20·21·26·50-1절의 "실패하면 조용히 생략" 원칙을 여기서만 살짝 비튼다.
+    그 원칙은 **있는 줄도 몰랐던 정보**에 대한 것인데, 이 카드는 사용자가
+    **찾다가 못 찾았다**("연령대 뭐 그건 어디 간 거임"). 아무 말 없이
+    사라지면 고장인지 원래 없는 건지 구별할 방법이 없다.
+
+    ⚠️ 그래도 **계산을 막지는 않는다** — 문장 하나를 돌려줄 뿐이다.
+    """
+    table = load_buyer_age() if table is None else table
+    key = region_for_address(address, table)
+    if not key:
+        if any(w in address for w in ("광주", "전남", "전라남")):
+            return ("이 통계는 원본이 광주광역시와 전라남도를 한 항목으로 묶어 "
+                    "내려보내서 둘을 가를 수 없어요 — 그래서 이 지역만 지원하지 않습니다.")
+        return "주소에서 시/군/구를 찾지 못해 이 지역 통계를 고르지 못했어요."
+    ages = table.get(key) or {}
+    name = key[1] or key[0]
+    totals = ages.get("합계") or {}
+    if not totals:
+        return f"{name}{_eun_neun(name)} 이 통계에 거래 기록이 없어요."
+    latest = sorted(totals)[-1]
+    total = totals.get(latest, 0)
+    if total < MIN_TOTAL:
+        return (f"{name}{_eun_neun(name)} {latest}년 매입 거래가 {total:,}건뿐이라 "
+                f"연령 구성을 믿기 어려워 생략했어요 (최소 {MIN_TOTAL}건 필요).")
+    known = sum(ages.get(a, {}).get(latest, 0) for a in AGE_ORDER)
+    if known < MIN_TOTAL:
+        return (f"{name}{_eun_neun(name)} 매입자 연령이 확인된 거래가 {known:,}건뿐이라 "
+                f"생략했어요 (최소 {MIN_TOTAL}건 필요).")
+    return "이 지역 통계를 불러오지 못했어요."
+
+
 def _young_pct_for(table: dict, key: tuple, year: int) -> float | None:
     ages = table.get(key)
     if not ages:

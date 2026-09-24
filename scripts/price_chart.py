@@ -805,6 +805,21 @@ def render_price_trend_svg(trend: dict, width: int = 720, height: int = 210,
 AGE_RAMP = ("#d3f0e0", "#8fdcb4", "#4cc68a", "#20a96a", "#15804f", "#0d5c39")
 
 
+def _num(value, default: float | None = None):
+    """72-35절 — 차트에 들어오는 값을 **안전하게** 숫자로 바꾼다.
+
+    ⚠️ 이 프로젝트가 반복해서 데인 자리다(72-13절 교훈 #1): 숫자가 아닌 값,
+    NaN, 무한대가 가드를 그냥 통과해서 `float()` 에서 터지거나 좌표를 망친다.
+    참고용 차트 하나 때문에 페이지 전체가 죽으면 안 되므로 **못 읽으면
+    default 로 떨어뜨린다**.
+    """
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return default
+    return v if math.isfinite(v) else default
+
+
 def render_donut_svg(slices: list[dict], center_big: str, center_sub: str = "",
                      size: int = 168, thickness: int = 30) -> str:
     """구성 비율 도넛. slices = [{"label","pct","color"}, ...]
@@ -813,7 +828,7 @@ def render_donut_svg(slices: list[dict], center_big: str, center_sub: str = "",
        호출부에서 묶어서 넘겨야 한다. 여기서는 막지 않고 그리기만 한다.
     ⚠️ 색만으로 식별하게 두지 않는다 — 범례가 글자로 같이 나간다(호출부).
     """
-    total = sum(max(0.0, float(s.get("pct") or 0)) for s in slices)
+    total = sum(max(0.0, _num(s.get("pct"), 0.0)) for s in slices)
     if total <= 0:
         return ""
     r = (size - thickness) / 2
@@ -821,7 +836,7 @@ def render_donut_svg(slices: list[dict], center_big: str, center_sub: str = "",
     circ = 2 * math.pi * r
     segs, offset = [], 0.0
     for s in slices:
-        pct = max(0.0, float(s.get("pct") or 0)) / total
+        pct = max(0.0, _num(s.get("pct"), 0.0)) / total
         if pct <= 0:
             continue
         seg = circ * pct
@@ -853,13 +868,13 @@ def render_compare_bars_html(rows: list[dict], suffix: str = "%",
     가이드의 "비교는 막대그래프". 값 자체보다 **서로 얼마나 다른지**가
     핵심이라 가장 큰 값을 100%로 놓고 가로 길이를 준다.
     """
-    vals = [float(r.get("value") or 0) for r in rows]
+    vals = [_num(r.get("value"), 0.0) for r in rows]
     if not vals or max(vals) <= 0:
         return ""
     top = max(vals)
     out = []
     for r in rows:
-        v = float(r.get("value") or 0)
+        v = _num(r.get("value"), 0.0)
         strong = bool(r.get("strong"))
         color = PRIMARY if strong else "#c9d3da"
         out.append(
@@ -880,13 +895,13 @@ def render_compare_bars_html(rows: list[dict], suffix: str = "%",
 def render_diverging_bars_html(rows: list[dict], suffix: str = "%") -> str:
     """0을 가운데 두고 좌우로 갈라지는 막대 — 오르는 동네와 내리는 동네를
     한눈에 가른다. rows = [{"label","value","strong"?}, ...]"""
-    vals = [abs(float(r.get("value") or 0)) for r in rows]
+    vals = [abs(_num(r.get("value"), 0.0)) for r in rows]
     if not rows or max(vals or [0]) <= 0:
         return ""
     top = max(vals)
     out = []
     for r in rows:
-        v = float(r.get("value") or 0)
+        v = _num(r.get("value"), 0.0)
         strong = bool(r.get("strong"))
         w = abs(v) / top * 50          # 좌우 각각 최대 50%
         up = v >= 0
@@ -914,7 +929,8 @@ def render_diverging_bars_html(rows: list[dict], suffix: str = "%") -> str:
 def render_series_line_svg(points: list[tuple], width: int = 460, height: int = 130,
                            suffix: str = "") -> str:
     """시간에 따른 변화 — 가이드의 "변화는 꺾은선". points = [(x라벨, 값), ...]"""
-    pts = [(str(a), float(b)) for a, b in (points or []) if b is not None]
+    pts = [(str(a), _num(b)) for a, b in (points or [])]
+    pts = [(a, b) for a, b in pts if b is not None]
     if len(pts) < 2:
         return ""
     vals = [v for _, v in pts]

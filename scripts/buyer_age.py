@@ -125,7 +125,10 @@ def region_for_address(address: str, table: dict) -> tuple | None:
     """
     from market_index import sido_token
 
-    if not address:
+    # ⚠️ 72-35절 — 문자열이 아닌 값도 조용히 None 으로 떨어뜨린다.
+    #    `if not address` 는 0·None·"" 만 잡고 -1·NaN 은 그냥 통과해서
+    #    아래 `.strip()` 에서 터졌다(72-13절 교훈 #1이 또 재발했다).
+    if not isinstance(address, str) or not address:
         return None
     sido = sido_token(address)
     if not sido:
@@ -246,6 +249,9 @@ def unavailable_reason(address: str, table: dict | None = None) -> str:
     ⚠️ 그래도 **계산을 막지는 않는다** — 문장 하나를 돌려줄 뿐이다.
     """
     table = load_buyer_age() if table is None else table
+    # ⚠️ 72-35절 — 문자열이 아닌 값이 와도 터지지 않는다. 이 함수는 "왜 없는지"
+    #    를 말해주는 참고용이라, 여기서 죽으면 계산 전체가 멈춘다.
+    address = address if isinstance(address, str) else ""
     key = region_for_address(address, table)
     if not key:
         if any(w in address for w in ("광주", "전남", "전라남")):

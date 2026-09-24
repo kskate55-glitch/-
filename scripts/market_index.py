@@ -74,6 +74,8 @@ def sido_token(address: str) -> str | None:
 
     ⚠️ **맨 앞 토큰만 본다** — 부분 문자열로 찾으면 "경기도 **광주**시"가
     "광주광역시"로 잡힌다(실제로 헷갈리기 쉬운 조합이다)."""
+    if not isinstance(address, str):
+        return None   # 72-35절 — 문자열이 아닌 값이 와도 안 터진다
     first = (address or "").strip().split()
     return _SIDO_TOKEN.get(first[0]) if first else None
 
@@ -97,8 +99,8 @@ def seoul_zone_from_address(address: str) -> str | None:
     # ⚠️ 주소가 비어 있거나 None이면 여기서 끝낸다 — 아래 `in address`가
     #    None을 만나면 TypeError로 터지고, 참고용 카드 하나 때문에 계산
     #    전체가 죽는다(71절 ④와 같은 실패다).
-    if not address:
-        return None
+    if not isinstance(address, str) or not address:
+        return None          # 72-35절 — 문자열이 아닌 값도 조용히 넘긴다
     sido = sido_token(address)
     if sido is not None and sido != "서울":
         return None
@@ -151,7 +153,7 @@ def region_from_address(address: str, alias_map: dict[str, str] = SIDO_ALIAS) ->
     # ⚠️ 주소가 비어 있거나 None이면 여기서 끝낸다 — 아래 `in address`가
     #    None을 만나면 TypeError로 터지고, 참고용 카드 하나 때문에 계산
     #    전체가 죽는다(71절 ④와 같은 실패다).
-    if not address:
+    if not isinstance(address, str) or not address:   # 72-35절
         return None
     token = sido_token(address)
     if token is not None:

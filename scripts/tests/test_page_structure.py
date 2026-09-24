@@ -139,3 +139,80 @@ class TheTemplateKeysAreReal(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheNewChartsSwallowJunk(unittest.TestCase):
+    """72-35절 — 참고용 차트 하나 때문에 페이지가 죽으면 안 된다.
+
+    ⚠️ 이 프로젝트가 반복해서 데인 자리다(72-13절 교훈 #1): 숫자가 아닌 값·
+    NaN·무한대가 `if not x` 같은 가드를 **그냥 통과**한다.
+    """
+
+    JUNK = [None, "", "  ", "abc", 0, -1, 1e9, float("nan"), float("inf"),
+            float("-inf"), [], {}, True, 1e-12]
+
+    def test_the_donut_never_raises(self):
+        import price_chart as pc
+        for v in self.JUNK:
+            pc.render_donut_svg([{"label": "a", "pct": v, "color": "#000"}], "x", "y")
+        pc.render_donut_svg([], "x")
+        pc.render_donut_svg([{}], "x")
+
+    def test_the_bars_never_raise(self):
+        import price_chart as pc
+        for fn in (pc.render_compare_bars_html, pc.render_diverging_bars_html):
+            for v in self.JUNK:
+                fn([{"label": "a", "value": v}])
+                fn([{"label": v, "value": 1}])
+            fn([]), fn([{}])
+
+    def test_the_line_never_raises(self):
+        import price_chart as pc
+        for v in self.JUNK:
+            pc.render_series_line_svg([("a", v), ("b", 2), ("c", 3)])
+        pc.render_series_line_svg([])
+        pc.render_series_line_svg([(None, 1), ("b", 2), ("c", 3)])
+
+    def test_junk_is_dropped_not_drawn_as_zero(self):
+        """못 읽는 값을 0으로 그리면 **없는 데이터를 있는 것처럼** 보여준다."""
+        import price_chart as pc
+        svg = pc.render_series_line_svg([("a", 10), ("b", "abc"), ("c", 30)])
+        self.assertEqual(svg.count("<circle"), 2, "읽을 수 없는 점이 그려졌다")
+
+    def test_the_numeric_guard_exists(self):
+        """되돌아가지 않게 공용 헬퍼를 고정한다."""
+        import math
+        import price_chart as pc
+        self.assertIsNone(pc._num("abc"))
+        self.assertIsNone(pc._num(float("nan")))
+        self.assertIsNone(pc._num(float("inf")))
+        self.assertEqual(pc._num("3.5"), 3.5)
+        self.assertEqual(pc._num(None, 0.0), 0.0)
+
+
+class TheRegionResolversSwallowJunk(unittest.TestCase):
+    """72-35절 — 주소 자리에 문자열이 아닌 값이 와도 계산이 멈추면 안 된다."""
+
+    JUNK = [None, "", 0, -1, float("nan"), float("inf"), True, [], {}, 1e-12]
+
+    def test_buyer_age_resolvers(self):
+        import buyer_age as B
+        table = B.load_buyer_age()
+        for v in self.JUNK:
+            self.assertIsNone(B.region_for_address(v, table))
+            self.assertIsNone(B.sido_for_address(v, table))
+            self.assertIsInstance(B.unavailable_reason(v, table), str)
+
+    def test_market_index_resolvers(self):
+        import market_index as M
+        for v in self.JUNK:
+            self.assertIsNone(M.sido_token(v))
+            self.assertIsNone(M.seoul_zone_from_address(v))
+            self.assertIsNone(M.region_from_address(v, M.VILLA_SIDO_ALIAS))
+
+    def test_real_addresses_still_work(self):
+        """가드를 넣다가 정상 동작을 막지 않았는지."""
+        import buyer_age as B
+        import market_index as M
+        self.assertEqual(M.seoul_zone_from_address("서울특별시 서대문구 홍은동 1"), "서북권")
+        self.assertEqual(B.sido_for_address("서대문구 홍은동 265-218"), "서울")

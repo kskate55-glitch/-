@@ -409,6 +409,23 @@
   .cta-submit:hover { transform: translateY(-1px); box-shadow: 0 7px 20px rgba(3, 199, 90, .34); }
   .cta-submit:disabled { opacity: .6; cursor: default; transform: none; }
 
+  /* 다시 계산하기 — 예전엔 맨 아래 작은 글자 링크라 안 보였다 */
+  .recalc-btn {
+    display: block; max-width: 440px; margin: 0 auto; padding: 17px 20px;
+    border-radius: var(--radius-lg); text-align: center; text-decoration: none;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff; font-size: 18px; font-weight: 800;
+    box-shadow: 0 4px 14px rgba(3, 199, 90, .28);
+  }
+  .recalc-btn:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 7px 20px rgba(3, 199, 90, .34); }
+  .recalc-top {
+    display: inline-flex; align-items: center; gap: 6px; margin: 8px 0 6px;
+    padding: 10px 18px; border-radius: 999px; border: 2px solid var(--primary);
+    background: #fff; color: var(--primary-dark); font-size: 15.5px; font-weight: 800;
+    text-decoration: none;
+  }
+  .recalc-top:hover { background: var(--primary); color: #fff; }
+
   /* 하단 안내 줄 */
   .home-note {
     display: flex; gap: 9px; align-items: flex-start;
@@ -608,24 +625,10 @@
   }
   ul.ref-list li:last-child { border-bottom: none; }
 
-  /* 72-38절 — 14px 글자 링크라 페이지 맨 아래에서 안 보인다는 지적을 받아
-     입력 화면 제출 버튼(.cta-submit)과 같은 크기의 버튼으로 키웠다.
-     ⚠️ 색은 흰 배경 + 그린 테두리다 — 꽉 찬 그린으로 하면 위쪽 네이버 CTA와
-     같은 무게가 되어 "다음에 눌러야 할 버튼"이 둘로 보인다. */
-  a.back {
-    display: block; width: 100%; box-sizing: border-box;
-    margin: 4px auto 0; max-width: 420px;
-    padding: 16px 20px; text-align: center;
-    border: 2px solid var(--primary); border-radius: var(--radius-lg);
-    background: #fff; color: var(--primary-dark);
-    text-decoration: none; font-size: 16.5px; font-weight: 800; letter-spacing: -0.2px;
-    box-shadow: 0 2px 8px rgba(3, 199, 90, .14);
-    transition: background .12s ease, transform .12s ease, box-shadow .12s ease;
-  }
-  a.back:hover {
-    background: var(--primary-tint); transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(3, 199, 90, .22);
-  }
+  /* 72-38절 — 맨 아래 "다시 계산하기". 실제 모양은 `.recalc-btn`이 정한다.
+     ⚠️ `a.back`(0,1,1)이 `.recalc-btn`(0,1,0)보다 우선순위가 높아서, 여기에
+     색·크기를 적으면 버튼 스타일을 조용히 덮어쓴다 — 기본값만 둔다. */
+  a.back { text-decoration: none; }
 
   footer { margin-top: 28px; color: var(--muted-2); font-size: 13px; line-height: 1.75; padding: 0 4px; }
 

@@ -134,11 +134,20 @@ class TheRecalculateLinkIsAtTheVeryBottom(unittest.TestCase):
         """72-38절 — 14px 글자 링크라 페이지 맨 아래에서 안 보였다."""
         css = open(os.path.join(os.path.dirname(__file__), "..", "..",
                                 "webapp", "static", "app.css"), encoding="utf-8").read()
-        block = css[css.index("a.back {"):css.index("a.back:hover")]
+        tpl = _src(True)
+        link = tpl[tpl.index("다른 물건 다시 계산하기") - 120:]
+        self.assertIn("recalc-btn", link.split(">")[0] + link[:200],
+                      "맨 아래 링크에 버튼 클래스가 없다")
+        block = css[css.index(".recalc-btn {"):css.index(".recalc-btn:hover")]
         self.assertIn("display: block", block, "한 줄짜리 인라인 링크로 되돌아갔다")
         size = float(re.search(r"font-size: ([\d.]+)px", block).group(1))
         self.assertGreaterEqual(size, 16, f"글자가 {size}px 로 다시 작아졌다")
-        self.assertIn("border: 2px solid", block, "버튼 테두리가 없어 링크로 보인다")
+        self.assertIn("box-shadow", block, "버튼으로 안 보인다")
+        # ⚠️ `a.back`(0,1,1)이 `.recalc-btn`(0,1,0)을 이긴다 — 거기에 색·크기를
+        #    적으면 버튼 스타일이 조용히 죽는다.
+        base = css[css.index("a.back {"):css.index("}", css.index("a.back {"))]
+        for prop in ("font-size", "background", "border", "display"):
+            self.assertNotIn(prop, base, f"a.back 의 {prop} 가 버튼 스타일을 덮어쓴다")
 
 
 class TheVolumeNumbersAreOneLadder(unittest.TestCase):

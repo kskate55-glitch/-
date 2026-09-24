@@ -2750,11 +2750,14 @@ class TestRegionIsNotAFactor(unittest.TestCase):
 
 
 class TestReferenceCardsGoNarrowToWide(unittest.TestCase):
-    """72-27절 — 참고 정보 카드는 좁은 단위 → 넓은 단위 순이어야 한다.
+    """72-27절 — 참고 정보는 좁은 단위 → 넓은 단위 순이어야 한다.
 
     사용자 지적: "동 이야기를 먼저 하고 서남권 이런 권역 이야기를 다음에
     하는 게 순서상 맞지 않나". 화면 순서는 테스트가 없으면 다음 편집에서
     **조용히 뒤섞이고 아무도 모른다** — 소스 위치로 고정한다.
+
+    ⚠️ 72-32절에서 동(25절)과 구(69절)가 **한 카드로 합쳐졌다.** 순서 계약은
+    그대로다 — 이제 카드 **안에서** 동 → 구 순이고, 그 뒤에 권역 카드가 온다.
     """
 
     def _template(self):
@@ -2765,21 +2768,26 @@ class TestReferenceCardsGoNarrowToWide(unittest.TestCase):
 
     def test_dong_then_gu_then_zone(self):
         src = self._template()
-        spots = [(src.find("{% if result.dong_compare %}"), "인근 동 비교(동)"),
-                 (src.find("{% if result.buyer_age %}"), "매입자 연령대(구)"),
+        spots = [(src.find("📊 얼마나 자주 팔리나"), "거래 활발도(동)"),
+                 (src.find("👥 누가 사 가나"), "매입자 연령대(구)"),
                  (src.find("{% if result.villa_market_trend %}"), "시장 동향(권역)")]
         for pos, name in spots:
-            self.assertGreater(pos, 0, f"{name} 카드가 사라졌다")
+            self.assertGreater(pos, 0, f"{name} 가 사라졌다")
         self.assertEqual(spots, sorted(spots),
-                         "참고 정보 카드가 좁은 단위 → 넓은 단위 순이 아니다: "
+                         "참고 정보가 좁은 단위 → 넓은 단위 순이 아니다: "
                          + " → ".join(n for _, n in sorted(spots)))
 
+    def test_the_merged_card_comes_before_the_zone_card(self):
+        src = self._template()
+        self.assertLess(src.index("{% if result.neighbourhood %}"),
+                        src.index("{% if result.villa_market_trend %}"))
+
     def test_the_divider_still_comes_first(self):
-        """'참고 정보' 구분선은 세 카드보다 앞에 있어야 한다."""
+        """'참고 정보' 구분선은 참고 카드들보다 앞에 있어야 한다."""
         src = self._template()
         divider = src.find('<div class="section-divider">참고 정보</div>')
         self.assertGreater(divider, 0)
-        for key in ("dong_compare", "buyer_age", "villa_market_trend"):
+        for key in ("neighbourhood", "villa_market_trend"):
             self.assertGreater(src.find("{%% if result.%s %%}" % key), divider,
                                f"{key} 카드가 구분선보다 위에 있다")
 

@@ -241,6 +241,29 @@
         3열 그리드로 바꿔 **거리는 항상 오른쪽 같은 자리**에 선다.
      ② **★(판정에 쓰이는 두 항목)이 나머지 여덟과 똑같이 보이던 문제.**
         그 행만 배경과 왼쪽 띠를 줘서 훑어만 봐도 갈린다. */
+  /* 72-32절 — "이 동네, 누가 얼마나 사나" 카드. 한 카드 안에 갈래가 셋이라
+     (자주 팔리나 / 오르나 / 누가 사나) 구분선으로 나눠 준다. */
+  .nb-block { padding-top: 15px; margin-top: 15px; border-top: 1px solid var(--border); }
+  .nb-block:first-of-type { padding-top: 0; margin-top: 0; border-top: 0; }
+  .nb-head {
+    font-size: 15.5px; font-weight: 800; color: var(--ink); margin-bottom: 8px;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px;
+  }
+  .nb-sub { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .nb-age { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+  .nb-donut { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+  .nb-legend { display: flex; flex-direction: column; gap: 4px; }
+  .nb-leg {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap;
+  }
+  .nb-leg i { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; }
+  .nb-cmp { flex: 1 1 280px; min-width: 250px; }
+  .nb-cmp-title { font-size: 13.5px; font-weight: 800; color: var(--ink); margin-bottom: 8px; }
+  @media (max-width: 560px) {
+    .nb-donut { width: 100%; justify-content: center; }
+    .nb-cmp { flex-basis: 100%; }
+  }
   /* 72-31절 — "이 주소로 알아들었어요" 한 줄. 입력과 다를 때만 뜬다. */
   .subject-resolved {
     margin: 2px 0 0; font-size: 13.5px; color: var(--primary-dark);

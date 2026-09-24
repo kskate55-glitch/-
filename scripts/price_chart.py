@@ -52,6 +52,7 @@ JS 툴팁/클릭 상세/필터 토글)로 그린다.
 구분한다.
 """
 
+import math
 import html
 import uuid
 from datetime import datetime
@@ -742,3 +743,161 @@ def render_price_trend_svg(trend: dict, width: int = 720, height: int = 210,
                      f'text-anchor="{anchor}">{label}</text>')
     parts.append("</svg>")
     return f'<div style="overflow-x:auto; -webkit-overflow-scrolling:touch">{"".join(parts)}</div>'
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# 72-32절 — "이 동네, 누가 얼마나 사나" 카드용 차트들.
+#
+# 사용자가 보내준 데이터 시각화 가이드를 그대로 따랐다:
+#   · 하나의 변수에 대한 구성 비율 → 원/도넛 (도넛은 중앙에 총합을 넣을 수 있다)
+#   · 비교 → 막대   · 시간에 따른 변화 → 꺾은선
+# ⚠️ 가이드가 경고한 "항목을 너무 많이 넣은 원그래프"를 피하려고 도넛은
+#    6조각까지만 쓴다(연령 6구간). 동네 비교는 조각이 아니라 막대로 간다.
+# ⚠️ 외부 차트 라이브러리를 쓰지 않는다(14·22절) — 순수 SVG + 인라인 스타일이라
+#    어느 페이지에 넣어도 그대로 그려진다(44절 렌더러와 같은 원칙).
+# ─────────────────────────────────────────────────────────────────────────
+
+#: 연령 6구간 — 순서가 있는 값이라 무지개색이 아니라 한 색의 연→진 램프를 쓴다.
+AGE_RAMP = ("#d3f0e0", "#8fdcb4", "#4cc68a", "#20a96a", "#15804f", "#0d5c39")
+
+
+def render_donut_svg(slices: list[dict], center_big: str, center_sub: str = "",
+                     size: int = 168, thickness: int = 30) -> str:
+    """구성 비율 도넛. slices = [{"label","pct","color"}, ...]
+
+    ⚠️ 조각이 6개를 넘으면 가이드가 말한 "욕먹는 원그래프"가 되므로
+       호출부에서 묶어서 넘겨야 한다. 여기서는 막지 않고 그리기만 한다.
+    ⚠️ 색만으로 식별하게 두지 않는다 — 범례가 글자로 같이 나간다(호출부).
+    """
+    total = sum(max(0.0, float(s.get("pct") or 0)) for s in slices)
+    if total <= 0:
+        return ""
+    r = (size - thickness) / 2
+    c = size / 2
+    circ = 2 * math.pi * r
+    segs, offset = [], 0.0
+    for s in slices:
+        pct = max(0.0, float(s.get("pct") or 0)) / total
+        if pct <= 0:
+            continue
+        seg = circ * pct
+        segs.append(
+            f'<circle cx="{c:.1f}" cy="{c:.1f}" r="{r:.1f}" fill="none" '
+            f'stroke="{s.get("color", PRIMARY)}" stroke-width="{thickness}" '
+            f'stroke-dasharray="{seg:.2f} {circ - seg:.2f}" '
+            f'stroke-dashoffset="{-offset:.2f}" '
+            f'transform="rotate(-90 {c:.1f} {c:.1f})">'
+            f'<title>{html.escape(str(s.get("label", "")))} {pct * 100:.1f}%</title></circle>'
+        )
+        offset += seg
+    sub = (f'<text x="{c:.1f}" y="{c + 18:.1f}" text-anchor="middle" '
+           f'font-size="11.5" fill="{MUTED}">{html.escape(center_sub)}</text>') if center_sub else ""
+    return (
+        f'<svg viewBox="0 0 {size} {size}" width="{size}" height="{size}" '
+        f'role="img" style="flex:0 0 auto">'
+        + "".join(segs)
+        + f'<text x="{c:.1f}" y="{c + (0 if not center_sub else -2):.1f}" text-anchor="middle" '
+          f'font-size="21" font-weight="800" fill="{INK}">{html.escape(center_big)}</text>'
+        + sub + "</svg>"
+    )
+
+
+def render_compare_bars_html(rows: list[dict], suffix: str = "%",
+                             decimals: int = 1) -> str:
+    """비교 막대 — rows = [{"label","value","note"?,"strong"?}, ...]
+
+    가이드의 "비교는 막대그래프". 값 자체보다 **서로 얼마나 다른지**가
+    핵심이라 가장 큰 값을 100%로 놓고 가로 길이를 준다.
+    """
+    vals = [float(r.get("value") or 0) for r in rows]
+    if not vals or max(vals) <= 0:
+        return ""
+    top = max(vals)
+    out = []
+    for r in rows:
+        v = float(r.get("value") or 0)
+        strong = bool(r.get("strong"))
+        color = PRIMARY if strong else "#c9d3da"
+        out.append(
+            f'<div style="display:grid; grid-template-columns:92px 1fr auto; gap:9px;'
+            f' align-items:center; margin-bottom:6px">'
+            f'<span style="font-size:13px; font-weight:{"800" if strong else "600"};'
+            f' color:{INK if strong else MUTED}">{html.escape(str(r.get("label","")))}</span>'
+            f'<span style="display:block; height:14px; background:#eef1f3; border-radius:999px; overflow:hidden">'
+            f'<span style="display:block; height:100%; width:{v / top * 100:.1f}%;'
+            f' background:{color}; border-radius:999px"></span></span>'
+            f'<span style="font-size:13.5px; font-weight:800;'
+            f' color:{INK if strong else MUTED}; font-variant-numeric:tabular-nums">'
+            f'{v:.{decimals}f}{suffix}</span></div>'
+        )
+    return "".join(out)
+
+
+def render_diverging_bars_html(rows: list[dict], suffix: str = "%") -> str:
+    """0을 가운데 두고 좌우로 갈라지는 막대 — 오르는 동네와 내리는 동네를
+    한눈에 가른다. rows = [{"label","value","strong"?}, ...]"""
+    vals = [abs(float(r.get("value") or 0)) for r in rows]
+    if not rows or max(vals or [0]) <= 0:
+        return ""
+    top = max(vals)
+    out = []
+    for r in rows:
+        v = float(r.get("value") or 0)
+        strong = bool(r.get("strong"))
+        w = abs(v) / top * 50          # 좌우 각각 최대 50%
+        up = v >= 0
+        color = (PRIMARY if up else "#e0475a") if strong else ("#a9d9c0" if up else "#f0b4bd")
+        bar = (f'<span style="position:absolute; left:50%; width:{w:.1f}%; height:100%;'
+               f' background:{color}; border-radius:0 999px 999px 0"></span>' if up else
+               f'<span style="position:absolute; right:50%; width:{w:.1f}%; height:100%;'
+               f' background:{color}; border-radius:999px 0 0 999px"></span>')
+        out.append(
+            f'<div style="display:grid; grid-template-columns:78px 1fr 62px; gap:9px;'
+            f' align-items:center; margin-bottom:6px">'
+            f'<span style="font-size:13px; font-weight:{"800" if strong else "600"};'
+            f' color:{INK if strong else MUTED}">{html.escape(str(r.get("label","")))}</span>'
+            f'<span style="position:relative; display:block; height:14px; background:#f4f6f7;'
+            f' border-radius:999px">'
+            f'<span style="position:absolute; left:50%; top:0; bottom:0; width:1px; background:#d6dde2"></span>'
+            f'{bar}</span>'
+            f'<span style="font-size:13.5px; font-weight:800; text-align:right;'
+            f' color:{INK if strong else MUTED}; font-variant-numeric:tabular-nums">'
+            f'{v:+.1f}{suffix}</span></div>'
+        )
+    return "".join(out)
+
+
+def render_series_line_svg(points: list[tuple], width: int = 460, height: int = 130,
+                           suffix: str = "") -> str:
+    """시간에 따른 변화 — 가이드의 "변화는 꺾은선". points = [(x라벨, 값), ...]"""
+    pts = [(str(a), float(b)) for a, b in (points or []) if b is not None]
+    if len(pts) < 2:
+        return ""
+    vals = [v for _, v in pts]
+    lo, hi = min(vals), max(vals)
+    if hi == lo:
+        hi = lo + 1
+    pad_l, pad_r, pad_t, pad_b = 8, 8, 16, 22
+    iw, ih = width - pad_l - pad_r, height - pad_t - pad_b
+    xy = [(pad_l + iw * i / (len(pts) - 1), pad_t + ih * (1 - (v - lo) / (hi - lo)))
+          for i, (_, v) in enumerate(pts)]
+    line = " ".join(f"{x:.1f},{y:.1f}" for x, y in xy)
+    area = f"{pad_l},{pad_t + ih} " + line + f" {pad_l + iw},{pad_t + ih}"
+    dots = "".join(
+        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3.2" fill="{PRIMARY}">'
+        f'<title>{html.escape(pts[i][0])} {pts[i][1]:,.0f}{html.escape(suffix)}</title></circle>'
+        for i, (x, y) in enumerate(xy))
+    ends = (
+        f'<text x="{pad_l}" y="{height - 6}" font-size="11" fill="{MUTED}">{html.escape(pts[0][0])}</text>'
+        f'<text x="{pad_l + iw}" y="{height - 6}" font-size="11" fill="{MUTED}" '
+        f'text-anchor="end">{html.escape(pts[-1][0])}</text>'
+        f'<text x="{xy[0][0]:.1f}" y="{max(11.0, xy[0][1] - 7):.1f}" font-size="11.5" '
+        f'font-weight="700" fill="{MUTED}">{pts[0][1]:,.0f}</text>'
+        f'<text x="{xy[-1][0]:.1f}" y="{max(11.0, xy[-1][1] - 7):.1f}" font-size="11.5" '
+        f'font-weight="800" fill="{INK}" text-anchor="end">{pts[-1][1]:,.0f}</text>')
+    return (f'<svg viewBox="0 0 {width} {height}" width="100%" role="img" '
+            f'style="height:auto; display:block; max-width:{width}px">'
+            f'<polygon points="{area}" fill="{PRIMARY}" fill-opacity="0.10"/>'
+            f'<polyline points="{line}" fill="none" stroke="{PRIMARY}" '
+            f'stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
+            f'{dots}{ends}</svg>')

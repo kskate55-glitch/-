@@ -215,6 +215,10 @@ def compute_buyer_age(address: str, table: dict | None = None) -> dict | None:
         "breakdown": breakdown,
         "young_pct": young_pct,
         "nationwide_young_pct": _young_pct_for(table, ("전국", ""), latest),
+        # 72-32절 — 전국 평균만으로는 "이 동네가 젊은 편인가"가 안 잡힌다.
+        #            같은 시/도 평균까지 있어야 세 단계로 비교된다.
+        "sido_young_pct": (_young_pct_for(table, (key[0], ""), latest)
+                           if key[1] else None),
         "volume_series": [(y, ages["합계"].get(y, 0)) for y in years],
         "rank": _rank_within_sido(table, key, latest),
     }

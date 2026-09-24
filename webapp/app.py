@@ -99,6 +99,85 @@ def _address_differs(typed: str, canonical: str) -> bool:
     return bool(canonical) and norm(typed) != norm(canonical)
 
 
+def _build_neighbourhood_card(dong_compare, buyer_age) -> dict | None:
+    """72-32절 — 25절 인근 동 비교와 69절 매입자 연령대를 한 카드로 묶는다.
+
+    사용자 지적: *"인근 동 비교 거래 활발도, 사실 이거랑 같은 계열이니 묶으면
+    좋겠다"* — 맞다. 둘 다 **"이 동네에서 손바뀜이 얼마나, 누구 사이에서
+    일어나나"**를 본다. 따로 떨어져 있으면 두 번 읽고 머릿속에서 합쳐야 한다.
+
+    차트는 사용자가 보내준 시각화 가이드를 그대로 따랐다:
+      · 구성 비율 → 도넛(6조각, 중앙에 대표값)
+      · 비교      → 가로 막대 / 0 기준 발산 막대
+      · 시간 변화 → 꺾은선
+    ⚠️ 값이 없으면 그 조각만 비워 둔다 — 카드 전체를 없애지 않는다.
+    """
+    if not dong_compare and not buyer_age:
+        return None
+    from price_chart import (AGE_RAMP, render_compare_bars_html,
+                             render_diverging_bars_html, render_donut_svg,
+                             render_series_line_svg)
+
+    card: dict = {"dong": None, "age": None}
+
+    if dong_compare:
+        vol = dong_compare.get("volume_top") or []
+        pri = dong_compare.get("price_top") or []
+        card["dong"] = {
+            "name": dong_compare.get("dong"),
+            "latest_month": dong_compare.get("latest_month"),
+            "volume_bars": render_compare_bars_html(
+                [{"label": v["dong"], "value": v["count"], "strong": v.get("is_target")}
+                 for v in vol], suffix="건", decimals=0),
+            "price_bars": render_diverging_bars_html(
+                [{"label": p["dong"],
+                  "value": _pct_to_float(p.get("change_pct")),
+                  "strong": p.get("is_target")} for p in pri]),
+            "volume_rank_note": dong_compare.get("volume_rank_note"),
+            "price_rank_note": dong_compare.get("price_rank_note"),
+            "volume_missing": dong_compare.get("volume_missing"),
+            "price_missing": dong_compare.get("price_missing"),
+            "target_count": next((v["count"] for v in vol if v.get("is_target")), None),
+        }
+
+    if buyer_age:
+        bands = buyer_age.get("breakdown") or []
+        slices = [{"label": b["age"], "pct": b["pct"], "color": AGE_RAMP[i % len(AGE_RAMP)]}
+                  for i, b in enumerate(bands)]
+        rows = [{"label": buyer_age["region"], "value": buyer_age["young_pct"], "strong": True}]
+        if buyer_age.get("sido_young_pct"):
+            rows.append({"label": f"{buyer_age['sido']} 평균",
+                         "value": buyer_age["sido_young_pct"]})
+        if buyer_age.get("nationwide_young_pct"):
+            rows.append({"label": "전국 평균", "value": buyer_age["nationwide_young_pct"]})
+        card["age"] = {
+            "region": buyer_age["region"], "year": buyer_age["year"],
+            "young_pct": buyer_age["young_pct"],
+            "donut": render_donut_svg(slices, f"{buyer_age['young_pct']:.0f}%", "30~40대"),
+            "legend": [{"label": s["label"], "pct": f"{s['pct']:.0f}", "color": s["color"]}
+                       for s in slices],
+            "compare_bars": render_compare_bars_html(rows),
+            "vs_sido": (buyer_age["young_pct"] - buyer_age["sido_young_pct"]
+                        if buyer_age.get("sido_young_pct") else None),
+            "vs_nation": (buyer_age["young_pct"] - buyer_age["nationwide_young_pct"]
+                          if buyer_age.get("nationwide_young_pct") else None),
+            "rank": buyer_age.get("rank"),
+            "volume_line": render_series_line_svg(
+                [(str(y), n) for y, n in (buyer_age.get("volume_series") or [])], suffix="건"),
+            "is_sido_only": buyer_age.get("is_sido_only"),
+            "sido": buyer_age.get("sido"),
+        }
+    return card
+
+
+def _pct_to_float(text) -> float:
+    """'+1.7%' 같은 표시용 문자열을 숫자로. 못 읽으면 0."""
+    try:
+        return float(str(text).replace("%", "").replace("+", "").strip())
+    except (TypeError, ValueError):
+        return 0.0
+
+
 @app.context_processor
 def _inject_version():
     """모든 화면 푸터에 배포 버전을 꽂는다 — 48-5절.
@@ -1347,6 +1426,7 @@ def estimate():
         "villa_market_trend": villa_market_trend,
         "buyer_age": buyer_age,
         "buyer_age_missing": buyer_age_missing,
+        "neighbourhood": _build_neighbourhood_card(dong_compare, buyer_age),
         "dong_compare": dong_compare,
         "station_premium": station_premium,
         "price_chart_html": price_chart_html,

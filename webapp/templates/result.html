@@ -676,82 +676,83 @@
    인근 동 비교(동) → 매입자 연령대(구) → 시장 동향(권역·시도).
    사용자 지적: "동 이야기를 먼저 하고 서남권 이런 권역 이야기를
    다음에 하는 게 순서상 맞지 않나". #}
-{% if result.dong_compare %}
+{# 72-32절 — 25절 인근 동 비교 + 69절 매입자 연령대를 한 카드로 묶었다.
+   둘 다 "이 동네에서 손바뀜이 얼마나, 누구 사이에서 일어나나"를 본다.
+   차트는 사용자가 보내준 시각화 가이드대로: 구성비=도넛 · 비교=막대 ·
+   변화=꺾은선. #}
+{% if result.neighbourhood %}
+{% set nb = result.neighbourhood %}
 <div class="card">
-  <h3>🏘️ 인근 동 비교 ({{ result.dong_compare.dong }} 기준, 최근 거래월 {{ result.dong_compare.latest_month }})</h3>
-  <p class="muted" style="font-weight:700; color:#4a4f54">거래 활발도 (최근 3개월 거래건수)</p>
-  {% if result.dong_compare.volume_top %}
-  <ul class="ref-list">
-    {% for v in result.dong_compare.volume_top %}
-    <li{% if v.is_target %} style="font-weight:800; color:var(--primary-dark)"{% endif %}>{{ v.dong }} {{ v.count }}건{% if v.is_target %} ← 검색하신 동{% endif %}</li>
-    {% endfor %}
-  </ul>
-  {% if result.dong_compare.volume_rank_note %}<p class="muted" style="margin-top:6px">{{ result.dong_compare.volume_rank_note }} ← 검색하신 동</p>{% endif %}
-  {% elif result.dong_compare.volume_missing %}
-  <p class="muted">비교할 만한 동이 부족합니다.</p>
-  {% endif %}
+  <h3 style="font-size:19px; margin-bottom:8px">🏘️ 이 동네, 누가 얼마나 사나</h3>
+  <p style="margin:0 0 14px; font-size:15px; font-weight:700; line-height:1.6; color:var(--ink)">
+    매도가는 "얼마에"를 말해주지만, 여기는 <span style="color:var(--primary-dark)">얼마나 자주 팔리고,
+    그걸 누가 사 가는지</span>를 봅니다.</p>
 
-  <p class="muted" style="margin-top:14px; font-weight:700; color:#4a4f54">가격 상승률 (최근 3개월 평균 평당가, 이전 3개월 대비)</p>
-  {% if result.dong_compare.price_top %}
-  <ul class="ref-list">
-    {% for p in result.dong_compare.price_top %}
-    <li{% if p.is_target %} style="font-weight:800; color:var(--primary-dark)"{% endif %}>{{ p.dong }} {{ p.change_pct }}{% if p.is_target %} ← 검색하신 동{% endif %}</li>
-    {% endfor %}
-  </ul>
-  {% if result.dong_compare.price_rank_note %}<p class="muted" style="margin-top:6px">{{ result.dong_compare.price_rank_note }} ← 검색하신 동</p>{% endif %}
-  {% elif result.dong_compare.price_missing %}
-  <p class="muted">비교할 만한 동이 부족합니다.</p>
-  {% endif %}
-  <p class="muted" style="margin-top:10px">※ 같은 구 안에서 지금까지 조회된 데이터 기준입니다.</p>
-</div>
-{% endif %}
+  {% if nb.dong %}
+  <div class="nb-block">
+    <div class="nb-head">📊 얼마나 자주 팔리나 <span class="nb-sub">{{ nb.dong.name }} · 최근 거래월 {{ nb.dong.latest_month }}</span></div>
+    <ul class="note-lines" style="margin:0 0 10px">
+      <li><b>거래 활발도</b>는 최근 3개월 동안 그 동네에서 <b>실제로 손바뀜이 몇 번 일어났는지</b>예요 —
+        매물 수가 아니라 <b>계약이 끝난 건수</b>입니다.</li>
+      <li>숫자가 크면 <b>내놓았을 때 사 줄 사람을 만날 확률이 높다</b>는 뜻이에요. 거래가 뜸한 동네는
+        가격을 맞춰도 몇 달씩 걸릴 수 있습니다.</li>
+      <li>같은 구 안의 동끼리 비교한 값이라, 옆 동네보다 활발한지 아닌지로 읽으시면 됩니다.</li>
+    </ul>
+    {% if nb.dong.volume_bars %}{{ nb.dong.volume_bars|safe }}
+    {% if nb.dong.volume_rank_note %}<p class="muted" style="margin:6px 0 0">{{ nb.dong.volume_rank_note }} ← 검색하신 동</p>{% endif %}
+    {% elif nb.dong.volume_missing %}<p class="muted">비교할 만한 동이 부족합니다.</p>{% endif %}
 
-{# 72-29절 — 이 카드가 안 뜨면 왜 없는지 한 줄로 말한다. 조용히 사라지면
-   고장인지 원래 없는 건지 알 방법이 없다(사용자가 실제로 찾다가 못 찾았다). #}
-{% if not result.buyer_age and result.buyer_age_missing %}
-<div class="card" style="background:#fafbfc">
-  <h3 style="margin-bottom:6px">👥 매입자 연령대 — 이 동네에서 집을 사는 사람</h3>
-  <p class="muted" style="margin:0">{{ result.buyer_age_missing }}</p>
-</div>
-{% endif %}
-
-{% if result.buyer_age %}
-{# 69절 — 매입자 연령대. 연령은 순서가 있는 구간이라 한 가지 색의 연→진 램프를
-   쓴다(무지개색 금지). 어떤 색이 어느 구간인지는 아래 범례가 글자로 말해주므로
-   색만으로 식별하게 두지 않는다. #}
-{% set age_colors = ['#d7f2e2', '#a9e4c4', '#74d3a2', '#43bf80', '#21a366', '#0d7a4a'] %}
-<div class="card">
-  <h3>👥 매입자 연령대 — 이 동네에서 집을 사는 사람 ({{ result.buyer_age.region }}{% if result.buyer_age.is_sido_only %} 전체{% endif %}, {{ result.buyer_age.year }}년)</h3>
-  <p style="margin:6px 0 12px"><strong style="font-size:22px; color:var(--primary-dark)">30~40대 {{ '%.1f'|format(result.buyer_age.young_pct) }}%</strong>
-    {% if result.buyer_age.nationwide_young_pct %}<span class="muted">· 전국 평균 {{ '%.1f'|format(result.buyer_age.nationwide_young_pct) }}% 대비 {{ '%+.1f'|format(result.buyer_age.young_pct - result.buyer_age.nationwide_young_pct) }}%p</span>{% endif %}
-  </p>
-
-  <div style="display:flex; height:24px; border-radius:6px; overflow:hidden; background:#eef1f3">
-    {% for b in result.buyer_age.breakdown %}
-    <div style="flex:{{ '%.4f'|format(b.pct) }} 0 0; background:{{ age_colors[loop.index0] }};{% if not loop.last %} border-right:2px solid #fff;{% endif %}"
-         title="{{ b.age }} {{ '%.1f'|format(b.pct) }}% ({{ '{:,}'.format(b.count) }}건)"></div>
-    {% endfor %}
+    <div class="nb-head" style="margin-top:18px">📈 값이 오르는 동네인가 <span class="nb-sub">최근 3개월 평균 평당가, 이전 3개월 대비</span></div>
+    <p class="muted" style="margin:0 0 9px">가운데 선이 0%입니다 — 오른쪽이면 오르는 중, 왼쪽이면 내리는 중이에요.</p>
+    {% if nb.dong.price_bars %}{{ nb.dong.price_bars|safe }}
+    {% if nb.dong.price_rank_note %}<p class="muted" style="margin:6px 0 0">{{ nb.dong.price_rank_note }} ← 검색하신 동</p>{% endif %}
+    {% elif nb.dong.price_missing %}<p class="muted">비교할 만한 동이 부족합니다.</p>{% endif %}
+    <p class="muted" style="margin:10px 0 0">※ 같은 구 안에서 지금까지 조회된 데이터 기준입니다.</p>
   </div>
-  <div style="display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px">
-    {% for b in result.buyer_age.breakdown %}
-    <span class="muted" style="display:inline-flex; align-items:center; gap:5px">
-      <i style="width:10px; height:10px; border-radius:3px; background:{{ age_colors[loop.index0] }}; display:inline-block"></i>{{ b.age }} {{ '%.0f'|format(b.pct) }}%</span>
-    {% endfor %}
+  {% endif %}
+
+  {% if nb.age %}
+  <div class="nb-block">
+    <div class="nb-head">👥 누가 사 가나 <span class="nb-sub">{{ nb.age.region }}{% if nb.age.is_sido_only %} 전체{% endif %} · {{ nb.age.year }}년 매입자 연령대</span></div>
+    <div class="nb-age">
+      <div class="nb-donut">
+        {{ nb.age.donut|safe }}
+        <div class="nb-legend">
+          {% for l in nb.age.legend %}
+          <span class="nb-leg"><i style="background:{{ l.color }}"></i>{{ l.label }} {{ l.pct }}%</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="nb-cmp">
+        <div class="nb-cmp-title">30~40대 비중을 다른 곳과 비교하면</div>
+        {{ nb.age.compare_bars|safe }}
+        <ul class="note-lines" style="margin:10px 0 0">
+          {% if nb.age.vs_sido is not none %}
+          <li>{{ nb.age.sido }} 평균보다 <b>{{ '%+.1f'|format(nb.age.vs_sido) }}%p</b>
+            {{ '높습니다 — 젊은 실거주 수요가 두꺼운 편이에요.' if nb.age.vs_sido > 0 else '낮습니다 — 젊은 실거주 수요가 얇은 편이에요.' }}</li>
+          {% endif %}
+          {% if nb.age.rank %}
+          <li>{{ nb.age.sido }} {{ nb.age.rank.total }}개 시군구 중 <b>{{ nb.age.rank.rank }}위</b>입니다 (30~40대 비중이 높은 순).</li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+    {% if nb.age.volume_line %}
+    <div class="nb-head" style="margin-top:16px">🕒 매입 거래량은 늘고 있나 <span class="nb-sub">연도별 매입 건수</span></div>
+    {{ nb.age.volume_line|safe }}
+    {% endif %}
+    <ul class="note-lines" style="margin:12px 0 0">
+      <li>30~40대는 <b>실거주 목적으로 사는 주력 매수층</b>이에요 — 이 비중이 높으면 팔 때 사 줄 사람이 두껍다는 뜻으로 읽습니다.</li>
+      <li>⚠️ 주택유형이 구분되지 않은 <b>전체 주택 통계</b>라 아파트 거래가 섞여 있어요.</li>
+      <li>⚠️ 연 단위 스냅샷이고, <b>매도가 계산이나 환금성 점수에는 반영되지 않는</b> 참고 정보입니다.</li>
+    </ul>
   </div>
-
-  {% if result.buyer_age.rank %}
-  <p class="muted" style="margin-top:12px">{{ result.buyer_age.sido 
-    }} {{ result.buyer_age.rank.total }}개 시군구 중 <strong>{{ result.buyer_age.rank.rank }}위</strong> (30~40대 비중 높은 순)</p>
+  {% elif result.buyer_age_missing %}
+  <div class="nb-block">
+    <div class="nb-head">👥 누가 사 가나 <span class="nb-sub">매입자 연령대</span></div>
+    <p class="muted" style="margin:0">{{ result.buyer_age_missing }}</p>
+  </div>
   {% endif %}
-  {% if result.buyer_age.volume_series|length >= 2 %}
-  <p class="muted">매입 거래량: {{ result.buyer_age.volume_series[0][0] }}년 {{ '{:,}'.format(result.buyer_age.volume_series[0][1]) }}건 → {{ result.buyer_age.volume_series[-1][0] }}년 {{ '{:,}'.format(result.buyer_age.volume_series[-1][1]) }}건</p>
-  {% endif %}
-
-  <ul class="note-lines" style="margin-top:12px">
-    <li>30~40대는 실거주 목적으로 사는 주력 매수층이에요 — 이 비중이 높으면 팔 때 사줄 사람이 두껍다는 뜻으로 읽습니다.</li>
-    <li>⚠️ 주택유형이 구분되지 않은 전체 주택 통계라 아파트 거래가 섞여 있어요.</li>
-    <li>⚠️ 연 단위 스냅샷이고, 매도가 계산이나 환금성 점수에는 반영되지 않는 참고 정보입니다.</li>
-  </ul>
 </div>
 {% endif %}
 

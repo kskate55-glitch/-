@@ -22,21 +22,26 @@ def _tpl():
 
 class TheTitleSaysWhatItIs(unittest.TestCase):
     def test_the_word_age_is_in_the_heading(self):
+        """72-32절에서 카드가 합쳐졌지만 **찾을 수 있어야 한다는 계약은 그대로다.**"""
         src = _tpl()
-        i = src.find("result.buyer_age.region")
-        self.assertGreater(i, 0, "연령대 카드가 사라졌다")
-        head = src[max(0, i - 300):i]
+        i = src.find("nb.age.region")
+        self.assertGreater(i, 0, "연령대 갈래가 사라졌다")
+        head = src[max(0, i - 400):i + 200]
         self.assertIn("매입자 연령대", head,
                       "제목에 '매입자 연령대'가 없으면 사용자가 못 찾는다")
+        self.assertIn("누가 사 가나", head)
 
-    def test_the_three_reference_cards_all_have_an_icon(self):
-        """참고 정보 섹션을 훑어서 찾을 수 있어야 한다."""
+    def test_every_reference_section_has_an_icon(self):
+        """참고 정보 섹션을 훑어서 찾을 수 있어야 한다.
+
+        ⚠️ 72-32절에서 인근 동 비교와 연령대가 **한 카드로 합쳐졌다** —
+        이제 카드 제목 하나 + 그 안의 갈래 제목 둘이다.
+        """
         src = _tpl()
-        for icon, marker in (("🏘️", "인근 동 비교"),
-                             ("👥", "매입자 연령대"),
-                             ("📊", "시장 동향 참고")):
-            self.assertIn(f"<h3>{icon} {marker}", src,
-                          f"{marker} 카드 제목에 아이콘이 없다")
+        self.assertIn("🏘️ 이 동네, 누가 얼마나 사나", src)   # 합친 카드 제목
+        self.assertIn("📊 얼마나 자주 팔리나", src)           # 동 갈래
+        self.assertIn("👥 누가 사 가나", src)                # 구(연령대) 갈래
+        self.assertIn("<h3>📊 시장 동향 참고", src)           # 권역 카드
 
 
 class ItSaysWhyWhenItIsMissing(unittest.TestCase):
@@ -83,14 +88,16 @@ class ItSaysWhyWhenItIsMissing(unittest.TestCase):
         src = _tpl()
         self.assertIn("result.buyer_age_missing", src,
                       "안 뜰 때 이유를 보여주는 자리가 템플릿에 없다")
-        self.assertIn("{% if not result.buyer_age and result.buyer_age_missing %}", src,
+        # 72-32절 — 합친 카드 안에서 {% if nb.age %}…{% elif ... %} 로 갈린다.
+        #           카드가 뜨는데 이유까지 같이 뜨면 중복이라 elif 여야 한다.
+        self.assertIn("{% elif result.buyer_age_missing %}", src,
                       "카드가 뜨는데도 이유가 같이 뜨면 중복이다")
 
     def test_the_divider_appears_for_the_reason_too(self):
         """이유만 남는 경우에도 '참고 정보' 구분선이 있어야 카드가 떠 보인다."""
         src = _tpl()
         i = src.index('<div class="section-divider">참고 정보</div>')
-        cond = src[max(0, i - 260):i]
+        cond = src[max(0, i - 300):i]
         self.assertIn("result.buyer_age_missing", cond)
 
 

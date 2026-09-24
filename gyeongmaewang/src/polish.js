@@ -126,11 +126,12 @@ function pxCaseClosed(){
 
 /* ---------- 🧭 장면 전환 감지 — 이전 렌더와 비교해서 한 번씩만 ---------- */
 let PX_SIG = {};
+const PX_OPENED = new Set();   // 탭을 오가도 같은 사건의 서류철은 한 번만 연다
 function pxAfterKing(){
   if(typeof page === "undefined" || page !== "arena" || arenaTab !== "king" || !K){ PX_SIG = {}; return; }
   const s = {seed:K.seed, step:K.step, rev:!!K.revealing, intro:!!K.intro, sealed:!!K.sealed}, P = PX_SIG, same = P.seed === s.seed;
   // CASE OPEN — 새 사건의 첫 조사 화면
-  if(s.step === "brief" && !s.intro && !s.rev && (!same || P.intro)) pxCaseOpen();
+  if(s.step === "brief" && !s.intro && !s.rev && (!same || P.intro) && !PX_OPENED.has(s.seed)){ PX_OPENED.add(s.seed); pxCaseOpen(); }
   if(same){
     if(s.sealed && !P.sealed) kcSfx("envelope");                             // 봉투 넣는 소리
     if(s.rev && !P.rev){                                                    // 개찰 직전 정적 — BGM 크게 낮춤
@@ -156,7 +157,7 @@ function pxAfterKing(){
 }
 
 /* ---------- 💸 돈이 실제로 움직인다(거점 머리줄) ---------- */
-let PX_CASH = null;
+let PX_CASH = null, PX_CASH_WHO = null;
 function pxCashStr(v){ return v < 0 ? "대출 " + kMan(-v) : kMan(v); }
 const _px_kfsHeader = kfsHeader;
 kfsHeader = function(){
@@ -169,6 +170,7 @@ kfsHeader = function(){
 };
 function pxAfterCash(){
   const el = document.querySelector(".px-cash"); if(!el){ return; }
+  const L = typeof lfRec === "function" && lfRec(), who = L ? L.char + ":" + L.born : null; if(who !== PX_CASH_WHO){ PX_CASH_WHO = who; PX_CASH = null; }   // 다른 인생으로 바뀌면 이전 잔액과 비교하지 않는다
   const v = +el.dataset.v, prev = PX_CASH; PX_CASH = v;
   if(prev == null || Math.abs(v - prev) < 10) return;                     // 10만원 미만 변화는 조용히
   const d = v - prev;

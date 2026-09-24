@@ -1122,3 +1122,21 @@ html.px-still .lf-me,html.px-still .vn-player{animation:none}
 .dp-newslist li.regret b{color:#b3261e}.dp-newslist li.relief b{color:#1f7a45}
 @media (max-width:640px){.dp-props{bottom:36%;left:2%}.dp-prop{font-size:18px;min-width:44px}}
 @media (prefers-reduced-motion:reduce){.dp-visit li,.dp-visit .dp-react{animation:none;opacity:1}}
+/* ===== 점검 반영 — 알림 위치 · 터치 영역 · 작은 글씨 ===== */
+/* 알림 띠가 대사창(왼쪽 위)을 가리던 문제 — PC는 오른쪽 아래, 모바일은 아래 전체 폭 */
+#hubToasts{top:auto!important;left:auto!important;right:14px!important;bottom:14px!important;max-width:min(360px,calc(100vw - 28px))!important}
+@media (max-width:640px){#hubToasts{left:10px!important;right:10px!important;max-width:none!important;bottom:calc(10px + env(safe-area-inset-bottom))!important}}
+.px-phone{top:8px;right:120px}
+@media (max-width:640px){.px-phone{right:110px;top:6px}}
+.kc-skip{min-height:44px;padding:10px 18px}
+.st-slot i{font-size:11.5px}.ke-est small{font-size:11.5px}.stg-tab small{font-size:12px}
+@media (max-width:640px){
+  .rtabs button,.hub-tabs button,.hub-practice button{min-height:44px}
+  #kfsRoot summary,#main .arena summary,.lf-sel summary{padding-top:10px;padding-bottom:10px;min-height:44px;box-sizing:border-box}
+  .kc-audio-in button,.kc-audio-in select,.lf-acts select,.panel select{min-height:40px}
+  .kc-audio-in input[type=range]{min-height:32px}
+}
+@media (max-width:640px){
+  #main summary{padding-top:10px;padding-bottom:10px;min-height:44px;box-sizing:border-box}
+  #main .hub-tabs ~ * button,#main .rlist button,#main .chip{min-height:40px}
+}

@@ -234,35 +234,62 @@
 
   /* 19절 입지 체크 — 항목이 3개에서 10개로 늘어서, 갈래(교통/교육/생활/의료)
      별로 묶은 카드 그리드로 보여준다. 한 줄로 늘어놓으면 안 읽힌다. */
+  /* 72-28절 — 입지 체크가 환금성 진단 항목 안 접이식으로 들어가면서 모양을
+     다시 잡았다. 고친 것 두 가지:
+     ① **긴 이름이 거리 숫자를 밀어내던 문제.** flex 라 "시티식자재마트
+        남가좌점"처럼 이름이 길면 줄바꿈되면서 1408m 이 엉뚱한 줄로 떠밀렸다.
+        3열 그리드로 바꿔 **거리는 항상 오른쪽 같은 자리**에 선다.
+     ② **★(판정에 쓰이는 두 항목)이 나머지 여덟과 똑같이 보이던 문제.**
+        그 행만 배경과 왼쪽 띠를 줘서 훑어만 봐도 갈린다. */
+  .loc-lead {
+    display: flex; gap: 9px; align-items: flex-start;
+    padding: 11px 13px; margin-bottom: 12px;
+    background: #fffaf0; border: 1px solid #f3dfb8; border-radius: var(--radius-md);
+    font-size: 13.5px; line-height: 1.7; color: var(--ink);
+  }
+  .loc-lead-star { flex: 0 0 auto; color: #e8920a; font-size: 15px; font-weight: 800; }
   .loc-groups {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(248px, 1fr)); gap: 11px;
   }
   .loc-group {
-    padding: 12px 14px; background: #fafbfc;
+    padding: 13px 14px 11px; background: #fff;
     border: 1px solid var(--border); border-radius: var(--radius-md);
   }
   .loc-group-name {
-    font-size: 13.5px; font-weight: 800; color: var(--ink); margin-bottom: 7px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 14px; font-weight: 800; color: var(--ink);
+    padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px solid #f0f2f4;
   }
+  .loc-group-icon { font-size: 15px; }
   .loc-row {
-    display: flex; align-items: baseline; gap: 7px;
-    font-size: 14px; line-height: 1.75; color: var(--ink);
+    display: grid; grid-template-columns: 74px 1fr auto;
+    align-items: baseline; gap: 4px 8px;
+    font-size: 14px; line-height: 1.7; color: var(--ink);
+    padding: 3px 6px; margin: 0 -6px; border-radius: 7px;
   }
   /* ★는 줄바꿈되면 라벨과 떨어져 보여서 nowrap으로 붙여 둔다 */
-  .loc-label { flex: 0 0 auto; min-width: 68px; white-space: nowrap;
-    color: var(--muted); font-weight: 600; }
-  .loc-place { flex: 1; font-weight: 700; }
-  .loc-dist { flex: 0 0 auto; font-weight: 800; color: var(--primary-dark); }
-  .loc-none .loc-place { font-weight: 500; color: var(--muted-2); }
-  /* 34절 주변 지형을 이 카드의 다섯 번째 갈래로 합치면서, 그 갈래만
-     신뢰도가 다르다는 걸 제목 옆에 작게 달아 둔다(산·강은 전용 장소
-     분류가 없어 이름으로 걸러낸 결과다). */
+  .loc-label { white-space: nowrap; color: var(--muted); font-weight: 600; }
+  .loc-place { font-weight: 700; word-break: keep-all; }
+  .loc-dist {
+    font-weight: 800; color: var(--primary-dark);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  /* 판정에 실제로 쓰이는 두 항목만 눈에 띄게 */
+  .loc-scored { background: #fff8ec; box-shadow: inset 2px 0 0 #e8920a; }
+  .loc-scored .loc-label { color: #9a6508; font-weight: 700; }
+  .loc-place-none { font-weight: 500; color: var(--muted-2); grid-column: 2 / -1; }
+  /* 못 찾은 항목은 행 전체를 한 단계 옅게 — 있는 것과 없는 것이 섞여 있어
+     같은 무게로 보이면 훑을 때 눈에 걸린다. */
+  .loc-none .loc-label { color: var(--muted-2); font-weight: 600; }
+  .loc-star { color: #e8920a; margin-left: 3px; font-size: 12px; }
+  /* 34절 주변 지형("자연")만 신뢰도가 다르다는 걸 제목 옆에 작게 달아 둔다 —
+     산·강은 전용 장소 분류가 없어 이름으로 걸러낸 결과다. */
   .loc-exp {
     margin-left: 6px; padding: 1px 6px; border-radius: 999px;
     background: #fff4e6; color: #b35309; font-size: 10.5px; font-weight: 800;
     vertical-align: middle;
   }
-  .loc-star { color: #e8920a; margin-left: 3px; font-size: 12px; }
+  .loc-group-exp { background: #fffdf8; border-color: #f0e2c8; }
 
   /* 아이콘 타일 + 입력칸 한 줄 */
   .field { display: flex; align-items: center; gap: 11px; }

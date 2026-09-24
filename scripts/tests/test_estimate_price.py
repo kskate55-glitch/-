@@ -2823,3 +2823,97 @@ class TestMarketabilityHeadingIsEmphasised(unittest.TestCase):
         self.assertIn("중요한 순서대로", notes)
         self.assertNotIn("font-size", notes.split("</ul>")[0],
                          "부연 목록에도 크기를 줘서 강조가 흐려졌다")
+
+
+class TestLocationCheckIsFoldedIntoTheDiagnosis(unittest.TestCase):
+    """72-28절 — 입지 체크(19·34·45절)는 환금성 진단 항목 안 접이식이다.
+
+    사용자 지적: "입지 체크 밑에 따로 있는 건 환금성·경쟁 진단 2번 요소랑
+    합쳐도 될 것 같아, 쓸데없이 길어짐. 전부 입지 요소니까." — 41절이 이미
+    정해둔 패턴(40절 아파트 대비·43절 임장 체크가 그 항목 안으로 들어간 것)
+    그대로다.
+    """
+
+    def _tpl(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "..",
+                            "webapp", "templates", "result.html")
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+
+    def test_the_fold_lives_inside_the_transit_school_item(self):
+        src = self._tpl()
+        m = re.search(r"\{%\s*if item\.key == 'transit_school' and result\.location\s*%\}"
+                      r"(.{0,400}?)\{%\s*endif\s*%\}", src, re.S)
+        self.assertIsNotNone(m, "역세권·학세권 항목 안에 입지 체크 접이식이 없다")
+        block = m.group(1)
+        self.assertIn("<details", block, "접이식이 아니다 — 펼치기가 안 된다")
+        self.assertIn("location_detail()", block)
+
+    def test_the_standalone_card_only_shows_as_a_fallback(self):
+        """진단 항목이 있으면 같은 내용이 두 번 뜨면 안 된다(40절 전례)."""
+        src = self._tpl()
+        self.assertIn("{% if result.location and not _has_ts %}", src,
+                      "따로 있는 카드가 폴백 조건 없이 그대로 남아 있다")
+        self.assertNotIn("{% if result.location %}\n<div class=\"card\">", src)
+
+    def test_the_fallback_still_renders_everything(self):
+        """진단 카드가 아예 안 뜨는 경우에도 입지 정보가 사라지면 안 된다."""
+        src = self._tpl()
+        fallback = src[src.index("{% if result.location and not _has_ts %}"):]
+        fallback = fallback[:fallback.index("{% endif %}")]
+        self.assertIn("location_detail()", fallback)
+
+    def test_nothing_was_dropped_from_the_content(self):
+        """⚠️ 사용자가 '내용을 줄이라는 건 절대 아냐'라고 못박았다."""
+        src = self._tpl()
+        macro = src[src.index("{% macro location_detail() %}"):
+                    src.index("{% endmacro %}", src.index("{% macro location_detail() %}"))]
+        for phrase in (
+            "지하철역·초등학교",                  # ★가 무엇인지
+            "참고 정보",                          # 나머지 여덟의 성격
+            "편의점이 200m냐 400m냐",             # ★ 외를 왜 안 세는지
+            "매도가 계산에는 어느 항목도",          # 가격 미반영
+            '"자연"은 실험적입니다',               # 34절 경고
+            "카카오 로컬",                        # 출처
+            "radius_km",                          # 검색 반경
+            "loc-star",                           # ★ 표시 자체
+            "experimental",                       # 실험적 배지
+            "none_text",                          # 못 찾은 항목 문구
+        ):
+            self.assertIn(phrase, macro, f"입지 체크에서 '{phrase}' 가 사라졌다")
+
+
+class TestLocationRowsKeepTheDistanceColumn(unittest.TestCase):
+    """72-28절 — 긴 이름이 거리 숫자를 밀어내면 안 된다.
+
+    예전 flex 배치에서는 "시티식자재마트 남가좌점"처럼 이름이 길면 줄바꿈되며
+    1408m 이 엉뚱한 줄로 떠밀렸다(사용자 스크린샷에서 실제로 그랬다).
+    """
+
+    def _css(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "..",
+                            "webapp", "templates", "base.html")
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+
+    def _rule(self, selector):
+        css = self._css()
+        i = css.index(selector + " {")
+        return css[i:css.index("}", i)]
+
+    def test_the_row_is_a_grid_with_its_own_distance_column(self):
+        rule = self._rule("  .loc-row")
+        self.assertIn("display: grid", rule, "flex 로 되돌아가면 거리가 다시 밀린다")
+        self.assertIn("grid-template-columns", rule)
+
+    def test_the_distance_never_wraps(self):
+        self.assertIn("white-space: nowrap", self._rule("  .loc-dist"))
+
+    def test_the_two_scored_rows_are_visually_separated(self):
+        """★ 두 항목이 나머지 여덟과 똑같이 보이면 어느 게 판정에 쓰이는지 모른다."""
+        css = self._css()
+        self.assertIn(".loc-scored {", css)
+
+    def test_the_experimental_badge_survived(self):
+        """34절 '자연' 갈래의 신뢰도 경고 배지 — CSS 정리하다 날리기 쉽다."""
+        self.assertIn(".loc-exp {", self._css())

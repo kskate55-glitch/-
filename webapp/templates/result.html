@@ -48,6 +48,47 @@
   </details>
 {% endmacro %}
 
+{# 72-28절 — 입지 체크(19·34·45절)를 환금성 진단 "역세권·학세권" 항목 안으로
+   접어 넣기 위해 매크로로 뺐다. 40절 인근 아파트 대비·43절 임장 체크와 같은
+   패턴이다 — 판정과 그 근거가 되는 숫자가 한자리에서 이어진다.
+   ⚠️ 내용은 하나도 줄이지 않았다(사용자 요청). 배치와 모양만 바꿨다. #}
+{% macro location_detail() %}
+  <div class="loc-lead">
+    <span class="loc-lead-star">★</span>
+    <span><b>지하철역·초등학교</b>까지의 거리만 위 판정에 쓰입니다.
+      나머지 여덟 항목은 <b>참고 정보</b>예요 —
+      편의점이 200m냐 400m냐가 매도 속도를 가르지는 않아서 점수에 넣지 않았습니다.</span>
+  </div>
+  <div class="loc-groups">
+    {% for g in result.location.groups %}
+    <div class="loc-group{{ ' loc-group-exp' if g.experimental else '' }}">
+      <div class="loc-group-name">
+        <span class="loc-group-icon">{{ g.icon }}</span>{{ g.name }}
+        {% if g.experimental %}<span class="loc-exp" title="키워드 검색 기반이라 정확도가 완벽하지 않아요">실험적</span>{% endif %}
+      </div>
+      {% for p in g.places %}
+      <div class="loc-row{{ ' loc-none' if not p.place else '' }}{{ ' loc-scored' if p.scored else '' }}">
+        <span class="loc-label">{{ p.label }}{% if p.scored %}<span class="loc-star" title="환금성 진단 판정에 쓰이는 항목">★</span>{% endif %}</span>
+        {% if p.place %}
+        <span class="loc-place">{{ p.place.name }}</span>
+        <span class="loc-dist">{{ p.place.distance_m }}m</span>
+        {% else %}
+        <span class="loc-place loc-place-none">{{ p.none_text }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <ul class="note-lines" style="margin:12px 0 0">
+    <li>카카오 로컬에서 반경 {{ result.location.radius_km }}km 안을 찾은 결과예요.</li>
+    <li><b>매도가 계산에는 어느 항목도 반영되지 않습니다.</b></li>
+    {% if result.location.has_terrain %}
+    <li>⚠️ <b>"자연"은 실험적입니다</b> — 산·강은 전용 장소 분류가 없어 이름으로 걸러낸 결과라 엉뚱한 곳이 잡힐 수 있어요. 이상하면 실제 지도로 확인하세요. (검색 반경도 다른 갈래 {{ result.location.radius_km }}km가 아니라 1km입니다.)</li>
+    {% endif %}
+  </ul>
+{% endmacro %}
+
 {% macro apt_gap_detail() %}
 {% set g = result.apt_gap %}
 {% set gc = '#2f9e44' if g.verdict == 'good' else ('#e8920a' if g.verdict == 'ok' else '#e0475a') %}
@@ -389,6 +430,12 @@
     </ul>
     {% endif %}
     <p class="mk-lecture">{{ item.why }}</p>
+    {% if item.key == 'transit_school' and result.location %}
+    <details class="paste-fold">
+      <summary>🚇 지하철역·학교·생활시설까지 실제 거리 — 누르면 열려요</summary>
+      <div class="paste-fold-body">{{ location_detail() }}</div>
+    </details>
+    {% endif %}
     {% if item.key == 'apt_gap' and result.apt_gap %}
     <details class="paste-fold">
       <summary>🏢 인근 아파트와 얼마나 차이 나는지 자세히 보기 — 누르면 열려요</summary>
@@ -423,38 +470,15 @@
 </div>
 {% endif %}
 
-{% if result.location %}
+{# 72-28절 — 입지 체크는 이제 환금성 진단 "역세권·학세권" 항목 안에 접혀 있다.
+   ⚠️ 진단 카드 자체가 안 뜨는 경우(표본이 없어 항목을 못 만든 경우 등)에는
+      이 정보가 통째로 사라지면 안 되므로 그때만 예전처럼 카드로 보여준다. #}
+{% set _mk_items = result.marketability['items'] if result.marketability else [] %}
+{% set _has_ts = _mk_items | selectattr('key', 'equalto', 'transit_school') | list | length > 0 %}
+{% if result.location and not _has_ts %}
 <div class="card">
   <h3>🚇 입지 체크 (카카오 로컬 기준)</h3>
-  <ul class="note-lines" style="margin-top:-4px">
-    <li>위 환금성 진단 <b>"역세권·학세권"</b> 항목이 어디서 나온 숫자인지 보여주는 칸이에요.</li>
-    <li><b>★ 표시(지하철역·초등학교)만</b> 그 판정에 쓰입니다 — 나머지는 참고 정보예요.</li>
-  </ul>
-  <div class="loc-groups" style="margin-top:12px">
-    {% for g in result.location.groups %}
-    <div class="loc-group">
-      <div class="loc-group-name">{{ g.icon }} {{ g.name }}{% if g.experimental %}<span class="loc-exp" title="키워드 검색 기반이라 정확도가 완벽하지 않아요">실험적</span>{% endif %}</div>
-      {% for p in g.places %}
-      <div class="loc-row{{ ' loc-none' if not p.place else '' }}">
-        <span class="loc-label">{{ p.label }}{% if p.scored %}<span class="loc-star" title="환금성 진단 판정에 쓰이는 항목">★</span>{% endif %}</span>
-        {% if p.place %}
-        <span class="loc-place">{{ p.place.name }}</span>
-        <span class="loc-dist">{{ p.place.distance_m }}m</span>
-        {% else %}
-        <span class="loc-place">{{ p.none_text }}</span>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-    {% endfor %}
-  </div>
-  <ul class="note-lines" style="margin-top:12px; margin-bottom:0">
-    <li>편의점이 200m냐 400m냐가 매도 속도를 가르지는 않아서 ★ 외에는 점수에 넣지 않았습니다.</li>
-    <li>매도가 계산에는 어느 항목도 반영되지 않습니다.</li>
-    {% if result.location.has_terrain %}
-    <li>⚠️ <b>"자연"은 실험적입니다</b> — 산·강은 전용 장소 분류가 없어 이름으로 걸러낸 결과라 엉뚱한 곳이 잡힐 수 있어요. 이상하면 실제 지도로 확인하세요. (검색 반경도 다른 갈래 {{ result.location.radius_km }}km가 아니라 1km입니다.)</li>
-    {% endif %}
-  </ul>
+  {{ location_detail() }}
 </div>
 {% endif %}
 

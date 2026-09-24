@@ -17,13 +17,10 @@ import os
 import statistics
 from collections import defaultdict
 
-from estimate_price import load_transactions, dedupe, to_amount_man
+from estimate_price import (load_transactions, dedupe, to_amount_man,
+                            month_index, decode_month_index)
 
 MIN_SAMPLE = 3  # 이보다 적게 거래된 동은 통계적으로 신뢰하기 어려워 랭킹에서 제외
-
-
-def month_index(year: int, month: int) -> int:
-    return year * 12 + (month - 1)
 
 
 def build_dong_stats(rows: list[dict]):
@@ -183,14 +180,14 @@ def print_dong_comparison(rows: list[dict], target_dong: str, gu_label: str | No
     if result is None or not target_dong:
         return
     latest, dong_data = result
-    latest_y, latest_m = divmod(latest, 12)
+    latest_y, latest_m = decode_month_index(latest)
 
     price_ranked = rank_by_price_change(dong_data)
     volume_ranked = rank_by_volume(dong_data)
 
     label = f"{gu_label} 내 다른 동네와 비교" if gu_label else "인근 동네와 비교"
     print()
-    print(f"[인근 동 비교] ({label}, 최근 거래월 {latest_y}.{latest_m + 1:02d} 기준)")
+    print(f"[인근 동 비교] ({label}, 최근 거래월 {latest_y}.{latest_m:02d} 기준)")
 
     print("거래 활발도 (최근 3개월 거래건수):")
     if not volume_ranked:
@@ -234,10 +231,10 @@ def print_area_bands(rows: list[dict], dong: str):
         print(f"[면적대별 비교] {dong}에 유효한 계약월 데이터가 없습니다.")
         return
     latest, band_data = result
-    latest_y, latest_m = divmod(latest, 12)
+    latest_y, latest_m = decode_month_index(latest)
     ranked = rank_bands_by_price_change(band_data)
 
-    print(f"[면적대별 비교] {dong} 기준, 최근 거래월: {latest_y}.{latest_m + 1:02d}")
+    print(f"[면적대별 비교] {dong} 기준, 최근 거래월: {latest_y}.{latest_m:02d}")
     if not ranked:
         print("  구간별로 비교할 만한 데이터가 부족합니다 (구간마다 최근·이전 3개월에 각 3건 이상 필요).")
         return
@@ -263,12 +260,12 @@ def main():
         print("[안내] 유효한 계약월 데이터가 없습니다.")
         return
     latest, dong_data = result
-    latest_y, latest_m = divmod(latest, 12)
+    latest_y, latest_m = decode_month_index(latest)
 
     price_ranked = rank_by_price_change(dong_data)
     volume_ranked = rank_by_volume(dong_data)
 
-    print(f"[동네 랭킹] 최근 거래월 기준: {latest_y}.{latest_m + 1:02d} (data/raw에 있는 동네만 대상)")
+    print(f"[동네 랭킹] 최근 거래월 기준: {latest_y}.{latest_m:02d} (data/raw에 있는 동네만 대상)")
     print()
 
     print("가격 상승률 TOP (최근 3개월 평균 평당가 vs 이전 3개월)")

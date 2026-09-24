@@ -1740,7 +1740,7 @@ def compute_liquidity(rows: list[dict], subject_coord: tuple[float, float], area
 
     def _ym(r):
         try:
-            return int(r["dealYear"]) * 12 + int(r["dealMonth"])
+            return month_index(int(r["dealYear"]), int(r["dealMonth"]))
         except (KeyError, ValueError, TypeError):
             return None
 
@@ -1758,10 +1758,29 @@ def compute_liquidity(rows: list[dict], subject_coord: tuple[float, float], area
                 if r["_distance_m"] <= radius and (ym := _ym(r)) is not None and cutoff <= ym <= latest
             )
 
+    _latest_y, _latest_m = decode_month_index(latest)
     return {
-        "latest_year": latest // 12, "latest_month": latest % 12 or 12,
+        "latest_year": _latest_y, "latest_month": _latest_m,
         "counts": counts, "radii": radii,
     }
+
+
+def month_index(year: int, month: int) -> int:
+    """계약월을 하나의 정수로 (연·월 비교와 "N개월 전" 산술을 한 번에 하려고).
+
+    ⚠️ `decode_month_index()`와 **짝**이다 — 한쪽만 고치면 12월에서 연도가
+    어긋난다(72-21절에서 실제로 그랬다). 둘을 같이 두는 이유가 그것이다."""
+    return year * 12 + month
+
+
+def decode_month_index(idx: int) -> tuple[int, int]:
+    """`month_index()`가 만든 정수를 (연, 월)로 되돌린다.
+
+    ⚠️ **`divmod(idx, 12)`로 하면 안 된다** — 이 인코딩은 월이 1~12(1-based)라
+    12월에서 나머지가 0이 되고, 몫이 연도+1이 된다. 72-21절에서 30절 유동성
+    카드가 "2026.12" 대신 **"2027.12"** 로 떴던 실제 버그다."""
+    year, m0 = divmod(idx - 1, 12)
+    return year, m0 + 1
 
 
 def speed_label_for_percentile(percentile: float, liquidity_monthly_avg: float | None = None) -> str:

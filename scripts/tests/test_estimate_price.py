@@ -2624,3 +2624,63 @@ class TestTheScreenNeverStatesStaleWeights(unittest.TestCase):
                                  if not line.lstrip().startswith(("#", "//")))
             self.assertIsNone(stale.search(body),
                               f"{rel}에 옛 배분이 문구로 박혀 있습니다")
+
+
+class TestMonthIndexRoundTrip(unittest.TestCase):
+    """72-21절 — 계약월 정수 인코딩/디코딩이 **12월에서 어긋났던** 실제 버그.
+
+    30절 유동성 카드가 "데이터상 최근 계약월"을 헤더에 찍는데, 12월이 최신이면
+    **2026.12가 아니라 2027.12**로 떴다. `year*12+month`(월이 1~12)를
+    `divmod(idx, 12)`로 되돌리면 12월에서 나머지가 0이 되고 몫이 연도+1이 되기
+    때문이다. 세는 것(창 계산)은 차이만 쓰므로 정상이었고 **표시만 틀렸다** —
+    그래서 화면을 봐도 12월이 아니면 알아챌 수 없었다.
+    """
+
+    def test_every_month_survives_the_round_trip(self):
+        for year in range(2019, 2031):
+            for month in range(1, 13):
+                idx = ep.month_index(year, month)
+                self.assertEqual(ep.decode_month_index(idx), (year, month),
+                                 f"{year}.{month:02d}이 왕복에서 어긋났다")
+
+    def test_december_is_the_case_that_used_to_break(self):
+        self.assertEqual(ep.decode_month_index(ep.month_index(2026, 12)), (2026, 12))
+
+    def test_consecutive_months_stay_consecutive_across_the_year_line(self):
+        dec = ep.month_index(2026, 12)
+        self.assertEqual(ep.decode_month_index(dec - 1), (2026, 11))
+        self.assertEqual(ep.decode_month_index(dec + 1), (2027, 1))
+
+    def test_the_naive_divmod_would_fail_this(self):
+        """이 인코딩에 `divmod(idx, 12)`를 쓰면 안 된다는 것 자체를 고정한다 —
+        누가 '더 간단하게' 되돌리려다 같은 버그를 다시 심는 것을 막는다."""
+        idx = ep.month_index(2026, 12)
+        self.assertNotEqual(divmod(idx, 12), (2026, 12))
+
+    def test_the_liquidity_card_reports_december_correctly(self):
+        """계산부까지 통째로 태워서, 화면에 실리는 값이 맞는지 본다."""
+        rows = [_fake_row(f"동일빌라{i}", str(100 + i), 60.0, 3, 2012,
+                          2026, 12, 30000) for i in range(4)]
+        with patch("geocode.geocode", return_value=(37.6, 127.0)):
+            liq = ep.compute_liquidity(rows, (37.6, 127.0), 60.0,
+                                       this_year=2027)
+        self.assertIsNotNone(liq)
+        self.assertEqual((liq["latest_year"], liq["latest_month"]), (2026, 12))
+
+
+    def test_there_is_only_one_month_encoding_in_the_repo(self):
+        """⚠️ 72-21절 — 이 버그를 고치는 과정에서 `month_index`라는 **같은 이름이
+        두 파일에 서로 다른 인코딩으로** 생길 뻔했다(rank_areas는 0-based,
+        estimate_price는 1-based). 둘을 섞어 쓰면 모든 달이 한 달씩 밀린다.
+        그래서 rank_areas가 자기 것을 버리고 공용 함수를 쓰도록 통일했고,
+        여기서 그게 유지되는지 고정한다."""
+        import rank_areas
+        self.assertIs(rank_areas.month_index, ep.month_index)
+        self.assertIs(rank_areas.decode_month_index, ep.decode_month_index)
+
+        src = open(_repo("scripts/rank_areas.py"), encoding="utf-8").read()
+        src = re.sub(r"#.*", "", src)  # 주석은 세지 않는다
+        self.assertNotIn("def month_index", src,
+                         "rank_areas가 자기 인코딩을 다시 정의했다 — 짝이 갈린다")
+        self.assertNotIn("divmod(latest", src,
+                         "divmod로 되돌리면 12월에서 어긋난다 (decode_month_index를 쓸 것)")

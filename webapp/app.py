@@ -1080,18 +1080,19 @@ def estimate():
     }
 
     dong_compare = None
+    from estimate_price import decode_month_index
     from rank_areas import MIN_SAMPLE, build_dong_stats, find_dong_rank, rank_by_price_change, rank_by_volume
 
     dong_result = build_dong_stats(rows) if target_dong else None
     if dong_result is not None:
         latest_ym, dong_data = dong_result
-        latest_y, latest_m = divmod(latest_ym, 12)
+        latest_y, latest_m = decode_month_index(latest_ym)
         volume_ranked = rank_by_volume(dong_data)
         price_ranked = rank_by_price_change(dong_data)
         vol_rank = find_dong_rank(volume_ranked, target_dong)
         price_rank = find_dong_rank(price_ranked, target_dong)
         dong_compare = {
-            "dong": target_dong, "latest_month": f"{latest_y}.{latest_m + 1:02d}",
+            "dong": target_dong, "latest_month": f"{latest_y}.{latest_m:02d}",
             "volume_top": [
                 {"dong": d, "count": c, "is_target": d == target_dong}
                 for d, c in volume_ranked[:5]

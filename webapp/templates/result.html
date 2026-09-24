@@ -147,7 +147,6 @@
   </form>
 {% endmacro %}
 
-
 <h1>🏠 주영이의 빌라 경매 매도가 계산기 — 결과</h1>
 <p class="subject-line">{{ result.address }}</p>
 {# 72-31절 — 도로명주소나 시/군/구를 뺀 주소를 넣으면 카카오가 정규화한
@@ -242,6 +241,59 @@
   </div>
   {% endif %}
 </div>
+{% if result.estimate_warnings %}
+<div class="card" style="border-left:4px solid #e8a33d; background:#fff8ec">
+  <h3 style="margin-bottom:6px">⚠️ 이 추정치, 그대로 믿기 전에 확인하세요</h3>
+  <p class="muted" style="margin:0 0 12px">
+    과거 실거래 125건에 이 계산기를 다시 돌려 봤더니, 아래 같은 신호가 뜬 경우가
+    <b>1.4배쯤 더 많이 빗나갔어요</b> (신호 없을 때 평균 10.8% · 있을 때 14.6%).</p>
+  {% for w in result.estimate_warnings %}
+  <div style="padding:11px 13px; margin-bottom:8px; background:#fff;
+              border:1px solid #f0d9b5; border-radius:10px">
+    <div style="font-weight:700; font-size:14.5px; margin-bottom:4px">{{ w.label }}</div>
+    <div class="muted" style="margin:0 0 5px">{{ w.detail }}</div>
+    <div style="font-size:13.5px; color:var(--primary-dark); font-weight:600">→ {{ w.advice }}</div>
+  </div>
+  {% endfor %}
+  {# 72-26절 — 정비구역 경고가 떴는데 아직 답을 안 했으면 여기서 바로 답하게
+     한다(43절 임장 체크·44절 매물 붙여넣기와 같은 패턴). 경고가 "확인하세요"
+     라고만 하고 확인할 칸이 화면에 없으면 고리가 닫히지 않는다. #}
+  {% if result.zone_ask %}
+  <details class="paste-fold" style="margin:10px 0 0">
+    <summary>🏗️ 여기가 재개발 구역인지 알려주시면 다시 안내해 드려요</summary>
+    <form method="post" action="/estimate" style="margin-top:10px">
+      {% for k, v in result.resubmit_fields_no_zone.items() %}
+      <input type="hidden" name="{{ k }}" value="{{ v }}">
+      {% endfor %}
+      <label for="rz">재개발·재건축 구역인가요?</label>
+      <select id="rz" name="redevelopment">
+        <option value="">모르겠어요 / 확인 안 했어요</option>
+        {% for val, label in redev_choices %}
+        <option value="{{ val }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <p class="hint" style="margin:8px 0 10px">경매 정보나 토지이용계획확인원에서 확인할 수 있어요.
+        <b>매도가 숫자는 바뀌지 않고</b>, 이 값을 어떻게 읽어야 하는지 안내만 달라집니다.</p>
+      <button type="submit">알려주고 다시 보기</button>
+    </form>
+  </details>
+  {% endif %}
+  <ul class="note-lines" style="margin:10px 0 0">
+    <li>신호가 떴다고 <b>틀린 값이라는 뜻은 아닙니다</b> — "한 번 더 확인하라"는 표시예요.</li>
+    <li>반대로 <b>신호가 없다고 정확한 것도 아닙니다</b> — 크게 빗나간 7건 중 1건은 아무 신호에도 안 걸렸어요.</li>
+  </ul>
+</div>
+{% endif %}
+{% if result.verdict_lines %}
+<div class="card" style="border-left:4px solid var(--primary); background:var(--primary-tint)">
+  <h3 style="margin-bottom:8px">📝 종합 판단 (규칙 기반 자동 요약)</h3>
+  {% for line in result.verdict_lines %}
+  <p style="margin:0 0 7px; line-height:1.75; font-size:14px">{{ line }}</p>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="sec-head"><span class="sec-num">1</span><span class="sec-title">이 집, 얼마에 팔릴까</span><span class="sec-sub">가격 자체를 다루는 부분</span></div>
 
 {% if result.price_tiers %}
 <div class="card">
@@ -300,7 +352,6 @@
 </div>
 {% endif %}
 </div>
-
 {# 72-33절 — 그래프와 그 점들의 목록은 같은 이야기다. 카드를 나눠 두면
    "이게 뭐구나"가 두 번에 나눠 들어온다는 지적을 받아 한 카드로 합쳤다. #}
 <div class="card">
@@ -343,59 +394,50 @@
   </table>
   </div>
 </div>
-
-{% if result.estimate_warnings %}
-<div class="card" style="border-left:4px solid #e8a33d; background:#fff8ec">
-  <h3 style="margin-bottom:6px">⚠️ 이 추정치, 그대로 믿기 전에 확인하세요</h3>
-  <p class="muted" style="margin:0 0 12px">
-    과거 실거래 125건에 이 계산기를 다시 돌려 봤더니, 아래 같은 신호가 뜬 경우가
-    <b>1.4배쯤 더 많이 빗나갔어요</b> (신호 없을 때 평균 10.8% · 있을 때 14.6%).</p>
-  {% for w in result.estimate_warnings %}
-  <div style="padding:11px 13px; margin-bottom:8px; background:#fff;
-              border:1px solid #f0d9b5; border-radius:10px">
-    <div style="font-weight:700; font-size:14.5px; margin-bottom:4px">{{ w.label }}</div>
-    <div class="muted" style="margin:0 0 5px">{{ w.detail }}</div>
-    <div style="font-size:13.5px; color:var(--primary-dark); font-weight:600">→ {{ w.advice }}</div>
+{% if result.condition_adjustment %}
+<div class="card">
+  <h3>🔧 상태별 매도가 3단계 ({{ result.condition_adjustment.base_label }} 기준)</h3>
+  <ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
+    <li>같은 집이라도 <b>험한 집 / 깔끔한 기본집 / 올수리집</b>은 팔리는 가격이 다릅니다.</li>
+    <li>지금 상태({{ result.condition_adjustment.current_label }})에서 손을 볼수록 매도가가 얼마나 올라가는지 보여드려요.</li>
+    <li>경매 단타에서는 보통 <b>기본 정리(청소·도배·장판)</b>까지만 하고 팝니다 — 올수리 줄은 "그렇게까지 하면" 참고용이에요.</li>
+  </ul>
+  <div class="table-scroll">
+  <table>
+    <tr><th>상태</th><th>예상 매도가</th><th>현재 대비</th>{% if result.condition_adjustment.has_cost %}<th>예상 공사비</th><th>순증</th>{% endif %}</tr>
+    {% for row in result.condition_adjustment.rows %}
+    <tr{% if row.is_current %} style="background:var(--primary-tint)"{% endif %}>
+      <td>{{ row.label }}{% if row.is_current %} <b>← 지금</b>{% endif %}</td>
+      <td><strong>{{ row.price }}</strong></td>
+      <td>{% if row.gain %}+{{ row.gain }}{% else %}—{% endif %}</td>
+      {% if result.condition_adjustment.has_cost %}
+      <td>{{ row.cost or '—' }}</td>
+      <td>{% if row.net %}<strong style="color:{% if row.net_positive %}var(--primary){% else %}#d03050{% endif %}">{{ row.net }}</strong>{% else %}—{% endif %}</td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </table>
   </div>
-  {% endfor %}
-  {# 72-26절 — 정비구역 경고가 떴는데 아직 답을 안 했으면 여기서 바로 답하게
-     한다(43절 임장 체크·44절 매물 붙여넣기와 같은 패턴). 경고가 "확인하세요"
-     라고만 하고 확인할 칸이 화면에 없으면 고리가 닫히지 않는다. #}
-  {% if result.zone_ask %}
-  <details class="paste-fold" style="margin:10px 0 0">
-    <summary>🏗️ 여기가 재개발 구역인지 알려주시면 다시 안내해 드려요</summary>
-    <form method="post" action="/estimate" style="margin-top:10px">
-      {% for k, v in result.resubmit_fields_no_zone.items() %}
-      <input type="hidden" name="{{ k }}" value="{{ v }}">
-      {% endfor %}
-      <label for="rz">재개발·재건축 구역인가요?</label>
-      <select id="rz" name="redevelopment">
-        <option value="">모르겠어요 / 확인 안 했어요</option>
-        {% for val, label in redev_choices %}
-        <option value="{{ val }}">{{ label }}</option>
-        {% endfor %}
-      </select>
-      <p class="hint" style="margin:8px 0 10px">경매 정보나 토지이용계획확인원에서 확인할 수 있어요.
-        <b>매도가 숫자는 바뀌지 않고</b>, 이 값을 어떻게 읽어야 하는지 안내만 달라집니다.</p>
-      <button type="submit">알려주고 다시 보기</button>
-    </form>
-  </details>
-  {% endif %}
-  <ul class="note-lines" style="margin:10px 0 0">
-    <li>신호가 떴다고 <b>틀린 값이라는 뜻은 아닙니다</b> — "한 번 더 확인하라"는 표시예요.</li>
-    <li>반대로 <b>신호가 없다고 정확한 것도 아닙니다</b> — 크게 빗나간 7건 중 1건은 아무 신호에도 안 걸렸어요.</li>
+  <ul class="note-lines" style="margin-top:10px">
+    <li>⚠️ 국토부 실거래가에는 수리상태 정보가 없어 <b>검증된 수치가 아닙니다</b>.</li>
+    <li>현장 경험에서 나온 참고 배율(노후 0.90 · 기본 1.00 · 올수리 1.08)을 곱한 값일 뿐이에요.</li>
+    {% if not result.condition_adjustment.has_cost %}<li>상세 옵션에서 예상 공사비를 넣으면 "고쳐서 남는지"까지 계산해 드립니다.</li>{% endif %}
+  </ul>
+</div>
+{% endif %}
+{% if result.monthly_rent %}
+<div class="card">
+  <h3>예상 월세 추정 (전월세전환율 역산)</h3>
+  <p class="muted">가정: 월세보증금 {{ result.monthly_rent.deposit }}만원, 연 전환율 {{ result.monthly_rent.rate }}%</p>
+  <div class="price-item" style="max-width:220px; margin-top:8px"><div class="label">예상 월세</div><div class="value">{{ result.monthly_rent.amount }}만원/월</div></div>
+  <ul class="note-lines" style="margin-top:10px">
+    <li>⚠️ 실거래 데이터가 아니라, 위 매도가(현실적 체결가)에 전환율을 적용한 추정치입니다.</li>
+    <li>인근 실제 월세 매물과 비교해서 조정하세요.</li>
   </ul>
 </div>
 {% endif %}
 
-{% if result.verdict_lines %}
-<div class="card" style="border-left:4px solid var(--primary); background:var(--primary-tint)">
-  <h3 style="margin-bottom:8px">📝 종합 판단 (규칙 기반 자동 요약)</h3>
-  {% for line in result.verdict_lines %}
-  <p style="margin:0 0 7px; line-height:1.75; font-size:14px">{{ line }}</p>
-  {% endfor %}
-</div>
-{% endif %}
+<div class="sec-head"><span class="sec-num">2</span><span class="sec-title">얼마나 잘 팔릴까</span><span class="sec-sub">같은 값이라도 빨리 팔리느냐</span></div>
 
 {% if result.marketability and result.marketability['items'] %}
 <div class="card">
@@ -489,39 +531,6 @@
   {{ location_detail() }}
 </div>
 {% endif %}
-
-{% if result.condition_adjustment %}
-<div class="card">
-  <h3>🔧 상태별 매도가 3단계 ({{ result.condition_adjustment.base_label }} 기준)</h3>
-  <ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
-    <li>같은 집이라도 <b>험한 집 / 깔끔한 기본집 / 올수리집</b>은 팔리는 가격이 다릅니다.</li>
-    <li>지금 상태({{ result.condition_adjustment.current_label }})에서 손을 볼수록 매도가가 얼마나 올라가는지 보여드려요.</li>
-    <li>경매 단타에서는 보통 <b>기본 정리(청소·도배·장판)</b>까지만 하고 팝니다 — 올수리 줄은 "그렇게까지 하면" 참고용이에요.</li>
-  </ul>
-  <div class="table-scroll">
-  <table>
-    <tr><th>상태</th><th>예상 매도가</th><th>현재 대비</th>{% if result.condition_adjustment.has_cost %}<th>예상 공사비</th><th>순증</th>{% endif %}</tr>
-    {% for row in result.condition_adjustment.rows %}
-    <tr{% if row.is_current %} style="background:var(--primary-tint)"{% endif %}>
-      <td>{{ row.label }}{% if row.is_current %} <b>← 지금</b>{% endif %}</td>
-      <td><strong>{{ row.price }}</strong></td>
-      <td>{% if row.gain %}+{{ row.gain }}{% else %}—{% endif %}</td>
-      {% if result.condition_adjustment.has_cost %}
-      <td>{{ row.cost or '—' }}</td>
-      <td>{% if row.net %}<strong style="color:{% if row.net_positive %}var(--primary){% else %}#d03050{% endif %}">{{ row.net }}</strong>{% else %}—{% endif %}</td>
-      {% endif %}
-    </tr>
-    {% endfor %}
-  </table>
-  </div>
-  <ul class="note-lines" style="margin-top:10px">
-    <li>⚠️ 국토부 실거래가에는 수리상태 정보가 없어 <b>검증된 수치가 아닙니다</b>.</li>
-    <li>현장 경험에서 나온 참고 배율(노후 0.90 · 기본 1.00 · 올수리 1.08)을 곱한 값일 뿐이에요.</li>
-    {% if not result.condition_adjustment.has_cost %}<li>상세 옵션에서 예상 공사비를 넣으면 "고쳐서 남는지"까지 계산해 드립니다.</li>{% endif %}
-  </ul>
-</div>
-{% endif %}
-
 {% if result.sale_pressure %}
 <div class="card">
   <h3>⚖️ 매도 압력 (경쟁매물 ÷ 최근 실거래) — {{ result.sale_pressure.level }}</h3>
@@ -541,62 +550,6 @@
   </ul>
 </div>
 {% endif %}
-
-{% if result.liquidity %}
-<div class="card">
-  <h3>거래량·유동성 점수 (유사면적 기준, {{ result.liquidity.latest }} 기준)</h3>
-  <div class="table-scroll">
-  <table>
-    <tr><th>반경</th><th>최근 3개월</th><th>최근 6개월</th><th>최근 12개월</th></tr>
-    {% for r in result.liquidity.rows %}
-    <tr>
-      <td>{{ r.radius }}m</td>
-      <td>{{ r.m3 }}건 (월평균 {{ r.m3_avg }})</td>
-      <td>{{ r.m6 }}건 (월평균 {{ r.m6_avg }})</td>
-      <td>{{ r.m12 }}건 (월평균 {{ r.m12_avg }})</td>
-    </tr>
-    {% endfor %}
-  </table>
-  </div>
-  <ul class="note-lines" style="margin-top:10px">
-    <li>※ 층·준공년도 조건은 빼고, <b>유사면적만</b> 기준으로 센 거래 빈도입니다.</li>
-    <li>조건을 너무 좁히면 표본이 줄어 동네 유동성 자체를 가늠하기 어려워지기 때문이에요.</li>
-  </ul>
-</div>
-{% endif %}
-
-{% if result.price_trend %}
-<div class="card">
-  <h3>📈 가격 추이 ({{ result.price_trend.scope }} 월별 평균 평당가)</h3>
-  <ul class="note-lines" style="margin-top:-6px; margin-bottom:10px">
-    <li>이 동네 빌라가 <b>㎡당 얼마에</b> 거래돼 왔는지 시간순으로 이은 선이에요.</li>
-    <li>{{ result.price_trend.first }}만원/㎡ → {{ result.price_trend.last }}만원/㎡
-        {% if result.price_trend.change_pct %}(<b>{{ result.price_trend.change_pct }}%</b>){% endif %}</li>
-  </ul>
-  {{ result.price_trend.chart_html | safe }}
-  <ul class="note-lines" style="margin-top:10px">
-    <li>※ 조회한 기간 안의 계약월만 이은 것이고, 월마다 거래 건수가 달라 한두 건뿐인 달은 크게 튈 수 있어요.</li>
-    <li>매도가 계산에는 반영되지 않는 참고 그래프입니다.</li>
-  </ul>
-</div>
-{% endif %}
-
-{% if result.seasonality %}
-<div class="card">
-  <h3>🗓️ 계절성 — 몇 월에 거래가 몰리나 ({{ result.seasonality.scope }})</h3>
-  <ul class="note-lines" style="margin-top:-6px; margin-bottom:10px">
-    <li>월별 거래량을 <b>전체 평균 100</b>으로 놓고 지수화한 값이에요 — 130이면 평균보다 30% 많다는 뜻.</li>
-    {% if result.seasonality.busy %}<li>거래 활발한 달: <b>{{ result.seasonality.busy | join(' · ') }}</b>{% if result.seasonality.slow %} · 거래 적은 달: {{ result.seasonality.slow | join(' · ') }}{% endif %}</li>
-    {% else %}<li>뚜렷한 성수기·비수기가 보이지 않는 동네예요 — 시점보다 가격에 집중하는 편이 낫습니다.</li>{% endif %}
-  </ul>
-  {{ result.seasonality.chart_html | safe }}
-  <ul class="note-lines" style="margin-top:10px">
-    <li>※ 조회한 기간 기준이라 표본이 적을수록 들쭉날쭉할 수 있어요.</li>
-    {% if result.seasonality.busy %}<li>매도 시점을 고를 수 있다면 활발한 달에 맞춰 내놓는 게 매수 수요가 가장 많습니다.</li>{% endif %}
-  </ul>
-</div>
-{% endif %}
-
 {% if result.similar_listings %}
 <div class="card">
   <h3>📋 비교 매물 유사도 순위 (붙여넣은 네이버부동산 매물 기준)</h3>
@@ -659,30 +612,8 @@
 })();
 </script>
 
-{% if result.monthly_rent %}
-<div class="card">
-  <h3>예상 월세 추정 (전월세전환율 역산)</h3>
-  <p class="muted">가정: 월세보증금 {{ result.monthly_rent.deposit }}만원, 연 전환율 {{ result.monthly_rent.rate }}%</p>
-  <div class="price-item" style="max-width:220px; margin-top:8px"><div class="label">예상 월세</div><div class="value">{{ result.monthly_rent.amount }}만원/월</div></div>
-  <ul class="note-lines" style="margin-top:10px">
-    <li>⚠️ 실거래 데이터가 아니라, 위 매도가(현실적 체결가)에 전환율을 적용한 추정치입니다.</li>
-    <li>인근 실제 월세 매물과 비교해서 조정하세요.</li>
-  </ul>
-</div>
-{% endif %}
+<div class="sec-head"><span class="sec-num">3</span><span class="sec-title">이 동네는 어떤 곳인가</span><span class="sec-sub">거래량·가격 흐름·사는 사람</span></div>
 
-{% if result.villa_market_trend or result.buyer_age or result.buyer_age_missing or result.dong_compare or result.station_premium %}
-<div class="section-divider">참고 정보</div>
-{% endif %}
-
-{# 72-27절 — 좁은 단위에서 넓은 단위로 읽히게 배치한다:
-   인근 동 비교(동) → 매입자 연령대(구) → 시장 동향(권역·시도).
-   사용자 지적: "동 이야기를 먼저 하고 서남권 이런 권역 이야기를
-   다음에 하는 게 순서상 맞지 않나". #}
-{# 72-32절 — 25절 인근 동 비교 + 69절 매입자 연령대를 한 카드로 묶었다.
-   둘 다 "이 동네에서 손바뀜이 얼마나, 누구 사이에서 일어나나"를 본다.
-   차트는 사용자가 보내준 시각화 가이드대로: 구성비=도넛 · 비교=막대 ·
-   변화=꺾은선. #}
 {% if result.neighbourhood %}
 {% set nb = result.neighbourhood %}
 <div class="card">
@@ -691,26 +622,91 @@
     매도가는 "얼마에"를 말해주지만, 여기는 <span style="color:var(--accent-ink)">얼마나 자주 팔리고,
     그걸 누가 사 가는지</span>를 봅니다.</p>
 
+  {# 72-34절 — 거래량 줌 사다리. 세 숫자가 다 "거래량"이라 똑같아 보이지만
+     보는 범위가 다르다: 내 물건 주변(반경) → 우리 동 → 우리 구. #}
+  <div class="nb-block">
+    <div class="nb-head">📊 얼마나 자주 팔리나</div>
+    <ul class="note-lines" style="margin:0 0 12px">
+      <li><b>거래량은 "팔고 싶을 때 사 줄 사람이 있는가"</b>를 보는 숫자예요 —
+        매물 수가 아니라 <b>계약이 끝난 건수</b>입니다.</li>
+      <li>아래 셋은 다 거래량인데 <b>보는 범위가 다릅니다</b> —
+        가까운 데서 넓은 데로 차례대로 넓혀 가며 보세요.</li>
+    </ul>
+
+    {% if nb.liquidity %}
+    <div class="zoom-step">
+      <div class="zoom-label"><span class="zoom-pin">1</span>내 물건 바로 주변
+        <span class="nb-sub">반경 300·500m · 비슷한 넓이만 · {{ nb.liquidity.latest }} 기준</span></div>
+      <p class="muted" style="margin:0 0 8px">가장 직접적인 숫자예요. <b>내 집과 비슷한 넓이</b>의 빌라가 걸어서 몇 분 거리 안에서 얼마나 팔렸는지입니다.</p>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>반경</th><th>최근 3개월</th><th>최근 6개월</th><th>최근 12개월</th></tr></thead>
+        <tbody>
+        {% for r in nb.liquidity.rows %}
+        <tr><td>{{ r.radius }}m</td>
+          <td>{{ r.m3 }}건 <span class="muted">(월평균 {{ r.m3_avg }})</span></td>
+          <td>{{ r.m6 }}건 <span class="muted">(월평균 {{ r.m6_avg }})</span></td>
+          <td>{{ r.m12 }}건 <span class="muted">(월평균 {{ r.m12_avg }})</span></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      <p class="muted" style="margin:8px 0 0">※ 층·준공년도 조건은 빼고 넓이만 맞춰서 셌어요 — 조건을 너무 좁히면 표본이 줄어 동네 분위기 자체를 못 봅니다.</p>
+    </div>
+    {% endif %}
+  {% if nb.dong %}
+    <div class="zoom-step">
+      <div class="zoom-label"><span class="zoom-pin">2</span>우리 동 vs 옆 동
+        <span class="nb-sub">{{ nb.dong.name }} · 최근 3개월 · 최근 거래월 {{ nb.dong.latest_month }}</span></div>
+      <p class="muted" style="margin:0 0 8px">같은 구 안에서 <b>우리 동이 옆 동보다 활발한지</b>를 봅니다. 넓이 조건 없이 그 동 전체 빌라 거래예요.</p>
+      {% if nb.dong.volume_bars %}{{ nb.dong.volume_bars|safe }}
+      {% if nb.dong.volume_rank_note %}<p class="muted" style="margin:6px 0 0">{{ nb.dong.volume_rank_note }} ← 검색하신 동</p>{% endif %}
+      {% elif nb.dong.volume_missing %}<p class="muted">비교할 만한 동이 부족합니다.</p>{% endif %}
+      <p class="muted" style="margin:8px 0 0">※ 같은 구 안에서 지금까지 조회된 데이터 기준입니다.</p>
+    </div>
+  {% endif %}
+
+  {% if nb.age and nb.age.volume_line %}
+    <div class="zoom-step">
+      <div class="zoom-label"><span class="zoom-pin">3</span>우리 구 전체, 해마다
+        <span class="nb-sub">{{ nb.age.region }} · {{ nb.age.year }}년까지</span></div>
+      <p class="muted" style="margin:0 0 8px">가장 넓게 본 숫자예요. <b>이 구의 매수세 자체가 늘고 있는지 줄고 있는지</b>를 봅니다.
+        ⚠️ 여기만 <b>주택유형 구분 없는 전체 주택</b>이라 아파트 거래가 섞여 있어요.</p>
+      {{ nb.age.volume_line|safe }}
+    </div>
+  {% endif %}
+  </div>
+
   {% if nb.dong %}
   <div class="nb-block">
-    <div class="nb-head">📊 얼마나 자주 팔리나 <span class="nb-sub">{{ nb.dong.name }} · 최근 거래월 {{ nb.dong.latest_month }}</span></div>
-    <ul class="note-lines" style="margin:0 0 10px">
-      <li><b>거래 활발도</b>는 최근 3개월 동안 그 동네에서 <b>실제로 손바뀜이 몇 번 일어났는지</b>예요 —
-        매물 수가 아니라 <b>계약이 끝난 건수</b>입니다.</li>
-      <li>숫자가 크면 <b>내놓았을 때 사 줄 사람을 만날 확률이 높다</b>는 뜻이에요. 거래가 뜸한 동네는
-        가격을 맞춰도 몇 달씩 걸릴 수 있습니다.</li>
-      <li>같은 구 안의 동끼리 비교한 값이라, 옆 동네보다 활발한지 아닌지로 읽으시면 됩니다.</li>
-    </ul>
-    {% if nb.dong.volume_bars %}{{ nb.dong.volume_bars|safe }}
-    {% if nb.dong.volume_rank_note %}<p class="muted" style="margin:6px 0 0">{{ nb.dong.volume_rank_note }} ← 검색하신 동</p>{% endif %}
-    {% elif nb.dong.volume_missing %}<p class="muted">비교할 만한 동이 부족합니다.</p>{% endif %}
-
-    <div class="nb-head" style="margin-top:18px">📈 값이 오르는 동네인가 <span class="nb-sub">최근 3개월 평균 평당가, 이전 3개월 대비</span></div>
+    <div class="nb-head">📈 값이 오르는 동네인가 <span class="nb-sub">최근 3개월 평균 평당가, 이전 3개월 대비</span></div>
     <p class="muted" style="margin:0 0 9px">가운데 선이 0%입니다 — 오른쪽이면 오르는 중, 왼쪽이면 내리는 중이에요.</p>
     {% if nb.dong.price_bars %}{{ nb.dong.price_bars|safe }}
     {% if nb.dong.price_rank_note %}<p class="muted" style="margin:6px 0 0">{{ nb.dong.price_rank_note }} ← 검색하신 동</p>{% endif %}
     {% elif nb.dong.price_missing %}<p class="muted">비교할 만한 동이 부족합니다.</p>{% endif %}
-    <p class="muted" style="margin:10px 0 0">※ 같은 구 안에서 지금까지 조회된 데이터 기준입니다.</p>
+    {% if result.price_trend %}
+    <div class="card-split"></div>
+    <div class="zoom-label" style="margin-bottom:6px">📉 {{ result.price_trend.scope }} 월별 평균 평당가</div>
+    <ul class="note-lines" style="margin:0 0 8px">
+      <li>위 막대가 "옆 동네와 견줘 어떤가"라면, 이 선은 <b>이 동네가 시간에 따라 어떻게 움직였나</b>예요.</li>
+      <li>{{ result.price_trend.first }}만원/㎡ → {{ result.price_trend.last }}만원/㎡
+        {% if result.price_trend.change_pct %}(<b>{{ result.price_trend.change_pct }}%</b>){% endif %}</li>
+    </ul>
+    {{ result.price_trend.chart_html | safe }}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if result.seasonality %}
+  <div class="nb-block">
+    <div class="nb-head">🗓️ 언제 많이 팔리나 <span class="nb-sub">{{ result.seasonality.scope }} · 월별 거래량 지수(평균=100)</span></div>
+    <ul class="note-lines" style="margin:0 0 10px">
+      <li>내놓는 <b>시점</b>을 고를 수 있다면 참고하세요 — 같은 값이라도 수요가 많은 달이 빨리 팔립니다.</li>
+      {% if result.seasonality.busy %}<li>거래가 <b>많은 달</b>: {{ result.seasonality.busy | join(' · ') }}</li>{% endif %}
+      {% if result.seasonality.slow %}<li>거래가 <b>적은 달</b>: {{ result.seasonality.slow | join(' · ') }}</li>{% endif %}
+      {% if not result.seasonality.busy and not result.seasonality.slow %}<li>뚜렷하게 몰리는 달은 없습니다.</li>{% endif %}
+    </ul>
+    {{ result.seasonality.chart_html | safe }}
   </div>
   {% endif %}
 
@@ -740,10 +736,8 @@
         </ul>
       </div>
     </div>
-    {% if nb.age.volume_line %}
-    <div class="nb-head" style="margin-top:16px">🕒 매입 거래량은 늘고 있나 <span class="nb-sub">연도별 매입 건수</span></div>
-    {{ nb.age.volume_line|safe }}
-    {% endif %}
+    {# 72-34절 — 이 꺾은선은 위 "얼마나 자주 팔리나" 줌 사다리 3단계로
+       옮겼다. 여기 그대로 두면 같은 그래프가 한 카드에 두 번 나온다. #}
     <ul class="note-lines" style="margin:12px 0 0">
       <li>30~40대는 <b>실거주 목적으로 사는 주력 매수층</b>이에요 — 이 비중이 높으면 팔 때 사 줄 사람이 두껍다는 뜻으로 읽습니다.</li>
       <li>⚠️ 주택유형이 구분되지 않은 <b>전체 주택 통계</b>라 아파트 거래가 섞여 있어요.</li>
@@ -758,6 +752,29 @@
   {% endif %}
 </div>
 {% endif %}
+{% if result.station_premium %}
+<div class="card">
+  <h3>역세권 프리미엄 참고 (반경 안 비교거래 {{ result.station_premium.n }}건, {{ result.station_premium.keyword }}까지 거리 기준)</h3>
+  <p class="muted">{{ result.station_premium.keyword }}까지 {{ result.station_premium.min_distance }}~{{ result.station_premium.max_distance }}m 분포</p>
+  <p style="margin:6px 0">{{ result.station_premium.keyword }}에서 100m 멀어질 때마다 평당가 <strong>{{ result.station_premium.change_per_100m }}만원/㎡ ({{ result.station_premium.pct_per_100m }}%) {{ result.station_premium.direction }}</strong> 경향</p>
+  <p class="muted">→ 이 지역 비교거래는 {{ result.station_premium.keyword }}에 {{ result.station_premium.tendency }} 경향을 보입니다 (설명력 R²={{ result.station_premium.r_squared }}, 1에 가까울수록 거리만으로 가격 차이가 잘 설명됨).</p>
+  {% if result.station_premium.low_confidence %}
+  <p class="muted">⚠️ 설명력(R²)이 낮아 거리 외에 다른 요인(층·연식·개별 단지 차이 등)의 영향이 더 클 수 있습니다.</p>
+  {% endif %}
+  <p class="muted">⚠️ 표본이 최대 15건인 단순 참고 통계입니다 — 매도가 계산에 자동 반영되지 않습니다.</p>
+  {% if result.station_premium.correction %}
+  <p style="margin:10px 0 0">→ [참고] 대상 물건은 {{ result.station_premium.keyword }}까지 {{ result.station_premium.correction.subject_distance_m }}m로
+    비교거래 평균({{ result.station_premium.correction.avg_distance_m }}m)보다
+    {{ "가깝습니다" if result.station_premium.correction.closer else "멉니다" }} — 이 회귀를 반영해 보정하면
+    현실적 체결가는 약 <strong>{{ result.station_premium.correction.corrected_realistic }}</strong> ({{ result.station_premium.correction.pct }}%)입니다.</p>
+  <p class="muted">⚠️ 표본·거리범위·설명력 조건을 모두 만족할 때만 계산되는 참고용 what-if 수치입니다 — 위 공식 매도가 값에는 반영되지 않습니다.</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<a class="back" href="/">← 다시 계산하기</a>
+
+<div class="sec-head"><span class="sec-num">4</span><span class="sec-title">더 넓게 보면</span><span class="sec-sub">구·권역 단위 시장 분위기</span></div>
 
 {% if result.villa_market_trend %}
 <div class="card">
@@ -782,28 +799,6 @@
   <p class="muted">2025년 11월부터 모은 스냅샷이라 '작년 대비' 계산은 아직 안 됩니다 — 최신 수치는 한국부동산원 R-ONE에서 확인하세요.</p>
 </div>
 {% endif %}
-
-{% if result.station_premium %}
-<div class="card">
-  <h3>역세권 프리미엄 참고 (반경 안 비교거래 {{ result.station_premium.n }}건, {{ result.station_premium.keyword }}까지 거리 기준)</h3>
-  <p class="muted">{{ result.station_premium.keyword }}까지 {{ result.station_premium.min_distance }}~{{ result.station_premium.max_distance }}m 분포</p>
-  <p style="margin:6px 0">{{ result.station_premium.keyword }}에서 100m 멀어질 때마다 평당가 <strong>{{ result.station_premium.change_per_100m }}만원/㎡ ({{ result.station_premium.pct_per_100m }}%) {{ result.station_premium.direction }}</strong> 경향</p>
-  <p class="muted">→ 이 지역 비교거래는 {{ result.station_premium.keyword }}에 {{ result.station_premium.tendency }} 경향을 보입니다 (설명력 R²={{ result.station_premium.r_squared }}, 1에 가까울수록 거리만으로 가격 차이가 잘 설명됨).</p>
-  {% if result.station_premium.low_confidence %}
-  <p class="muted">⚠️ 설명력(R²)이 낮아 거리 외에 다른 요인(층·연식·개별 단지 차이 등)의 영향이 더 클 수 있습니다.</p>
-  {% endif %}
-  <p class="muted">⚠️ 표본이 최대 15건인 단순 참고 통계입니다 — 매도가 계산에 자동 반영되지 않습니다.</p>
-  {% if result.station_premium.correction %}
-  <p style="margin:10px 0 0">→ [참고] 대상 물건은 {{ result.station_premium.keyword }}까지 {{ result.station_premium.correction.subject_distance_m }}m로
-    비교거래 평균({{ result.station_premium.correction.avg_distance_m }}m)보다
-    {{ "가깝습니다" if result.station_premium.correction.closer else "멉니다" }} — 이 회귀를 반영해 보정하면
-    현실적 체결가는 약 <strong>{{ result.station_premium.correction.corrected_realistic }}</strong> ({{ result.station_premium.correction.pct }}%)입니다.</p>
-  <p class="muted">⚠️ 표본·거리범위·설명력 조건을 모두 만족할 때만 계산되는 참고용 what-if 수치입니다 — 위 공식 매도가 값에는 반영되지 않습니다.</p>
-  {% endif %}
-</div>
-{% endif %}
-
-<a class="back" href="/">← 다시 계산하기</a>
 {% if result.timings %}
 {# ⚠️ 추측으로 서버를 옮기지 않기 위한 계측 줄이다. 어느 구간이 느린지 보이면
    원인이 갈린다 — 실거래 조회가 느리면 데이터 서버까지의 거리(또는 캐시가 빈 것),

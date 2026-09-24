@@ -204,7 +204,9 @@ class TheTemplateHasOneCardNotTwo(unittest.TestCase):
     def test_the_activity_metric_is_explained(self):
         """⚠️ 사용자 지적: '거래 활발도가 뭘 뜻하는지 더 자세히'."""
         src = self._tpl(strip_comments=True)
-        for phrase in ("손바뀜", "계약이 끝난 건수", "사 줄 사람을 만날 확률"):
+        # 72-34절 — 줌 사다리로 묶으며 문구가 바뀌었다. 계약은 그대로다:
+        #   "매물이 아니라 계약" + "팔고 싶을 때 사 줄 사람이 있는가"
+        for phrase in ("계약이 끝난 건수", "사 줄 사람이 있는가", "보는 범위가 다릅니다"):
             self.assertIn(phrase, src, f"거래 활발도 설명에서 '{phrase}' 가 빠졌다")
 
     def test_the_missing_reason_still_has_a_home(self):

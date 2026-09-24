@@ -2782,14 +2782,14 @@ class TestReferenceCardsGoNarrowToWide(unittest.TestCase):
         self.assertLess(src.index("{% if result.neighbourhood %}"),
                         src.index("{% if result.villa_market_trend %}"))
 
-    def test_the_divider_still_comes_first(self):
-        """'참고 정보' 구분선은 참고 카드들보다 앞에 있어야 한다."""
+    def test_each_card_sits_under_its_section_header(self):
+        """72-34절 — '참고 정보' 구분선 대신 번호 붙은 구역 헤더를 쓴다."""
         src = self._template()
-        divider = src.find('<div class="section-divider">참고 정보</div>')
-        self.assertGreater(divider, 0)
-        for key in ("neighbourhood", "villa_market_trend"):
-            self.assertGreater(src.find("{%% if result.%s %%}" % key), divider,
-                               f"{key} 카드가 구분선보다 위에 있다")
+        for key, sec in (("neighbourhood", "이 동네는 어떤 곳인가"),
+                         ("villa_market_trend", "더 넓게 보면")):
+            head = src.index(sec)
+            self.assertGreater(src.index("{%% if result.%s %%}" % key), head,
+                               f"{key} 카드가 '{sec}' 구역 헤더보다 위에 있다")
 
 
 class TestMarketabilityHeadingIsEmphasised(unittest.TestCase):

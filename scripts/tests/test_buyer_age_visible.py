@@ -24,9 +24,9 @@ class TheTitleSaysWhatItIs(unittest.TestCase):
     def test_the_word_age_is_in_the_heading(self):
         """72-32절에서 카드가 합쳐졌지만 **찾을 수 있어야 한다는 계약은 그대로다.**"""
         src = _tpl()
-        i = src.find("nb.age.region")
+        i = src.find("👥 누가 사 가나")
         self.assertGreater(i, 0, "연령대 갈래가 사라졌다")
-        head = src[max(0, i - 400):i + 200]
+        head = src[i:i + 300]
         self.assertIn("매입자 연령대", head,
                       "제목에 '매입자 연령대'가 없으면 사용자가 못 찾는다")
         self.assertIn("누가 사 가나", head)
@@ -93,12 +93,14 @@ class ItSaysWhyWhenItIsMissing(unittest.TestCase):
         self.assertIn("{% elif result.buyer_age_missing %}", src,
                       "카드가 뜨는데도 이유가 같이 뜨면 중복이다")
 
-    def test_the_divider_appears_for_the_reason_too(self):
-        """이유만 남는 경우에도 '참고 정보' 구분선이 있어야 카드가 떠 보인다."""
+    def test_the_reason_lives_in_the_neighbourhood_section(self):
+        """72-34절 — '참고 정보' 구분선은 구역 헤더로 대체됐다.
+        이유 문구는 '이 동네' 카드 안 연령대 갈래 자리에 남아 있어야 한다."""
         src = _tpl()
-        i = src.index('<div class="section-divider">참고 정보</div>')
-        cond = src[max(0, i - 300):i]
-        self.assertIn("result.buyer_age_missing", cond)
+        start = src.index("{% if result.neighbourhood %}")
+        end = src.index('class="sec-head"', start)
+        self.assertIn("result.buyer_age_missing", src[start:end],
+                      "연령대가 없을 때 이유를 말할 자리가 '이 동네' 카드 밖으로 나갔다")
 
 
 class TheParticleIsCorrect(unittest.TestCase):

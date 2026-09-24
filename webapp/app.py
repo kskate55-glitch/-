@@ -99,7 +99,8 @@ def _address_differs(typed: str, canonical: str) -> bool:
     return bool(canonical) and norm(typed) != norm(canonical)
 
 
-def _build_neighbourhood_card(dong_compare, buyer_age) -> dict | None:
+def _build_neighbourhood_card(dong_compare, buyer_age,
+                              liquidity=None) -> dict | None:
     """72-32절 — 25절 인근 동 비교와 69절 매입자 연령대를 한 카드로 묶는다.
 
     사용자 지적: *"인근 동 비교 거래 활발도, 사실 이거랑 같은 계열이니 묶으면
@@ -112,13 +113,17 @@ def _build_neighbourhood_card(dong_compare, buyer_age) -> dict | None:
       · 시간 변화 → 꺾은선
     ⚠️ 값이 없으면 그 조각만 비워 둔다 — 카드 전체를 없애지 않는다.
     """
-    if not dong_compare and not buyer_age:
+    if not dong_compare and not buyer_age and not liquidity:
         return None
     from price_chart import (AGE_RAMP, render_compare_bars_html,
                              render_diverging_bars_html, render_donut_svg,
                              render_series_line_svg)
 
-    card: dict = {"dong": None, "age": None}
+    # 72-34절 — **거래량이 세 군데에 흩어져 있었다.** 축이 서로 달라서
+    #   (반경 / 동 / 구) 사실 다른 이야기인데, 따로 놓여 있으니 사용자가
+    #   "다 똑같은 말 아닌가"라고 했다. 좁은 데서 넓은 데로 가는
+    #   **줌 사다리**로 묶어서 무엇이 다른지가 보이게 한다.
+    card: dict = {"dong": None, "age": None, "liquidity": liquidity}
 
     if dong_compare:
         vol = dong_compare.get("volume_top") or []
@@ -1430,7 +1435,8 @@ def estimate():
         "villa_market_trend": villa_market_trend,
         "buyer_age": buyer_age,
         "buyer_age_missing": buyer_age_missing,
-        "neighbourhood": _build_neighbourhood_card(dong_compare, buyer_age),
+        "neighbourhood": _build_neighbourhood_card(
+            dong_compare, buyer_age, liquidity_display),
         "dong_compare": dong_compare,
         "station_premium": station_premium,
         "price_chart_html": price_chart_html,

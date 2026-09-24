@@ -2747,3 +2747,79 @@ class TestRegionIsNotAFactor(unittest.TestCase):
         for v in ep.PREDICTION_INTERVAL_PCT.values():
             self.assertIsInstance(v, float,
                                   "폭이 숫자 하나가 아니라 지역별 표로 바뀌었다")
+
+
+class TestReferenceCardsGoNarrowToWide(unittest.TestCase):
+    """72-27절 — 참고 정보 카드는 좁은 단위 → 넓은 단위 순이어야 한다.
+
+    사용자 지적: "동 이야기를 먼저 하고 서남권 이런 권역 이야기를 다음에
+    하는 게 순서상 맞지 않나". 화면 순서는 테스트가 없으면 다음 편집에서
+    **조용히 뒤섞이고 아무도 모른다** — 소스 위치로 고정한다.
+    """
+
+    def _template(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "..",
+                            "webapp", "templates", "result.html")
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+
+    def test_dong_then_gu_then_zone(self):
+        src = self._template()
+        spots = [(src.find("{% if result.dong_compare %}"), "인근 동 비교(동)"),
+                 (src.find("{% if result.buyer_age %}"), "매입자 연령대(구)"),
+                 (src.find("{% if result.villa_market_trend %}"), "시장 동향(권역)")]
+        for pos, name in spots:
+            self.assertGreater(pos, 0, f"{name} 카드가 사라졌다")
+        self.assertEqual(spots, sorted(spots),
+                         "참고 정보 카드가 좁은 단위 → 넓은 단위 순이 아니다: "
+                         + " → ".join(n for _, n in sorted(spots)))
+
+    def test_the_divider_still_comes_first(self):
+        """'참고 정보' 구분선은 세 카드보다 앞에 있어야 한다."""
+        src = self._template()
+        divider = src.find('<div class="section-divider">참고 정보</div>')
+        self.assertGreater(divider, 0)
+        for key in ("dong_compare", "buyer_age", "villa_market_trend"):
+            self.assertGreater(src.find("{%% if result.%s %%}" % key), divider,
+                               f"{key} 카드가 구분선보다 위에 있다")
+
+
+class TestMarketabilityHeadingIsEmphasised(unittest.TestCase):
+    """72-27절 — 이 카드가 매도가 카드와 무엇이 다른지가 핵심 설명이다.
+
+    사용자 지적: "얼마에 팔리나와 별개로 얼마나 잘 팔리나를 본 것이에요,
+    이 부분 설명이 중요하자나" — 그 한 줄만 본문보다 크고 진해야 한다.
+    """
+
+    def _card(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "..",
+                            "webapp", "templates", "result.html")
+        with open(path, encoding="utf-8") as f:
+            src = f.read()
+        start = src.find("🧭 환금성·경쟁 진단")
+        self.assertGreater(start, 0, "환금성 진단 카드가 사라졌다")
+        return src[start - 200:start + 900]
+
+    def test_the_heading_is_bigger_than_the_default_h3(self):
+        card = self._card()
+        m = re.search(r"<h3[^>]*font-size:\s*([\d.]+)px[^>]*>🧭 환금성", card)
+        self.assertIsNotNone(m, "환금성 제목에 별도 크기 지정이 없다")
+        self.assertGreater(float(m.group(1)), 16.5,
+                           "기본 h3(16.5px)보다 커야 강조가 된다")
+
+    def test_the_key_sentence_is_bold_and_bigger_than_the_side_notes(self):
+        card = self._card()
+        m = re.search(r'<p style="[^"]*font-size:\s*([\d.]+)px[^"]*'
+                      r'font-weight:\s*(\d+)[^"]*">\s*"얼마에 팔리나"', card)
+        self.assertIsNotNone(m, "핵심 문장이 별도 <p>로 크게 들어가 있지 않다")
+        size, weight = float(m.group(1)), int(m.group(2))
+        self.assertGreaterEqual(size, 16.0, "핵심 문장이 부연(14px)보다 충분히 크지 않다")
+        self.assertGreaterEqual(weight, 700, "핵심 문장이 진하지 않다")
+
+    def test_the_side_notes_did_not_get_enlarged_too(self):
+        """셋 다 키우면 강조가 사라진다 — 부연은 기본 note-lines 그대로."""
+        card = self._card()
+        notes = card[card.find('<ul class="note-lines"'):]
+        self.assertIn("중요한 순서대로", notes)
+        self.assertNotIn("font-size", notes.split("</ul>")[0],
+                         "부연 목록에도 크기를 줘서 강조가 흐려졌다")

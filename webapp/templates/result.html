@@ -350,9 +350,15 @@
 
 {% if result.marketability and result.marketability['items'] %}
 <div class="card">
-  <h3 style="margin-bottom:8px">🧭 환금성·경쟁 진단</h3>
+  {# 72-27절 — 이 카드가 매도가 카드와 무엇이 다른지가 이 카드의 핵심이라,
+     제목과 그 한 줄만 본문보다 눈에 띄게 키웠다. 나머지 두 줄은 부연이라
+     그대로 둬서 셋이 똑같이 커지지 않게 한다(다 키우면 강조가 사라진다). #}
+  <h3 style="margin-bottom:10px; font-size:21px; letter-spacing:-0.3px">🧭 환금성·경쟁 진단</h3>
+  <p style="margin:0 0 10px; font-size:16.5px; font-weight:800; line-height:1.6; color:var(--ink)">
+    "얼마에 팔리나"(위 매도가)와 별개로,<br>
+    <span style="color:var(--primary-dark)">"얼마나 잘 팔리나"</span>를 본 것이에요.
+  </p>
   <ul class="note-lines" style="margin-top:0; margin-bottom:12px">
-    <li>"얼마에 팔리나"(위 매도가)와 별개로, <b>"얼마나 잘 팔리나"</b>를 본 것이에요.</li>
     <li><b>중요한 순서대로</b> 번호를 매겼습니다 — 1번부터 보세요.</li>
     <li>뒷번호로 갈수록 당장의 매도 속도보다 <b>중·장기 참고치</b>에 가깝습니다.</li>
   </ul>
@@ -637,27 +643,37 @@
 <div class="section-divider">참고 정보</div>
 {% endif %}
 
-{% if result.villa_market_trend %}
+{# 72-27절 — 좁은 단위에서 넓은 단위로 읽히게 배치한다:
+   인근 동 비교(동) → 매입자 연령대(구) → 시장 동향(권역·시도).
+   사용자 지적: "동 이야기를 먼저 하고 서남권 이런 권역 이야기를
+   다음에 하는 게 순서상 맞지 않나". #}
+{% if result.dong_compare %}
 <div class="card">
-  <h3>시장 동향 참고 - 연립다세대 ({{ result.villa_market_trend.region }}, {{ result.villa_market_trend.date }} 기준 스냅샷)</h3>
-  <p class="muted">매매수급동향지수: {{ result.villa_market_trend.index }} (기준선 100 대비 {{ result.villa_market_trend.diff }})</p>
-  <p style="margin:6px 0"><strong>→ {{ result.villa_market_trend.plain_desc }}</strong></p>
-  <p class="muted">최근 3개월 추세: {{ result.villa_market_trend.trend }} ({{ result.villa_market_trend.start_date }} 최초 집계 {{ result.villa_market_trend.start_value }} → 지금, {{ result.villa_market_trend.since_start }}p)</p>
-  {% if result.villa_market_trend.peers %}
-  <p class="muted" style="margin-top:10px; font-weight:700">서울 5개 생활권 비교</p>
+  <h3>인근 동 비교 ({{ result.dong_compare.dong }} 기준, 최근 거래월 {{ result.dong_compare.latest_month }})</h3>
+  <p class="muted" style="font-weight:700; color:#4a4f54">거래 활발도 (최근 3개월 거래건수)</p>
+  {% if result.dong_compare.volume_top %}
   <ul class="ref-list">
-    {% for line in result.villa_market_trend.peers %}<li>{{ line }}</li>{% endfor %}
+    {% for v in result.dong_compare.volume_top %}
+    <li{% if v.is_target %} style="font-weight:800; color:var(--primary-dark)"{% endif %}>{{ v.dong }} {{ v.count }}건{% if v.is_target %} ← 검색하신 동{% endif %}</li>
+    {% endfor %}
   </ul>
+  {% if result.dong_compare.volume_rank_note %}<p class="muted" style="margin-top:6px">{{ result.dong_compare.volume_rank_note }} ← 검색하신 동</p>{% endif %}
+  {% elif result.dong_compare.volume_missing %}
+  <p class="muted">비교할 만한 동이 부족합니다.</p>
   {% endif %}
-  {% if result.villa_market_trend.national_line %}
-  <p class="muted" style="margin-top:8px">{{ result.villa_market_trend.national_line }}</p>
+
+  <p class="muted" style="margin-top:14px; font-weight:700; color:#4a4f54">가격 상승률 (최근 3개월 평균 평당가, 이전 3개월 대비)</p>
+  {% if result.dong_compare.price_top %}
+  <ul class="ref-list">
+    {% for p in result.dong_compare.price_top %}
+    <li{% if p.is_target %} style="font-weight:800; color:var(--primary-dark)"{% endif %}>{{ p.dong }} {{ p.change_pct }}{% if p.is_target %} ← 검색하신 동{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% if result.dong_compare.price_rank_note %}<p class="muted" style="margin-top:6px">{{ result.dong_compare.price_rank_note }} ← 검색하신 동</p>{% endif %}
+  {% elif result.dong_compare.price_missing %}
+  <p class="muted">비교할 만한 동이 부족합니다.</p>
   {% endif %}
-  {% if result.villa_market_trend.is_zone %}
-  <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 서울 내 5대 생활권(도심/동북/서북/서남/동남) 단위 참고용입니다 (개별 구/동 신호 아님). 매도가 계산에 자동 반영되지 않습니다.</p>
-  {% else %}
-  <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 시/도 단위(구/동 단위 신호 아님) 참고용입니다. 매도가 계산에 자동 반영되지 않습니다.</p>
-  {% endif %}
-  <p class="muted">2025년 11월부터 모은 스냅샷이라 '작년 대비' 계산은 아직 안 됩니다 — 최신 수치는 한국부동산원 R-ONE에서 확인하세요.</p>
+  <p class="muted" style="margin-top:10px">※ 같은 구 안에서 지금까지 조회된 데이터 기준입니다.</p>
 </div>
 {% endif %}
 
@@ -701,33 +717,27 @@
 </div>
 {% endif %}
 
-{% if result.dong_compare %}
+{% if result.villa_market_trend %}
 <div class="card">
-  <h3>인근 동 비교 ({{ result.dong_compare.dong }} 기준, 최근 거래월 {{ result.dong_compare.latest_month }})</h3>
-  <p class="muted" style="font-weight:700; color:#4a4f54">거래 활발도 (최근 3개월 거래건수)</p>
-  {% if result.dong_compare.volume_top %}
+  <h3>시장 동향 참고 - 연립다세대 ({{ result.villa_market_trend.region }}, {{ result.villa_market_trend.date }} 기준 스냅샷)</h3>
+  <p class="muted">매매수급동향지수: {{ result.villa_market_trend.index }} (기준선 100 대비 {{ result.villa_market_trend.diff }})</p>
+  <p style="margin:6px 0"><strong>→ {{ result.villa_market_trend.plain_desc }}</strong></p>
+  <p class="muted">최근 3개월 추세: {{ result.villa_market_trend.trend }} ({{ result.villa_market_trend.start_date }} 최초 집계 {{ result.villa_market_trend.start_value }} → 지금, {{ result.villa_market_trend.since_start }}p)</p>
+  {% if result.villa_market_trend.peers %}
+  <p class="muted" style="margin-top:10px; font-weight:700">서울 5개 생활권 비교</p>
   <ul class="ref-list">
-    {% for v in result.dong_compare.volume_top %}
-    <li{% if v.is_target %} style="font-weight:800; color:var(--primary-dark)"{% endif %}>{{ v.dong }} {{ v.count }}건{% if v.is_target %} ← 검색하신 동{% endif %}</li>
-    {% endfor %}
+    {% for line in result.villa_market_trend.peers %}<li>{{ line }}</li>{% endfor %}
   </ul>
-  {% if result.dong_compare.volume_rank_note %}<p class="muted" style="margin-top:6px">{{ result.dong_compare.volume_rank_note }} ← 검색하신 동</p>{% endif %}
-  {% elif result.dong_compare.volume_missing %}
-  <p class="muted">비교할 만한 동이 부족합니다.</p>
   {% endif %}
-
-  <p class="muted" style="margin-top:14px; font-weight:700; color:#4a4f54">가격 상승률 (최근 3개월 평균 평당가, 이전 3개월 대비)</p>
-  {% if result.dong_compare.price_top %}
-  <ul class="ref-list">
-    {% for p in result.dong_compare.price_top %}
-    <li{% if p.is_target %} style="font-weight:800; color:var(--primary-dark)"{% endif %}>{{ p.dong }} {{ p.change_pct }}{% if p.is_target %} ← 검색하신 동{% endif %}</li>
-    {% endfor %}
-  </ul>
-  {% if result.dong_compare.price_rank_note %}<p class="muted" style="margin-top:6px">{{ result.dong_compare.price_rank_note }} ← 검색하신 동</p>{% endif %}
-  {% elif result.dong_compare.price_missing %}
-  <p class="muted">비교할 만한 동이 부족합니다.</p>
+  {% if result.villa_market_trend.national_line %}
+  <p class="muted" style="margin-top:8px">{{ result.villa_market_trend.national_line }}</p>
   {% endif %}
-  <p class="muted" style="margin-top:10px">※ 같은 구 안에서 지금까지 조회된 데이터 기준입니다.</p>
+  {% if result.villa_market_trend.is_zone %}
+  <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 서울 내 5대 생활권(도심/동북/서북/서남/동남) 단위 참고용입니다 (개별 구/동 신호 아님). 매도가 계산에 자동 반영되지 않습니다.</p>
+  {% else %}
+  <p class="muted" style="margin-top:8px">⚠️ 한국부동산원 기준, 시/도 단위(구/동 단위 신호 아님) 참고용입니다. 매도가 계산에 자동 반영되지 않습니다.</p>
+  {% endif %}
+  <p class="muted">2025년 11월부터 모은 스냅샷이라 '작년 대비' 계산은 아직 안 됩니다 — 최신 수치는 한국부동산원 R-ONE에서 확인하세요.</p>
 </div>
 {% endif %}
 

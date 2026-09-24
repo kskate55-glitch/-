@@ -1,0 +1,15 @@
+seoyun {"careers":300,"cases":3471,"gain":8391,"gainMed":8335,"bankrupt":0,"win":46.4,"profit":1322,"overbid":48.2,"moveDays":19.3,"found":86.5,"repair":645,"weeks":2.2,"S":4.6,"days":392,"n":11.6,"sec":"4"}
+dohyun {"careers":300,"cases":3549,"gain":8931,"gainMed":9073,"bankrupt":0,"win":48.9,"profit":1391,"overbid":44.4,"moveDays":17.8,"found":71.8,"repair":649,"weeks":1.7,"S":4.1,"days":390,"n":11.8,"sec":"3"}
+mijeong {"careers":300,"cases":3741,"gain":9033,"gainMed":8973,"bankrupt":0,"win":49.5,"profit":1487,"overbid":40.7,"moveDays":13.6,"found":72.8,"repair":632,"weeks":1.7,"S":5.5,"days":387,"n":12.5,"sec":"4"}
+jaehoon {"careers":300,"cases":3629,"gain":9067,"gainMed":8945,"bankrupt":0,"win":50.9,"profit":1584,"overbid":33.4,"moveDays":15.1,"found":82,"repair":556,"weeks":1.6,"S":3.4,"days":387,"n":12.1,"sec":"4"}
+eunkyung {"careers":300,"cases":4147,"gain":8398,"gainMed":8570,"bankrupt":0,"win":40.1,"profit":1729,"overbid":21,"moveDays":17.4,"found":80.9,"repair":654,"weeks":1.6,"S":1.7,"days":388,"n":13.8,"sec":"4"}
+taesik {"careers":300,"cases":3681,"gain":8734,"gainMed":8709,"bankrupt":0,"win":52.8,"profit":1567,"overbid":27.1,"moveDays":12.9,"found":83.2,"repair":617,"weeks":1.6,"S":4.4,"days":387,"n":12.3,"sec":"4"}
+mean gain 8759 spread % {
+  seoyun: -4.2,
+  dohyun: 2,
+  mijeong: 3.1,
+  jaehoon: 3.5,
+  eunkyung: -4.1,
+  taesik: -0.3
+}
+errors []

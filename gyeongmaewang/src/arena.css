@@ -768,3 +768,36 @@ html.kfs-on #hubToasts{top:62px;left:14px;right:auto;bottom:auto}
 @keyframes snRain{to{background-position:0 120px}}@keyframes snSnow{to{background-position:20px 240px,-15px 180px}}
 @media (prefers-reduced-motion:reduce){#kfsRoot .kfs-stage::after{animation:none!important}}
 #kfsRoot.sn-dim .kfs-stage .vn-bg,#kfsRoot.sn-dim .kfs-stage img{filter:saturate(.72) brightness(.88)}
+/* ===== 🎭 경매 투자자의 삶 ===== */
+.lf-select h3{margin:0 0 4px}
+.lf-cards{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0}
+.lf-card{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px;border-radius:14px;border:2px solid var(--line,#e5e7eb);background:#fff;cursor:pointer;font:inherit;text-align:center}
+.lf-card.on{border-color:#e0a63a;background:#fff8ea;box-shadow:0 4px 14px rgba(224,166,58,.25)}
+.lf-card b{font-size:15px}.lf-card small{color:var(--muted,#667);font-size:11.5px}.lf-card em{font-style:normal;font-size:12px;font-weight:700;color:#23476b;line-height:1.35}
+.lf-emo{font-size:34px;line-height:1}.lf-emo.big{font-size:52px}
+.lf-dhead{display:flex;gap:12px;align-items:center;margin-bottom:10px}.lf-dhead>div>b{font-size:18px;display:block}.lf-dhead small{color:var(--muted,#667)}
+.lf-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}.lf-cols ul{margin:4px 0 10px;padding-left:18px;font-size:14px}
+.lf-stats{list-style:none!important;padding:0!important;margin:0}.lf-stats li{display:grid;grid-template-columns:78px 1fr 30px auto;gap:6px;align-items:center;font-size:13px;padding:2px 0}
+.lf-bar{display:inline-block;height:8px;background:#e8ecf2;border-radius:999px;overflow:hidden;vertical-align:middle;width:100%;min-width:40px}.lf-bar>i{display:block;height:100%;background:#4a7bd8;border-radius:999px}
+.lf-bar>i.hi{background:#1d9a55}.lf-bar>i.low{background:#d9534f}.lf-bar.st>i{background:#e08a1a}
+.lf-go{margin-top:12px;width:100%;font-size:16px;padding:14px}
+.lf-meters{display:flex;gap:12px;flex-wrap:wrap;font-size:13px}.lf-meters span{display:flex;align-items:center;gap:6px}.lf-meters .lf-bar{width:70px}
+.lf-day{border-color:#6b8fd6;background:#f5f8ff}.lf-day-row{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.lf-feel{background:#fffbef;border-color:#f0c77a}
+.lf-calc{background:#eef7f1;border:1px solid #9bd4b0;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:13.5px;line-height:1.6}
+.lf-stage .lf-top{position:absolute;left:12px;right:12px;top:10px;display:flex;flex-direction:column;gap:4px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);font-size:13px;z-index:2}
+.lf-stage .lf-top b{font-size:15px}.lf-stage .lf-top .lf-meters{color:#fff}
+.lf-stage.night .vn-bg,.lf-stage.night img{filter:brightness(.7) saturate(.85)}
+.lf-spots{grid-template-columns:repeat(5,1fr)!important}
+.lf-acts{display:grid;gap:6px;margin:8px 0}
+.lf-rel{font-style:normal;color:#d9534f;letter-spacing:1px}
+.lf-titles .ag-badge.off{opacity:.45}
+.lf-intro{position:relative;min-height:320px}
+.lf-intro-in{font-size:16px;line-height:1.75}.lf-intro-in p{margin:6px 0}.lf-intro-card{margin:12px 0;padding:10px 12px;border-radius:12px;background:#fff8ea;border:1px solid #f0c77a;font-size:14px}
+.lf-intro-in p,.lf-intro-in .btn{opacity:0;animation:lfIn .6s forwards}.lf-intro-in h3{margin:4px 0 8px;font-size:22px}.lf-intro-in small{opacity:.8}
+@keyframes lfIn{to{opacity:1}}
+.lf-after{border-color:#e0a63a;background:#fff8ea}
+.lf-home-go small{display:block}
+@media (max-width:760px){.lf-cards{grid-template-columns:repeat(3,1fr)}.lf-cols{grid-template-columns:1fr}}
+@media (max-width:600px){.lf-spots{grid-template-columns:repeat(5,1fr)!important}.lf-stage{min-height:250px}.lf-stage .lf-top{font-size:11.5px}.lf-stage .lf-top b{font-size:13px}.lf-meters .lf-bar{width:44px}}
+@media (prefers-reduced-motion:reduce){.lf-intro-in p,.lf-intro-in .btn{animation:none;opacity:1}}

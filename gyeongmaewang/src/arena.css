@@ -712,3 +712,20 @@ html.kfs-on #hubToasts{top:62px;left:14px;right:auto;bottom:auto}
 .kr-eff{padding:14px 16px;border-radius:14px;background:#fff;border:1.5px solid var(--line);margin:10px 0}
 .kr-eff-grid{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;margin:8px 0}
 .kr-eff-grid .k-g{width:34px;height:34px;font-size:17px;border-width:2px;animation:none}
+
+/* ---- 🎲 입찰의 공포 ---- */
+.kp-sig{display:flex;flex-wrap:wrap;gap:4px 8px}.kp-sig em{font-style:normal;font-size:12.5px;padding:2px 8px;border-radius:999px;background:#eef2fb}
+.kp-sig em b{margin-left:2px}.kp-sig .lv-높음 b,.kp-sig .lv-매우높음 b{color:#c0392b}.kp-sig .lv-낮음 b{color:#1f7a4c}
+.kp-src{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;margin-right:6px;vertical-align:1px}
+.kp-src.off{background:#e6f4ea;color:#1f7a4c}.kp-src.dat{background:#eef2fb;color:#23476b}.kp-src.obs{background:#f0ebff;color:#5b3fa0}
+.kp-src.wit{background:#fff4e0;color:#8a4b00}.kp-src.brk{background:#fdeaea;color:#b23a3a}.kp-src.phn{background:#f1f1f1;color:#555}
+.kp-board{padding:12px 14px;border-radius:14px;background:#fff;border:1.5px solid var(--line);margin:10px 0}
+.kp-board ul{margin:8px 0 0;padding-left:0;list-style:none;display:grid;gap:6px;font-size:14px}
+.kp-rain{color:#9cc4ff!important;font-weight:700}
+.kp-solo,.kp-over{padding:16px 18px;border-radius:14px;background:#11151f;color:#e8ecf6;margin:10px 0;text-align:center}
+.kp-solo>b{font-size:22px;color:#ffd36b}
+.kp-cmp{display:grid;grid-template-columns:auto auto;justify-content:center;gap:4px 18px;margin:10px 0;font-variant-numeric:tabular-nums;text-align:left}
+.kp-cmp span{color:#9aa3b5}.kp-cmp b{font-size:18px}.kp-cmp b.down{color:#ff8f8f;font-size:20px}
+.kp-fear{font-size:17px;font-style:italic;color:#c9d2e6;margin:10px 0 6px;animation:kcIn 1.2s ease both;animation-delay:.8s}
+.kp-lesson{margin:8px 0 0;font-weight:800;color:#ffd36b;animation:kcIn .8s ease both;animation-delay:1s}
+.kp-solo small,.kp-over small{color:#9aa3b5}

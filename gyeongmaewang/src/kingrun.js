@@ -82,8 +82,8 @@ function kBid(amt){
   K.bid = amt; K.style.bidRatio = amt / KP.appraisal;
   const bids = K.rivals.map(v => ({who:v.t, amt: Math.round(KP.minBid * (v.lo + (v.hi - v.lo) * K.r()) / 10) * 10}));
   bids.push({who:"나", amt, me:true}); bids.sort((a,b)=>b.amt - a.amt);
-  const win = bids[0].me, other = win ? bids[1] : bids[0];
-  K.result = {win, bids, gap: Math.abs(amt - other.amt), other};
+  const win = bids[0].me, other = win ? (bids[1] || {who:"(없음 — 단독)", amt:KP.minBid, none:true}) : bids[0];
+  K.result = {win, bids, gap: Math.abs(amt - other.amt), other, solo: win && !bids[1]};
   if(win){ K.cost.bid = amt; K.cost.acq = Math.round(amt * 0.017); if(K.found.fee) K.cost.fee = 38; K.step = "won"; kAch(K.result.gap <= 30 ? "tight" : null); }
   else { K.step = "lost"; if(K.result.gap <= 10) kAch("tenman"); }
 }

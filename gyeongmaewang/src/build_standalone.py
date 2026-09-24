@@ -39,6 +39,19 @@ s = (s[:i] + boot + s[i:]) if i >= 0 else (s + boot)
 s = re.sub(r'<title>[^<]*</title>', '', s, count=1)
 head = '<!doctype html>\n<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>경매왕</title><meta name="description" content="낙찰부터 명도·수리·매도까지 — 경매 한 사이클을 돌려 보는 게임"><meta name="theme-color" content="#0d111b"></head><body>\n'
 s = head + s + '\n</body></html>\n'
+# ☁ 회원·클라우드 저장(Supabase) — config.js 가 비어 있으면 아무 일도 안 한다
+s = s.replace('\n</body></html>\n', '\n<script src="config.js"></script>\n<script src="cloud.js"></script>\n</body></html>\n')
+shutil.copyfile('cloud.js', os.path.join(OUT, 'cloud.js'))
+cfg = os.path.join(OUT, 'config.js')
+if not os.path.exists(cfg):   # 이미 채워 둔 설정은 덮어쓰지 않는다
+    open(cfg, 'w', encoding='utf-8').write('''/* Supabase 연결 설정 — 비워 두면 회원 기능 없이 이 기기에만 저장된다.
+   ⚠ anonKey 자리에는 anon(publishable) 키만. service_role / sb_secret_ 키는 절대 넣지 않는다(넣으면 자동으로 꺼진다). */
+window.GMW_CLOUD = {
+  url: "",        // 예: https://abcdxyz.supabase.co
+  anonKey: "",    // Project Settings → API → anon public (또는 sb_publishable_...)
+  emailDomain: "users.kyungmaewang.local"   // 아이디를 가짜 이메일로 바꿀 때 쓰는 도메인(사용자에게 안 보인다)
+};
+''')
 open(os.path.join(OUT, 'index.html'), 'w', encoding='utf-8').write(s)
-open(os.path.join(OUT, '_headers'), 'w').write('/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n/index.html\n  Cache-Control: no-cache\n')
+open(os.path.join(OUT, '_headers'), 'w').write('/assets/*\n  Cache-Control: public, max-age=31536000, immutable\n/index.html\n  Cache-Control: no-cache\n/config.js\n  Cache-Control: no-cache\n/cloud.js\n  Cache-Control: no-cache\n')
 print('ids', len(ids), 'copied', copied, 'html', len(s))

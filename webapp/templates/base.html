@@ -18,6 +18,16 @@
     --border: #e7e9ec;
     --danger-bg: #fdecec;
     --danger: #d33232;
+    /* 72-33절 — 초록 하나만 쓰니 단조롭다는 지적을 받아 짝이 되는 색 둘을
+       더했다. 초록(브랜드) + 딥 인디고(차분한 강조) + 앰버(주의·★)는
+       서로 채도가 겹치지 않아 한 화면에 같이 놓아도 싸우지 않는다.
+       ⚠️ 초록을 대체하는 게 아니라 **역할을 나눈다** — 값·긍정은 초록,
+          제목·설명 강조는 인디고, 주의·판정에 쓰이는 표시는 앰버. */
+    --accent-ink: #23476b;
+    --accent-ink-dark: #17324d;
+    --accent-tint: #edf2f8;
+    --accent-warm: #d9861a;
+    --accent-warm-tint: #fdf4e6;
     --radius-lg: 16px;
     --radius-md: 10px;
     --shadow: 0 1px 2px rgba(20, 24, 28, 0.04), 0 4px 14px rgba(20, 24, 28, 0.05);
@@ -246,8 +256,15 @@
   .nb-block { padding-top: 15px; margin-top: 15px; border-top: 1px solid var(--border); }
   .nb-block:first-of-type { padding-top: 0; margin-top: 0; border-top: 0; }
   .nb-head {
-    font-size: 15.5px; font-weight: 800; color: var(--ink); margin-bottom: 8px;
+    font-size: 15.5px; font-weight: 800; color: var(--accent-ink-dark); margin-bottom: 8px;
     display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px;
+    padding-left: 10px; border-left: 3px solid var(--accent-ink);
+  }
+  /* 한 카드 안에서 갈래를 나누는 얇은 선 */
+  .card-split {
+    height: 1px; margin: 16px 0; border: 0;
+    background: linear-gradient(90deg, var(--accent-ink) 0%, var(--border) 45%, var(--border) 100%);
+    opacity: .45;
   }
   .nb-sub { font-size: 12.5px; font-weight: 600; color: var(--muted); }
   .nb-age { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
@@ -526,6 +543,7 @@
   .price-item .value { font-size: 17.5px; font-weight: 800; margin-top: 2px; }
   .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
+  .section-divider { color: var(--accent-ink); }
   .section-divider {
     display: flex; align-items: center; gap: 10px;
     margin: 26px 4px 12px; color: var(--muted-2); font-size: 13.5px; font-weight: 800;
@@ -534,6 +552,7 @@
 
   table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
   th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  thead tr { background: var(--accent-tint); }
   th { color: var(--muted); font-weight: 700; font-size: 13px; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fafbfc; }

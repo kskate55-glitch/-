@@ -301,16 +301,19 @@
 {% endif %}
 </div>
 
-{% if result.price_chart_html %}
+{# 72-33절 — 그래프와 그 점들의 목록은 같은 이야기다. 카드를 나눠 두면
+   "이게 뭐구나"가 두 번에 나눠 들어온다는 지적을 받아 한 카드로 합쳤다. #}
 <div class="card">
+  <h3 style="font-size:19px; margin-bottom:6px">📊 이 매도가, 어떤 실거래를 보고 나온 건가</h3>
+  <p style="margin:0 0 14px; font-size:15px; font-weight:700; line-height:1.6; color:var(--ink)">
+    아래 점 하나하나가 <span style="color:var(--accent-ink)">실제로 거래된 가격</span>이고,
+    그 목록이 바로 밑에 있습니다.</p>
+  {% if result.price_chart_html %}
   {{ result.price_chart_html | safe }}
-</div>
-{% endif %}
-
-<div class="card">
-  <h3>📋 매도가 산출 근거 — 핵심 비교거래 (가까운 순)</h3>
-  <ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
-    <li>바로 위 그래프에 찍힌 점들의 실제 목록이에요.</li>
+  <div class="card-split"></div>
+  {% endif %}
+  <div class="nb-head">📋 위 점들의 실제 목록 <span class="nb-sub">가까운 순</span></div>
+  <ul class="note-lines" style="margin-top:0; margin-bottom:12px">
     <li>국토교통부에 신고된 <b>과거 실거래(실제로 체결된 매매 기록)</b>입니다 — 지금 나와 있는 매물 호가가 아니에요.</li>
     <li>이 기록들을 기준으로 위 매도가 값들을 계산했습니다.</li>
   </ul>
@@ -345,8 +348,8 @@
 <div class="card" style="border-left:4px solid #e8a33d; background:#fff8ec">
   <h3 style="margin-bottom:6px">⚠️ 이 추정치, 그대로 믿기 전에 확인하세요</h3>
   <p class="muted" style="margin:0 0 12px">
-    비슷한 조건에서 이런 신호가 뜬 추정치는 실제로 <b>더 많이 빗나갔어요</b>
-    (과거 실거래 125건: 신호 없을 때 10.8% · 있을 때 14.6%).</p>
+    과거 실거래 125건에 이 계산기를 다시 돌려 봤더니, 아래 같은 신호가 뜬 경우가
+    <b>1.4배쯤 더 많이 빗나갔어요</b> (신호 없을 때 평균 10.8% · 있을 때 14.6%).</p>
   {% for w in result.estimate_warnings %}
   <div style="padding:11px 13px; margin-bottom:8px; background:#fff;
               border:1px solid #f0d9b5; border-radius:10px">
@@ -380,7 +383,7 @@
   {% endif %}
   <ul class="note-lines" style="margin:10px 0 0">
     <li>신호가 떴다고 <b>틀린 값이라는 뜻은 아닙니다</b> — "한 번 더 확인하라"는 표시예요.</li>
-    <li>반대로 신호가 없다고 정확을 보장하지도 않습니다. 실측에서 크게 빗나간 7건 중 1건은 어떤 신호에도 안 걸렸어요.</li>
+    <li>반대로 <b>신호가 없다고 정확한 것도 아닙니다</b> — 크게 빗나간 7건 중 1건은 아무 신호에도 안 걸렸어요.</li>
   </ul>
 </div>
 {% endif %}
@@ -402,7 +405,7 @@
   <h3 style="margin-bottom:10px; font-size:21px; letter-spacing:-0.3px">🧭 환금성·경쟁 진단</h3>
   <p style="margin:0 0 10px; font-size:16.5px; font-weight:800; line-height:1.6; color:var(--ink)">
     "얼마에 팔리나"(위 매도가)와 별개로,<br>
-    <span style="color:var(--primary-dark)">"얼마나 잘 팔리나"</span>를 본 것이에요.
+    <span style="color:var(--accent-ink)">"얼마나 잘 팔리나"</span>를 본 것이에요.
   </p>
   <ul class="note-lines" style="margin-top:0; margin-bottom:12px">
     <li><b>중요한 순서대로</b> 번호를 매겼습니다 — 1번부터 보세요.</li>
@@ -685,7 +688,7 @@
 <div class="card">
   <h3 style="font-size:19px; margin-bottom:8px">🏘️ 이 동네, 누가 얼마나 사나</h3>
   <p style="margin:0 0 14px; font-size:15px; font-weight:700; line-height:1.6; color:var(--ink)">
-    매도가는 "얼마에"를 말해주지만, 여기는 <span style="color:var(--primary-dark)">얼마나 자주 팔리고,
+    매도가는 "얼마에"를 말해주지만, 여기는 <span style="color:var(--accent-ink)">얼마나 자주 팔리고,
     그걸 누가 사 가는지</span>를 봅니다.</p>
 
   {% if nb.dong %}

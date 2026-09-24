@@ -84,6 +84,16 @@ OUTLIER_RING_COLOR = "#c0392b"  # 톤 다운된 레드 — 이상치(경고 성�
 
 # 거래 밀집도 곡선(부드러운 밀도 영역) 채움색
 HIST_BAR_COLOR = "#c7d2e8"
+#: 72-33절 — 화면 CSS `--accent-ink`와 같은 딥 인디고. 초록 하나만 쓰던 톤에
+#: 짝이 되는 색을 하나 더해 축·눈금에 깊이를 준다.
+ACCENT_INK = "#23476b"
+#: 밀도 곡선 그라데이션의 진한 쪽. ⚠️ 같은 이름의 상수가 8-1-1절 막대 시절에
+#: 있었다가 곡선으로 바꾸면서 사라졌다 — 72-33절에서 그라데이션에 다시 필요해
+#: 되살렸다(그때 값과 같은 계열의 한 단계 진한 블루그레이).
+HIST_BAR_COLOR_STRONG = "#93a9cf"
+#: 72-33절 — 그래프가 단독으로 놓일 때의 제목. 카드 안에 들어가면 호출부가
+#: 짧은 제목이나 None 을 넘겨 **제목이 두 번 나오는 것**을 없앤다.
+_HEADING_DEFAULT = "📊 매도가 산출 근거 — 실제 비교거래 분포"
 
 EMPHASIS_CAP_DEFAULT = 40  # 이 안쪽 순위(가중치 기준)까지만 모양/테두리/클릭상세 등 "강조" 처리
 MAX_TOTAL_DOTS = 150  # 그래프에 그리는 점의 안전 상한(극단적으로 큰 표본 방지, 배경 점 포함)
@@ -190,7 +200,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
                                      hero_name: str = "경매용 매도가",
                                      max_dots: int = EMPHASIS_CAP_DEFAULT, width: int = 420, height: int = 300,
                                      primary: str = PRIMARY, min_width: int = 0,
-                                     this_year: int | None = None, this_month: int | None = None) -> str:
+                                     this_year: int | None = None, this_month: int | None = None,
+                                     heading: str | None = _HEADING_DEFAULT) -> str:
     """filtered: find_comparables()가 돌려준 비교거래 목록(거리순 정렬됨,
     _amount_man·_weight 필요. _dealing_gbn/_same_building/_price_outlier가
     있으면 함께 시각화한다). markers: {"보수적
@@ -261,9 +272,31 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     # 축소돼 글씨가 뭉개지기 때문이다. 표가 넘칠 때 `.tier-table-wrap`으로
     # 가로 스크롤을 주는 것과 같은 처리다.
     min_w = f' min-width:{min_width}px;' if min_width else ''
+    # 72-33절 — "그래프도 더 화려하게". 채도를 올리는 게 아니라 **깊이**를 준다:
+    #   ① 밀도 곡선에 위→아래 그라데이션  ② 축선에 좌→우 페이드
+    #   ③ 대표값(경매용 매도가) 핀에 후광  ④ 눈금선도 위에서 흐려지게
+    # ⚠️ id 는 한 페이지에 여러 그래프가 있어도 안 겹치게 고유값을 붙인다
+    #    (14절 HTML 리포트에는 그래프가 둘 이상 들어간다).
+    gid = f"pd{abs(hash((width, height, len(rows)))) % 100000}"
     svg = [
         f'<svg viewBox="0 0 {width} {height}" style="width:100%; height:auto;{min_w} display:block" '
-        f'role="img" aria-label="비교거래 가격 분포와 산출값">'
+        f'role="img" aria-label="비교거래 가격 분포와 산출값">',
+        f'<defs>'
+        f'<linearGradient id="{gid}h" x1="0" y1="0" x2="0" y2="1">'
+        f'<stop offset="0%" stop-color="{HIST_BAR_COLOR_STRONG}" stop-opacity="0.95"/>'
+        f'<stop offset="100%" stop-color="{HIST_BAR_COLOR}" stop-opacity="0.35"/>'
+        f'</linearGradient>'
+        f'<linearGradient id="{gid}a" x1="0" y1="0" x2="1" y2="0">'
+        f'<stop offset="0%" stop-color="{BORDER}" stop-opacity="0.25"/>'
+        f'<stop offset="18%" stop-color="{ACCENT_INK}" stop-opacity="0.55"/>'
+        f'<stop offset="82%" stop-color="{ACCENT_INK}" stop-opacity="0.55"/>'
+        f'<stop offset="100%" stop-color="{BORDER}" stop-opacity="0.25"/>'
+        f'</linearGradient>'
+        f'<radialGradient id="{gid}g">'
+        f'<stop offset="0%" stop-color="{primary}" stop-opacity="0.45"/>'
+        f'<stop offset="100%" stop-color="{primary}" stop-opacity="0"/>'
+        f'</radialGradient>'
+        f'</defs>',
     ]
 
     band_names = set(highlight)
@@ -278,7 +311,7 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
 
     svg.append(
         f'<line x1="{margin_l}" y1="{axis_y}" x2="{width - margin_r}" y2="{axis_y}" '
-        f'stroke="{BORDER}" stroke-width="1" />'
+        f'stroke="url(#{gid}a)" stroke-width="1.6" stroke-linecap="round" />'
     )
 
     # 가격 눈금(최저/중간/최고) — 값을 안 눌러봐도 대략적인 가격대가 바로
@@ -399,11 +432,15 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
         color = primary if is_hero else MARKER_COLORS.get(name, MUTED_2)
         tick_len = 15 if is_hero else 11
         pin_r = 7 if is_hero else 5.5
+        # 72-33절 — 대표값(경매용 매도가)만 후광을 둘러 제일 먼저 눈에 들어오게.
+        halo = (f'<circle cx="{x:.1f}" cy="{axis_y + tick_len:.1f}" r="{pin_r * 2.6:.1f}" '
+                f'fill="url(#{gid}g)" />') if is_hero else ""
         svg.append(
-            f'<line x1="{x:.1f}" y1="{axis_y}" x2="{x:.1f}" y2="{axis_y + tick_len}" '
-            f'stroke="{color}" stroke-width="{2.5 if is_hero else 2}" />'
-            f'<circle cx="{x:.1f}" cy="{axis_y + tick_len:.1f}" r="{pin_r}" fill="{color}" '
-            f'stroke="#fff" stroke-width="1.5" />'
+            halo
+            + f'<line x1="{x:.1f}" y1="{axis_y}" x2="{x:.1f}" y2="{axis_y + tick_len}" '
+              f'stroke="{color}" stroke-width="{2.5 if is_hero else 2}" />'
+              f'<circle cx="{x:.1f}" cy="{axis_y + tick_len:.1f}" r="{pin_r}" fill="{color}" '
+              f'stroke="#fff" stroke-width="{2 if is_hero else 1.5}" />'
         )
         # hero(경매용 매도가)만 핀 밑에 이름을 글자로 같이 써준다 — 겹칠 다른
         # 라벨이 없어서 안전하고, 이 그래프에서 제일 중요한 값이라는 걸 바로
@@ -433,7 +470,8 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
                      for i, c in enumerate(counts)]
         closed_pts = [(margin_l, baseline)] + curve_pts + [(margin_l + plot_w, baseline)]
         area_d = _smooth_area_path(closed_pts)
-        svg.append(f'<path d="{area_d} Z" fill="{HIST_BAR_COLOR}" fill-opacity="0.9" stroke="none" />')
+        svg.append(f'<path d="{area_d} Z" fill="url(#{gid}h)" stroke="{HIST_BAR_COLOR_STRONG}" '
+                   f'stroke-width="1" stroke-opacity="0.35" />')
         svg.append(
             f'<text x="{margin_l}" y="{baseline + 16:.1f}" font-size="12" font-weight="600" fill="{MUTED}">거래 밀집도</text>'
         )
@@ -629,14 +667,20 @@ def render_price_distribution_html(filtered: list[dict], markers: dict[str, floa
     # 설명은 문장마다 줄을 나눈다 — 한 덩어리 줄글로 흘려보내면 눈이
     # 어디를 읽고 있는지 놓치기 쉽다는 지적을 반영했다(결과 페이지의
     # 다른 안내 문단도 같은 방식으로 맞춰뒀다).
+    # ⚠️ 72-33절 — 웹에서는 이 그래프가 "이 매도가, 어떤 실거래를 보고 나온
+    #    건가" 카드 **안**으로 들어가면서 카드 제목과 **제목이 두 번** 나왔다.
+    #    `heading=None`을 넘기면 제목과, 카드 머리말과 겹치는 첫 줄이 같이 빠진다.
+    #    CLI HTML 리포트(14절)는 이 그래프만 따로 놓이므로 기본값을 그대로 쓴다.
     intro_lines = [
-        "아래 점 하나하나가 <b>실제로 거래된 가격</b>이에요.",
         "그 안에서 위 매도가 값들이 어디쯤 위치하는지 보면, 이 매도가가 어떤 실거래를 근거로 나온 숫자인지 알 수 있습니다.",
         "점을 누르면 왜 그 거래가 많이/적게 반영됐는지도 볼 수 있어요.",
     ]
+    if heading:
+        intro_lines.insert(0, "아래 점 하나하나가 <b>실제로 거래된 가격</b>이에요.")
     intro = (
         '<div style="margin-bottom:10px">'
-        f'<div style="font-size:16px; font-weight:800; color:{INK}">📊 매도가 산출 근거 — 실제 비교거래 분포</div>'
+        + (f'<div style="font-size:16px; font-weight:800; color:{INK}">{heading}</div>'
+           if heading else "")
         + "".join(
             f'<div style="font-size:13px; color:{MUTED}; margin-top:4px; line-height:1.7">{line}</div>'
             for line in intro_lines

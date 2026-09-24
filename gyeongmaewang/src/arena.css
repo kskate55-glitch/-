@@ -888,3 +888,14 @@ html.kfs-on #hubToasts{top:62px;left:14px;right:auto;bottom:auto}
 .lf-sel .lf-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;overflow:visible}
 @media (max-width:720px){.lf-sel .lf-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.lf-sel-in{padding:16px 12px}}
 .gx-op [hidden]{display:none!important}
+/* 🖼️ 캐릭터 그림 */
+.lf-face{display:inline-flex;width:58px;height:58px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.12);align-items:flex-start;justify-content:center}
+.lf-face img{width:118%;margin-top:4%;display:block}
+.lf-emo.big.lf-face{width:72px;height:72px}
+.lf-focus.has-art{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:0 18px}
+.lf-focus.has-art>*:not(.lf-focus-art){grid-column:2}
+.lf-focus-art{grid-column:1;grid-row:1/span 12;width:100%;border-radius:12px;object-fit:cover;align-self:start;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+@media (max-width:720px){.lf-focus.has-art{display:block}.lf-focus-art{width:100%;max-height:340px;object-position:50% 20%;margin-bottom:12px}}
+.lf-stage{position:relative}
+.lf-me{position:absolute;right:22%;bottom:31%;height:46%;max-height:340px;z-index:1;pointer-events:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4))}
+@media (max-width:720px){.lf-me{height:33%;bottom:37%;right:5%}}

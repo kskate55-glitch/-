@@ -22,7 +22,7 @@ body { background:#0d111b; }
 window.GMW_STANDALONE = true;
 document.title = "경매왕";
 // 그림은 같은 폴더의 assets/ 에서 (claude.ai 자산 저장소 대신)
-artUrl = function(id){ var a = ART_DEFAULT[id]; return a ? "assets/" + a + ".webp" : null; };
+var _gmwArt = artUrl; artUrl = function(id){ var u = _gmwArt(id); return u ? u.replace(/^\/_blob\/([0-9a-f]{32})$/, "assets/$1.webp") : null; };
 try{ page = "arena"; arenaTab = "home"; render(); }catch(e){ console.error(e); }
 // 주소창 #으로 다른 페이지(노트·퀴즈 등)로 가면 게임 홈으로 돌려놓는다
 window.addEventListener("hashchange", function(){ if(page !== "arena"){ page = "arena"; arenaTab = "home"; render(); } });
@@ -30,7 +30,7 @@ setInterval(function(){ if(typeof page !== "undefined" && page !== "arena"){ pag
 </script>
 '''
 # 첫 render() 전에 그림 경로·시작 페이지를 바꿔 둔다(안 그러면 첫 화면이 /_blob/ 을 찾는다)
-pre = '\nwindow.GMW_STANDALONE = true;\nartUrl = function(id){ var a = ART_DEFAULT[id]; return a ? "assets/" + a + ".webp" : null; };\npage = "arena"; arenaTab = "home";\n'
+pre = '\nwindow.GMW_STANDALONE = true;\nvar _gmwArt0 = artUrl; artUrl = function(id){ var u = _gmwArt0(id); return u ? u.replace(/^\\/_blob\\/([0-9a-f]{32})$/, "assets/$1.webp") : null; };\n\npage = "arena"; arenaTab = "home";\n'
 k = s.rfind('\nrender();\n</script>')
 assert k > 0
 s = s[:k] + pre + s[k:]

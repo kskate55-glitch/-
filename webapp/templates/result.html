@@ -635,8 +635,9 @@
     <ul class="note-lines" style="margin:0 0 12px">
       <li><b>거래량은 "팔고 싶을 때 사 줄 사람이 있는가"</b>를 보는 숫자예요 —
         매물 수가 아니라 <b>계약이 끝난 건수</b>입니다.</li>
-      <li>아래 셋은 다 거래량인데 <b>보는 범위가 다릅니다</b> —
-        가까운 데서 넓은 데로 차례대로 넓혀 가며 보세요.</li>
+      <li>아래 둘은 다 거래량인데 <b>보는 범위가 다릅니다</b> —
+        가까운 데서 넓은 데로 차례대로 넓혀 가며 보세요.
+        (구 전체 흐름은 아래 <b>👥 누가 사 가나</b>에 같이 있어요.)</li>
     </ul>
 
     {% if nb.liquidity %}
@@ -672,15 +673,6 @@
     </div>
   {% endif %}
 
-  {% if nb.age and nb.age.volume_line %}
-    <div class="zoom-step">
-      <div class="zoom-label"><span class="zoom-pin">3</span>우리 구 전체, 해마다
-        <span class="nb-sub">{{ nb.age.region }} · {{ nb.age.year }}년까지</span></div>
-      <p class="muted" style="margin:0 0 8px">가장 넓게 본 숫자예요. <b>이 구의 매수세 자체가 늘고 있는지 줄고 있는지</b>를 봅니다.
-        ⚠️ 여기만 <b>주택유형 구분 없는 전체 주택</b>이라 아파트 거래가 섞여 있어요.</p>
-      {{ nb.age.volume_line|safe }}
-    </div>
-  {% endif %}
   </div>
 
   {% if nb.dong %}
@@ -739,13 +731,41 @@
           {% if nb.age.rank %}
           <li>{{ nb.age.sido }} {{ nb.age.rank.total }}개 시군구 중 <b>{{ nb.age.rank.rank }}위</b>입니다 (30~40대 비중이 높은 순).</li>
           {% endif %}
+          <li>30~40대는 <b>실거주 목적으로 사는 주력 매수층</b>이에요 — 이 비중이 높으면 팔 때 사 줄 사람이 두껍다는 뜻으로 읽습니다.</li>
+
         </ul>
       </div>
     </div>
-    {# 72-34절 — 이 꺾은선은 위 "얼마나 자주 팔리나" 줌 사다리 3단계로
-       옮겼다. 여기 그대로 두면 같은 그래프가 한 카드에 두 번 나온다. #}
+    {# 72-38절 — 구 전체 거래량 꺾은선을 여기로 되돌렸다. 72-34절에서 줌
+       사다리 3단계로 뺐었는데, 이건 연령 구성과 **같은 표·같은 구 단위**
+       자료라 "누가 사 가나" 옆에 있어야 한 번에 읽힌다. #}
+    {% if nb.age.volume_line %}
+    <div class="card-split"></div>
+    <div class="zoom-label" style="margin-bottom:6px">🕒 이 구 매수세는 늘고 있나
+      <span class="nb-sub">{{ nb.age.region }} · 해마다 전체 매입 건수</span></div>
+    <ul class="note-lines" style="margin:0 0 8px">
+      <li>위가 <b>"누가"</b>라면 이 선은 <b>"얼마나 많이"</b>예요 — 이 구에서 집을 사는 사람 수 자체가 늘고 있는지 봅니다.</li>
+    </ul>
+    {{ nb.age.volume_line|safe }}
+    {% set vc = nb.age.volume_compare %}
+    {% if vc %}
+    <ul class="note-lines" style="margin:10px 0 0">
+      <li>{{ vc.first_year }}년 {{ '{:,}'.format(vc.first) }}건 → {{ vc.last_year }}년 {{ '{:,}'.format(vc.last) }}건
+        (<b>{{ '%+.1f'|format(vc.change_pct) }}%</b>)</li>
+      {% if vc.vs_sido is not none %}
+      <li>같은 기간 <b>{{ vc.sido }} 전체</b>는 {{ '%+.1f'|format(vc.sido_change_pct) }}%였어요 —
+        이 구는 그보다 <b>{{ '%+.1f'|format(vc.vs_sido) }}%p</b>
+        {{ '잘 버틴 편입니다.' if vc.vs_sido > 0 else '더 줄었습니다.' }}</li>
+      {% endif %}
+      {% if vc.rank %}
+      <li>{{ vc.sido }} <b>{{ vc.rank.total }}개 시군구 중 {{ vc.rank.rank }}위</b>입니다
+        (매수세가 잘 늘어난 순).</li>
+      {% endif %}
+      <li>⚠️ 구마다 인구·주택 수가 달라 <b>건수 자체는 비교가 안 되므로 변화율로 견줬어요.</b></li>
+    </ul>
+    {% endif %}
+    {% endif %}
     <ul class="note-lines" style="margin:12px 0 0">
-      <li>30~40대는 <b>실거주 목적으로 사는 주력 매수층</b>이에요 — 이 비중이 높으면 팔 때 사 줄 사람이 두껍다는 뜻으로 읽습니다.</li>
       <li>⚠️ 주택유형이 구분되지 않은 <b>전체 주택 통계</b>라 아파트 거래가 섞여 있어요.</li>
       <li>⚠️ 연 단위 스냅샷이고, <b>매도가 계산이나 환금성 점수에는 반영되지 않는</b> 참고 정보입니다.</li>
     </ul>
@@ -818,6 +838,8 @@
 </p>
 {% endif %}
 
-<p style="text-align:center; margin:22px 0 4px"><a class="back" href="/">← 다시 계산하기</a></p>
+<div style="margin:26px 0 4px">
+  <a class="back" href="/">🔄 다른 물건 다시 계산하기</a>
+</div>
 
 {% endblock %}

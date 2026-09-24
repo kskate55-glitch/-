@@ -608,11 +608,24 @@
   }
   ul.ref-list li:last-child { border-bottom: none; }
 
+  /* 72-38절 — 14px 글자 링크라 페이지 맨 아래에서 안 보인다는 지적을 받아
+     입력 화면 제출 버튼(.cta-submit)과 같은 크기의 버튼으로 키웠다.
+     ⚠️ 색은 흰 배경 + 그린 테두리다 — 꽉 찬 그린으로 하면 위쪽 네이버 CTA와
+     같은 무게가 되어 "다음에 눌러야 할 버튼"이 둘로 보인다. */
   a.back {
-    display: inline-block; margin-top: 6px; color: var(--primary-dark);
-    text-decoration: none; font-size: 14px; font-weight: 700;
+    display: block; width: 100%; box-sizing: border-box;
+    margin: 4px auto 0; max-width: 420px;
+    padding: 16px 20px; text-align: center;
+    border: 2px solid var(--primary); border-radius: var(--radius-lg);
+    background: #fff; color: var(--primary-dark);
+    text-decoration: none; font-size: 16.5px; font-weight: 800; letter-spacing: -0.2px;
+    box-shadow: 0 2px 8px rgba(3, 199, 90, .14);
+    transition: background .12s ease, transform .12s ease, box-shadow .12s ease;
   }
-  a.back:hover { text-decoration: underline; }
+  a.back:hover {
+    background: var(--primary-tint); transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(3, 199, 90, .22);
+  }
 
   footer { margin-top: 28px; color: var(--muted-2); font-size: 13px; line-height: 1.75; padding: 0 4px; }
 

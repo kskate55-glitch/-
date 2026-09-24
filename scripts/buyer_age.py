@@ -224,6 +224,7 @@ def compute_buyer_age(address: str, table: dict | None = None) -> dict | None:
                            if key[1] else None),
         "volume_series": [(y, ages["합계"].get(y, 0)) for y in years],
         "rank": _rank_within_sido(table, key, latest),
+        "volume_compare": compare_volume(table, key, years),
     }
 
 
@@ -292,6 +293,69 @@ def _young_pct_for(table: dict, key: tuple, year: int) -> float | None:
     return sum(ages.get(a, {}).get(year, 0) for a in YOUNG_AGES) / known * 100
 
 
+def _volume_change(series: list) -> float | None:
+    """첫 해 → 마지막 해 변화율(%). 표본이 얇으면 None."""
+    if len(series) < 2:
+        return None
+    first, last = series[0][1], series[-1][1]
+    # ⚠️ 분모가 작으면 몇 건 차이가 수백 %로 튄다 — MIN_TOTAL 을 그대로 쓴다.
+    if first < MIN_TOTAL or last < MIN_TOTAL:
+        return None
+    return (last - first) / first * 100
+
+
+def compare_volume(table: dict, key: tuple, years: list) -> dict | None:
+    """72-38절 — "이 구 매수세가 다른 구와 견줘 어떤가".
+
+    숫자 하나(4,653건)만 던지면 많은 건지 적은 건지 알 수 없다 — 24절이 지수
+    하나에 지역간 순위를 붙인 것, 72-32절이 연령 비중에 시/도 평균을 붙인 것과
+    같은 이유다. 여기서는 **건수가 아니라 변화율**로 비교한다: 구마다 인구·
+    주택 수가 달라 건수 자체는 비교가 안 되고, "늘고 있나 줄고 있나"는 비교가
+    된다.
+
+    ⚠️ 시/도 합계 행(`(sido, "")`)을 기준선으로 쓴다 — 시군구 변화율을 단순
+    평균하면 작은 군이 큰 구와 같은 무게를 갖는다.
+    """
+    sido, gu = key
+    if not gu or len(years) < 2:
+        return None
+    mine = table.get(key, {}).get("합계", {})
+    series = [(y, mine.get(y, 0)) for y in years]
+    change = _volume_change(series)
+    if change is None:
+        return None
+
+    sido_rows = table.get((sido, ""), {}).get("합계", {})
+    sido_change = _volume_change([(y, sido_rows.get(y, 0)) for y in years])
+
+    # 같은 시/도 시군구끼리 변화율 순위 — 24절 `rank_region`과 같은 형태다.
+    peers = []
+    for (s, g) in table:
+        if s != sido or not g:
+            continue
+        rows = table.get((s, g), {}).get("합계", {})
+        c = _volume_change([(y, rows.get(y, 0)) for y in years])
+        if c is not None:
+            peers.append((g, c))
+    rank = None
+    if len(peers) >= 3:
+        peers.sort(key=lambda x: -x[1])
+        for i, (g, _c) in enumerate(peers, 1):
+            if g == gu:
+                rank = {"rank": i, "total": len(peers)}
+                break
+
+    return {
+        "first_year": years[0], "last_year": years[-1],
+        "first": series[0][1], "last": series[-1][1],
+        "change_pct": change,
+        "sido": sido,
+        "sido_change_pct": sido_change,
+        "vs_sido": None if sido_change is None else change - sido_change,
+        "rank": rank,
+    }
+
+
 def _rank_within_sido(table: dict, key: tuple, year: int) -> dict | None:
     """같은 시/도 안에서 30~40대 비중 순위 — 숫자 하나만 던지면 높은지 낮은지
     모르기 때문에, 24절이 지역간 순위를 같이 보여주는 것과 같은 이유다."""
@@ -333,5 +397,14 @@ def print_buyer_age(info: dict | None):
         (y0, v0), (y1, v1) = series[0], series[-1]
         chg = (v1 / v0 - 1) * 100 if v0 else 0.0
         print(f"  거래량: {y0}년 {v0:,}건 → {y1}년 {v1:,}건 ({chg:+.0f}%)")
+    # 72-38절 — 건수만으로는 많은 건지 적은 건지 모른다. 웹과 같은 비교를 붙인다.
+    vc = info.get("volume_compare")
+    if vc and vc.get("vs_sido") is not None:
+        print(f"    같은 기간 {vc['sido']} 전체는 {vc['sido_change_pct']:+.1f}% "
+              f"(이 구는 {vc['vs_sido']:+.1f}%p "
+              f"{'잘 버틴 편' if vc['vs_sido'] > 0 else '더 줄었음'})")
+    if vc and vc.get("rank"):
+        print(f"    {vc['sido']} {vc['rank']['total']}개 시군구 중 "
+              f"{vc['rank']['rank']}위 (매수세가 잘 늘어난 순)")
     print("  ⚠️ 주택유형이 구분되지 않은 전체 주택 통계라 아파트 거래가 섞여 있습니다 — "
           "참고용이고 매도가 계산에는 반영되지 않습니다.")

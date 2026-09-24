@@ -125,37 +125,55 @@ class TheRecalculateLinkIsAtTheVeryBottom(unittest.TestCase):
 
     def test_nothing_but_the_link_after_the_last_section(self):
         src = _src(True)
-        link = src.index("← 다시 계산하기")
+        link = src.index("다른 물건 다시 계산하기")
         self.assertGreater(link, src.rindex('class="sec-head"'),
                            "다시 계산하기가 구역 중간에 끼어 있다")
-        self.assertEqual(src.count("← 다시 계산하기"), 1)
+        self.assertEqual(src.count("다른 물건 다시 계산하기"), 1)
+
+    def test_it_is_a_button_not_a_tiny_link(self):
+        """72-38절 — 14px 글자 링크라 페이지 맨 아래에서 안 보였다."""
+        css = open(os.path.join(os.path.dirname(__file__), "..", "..",
+                                "webapp", "static", "app.css"), encoding="utf-8").read()
+        block = css[css.index("a.back {"):css.index("a.back:hover")]
+        self.assertIn("display: block", block, "한 줄짜리 인라인 링크로 되돌아갔다")
+        size = float(re.search(r"font-size: ([\d.]+)px", block).group(1))
+        self.assertGreaterEqual(size, 16, f"글자가 {size}px 로 다시 작아졌다")
+        self.assertIn("border: 2px solid", block, "버튼 테두리가 없어 링크로 보인다")
 
 
 class TheVolumeNumbersAreOneLadder(unittest.TestCase):
-    """세 거래량은 축이 다르다 — 반경 / 동 / 구. 좁은 데서 넓은 데로."""
+    """거래량 사다리는 반경 → 동 두 단계다. 좁은 데서 넓은 데로.
 
-    def test_three_zoom_steps_in_order(self):
+    ⚠️ 72-38절에서 **세 단계였던 것이 둘로 줄었다** — 구 단위 꺾은선은
+    연령 구성과 같은 표·같은 범위 자료라 "누가 사 가나" 갈래로 옮겼다
+    (`TheDistrictVolumeSitsWithTheAges`가 그쪽을 고정한다).
+    """
+
+    def test_the_zoom_steps_are_in_order(self):
         src = _src(True)
         pins = re.findall(r'zoom-pin">(\d)</span>\s*([^<\n]+)', src)
-        self.assertEqual([n for n, _ in pins], ["1", "2", "3"])
+        self.assertEqual([n for n, _ in pins], ["1", "2"])
         labels = [t.strip() for _, t in pins]
         self.assertIn("주변", labels[0])
         self.assertIn("동", labels[1])
-        self.assertIn("구", labels[2])
 
     def test_each_step_says_what_range_it_covers(self):
         src = _src(True)
-        for phrase in ("반경 300·500m", "같은 구 안에서", "가장 넓게 본"):
+        for phrase in ("반경 300·500m", "같은 구 안에서"):
             self.assertIn(phrase, src, f"'{phrase}' 설명이 빠졌다")
+
+    def test_the_ladder_points_at_where_the_district_line_went(self):
+        """단계를 빼 놓고 말을 안 하면 "구 얘기는 어디 갔지"가 된다."""
+        src = _src(True)
+        lead = src[src.index("아래 둘은 다 거래량"):][:300]
+        self.assertIn("누가 사 가나", lead)
 
     def test_the_ladder_explains_why_there_are_three(self):
         self.assertIn("보는 범위가 다릅니다", _src(True))
 
     def test_the_district_line_is_not_drawn_twice(self):
-        """줌 3단계로 옮긴 뒤 연령대 갈래의 원본을 안 지우면 두 번 나온다."""
-        src = _src(True)
-        # 조건문 한 번 + 출력 한 번이 정상. 출력이 둘이면 두 번 그려진다.
-        self.assertEqual(src.count("{{ nb.age.volume_line"), 1)
+        """옮길 때 원본을 안 지우면 같은 그래프가 한 카드에 두 번 나온다."""
+        self.assertEqual(_src(True).count("{{ nb.age.volume_line"), 1)
 
     def test_the_old_standalone_cards_are_gone(self):
         """유동성·가격추이·계절성은 이제 '이 동네' 카드 안이다."""
@@ -274,3 +292,41 @@ class TheRegionResolversSwallowJunk(unittest.TestCase):
         import market_index as M
         self.assertEqual(M.seoul_zone_from_address("서울특별시 서대문구 홍은동 1"), "서북권")
         self.assertEqual(B.sido_for_address("서대문구 홍은동 265-218"), "서울")
+
+
+class TheDistrictVolumeSitsWithTheAges(unittest.TestCase):
+    """72-38절 — 사용자 지적: *"요거는 구 관련 이야기니까 누가 사 가나
+    서대문구 연령대 이야기랑 같이 있어야 하는 거 아닌감?"*
+
+    맞다. 둘 다 `buyer_age_by_region.csv` 한 표에서 나오고 범위도 같은 구
+    단위다. 거래량 사다리(반경·동)와는 출처도 범위도 다르다.
+    """
+
+    def _age_block(self):
+        src = _src(True)
+        i = src.index('👥 누가 사 가나 <span class="nb-sub">{{ nb.age.region')
+        return src[i:src.index("{% elif result.buyer_age_missing %}", i)]
+
+    def test_the_line_is_inside_the_age_block(self):
+        self.assertIn("{{ nb.age.volume_line", self._age_block(),
+                      "구 거래량 꺾은선이 연령대 갈래 밖에 있다")
+
+    def test_it_is_not_in_the_zoom_ladder_any_more(self):
+        src = _src(True)
+        ladder = src[src.index("📊 얼마나 자주 팔리나"):src.index("📈 값이 오르는 동네인가")]
+        self.assertNotIn("nb.age.volume_line", ladder)
+
+    def test_it_says_how_this_district_compares_with_others(self):
+        """숫자 하나(4,653건)만 던지면 많은 건지 적은 건지 알 수 없다."""
+        block = self._age_block()
+        for needle in ("vc.change_pct", "vc.sido_change_pct", "vc.vs_sido",
+                       "vc.rank.rank", "vc.rank.total"):
+            self.assertIn(needle, block, f"{needle} 비교가 화면에 없다")
+
+    def test_it_admits_counts_are_not_comparable_across_districts(self):
+        """구마다 인구가 달라 건수 자체로는 비교가 안 된다 — 밝혀야 한다."""
+        block = self._age_block()
+        self.assertIn("건수 자체는 비교가 안 되므로", block)
+        # ⚠️ 주택유형 경고는 갈래 맨 아래에 **한 번만** 있어야 한다 —
+        #    72-38절에서 꺾은선을 옮기며 같은 경고를 두 번 쓴 걸 고쳤다.
+        self.assertEqual(block.count("전체 주택"), 1, "주택유형 경고가 중복된다")

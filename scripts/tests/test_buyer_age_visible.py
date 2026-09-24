@@ -24,7 +24,9 @@ class TheTitleSaysWhatItIs(unittest.TestCase):
     def test_the_word_age_is_in_the_heading(self):
         """72-32절에서 카드가 합쳐졌지만 **찾을 수 있어야 한다는 계약은 그대로다.**"""
         src = _tpl()
-        i = src.find("👥 누가 사 가나")
+        # ⚠️ 제목 자체를 찾는다 — 72-38절에서 거래량 사다리 안내문도 이 말을
+        #    쓰게 됐고, 그냥 find 하면 그 안내문이 먼저 잡힌다.
+        i = src.find('👥 누가 사 가나 <span class="nb-sub">')
         self.assertGreater(i, 0, "연령대 갈래가 사라졌다")
         head = src[i:i + 300]
         self.assertIn("매입자 연령대", head,

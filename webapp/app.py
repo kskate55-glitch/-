@@ -171,6 +171,8 @@ def _build_neighbourhood_card(dong_compare, buyer_age,
                 [(str(y), n) for y, n in (buyer_age.get("volume_series") or [])], suffix="건"),
             "is_sido_only": buyer_age.get("is_sido_only"),
             "sido": buyer_age.get("sido"),
+            # 72-38절 — 건수 하나만 보여주면 "많은 건지 적은 건지"를 알 수 없다.
+            "volume_compare": buyer_age.get("volume_compare"),
         }
     return card
 

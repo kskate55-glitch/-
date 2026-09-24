@@ -155,6 +155,8 @@
 <p class="subject-resolved">📍 <b>{{ result.resolved_address }}</b>(으)로 알아들었어요{% if result.resolved_road %} · 도로명 {{ result.resolved_road }}{% endif %}</p>
 {% endif %}
 <p class="subject-period">분석기간 {{ result.period }}</p>
+{# 다시 계산하기가 맨 아래 작은 글자뿐이라 못 찾았다 — 위에도 하나 둔다(문구는 달리 해서 맨 아래 링크와 구분) #}
+<a class="recalc-top" href="/">↺ 새 주소로 다시 계산</a>
 {% if result.naver_land_url %}
 <a href="{{ result.naver_land_url }}" target="_blank" rel="noopener" class="naver-cta">
   <span class="naver-cta-icon">🗺️</span>
@@ -818,6 +820,6 @@
 </p>
 {% endif %}
 
-<p style="text-align:center; margin:22px 0 4px"><a class="back" href="/">← 다시 계산하기</a></p>
+<p style="text-align:center; margin:26px 0 6px"><a class="back recalc-btn" href="/">← 다시 계산하기</a></p>
 
 {% endblock %}

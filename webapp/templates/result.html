@@ -206,8 +206,12 @@
 </script>
 {% endif %}
 
-<div class="hero-row{% if result.price_tiers %} two-col{% endif %}">
+{# 사용자 요청 — 경매용 매도가와 가격 구간별 매도 전략은 "얼마에 내놓을까"
+   하나의 이야기다. 카드를 둘로 나눠 두면 화면에서 멀어져 나란히 비교가
+   안 된다는 지적을 받아 한 카드 안 2단으로 합쳤다(좁은 화면은 세로). #}
 <div class="hero">
+<div class="hero-split{% if result.price_tiers %} two-col{% endif %}">
+<div class="hero-main">
   <div class="hero-label">경매용 매도가</div>
   <div class="hero-price">{{ result.auction_price }}</div>
   <div class="hero-range">보수적 급매가 {{ result.conservative }} ~ 현실적 체결가(일반 매매) {{ result.realistic }}의 중간값</div>
@@ -241,63 +245,9 @@
   </div>
   {% endif %}
 </div>
-{% if result.estimate_warnings %}
-<div class="card" style="border-left:4px solid #e8a33d; background:#fff8ec">
-  <h3 style="margin-bottom:6px">⚠️ 이 추정치, 그대로 믿기 전에 확인하세요</h3>
-  <p class="muted" style="margin:0 0 12px">
-    과거 실거래 125건에 이 계산기를 다시 돌려 봤더니, 아래 같은 신호가 뜬 경우가
-    <b>1.4배쯤 더 많이 빗나갔어요</b> (신호 없을 때 평균 10.8% · 있을 때 14.6%).</p>
-  {% for w in result.estimate_warnings %}
-  <div style="padding:11px 13px; margin-bottom:8px; background:#fff;
-              border:1px solid #f0d9b5; border-radius:10px">
-    <div style="font-weight:700; font-size:14.5px; margin-bottom:4px">{{ w.label }}</div>
-    <div class="muted" style="margin:0 0 5px">{{ w.detail }}</div>
-    <div style="font-size:13.5px; color:var(--primary-dark); font-weight:600">→ {{ w.advice }}</div>
-  </div>
-  {% endfor %}
-  {# 72-26절 — 정비구역 경고가 떴는데 아직 답을 안 했으면 여기서 바로 답하게
-     한다(43절 임장 체크·44절 매물 붙여넣기와 같은 패턴). 경고가 "확인하세요"
-     라고만 하고 확인할 칸이 화면에 없으면 고리가 닫히지 않는다. #}
-  {% if result.zone_ask %}
-  <details class="paste-fold" style="margin:10px 0 0">
-    <summary>🏗️ 여기가 재개발 구역인지 알려주시면 다시 안내해 드려요</summary>
-    <form method="post" action="/estimate" style="margin-top:10px">
-      {% for k, v in result.resubmit_fields_no_zone.items() %}
-      <input type="hidden" name="{{ k }}" value="{{ v }}">
-      {% endfor %}
-      <label for="rz">재개발·재건축 구역인가요?</label>
-      <select id="rz" name="redevelopment">
-        <option value="">모르겠어요 / 확인 안 했어요</option>
-        {% for val, label in redev_choices %}
-        <option value="{{ val }}">{{ label }}</option>
-        {% endfor %}
-      </select>
-      <p class="hint" style="margin:8px 0 10px">경매 정보나 토지이용계획확인원에서 확인할 수 있어요.
-        <b>매도가 숫자는 바뀌지 않고</b>, 이 값을 어떻게 읽어야 하는지 안내만 달라집니다.</p>
-      <button type="submit">알려주고 다시 보기</button>
-    </form>
-  </details>
-  {% endif %}
-  <ul class="note-lines" style="margin:10px 0 0">
-    <li>신호가 떴다고 <b>틀린 값이라는 뜻은 아닙니다</b> — "한 번 더 확인하라"는 표시예요.</li>
-    <li>반대로 <b>신호가 없다고 정확한 것도 아닙니다</b> — 크게 빗나간 7건 중 1건은 아무 신호에도 안 걸렸어요.</li>
-  </ul>
-</div>
-{% endif %}
-{% if result.verdict_lines %}
-<div class="card" style="border-left:4px solid var(--primary); background:var(--primary-tint)">
-  <h3 style="margin-bottom:8px">📝 종합 판단 (규칙 기반 자동 요약)</h3>
-  {% for line in result.verdict_lines %}
-  <p style="margin:0 0 7px; line-height:1.75; font-size:14px">{{ line }}</p>
-  {% endfor %}
-</div>
-{% endif %}
-
-<div class="sec-head"><span class="sec-num">1</span><span class="sec-title">이 집, 얼마에 팔릴까</span><span class="sec-sub">가격 자체를 다루는 부분</span></div>
-
 {% if result.price_tiers %}
-<div class="card">
-  <h3>가격 구간별 매도 전략</h3>
+<div class="hero-tiers">
+  <h3 class="hero-tiers-title">💰 가격 구간별 매도 전략<span>얼마에 내놓느냐에 따라 팔리는 속도가 달라져요</span></h3>
   <ul class="note-lines" style="margin-top:-6px; margin-bottom:12px">
     <li>비교거래 분포 안에서의 <b>가격 위치</b>를 기준으로 붙인 참고 라벨입니다.</li>
     <li>"30일/60일"은 실제 매도 소요일수를 측정한 값이 <b>아닙니다</b>.</li>
@@ -352,6 +302,62 @@
 </div>
 {% endif %}
 </div>
+</div>
+
+{% if result.estimate_warnings %}
+<div class="card" style="border-left:4px solid #e8a33d; background:#fff8ec">
+  <h3 style="margin-bottom:6px">⚠️ 이 추정치, 그대로 믿기 전에 확인하세요</h3>
+  <p class="muted" style="margin:0 0 12px">
+    과거 실거래 125건에 이 계산기를 다시 돌려 봤더니, 아래 같은 신호가 뜬 경우가
+    <b>1.4배쯤 더 많이 빗나갔어요</b> (신호 없을 때 평균 10.8% · 있을 때 14.6%).</p>
+  {% for w in result.estimate_warnings %}
+  <div style="padding:11px 13px; margin-bottom:8px; background:#fff;
+              border:1px solid #f0d9b5; border-radius:10px">
+    <div style="font-weight:700; font-size:14.5px; margin-bottom:4px">{{ w.label }}</div>
+    <div class="muted" style="margin:0 0 5px">{{ w.detail }}</div>
+    <div style="font-size:13.5px; color:var(--primary-dark); font-weight:600">→ {{ w.advice }}</div>
+  </div>
+  {% endfor %}
+  {# 72-26절 — 정비구역 경고가 떴는데 아직 답을 안 했으면 여기서 바로 답하게
+     한다(43절 임장 체크·44절 매물 붙여넣기와 같은 패턴). 경고가 "확인하세요"
+     라고만 하고 확인할 칸이 화면에 없으면 고리가 닫히지 않는다. #}
+  {% if result.zone_ask %}
+  <details class="paste-fold" style="margin:10px 0 0">
+    <summary>🏗️ 여기가 재개발 구역인지 알려주시면 다시 안내해 드려요</summary>
+    <form method="post" action="/estimate" style="margin-top:10px">
+      {% for k, v in result.resubmit_fields_no_zone.items() %}
+      <input type="hidden" name="{{ k }}" value="{{ v }}">
+      {% endfor %}
+      <label for="rz">재개발·재건축 구역인가요?</label>
+      <select id="rz" name="redevelopment">
+        <option value="">모르겠어요 / 확인 안 했어요</option>
+        {% for val, label in redev_choices %}
+        <option value="{{ val }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <p class="hint" style="margin:8px 0 10px">경매 정보나 토지이용계획확인원에서 확인할 수 있어요.
+        <b>매도가 숫자는 바뀌지 않고</b>, 이 값을 어떻게 읽어야 하는지 안내만 달라집니다.</p>
+      <button type="submit">알려주고 다시 보기</button>
+    </form>
+  </details>
+  {% endif %}
+  <ul class="note-lines" style="margin:10px 0 0">
+    <li>신호가 떴다고 <b>틀린 값이라는 뜻은 아닙니다</b> — "한 번 더 확인하라"는 표시예요.</li>
+    <li>반대로 <b>신호가 없다고 정확한 것도 아닙니다</b> — 크게 빗나간 7건 중 1건은 아무 신호에도 안 걸렸어요.</li>
+  </ul>
+</div>
+{% endif %}
+{% if result.verdict_lines %}
+<div class="card" style="border-left:4px solid var(--primary); background:var(--primary-tint)">
+  <h3 style="margin-bottom:8px">📝 종합 판단 (규칙 기반 자동 요약)</h3>
+  {% for line in result.verdict_lines %}
+  <p style="margin:0 0 7px; line-height:1.75; font-size:14px">{{ line }}</p>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="sec-head"><span class="sec-num">1</span><span class="sec-title">이 집, 얼마에 팔릴까</span><span class="sec-sub">위 매도가가 어떤 근거로 나왔는지</span></div>
+
 {# 72-33절 — 그래프와 그 점들의 목록은 같은 이야기다. 카드를 나눠 두면
    "이게 뭐구나"가 두 번에 나눠 들어온다는 지적을 받아 한 카드로 합쳤다. #}
 <div class="card">
@@ -772,7 +778,6 @@
 </div>
 {% endif %}
 
-<a class="back" href="/">← 다시 계산하기</a>
 
 <div class="sec-head"><span class="sec-num">4</span><span class="sec-title">더 넓게 보면</span><span class="sec-sub">구·권역 단위 시장 분위기</span></div>
 
@@ -812,5 +817,7 @@
   · 같은 지역을 다시 조회하면 저장된 값을 써서 훨씬 빨라집니다
 </p>
 {% endif %}
+
+<p style="text-align:center; margin:22px 0 4px"><a class="back" href="/">← 다시 계산하기</a></p>
 
 {% endblock %}

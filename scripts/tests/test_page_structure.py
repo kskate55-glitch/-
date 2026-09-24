@@ -58,7 +58,6 @@ class ThePageHasFourSections(unittest.TestCase):
         # ⚠️ 조건문(`{% if result.X %}`)은 다른 카드 **안에서도** 쓰인다
         #    (price_tiers·similar_listings). 카드를 특정하려면 제목으로 찾는다.
         for needle, want, what in (
-            ("가격 구간별 매도 전략", "1", "가격 구간별 매도 전략"),
             ("이 매도가, 어떤 실거래를 보고", "1", "매도가 산출 근거"),
             ("상태별 매도가 3단계", "1", "상태별 매도가 3단계"),
             ("예상 월세 추정", "1", "예상 월세"),
@@ -71,6 +70,65 @@ class ThePageHasFourSections(unittest.TestCase):
         ):
             self.assertEqual(self._section_of(needle), want,
                              f"'{what}' 가 {want}번 구역에 없다")
+
+
+class ThePriceAndTheTiersAreOneCard(unittest.TestCase):
+    """사용자 요청 — 경매용 매도가와 가격 구간별 매도 전략은 "얼마에 내놓을까"
+    하나의 이야기라 한 카드 안 2단으로 합쳤다.
+
+    ⚠️ 예전엔 바깥 그리드(`.hero-row.two-col`)가 이 둘만이 아니라 **경고·종합
+    판단·구역 제목까지** 감싸 버려서 격자가 통째로 어긋났다(왼쪽에 카드가
+    쌓이고 오른쪽 절반이 비었다). 그 재발을 여기서 막는다.
+    """
+
+    def test_the_tier_table_lives_inside_the_hero_card(self):
+        src = _src(True)
+        hero = src.index('<div class="hero">')
+        tiers = src.index("가격 구간별 매도 전략")
+        first_sec = src.index('class="sec-head"')
+        self.assertLess(hero, tiers, "구간별 표가 히어로 카드보다 앞에 있다")
+        self.assertLess(tiers, first_sec,
+                        "구간별 표가 구역 제목 뒤로 밀렸다 — 맨 위에 있어야 한다")
+
+    def test_the_two_column_grid_wraps_only_those_two(self):
+        """격자가 감싸는 것이 히어로 본문과 구간표 **둘뿐**인지 센다."""
+        src = _src(True)
+        start = src.index('<div class="hero-split')
+        depth, i = 0, start
+        while True:
+            nxt_o = src.find("<div", i)
+            nxt_c = src.find("</div>", i)
+            if nxt_c == -1:
+                self.fail("hero-split 이 닫히지 않는다")
+            if nxt_o != -1 and nxt_o < nxt_c:
+                depth += 1
+                i = nxt_o + 4
+            else:
+                depth -= 1
+                i = nxt_c + 6
+                if depth == 0:
+                    break
+        inside = src[start:i]
+        for stray in ("이 추정치, 그대로 믿기 전에", "종합 판단", 'class="sec-head"'):
+            self.assertNotIn(stray, inside,
+                             f"'{stray}' 가 2단 격자 안에 들어가 격자를 어긋나게 한다")
+
+    def test_the_warning_card_comes_right_after(self):
+        src = _src(True)
+        self.assertLess(src.index("가격 구간별 매도 전략"),
+                        src.index("이 추정치, 그대로 믿기 전에"))
+
+
+class TheRecalculateLinkIsAtTheVeryBottom(unittest.TestCase):
+    """⚠️ 3번 구역과 4번 구역 **사이**에 끼어 있었다 — 페이지가 거기서
+    끝나는 것처럼 보인다."""
+
+    def test_nothing_but_the_link_after_the_last_section(self):
+        src = _src(True)
+        link = src.index("← 다시 계산하기")
+        self.assertGreater(link, src.rindex('class="sec-head"'),
+                           "다시 계산하기가 구역 중간에 끼어 있다")
+        self.assertEqual(src.count("← 다시 계산하기"), 1)
 
 
 class TheVolumeNumbersAreOneLadder(unittest.TestCase):

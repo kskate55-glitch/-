@@ -134,17 +134,30 @@
     border: 1px solid var(--border); margin-bottom: 14px; box-shadow: var(--shadow);
   }
 
-  /* 히어로 카드 + 가격 구간별 매도 전략을 나란히 놓는 행 —
-     넓은 화면에서만 2열, 좁은 화면(대부분의 방문자)에서는 그대로 세로로 쌓인다 */
-  .hero-row { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
+  /* 경매용 매도가 + 가격 구간별 매도 전략 — 한 카드 안의 2단.
+     ⚠️ 예전엔 .hero-row 라는 바깥 그리드였는데, 그 안에 경고·종합판단·구역
+     제목까지 들어가 버려 격자가 통째로 어긋났다(왼쪽에 카드가 쌓이고
+     오른쪽은 빈 칸). 지금은 이 두 덩어리만 감싼다. */
+  .hero-split { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: start; }
   /* 사용자 요청 — "가격 구간별 매도 전략을 더 크게, 경매용 매도가 칸은
-     조금 더 작게". 원래는 히어로가 더 넓었는데(1.35fr 1fr) 비율을 뒤집었다:
-     실제로 보는 건 구간별 전략 표 쪽이고, 히어로는 큰 숫자 하나라 좁아도
-     읽히기 때문이다. */
+     조금 더 작게". 실제로 들여다보는 건 구간별 표 쪽이고, 히어로는 큰 숫자
+     하나라 좁아도 읽힌다. */
   @media (min-width: 900px) {
-    .hero-row.two-col { grid-template-columns: 1fr 1.3fr; }
+    .hero-split.two-col { grid-template-columns: 1fr 1.25fr; gap: 24px; }
+    .hero-split.two-col .hero-tiers {
+      border-left: 1px solid var(--border); border-top: 0;
+      padding: 0 0 0 24px; margin-top: 2px;
+    }
   }
-  .hero-row .card { margin-bottom: 0; }
+  .hero-tiers {
+    border-top: 1px solid var(--border); padding-top: 16px;
+  }
+  .hero-tiers-title {
+    font-size: 17px; margin: 0 0 12px; display: flex; flex-direction: column; gap: 3px;
+  }
+  .hero-tiers-title span {
+    font-size: 13px; font-weight: 600; color: var(--muted);
+  }
   .tier-table-wrap { overflow-x: auto; }
   /* 열이 많은 표(핵심 비교거래 7열 등)는 좁은 화면에서 카드 밖으로 삐져나가
      페이지 전체에 가로 스크롤이 생긴다 — 표만 따로 스크롤되게 감싼다. */

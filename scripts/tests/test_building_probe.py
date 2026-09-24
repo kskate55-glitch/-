@@ -152,8 +152,20 @@ class ThePageNeverBreaks(unittest.TestCase):
         import app as webapp
         self.app = webapp
         self.client = webapp.app.test_client()
+        # ⚠️ 72-39절 두 번째 카드(대지지분)가 `get_trade_rows`로 국토부를 부른다 —
+        #    막지 않으면 이 테스트가 **실제 API로 새어 나간다**(48·55·72-11절이
+        #    반복해 겪은 함정. 실제로 여기서 새는 것을 ResourceWarning으로 잡았다).
+        import data_source
+        self._real_rows = data_source.get_trade_rows
+        data_source.get_trade_rows = lambda *a, **k: [
+            {"umdNm": "홍은동", "jibun": "265-218", "excluUseAr": "59.88",
+             "landAr": "40.1", "dealAmount": "30,000", "dealYear": "2026",
+             "dealMonth": "9", "dealDay": "1", "floor": "3", "buildYear": "2012"}
+        ]
 
     def tearDown(self):
+        import data_source
+        data_source.get_trade_rows = self._real_rows
         for k, v in self._saved.items():
             if v is None:
                 os.environ.pop(k, None)
@@ -197,6 +209,57 @@ class ThePageNeverBreaks(unittest.TestCase):
         self.assertIn("platArea", body)
         self.assertIn("대지지분을 구할 수 있습니다", body)
         self.assertNotIn(KEY, body)
+
+
+class TheLandShareCardIsWiredAndFakeable(unittest.TestCase):
+    """72-40절 — 72-39절 두 번째 카드가 뜨는지, 그리고 그게 **가짜로 막힐 수
+    있는지**. 후자가 더 중요하다 — 막을 수 없으면 테스트가 실제 국토부로
+    새어 나간다(그 누출을 실제로 겪어서 이 클래스를 만들었다)."""
+
+    def setUp(self):
+        os.environ["MOLIT_SERVICE_KEY"] = KEY
+        os.environ["KAKAO_REST_API_KEY"] = "kakao-test"
+        import app as webapp
+        import data_source
+        self.client = webapp.app.test_client()
+        self.ds = data_source
+        self._real = data_source.get_trade_rows
+        self.calls = []
+
+    def tearDown(self):
+        self.ds.get_trade_rows = self._real
+
+    def _run(self, rows):
+        def fake(*a, **k):
+            self.calls.append(a)
+            return rows
+        self.ds.get_trade_rows = fake
+        payload = ('<response><body><items><item><platArea>284</platArea>'
+                   '<totArea>424.8</totArea></item></items></body>'
+                   '<header><resultCode>00</resultCode></header></response>')
+        with mock.patch("geocode.geocode_full",
+                        return_value={"lat": 37.5, "lon": 126.9, "b_code": "1141011800",
+                                      "main_no": "265", "sub_no": "218"}), \
+             mock.patch.object(br, "urlopen", return_value=_Resp(payload.encode())):
+            r = self.client.get("/building-check?address=서울 서대문구 홍은동 265-218")
+        return r
+
+    def _row(self, land="40.1", area="59.88"):
+        return {"umdNm": "홍은동", "jibun": "265-218", "excluUseAr": area,
+                "landAr": land, "dealAmount": "30,000", "dealYear": "2026",
+                "dealMonth": "9", "dealDay": "1", "floor": "3", "buildYear": "2012"}
+
+    def test_the_fake_is_actually_used(self):
+        self._run([self._row()])
+        self.assertTrue(self.calls, "get_trade_rows 가짜가 안 불렸다 — 진짜로 나갔을 수 있다")
+
+    def test_the_card_renders(self):
+        text = self._run([self._row()]).get_data(as_text=True)
+        self.assertEqual(200, 200)
+        self.assertIn("대지권면적", text)
+
+    def test_no_rows_does_not_break_the_page(self):
+        self.assertEqual(self._run([]).status_code, 200)
 
 
 class TheNormalLookupIsUnchanged(unittest.TestCase):

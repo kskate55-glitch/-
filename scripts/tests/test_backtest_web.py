@@ -61,6 +61,12 @@ class BacktestWebBase(unittest.TestCase):
         #    이 파일만 단독 실행하면 통과하는데 전체 discover에서만 깨졌다).
         geo.geocode = fake_geocode
         bt.geocode = fake_geocode
+        # ⚠️ **세 번째 이름**도 막아야 한다 — 56절 LAWD 되살리기
+        #    (`_lawd_from_kakao`)는 `geocode`가 아니라 `geocode_full`을 부른다.
+        #    이걸 빼놓으면 "33개월 내내 0건"인 순간 실제 카카오로 나간다
+        #    (전체 discover에서만 드러났다, 72-40절).
+        self._orig_full = geo.geocode_full
+        geo.geocode_full = lambda *a, **k: None
 
         web.app.config["TESTING"] = True
         self.client = web.app.test_client()
@@ -68,6 +74,7 @@ class BacktestWebBase(unittest.TestCase):
     def tearDown(self):
         self.data_source.get_trade_rows = self._orig_rows
         geo.geocode = self._orig_geo
+        geo.geocode_full = self._orig_full
         self.bt.geocode = self._orig_bt_geo
         lawd_lookup._get_cache = self._orig_cache
 
@@ -277,3 +284,42 @@ class TestVersionSurvivesAHostChange(unittest.TestCase):
         os.environ["RENDER_GIT_COMMIT"] = "   "
         os.environ["GIT_COMMIT"] = "cafebabe"
         self.assertEqual(self.web._deploy_version(), "cafebab")
+
+
+class CsvIsSafeToOpenInExcel(unittest.TestCase):
+    """72-40절 — 엑셀 수식 주입 가드.
+
+    사용자는 이 CSV를 엑셀로 열고, 72-12절 짝지은 비교에 **다시 붙여넣는다**.
+    엑셀이 `=`로 시작하는 칸을 수식으로 바꿔 버리면 그 값이 변해서 짝이
+    안 맞는다.
+    """
+
+    def _js(self):
+        path = os.path.join(os.path.dirname(__file__), "..", "..", "webapp", "templates", "backtest.html")
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+
+    def test_free_text_columns_are_guarded(self):
+        js = self._js()
+        self.assertIn("textCols", js)
+        for col in ("gu", "name"):
+            self.assertRegex(js, r"textCols\s*=\s*\{[^}]*\b" + col + r"\b")
+
+    def test_number_columns_are_not_guarded(self):
+        """`err`는 음수(-26.1)가 정상이다 — 앞에 따옴표를 붙이면 엑셀에서
+        문자가 되어 사용자가 계산을 못 한다."""
+        js = self._js()
+        import re
+        block = re.search(r"var textCols = \{([^}]*)\}", js)
+        self.assertIsNotNone(block)
+        for col in ("err", "actual", "median", "conf", "area", "floor"):
+            self.assertNotIn(col, block.group(1))
+
+    def test_the_guard_covers_all_four_formula_starters(self):
+        js = self._js()
+        import re
+        pat = re.search(r"if \(textCols\[k\] && (/[^/]+/)\.test\(v\)\)", js)
+        self.assertIsNotNone(pat, "가드 정규식을 못 찾았다")
+        rx = pat.group(1)
+        for ch in ("=", "+", "-", "@"):
+            self.assertIn(ch, rx)

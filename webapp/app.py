@@ -191,6 +191,21 @@ def _pct_to_float(text) -> float:
 #    주면 고친 CSS가 며칠씩 반영 안 되는 사고가 난다.
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 60 * 60 * 24 * 365
 
+# 72-40절 — 붙여넣기 본문 상한.
+# ⚠️ 손대지 않으면 werkzeug 기본값 **500KB**가 걸리는데, 한글은 폼 전송 때
+#    URL 인코딩으로 **글자당 9바이트**(`%EA%B0%80`)가 되어 **약 5만 5천 자**에서
+#    잘린다. 28절 북마클릿은 네이버 페이지 텍스트를 **통째로** 복사하므로
+#    실사용 붙여넣기가 그 선을 넘고, 그때 방문자는 영어 기본 413 화면을 본다
+#    (70-3절에서 404·405를 한국어로 바꾸면서 이건 빠뜨렸다).
+#
+# 4MB면 한글 약 46만 자 — 실제 매물 페이지의 열 배쯤이라 넉넉하고, 파싱
+# 비용도 실측 1초 안쪽이다(50만 자 0.65초). 그러면서 **상한은 남겨 둔다** —
+# 무제한이면 큰 POST 하나로 워커가 메모리를 먹고 재시작하면서 57절·72-5절
+# 메모리 캐시가 통째로 날아간다(그러면 그 뒤 방문자가 전부 느려진다).
+PASTE_LIMIT_BYTES = 4 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = PASTE_LIMIT_BYTES
+app.config["MAX_FORM_MEMORY_SIZE"] = PASTE_LIMIT_BYTES
+
 
 @app.context_processor
 def _inject_version():
@@ -215,15 +230,34 @@ def _inject_version():
 #    옮길 수 있으니 **어디로 가든 압축은 되게** 우리 쪽에도 둔다.
 GZIP_MIN_BYTES = 1024          # 이보다 작으면 압축이 오히려 손해다
 GZIP_TYPES = ("text/html", "text/css", "text/plain", "text/xml",
-              "application/json", "application/javascript",
+              "application/json", "application/javascript", "text/javascript",
               "image/svg+xml", "text/csv")
+# ⚠️ `text/javascript`가 빠져 있어서 `app.js`가 무압축으로 나갔다 — Flask가
+#    `.js`에 붙이는 mimetype이 `application/javascript`가 아니라 이쪽이다.
+
+# 정적 파일은 `send_file`로 나가면서 `direct_passthrough`(스트리밍)가 켜지는데,
+# 그러면 아래 훅이 그냥 빠져나간다. 72-36절에서 CSS·JS를 정적 파일로 빼면서
+# **압축이 같이 빠진 것을 확인하지 않았다** — HTML은 33KB로 줄었는데 app.css
+# 38.5KB가 무압축으로 나가 첫 방문 전송량이 오히려 늘었다.
+# 스트리밍을 끄고 읽어도 되는 건 "작고 텍스트인" 응답뿐이라 상한을 둔다.
+GZIP_PASSTHROUGH_MAX_BYTES = 2 * 1024 * 1024
 
 
 @app.after_request
 def _compress(response):
     try:
-        if response.direct_passthrough or response.status_code >= 300:
+        if response.status_code >= 300:
             return response
+        if response.direct_passthrough:
+            # 정적 파일(app.css·app.js). 작은 텍스트일 때만 스트리밍을 끄고 읽는다 —
+            # 큰 파일을 메모리로 올리면 그게 더 나쁘다.
+            mt = (response.mimetype or "").lower()
+            length = response.headers.get("Content-Length")
+            if not any(mt.startswith(t) for t in GZIP_TYPES):
+                return response
+            if not length or int(length) > GZIP_PASSTHROUGH_MAX_BYTES:
+                return response
+            response.direct_passthrough = False
         if response.headers.get("Content-Encoding"):
             return response          # 앞단이 이미 했다
         accepted = request.headers.get("Accept-Encoding", "")
@@ -293,6 +327,17 @@ def _not_found(e):
         "그 주소에는 아무것도 없어요. 아래에서 다시 시작해 주세요. "
         "(주소를 직접 치셨다면 오타가 없는지, 끝에 슬래시(/)가 붙지 않았는지 확인해 주세요.)"
     ), form={}, last_year=datetime.now().year - 1), 404
+
+
+@app.errorhandler(413)
+def _too_large(e):
+    """72-40절 — 붙여넣은 글이 너무 길 때. 영어 기본 화면을 안 보여준다."""
+    mb = PASTE_LIMIT_BYTES // (1024 * 1024)
+    return render_template("index.html", error=(
+        f"붙여넣은 글이 너무 깁니다(한 번에 {mb}MB까지 받아요). "
+        "네이버부동산 매물 목록 부분만 잘라서 다시 붙여넣어 주세요 — "
+        "페이지 전체를 복사하면 메뉴·광고 글까지 같이 들어와 길어집니다."
+    ), form={}, last_year=datetime.now().year - 1), 413
 
 
 @app.route("/healthz", methods=["GET"], strict_slashes=False)

@@ -571,11 +571,16 @@
     var cols = ['version', 'seed', 'gu', 'name', 'date', 'area', 'floor', 'build_year',
                 'actual', 'median', 'err', 'n', 'sb', 'outliers', 'share',
                 'conf', 'divergence', 'in_band'];
+    // 72-40절 — 엑셀 수식 주입 가드. `=`·`+`·`-`·`@`로 시작하는 칸을 엑셀이
+    // 수식으로 실행한다. 자유 텍스트(지역·단지명)에만 건다 — 숫자 열(err 등)에
+    // 걸면 `-26.1`이 문자로 바뀌어 사용자가 엑셀에서 계산을 못 한다.
+    var textCols = {gu: 1, name: 1, version: 1};
     var lines = [cols.join(',')].concat(cases.map(function (c) {
       return cols.map(function (k) {
         var v = c[k];
         if (v == null) return '';
         v = String(v);
+        if (textCols[k] && /^[=+\-@\t\r]/.test(v)) v = "'" + v;
         return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
       }).join(',');
     }));

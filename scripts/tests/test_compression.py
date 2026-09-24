@@ -142,5 +142,66 @@ class TestResponsesAreCompressed(unittest.TestCase):
                 self.assertGreater(len(body), 100)
 
 
+class StaticFilesAreCompressedToo(unittest.TestCase):
+    """72-40절 — 72-36절에서 CSS·JS를 정적 파일로 빼면서 **압축이 같이 빠졌다.**
+
+    정적 파일은 `send_file`로 나가면서 `direct_passthrough`(스트리밍)가 켜지고,
+    압축 훅은 그 플래그를 보면 그냥 빠져나갔다. 그래서 app.css 37.6KB가
+    무압축으로 나가 **첫 방문 전송량이 오히려 늘어 있었다**(65.7KB).
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        os.environ.setdefault("KAKAO_REST_API_KEY", "테스트키")
+        import app
+        cls.mod = app
+        cls.client = app.app.test_client()
+
+    def _get(self, path):
+        return self.client.get(path, headers={"Accept-Encoding": "gzip"})
+
+    def test_the_stylesheet_is_gzipped(self):
+        res = self._get("/static/app.css")
+        self.assertEqual(res.headers.get("Content-Encoding"), "gzip")
+
+    def test_the_script_is_gzipped(self):
+        """⚠️ Flask는 .js에 `text/javascript`를 붙인다 — 목록에
+        `application/javascript`만 있어서 이것만 빠져 있었다."""
+        res = self._get("/static/app.js")
+        self.assertEqual(res.headers.get("Content-Encoding"), "gzip")
+
+    def test_it_actually_saves_a_lot(self):
+        raw = os.path.getsize(os.path.join(_ROOT, "webapp", "static", "app.css"))
+        sent = len(self._get("/static/app.css").get_data())
+        self.assertLess(sent, raw * 0.5)
+
+    def test_the_bytes_still_decompress_to_the_real_file(self):
+        raw = open(os.path.join(_ROOT, "webapp", "static", "app.css"), "rb").read()
+        self.assertEqual(gzip.decompress(self._get("/static/app.css").get_data()), raw)
+
+    def test_images_are_left_alone(self):
+        """PNG는 이미 압축돼 있다 — 다시 싸면 CPU만 쓰고 커진다."""
+        res = self._get("/static/hero-building.png")
+        self.assertIsNone(res.headers.get("Content-Encoding"))
+
+    def test_the_long_cache_survived(self):
+        """72-36절 계약 — 1년 캐시는 그대로여야 한다."""
+        res = self._get("/static/app.css")
+        self.assertIn("max-age=31536000", res.headers.get("Cache-Control", ""))
+
+    def test_vary_is_set_so_proxies_do_not_mix_them_up(self):
+        res = self._get("/static/app.css")
+        self.assertIn("Accept-Encoding", res.headers.get("Vary", ""))
+
+    def test_a_client_without_gzip_gets_the_plain_file(self):
+        res = self.client.get("/static/app.css", headers={"Accept-Encoding": "identity"})
+        self.assertIsNone(res.headers.get("Content-Encoding"))
+        self.assertEqual(res.status_code, 200)
+
+    def test_big_files_are_not_pulled_into_memory(self):
+        """상한이 있어야 한다 — 큰 파일을 버퍼링하면 압축 이득보다 손해가 크다."""
+        self.assertLessEqual(self.mod.GZIP_PASSTHROUGH_MAX_BYTES, 8 * 1024 * 1024)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -49,7 +49,16 @@ const LF_BASES = {
   gangnam:     {t:"강남 소형 개인사무실", tier:3, rent:560, rest:1.1, focus:1.22, bg:"bg_office_3", need:80000},
   mine:        {t:"내 경매 사무실", tier:4, rent:700, rest:1.15, focus:1.3, bg:"bg_office_3", need:100000}};
 // 매달 들어오는 돈(생활비·월세 빼기 전) — 캐릭터 생활 그대로
-const LF_INCOME = {seoyun:230, dohyun:240, mijeong:180, jaehoon:150, eunkyung:120, taesik:150};
+const LF_INCOME = {seoyun:230, dohyun:240, mijeong:180, jaehoon:150, eunkyung:120, taesik:150};   // (구버전 저장 호환용 — 지금은 LF_ECON을 쓴다)
+// 인생 조건 — 돈이 어디서 들어오고 어디로 나가는지, 무엇이 발목을 잡는지
+const LF_ECON = {
+  seoyun:  {inc:[130, 280], incT:"과외·단기 알바(들쭉날쭉)", fixed:85, housing:"보증금 500 · 월세 42 · 관리비 7 · 생활비", liab:["low_capital"], liabT:"자본이 가장 적다 — 대출 이자와 보증금이 늘 발목", life:"돈은 없다. 대신 하루 종일 움직일 수 있다.", quote:"시간은 많아. 돈이 없어서 그렇지."},
+  dohyun:  {inc:[390, 390], incT:"월급(세후)", fixed:210, housing:"월세 75 · 관리비 7", liab:["workday_block"], liabT:"평일 09~18시는 회사 — 연차·반차를 아껴 써야 한다", life:"월급은 들어온다. 대신 평일 오후 2시에 임장은 못 간다.", quote:"회사 다니면서도 할 수 있겠지."},
+  mijeong: {inc:[250, 650], incT:"가게 수입(달마다 다름)", fixed:360, housing:"전세대출 이자·관리비 · 가게 임대료·보험", liab:["business_interruptions"], liabT:"가게에 일이 터지면 오늘 임장은 취소", life:"사람 상대는 자신 있다. 가게만 조용하면.", quote:"사람 상대하는 건 내가 해봤지."},
+  jaehoon: {inc:[150, 400], incT:"현장·설비 프로젝트(변동)", fixed:260, housing:"대출 이자 · 관리비", liab:["slow_online_research"], liabT:"컴퓨터 앞에선 느리다 — 서류·온라인이 약하다", life:"눈으로 보면 다 안다. 컴퓨터가 문제지.", quote:"사진 말고 직접 봐야 알아."},
+  eunkyung:{inc:[170, 190], incT:"퇴직연금·금융소득", fixed:190, housing:"오피스텔 관리비 · 보험", liab:["field_fatigue"], liabT:"하루에 현장 여러 곳은 무리 — 체력이 먼저 바닥난다", life:"계산은 누구보다 정확하다. 발이 못 따라올 뿐.", quote:"일단 숫자부터 맞춰보죠."},
+  taesik:  {inc:[200, 230], incT:"연금 + 임대수입", fixed:200, housing:"자가 — 관리비·병원비·경조사", liab:["low_stamina"], liabT:"몸으로 때울 수 없다 — 전화와 핵심 임장 하나로 승부", life:"돈도 있고 인맥도 있다. 하지만 몸으로 때울 수는 없다.", quote:"싸다고 좋은 물건이면 다 부자 됐지."}};
+const LF_LEAVE_PER_YEAR = 15;
 // 조사할 수 있는 시간대(요일별) — 분 단위 [시작, 길이]
 const LF_WINDOW = {
   seoyun:  () => [600, 260],
@@ -58,7 +67,15 @@ const LF_WINDOW = {
   jaehoon: () => [600, 210],
   eunkyung:() => [600, 230],
   taesik:  () => [540, 220]};
+function lfEkTarget(){ const L = lfRec(); return L && L.path === "safe" ? 1000 : L && L.path === "expand" ? 300 : 600; }   // 최은경 계산기 기준선(인생 갈림길로 바뀐다)
 const LF_RESEARCH_DAYS = 2;       // 입찰 이틀 전부터 조사 — 입찰 당일은 법원
+function lfResearchDayCount(){ const L = lfRec(); return L && (L.char === "seoyun" || (L.path === "fulltime")) ? 3 : LF_RESEARCH_DAYS; }   // 시간 많은 사람은 하루 더 판다
+function lfWindow(dow){
+  const L = lfRec(); let w = LF_WINDOW[L.char](dow);
+  const P = LF_PATHS[L.char] && L.path ? LF_PATHS[L.char].opts.find(o => o.id === L.path) : null;
+  if(P && P.window) w = P.window(dow, w);
+  return w;
+}
 
 /* ---------- 상태 ---------- */
 function lfRec(){ const c = kcRec(); return c.life || null; }
@@ -74,16 +91,21 @@ function lfNew(id){
   const c = kcRec();
   delete c.board; c.cash = C.cash; c.start = C.cash; c.total = 0; c.cases = 0; c.wins = 0; c.fails = 0; c.bids = 0; c.lostBids = 0; c.best = null; c.worst = null; c.streak = 0; c.history = [];
   const [h, mi] = C.time.split(":").map(Number);
-  c.life = {char:id, t:h * 60 + mi, st:Object.assign({}, C.st), sta:C.st.stamina, stress:10, base:C.base, equip:{}, rel:{}, month:"2026-03", log:[], xp:{}, titles:{}, stats:{solo:0, loss:0}, born:Date.now(), intro:true, nextEvt:0};
+  c.life = {char:id, leave:(id === "dohyun" ? LF_LEAVE_PER_YEAR : 0), path:null, t:h * 60 + mi, st:Object.assign({}, C.st), sta:C.st.stamina, stress:10, base:C.base, equip:{}, rel:{}, month:"2026-03", log:[], xp:{}, titles:{}, stats:{solo:0, loss:0}, born:Date.now(), intro:true, nextEvt:0};
   if(typeof save === "function") save();
 }
 function lfLog(t){ const L = lfRec(); if(!L) return; L.log.unshift({t, at:L.t}); L.log = L.log.slice(0, 30); }
 
 /* ---------- 2. 시간 흐름 · 달 바뀜(월급·월세·이자) · 생활 이벤트 ---------- */
 function lfBaseInfo(){ const L = lfRec(); return LF_BASES[L.base] || LF_BASES.hwagok; }
-function lfMonthly(){ const L = lfRec(); const C = lfChar(), B = lfBaseInfo(), eq = Object.keys(L.equip).reduce((s, k) => s + ((LF_EQUIP.find(e => e.id === k) || {}).upkeep || 0), 0);
+function lfEcon(){ const L = lfRec(), E = Object.assign({}, LF_ECON[L.char]); const P = LF_PATHS[L.char] && L.path ? LF_PATHS[L.char].opts.find(o => o.id === L.path) : null; if(P && P.econ) Object.assign(E, P.econ(E)); return E; }
+function lfMonthly(roll){
+  const L = lfRec(), C = lfChar(), B = lfBaseInfo(), E = lfEcon(), eq = Object.keys(L.equip).reduce((s, k) => s + ((LF_EQUIP.find(e => e.id === k) || {}).upkeep || 0), 0);
   const debt = Math.max(0, -kcRec().cash), interest = Math.round(debt * 0.055 / 12);
-  return {income:LF_INCOME[C.id] || 0, rent:B.rent, upkeep:eq, interest, net:(LF_INCOME[C.id] || 0) - B.rent - eq - interest}; }
+  const income = roll != null ? Math.round((E.inc[0] + (E.inc[1] - E.inc[0]) * roll) / 10) * 10 : Math.round((E.inc[0] + E.inc[1]) / 2);
+  const rent = E.fixed + Math.max(0, B.rent - LF_BASES[C.base].rent);
+  return {income, rent, upkeep:eq, interest, net:income - rent - eq - interest, range:E.inc};
+}
 function lfAdvance(min, why){
   const L = lfRec(); if(!L || !(min > 0)) return;
   const before = lfDate(L.t); L.t += Math.round(min);
@@ -92,8 +114,8 @@ function lfAdvance(min, why){
   let y = before.y, m = before.m, guard = 0;
   while((y < after.y || (y === after.y && m < after.m)) && guard++ < 60){
     m++; if(m > 12){ m = 1; y++; }
-    const M = lfMonthly(), c = kcRec(); c.cash = Math.round(c.cash + M.net);
-    lfLog(`📆 ${y}.${String(m).padStart(2,"0")} 정산 — ${M.income ? `수입 +${kMan(M.income)} · ` : ""}월세·생활비 −${kMan(M.rent)}${M.upkeep ? ` · 장비 유지 −${kMan(M.upkeep)}` : ""}${M.interest ? ` · 대출 이자 −${kMan(M.interest)}` : ""}`);
+    const M = lfMonthly(kRng((y * 100 + m) * 7919 + (L.born % 9973))()), c = kcRec(); c.cash = Math.round(c.cash + M.net); if(m === 1 && L.char === "dohyun") L.leave = LF_LEAVE_PER_YEAR;
+    lfLog(`📆 ${y}.${String(m).padStart(2,"0")} 정산 — ${M.income ? `수입 +${kMan(M.income)} · ` : ""}생활비·고정비 −${kMan(M.rent)}${M.upkeep ? ` · 장비 유지 −${kMan(M.upkeep)}` : ""}${M.interest ? ` · 대출 이자 −${kMan(M.interest)}` : ""}`);
   }
   // 하루가 넘어가면 잠으로 체력 회복(너무 늦게 자면 덜 회복 + 스트레스)
   const days = Math.floor((L.t + 300) / 1440) - Math.floor((L.t - min + 300) / 1440);   // 새벽 5시 기준
@@ -204,7 +226,7 @@ const _lf_hubAward = hubAward; hubAward = function(xp, rep, why){ return _lf_hub
 /* ---------- 5. 조사 기간 = 입찰 전 이틀 · 캐릭터마다 다른 시간대 · 체력 ---------- */
 function lfResearchDays(){
   const L = lfRec(), out = [];
-  for(let i = 0; i < LF_RESEARCH_DAYS; i++){ const D = lfDate(K.lf.day0 + i * 1440), [s, len] = LF_WINDOW[L.char](D.dow); out.push({dow:D.dow, s, len}); }
+  for(let i = 0; i < lfResearchDayCount(); i++){ const D = lfDate(K.lf.day0 + i * 1440), [s, len] = lfWindow(D.dow); out.push({dow:D.dow, s, len}); }
   return out;
 }
 const _lf_kStart = kStart; kStart = function(seed){
@@ -215,10 +237,14 @@ const _lf_kStart = kStart; kStart = function(seed){
   // 조사 1일차 = 지금 시각 기준 다음 날(오늘이 이미 늦었으면)
   const today = Math.floor(L.t / 1440) * 1440, day0 = L.t % 1440 < 20 * 60 ? today : today + 1440;
   K.lf = {day0, rday:0};
-  const days = lfResearchDays(); K.lf.days = days; K.lf.total = days.reduce((s, d) => s + d.len, 0);
+  const days = lfResearchDays(); K.lf.days = days;
+  // 생활 사정 — 예약돼 있던 일이 조사 첫날 시간을 깎는다
+  if(L.fx.cutFirst){ days[0].len = Math.max(40, days[0].len - L.fx.cutFirst[0]); kLog(L.fx.cutFirst[1]); L.fx.cutFirst = null; }
+  K.lf.total = days.reduce((s, d) => s + d.len, 0);
+  if(typeof lfEntryLine === "function") lfEntryLine();
   K.timeLeft = days[0].len - (L.fx.updatePenalty || 0); if(L.fx.updatePenalty){ kLog(`💻 노트북 업데이트 — 첫날 조사 시간 ${L.fx.updatePenalty}분이 날아갔다.`); L.fx.updatePenalty = 0; }
   K.loc = "home"; K.rlog = K.rlog || []; K.hint = K.hint || {};
-  K.cal0 = LF_EPOCH + (day0 + LF_RESEARCH_DAYS * 1440) * 60000;     // 입찰일
+  K.lf.nd = lfResearchDayCount(); K.cal0 = LF_EPOCH + (day0 + K.lf.nd * 1440) * 60000;     // 입찰일
   const N = typeof snNow === "function" ? snNow() : null; if(N){ K.rain = N.W.id === "rain" || N.W.id === "monsoon"; }
   if(lfIs("taesik")) K.occ.coop = Math.min(100, K.occ.coop + 8);                 // 연장자 말을 더 믿는 점유자
   if(lfIs("mijeong")) K.occ.coop = Math.min(100, K.occ.coop + 6);
@@ -303,8 +329,8 @@ if(typeof keBidSheet === "function"){
   keBidSheet = function(){
     const h = _lf_sheet(); if(!lfIs("eunkyung") || !K) return h;
     const band = lfBand(), mid = (band.lo + band.hi) / 2, known = KP.hidden.filter(x => K.found[x.id]).length;
-    const cost = mid * 0.08 + 500 + (KP.estRepair || 250), cap = Math.round((mid - cost - 600) / 1.017 / 10) * 10;
-    return h.replace('<button type="button" class="btn pri" data-kcseal>', `<div class="lf-calc">🧮 <b>계산기부터 켠다</b> — 예상 매도 ${kMan(Math.round(mid))} · 비용(수리·명도·세금·이자) 약 ${kMan(Math.round(cost))}<br>600만원 남기려면 <b>입찰 상한 ${kMan(cap)}</b>${known < KP.hidden.length ? ` <small class="down">(아직 모르는 위험 ${KP.hidden.length - known}개 — 상한을 더 낮춰도 돼요)</small>` : ""}</div><button type="button" class="btn pri" data-kcseal>`);
+    const cost = mid * 0.08 + 500 + (KP.estRepair || 250), tgt = lfEkTarget(), cap = Math.round((mid - cost - tgt) / 1.017 / 10) * 10;
+    return h.replace('<button type="button" class="btn pri" data-kcseal>', `<div class="lf-calc">🧮 <b>계산기부터 켠다</b> — 예상 매도 ${kMan(Math.round(mid))} · 비용(수리·명도·세금·이자) 약 ${kMan(Math.round(cost))}<br>${kMan(tgt)} 남기려면 <b>입찰 상한 ${kMan(cap)}</b>${known < KP.hidden.length ? ` <small class="down">(아직 모르는 위험 ${KP.hidden.length - known}개 — 상한을 더 낮춰도 돼요)</small>` : ""}</div><button type="button" class="btn pri" data-kcseal>`);
   };
 }
 // 김태식: 허풍 감지 — 시세를 크게 부풀린 말에 바로 표시
@@ -318,7 +344,8 @@ const _lf_kBid = kBid; kBid = function(amt){
   _lf_kBid(amt);
   if(!K || !K.lf || !K.result) return;
   const L = lfRec();
-  L.t = Math.max(L.t, K.lf.day0 + LF_RESEARCH_DAYS * 1440 + 11 * 60);        // 입찰일 오전 11시 법원
+  L.t = Math.max(L.t, K.lf.day0 + K.lf.nd * 1440 + 11 * 60);        // 입찰일 오전 11시 법원
+  lfBidDayWork();
   if(!K.result.win){ lfStress(10); lfLog(`🔨 패찰 — ${KP.short || KP.title}. 1등 ${kMan(K.result.bids[0].amt)}.`); lfAdvance(360); }
   else { if(K.result.solo) L.stats.solo++; lfLog(`🏆 낙찰 — ${KP.short || KP.title} ${kMan(K.bid)}${K.result.solo ? " (단독)" : ""}`); }
   if(typeof save === "function") save();
@@ -329,7 +356,7 @@ const _lf_kFinish = kFinish; kFinish = function(){
   if(!K || !K.lf || K._lfDone) return; K._lfDone = true;
   const L = lfRec(), F = K.final || {}, c = kcRec();
   // 시간: 입찰일 + 이 판이 걸린 날
-  lfAdvance(Math.max(0, (K.lf.day0 + LF_RESEARCH_DAYS * 1440 + ((K.day || 0) + 1) * 1440 + 9 * 60) - L.t));
+  lfAdvance(Math.max(0, (K.lf.day0 + K.lf.nd * 1440 + ((K.day || 0) + 1) * 1440 + 9 * 60) - L.t));
   if(F.profit < 0){ lfStress(12); L.stats.loss++; } else lfStress(-10);
   if(K.events && K.events.includes("계약 파기")) lfStress(5);
   // 성장: 이번 판에 쓴 능력이 조금씩 는다
@@ -425,8 +452,8 @@ function lfPanel(id){
     for(let i = 0; i < 28; i += 7){ const d = snDate(D.ms + i * 864e5), P = snPeriods(d); rows.push(`<li><b>${d.m}/${d.d}</b> ${P.map(p=>`${p.ic} ${p.t}`).join(" · ") || "특별한 시기 없음"} <small class="note">${snWeatherOf(d).ic}</small></li>`); }
     const M = lfMonthly();
     return `<h3>📅 달력</h3><ul class="of-contacts">${rows.join("")}</ul>
-      <div class="panel"><b>매달 1일</b> — ${M.income ? `수입 +${kMan(M.income)} · ` : ""}월세·생활비 −${kMan(M.rent)}${M.upkeep ? ` · 장비 −${kMan(M.upkeep)}` : ""}${M.interest ? ` · 대출 이자 −${kMan(M.interest)}` : ""} = <b class="${M.net >= 0 ? "up" : "down"}">${kcSigned(M.net)}</b></div>
-      <div class="panel"><b>🕒 ${esc(C.name)}가 조사할 수 있는 시간</b><br><small class="note">${[1,2,3,4,5,6,0].map(d => { const [s, len] = LF_WINDOW[C.id](d); return `${SN_DOW[d]} ${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}~ ${krFmt(len)}`; }).join(" · ")}</small></div>`;
+      <div class="panel"><b>매달 1일</b> — ${M.income ? `수입 +${kMan(M.income)} · ` : ""}생활비·고정비 −${kMan(M.rent)}${M.upkeep ? ` · 장비 −${kMan(M.upkeep)}` : ""}${M.interest ? ` · 대출 이자 −${kMan(M.interest)}` : ""} = <b class="${M.net >= 0 ? "up" : "down"}">${kcSigned(M.net)}</b></div>
+      <div class="panel"><b>🕒 ${esc(C.name)}가 조사할 수 있는 시간</b><br><small class="note">${[1,2,3,4,5,6,0].map(d => { const [s, len] = lfWindow(d); return `${SN_DOW[d]} ${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}~ ${krFmt(len)}`; }).join(" · ")}</small></div>`;
   }
   if(id === "shelf") return `<h3>📚 책장</h3>${L.fx && L.fx.book ? `<p class="note">📦 새로 온 경매책 — 다음 공부 효율 +50%</p>` : ""}${lfActBtns("shelf")}`;
   if(id === "bed") return `<h3>🛏️ 침대</h3>${lfActBtns("bed")}`;
@@ -470,7 +497,7 @@ function lfSelectHTML(){
     <div class="lf-cards">${LF_CHARS.map(x => `<button type="button" class="lf-card ${x.id === cur ? "on" : ""}" data-lfpick="${x.id}"><span class="lf-emo">${x.emo}</span><b>${esc(x.name)}</b><small>${x.sex} · ${x.age}세</small><em>${esc(x.tag)}</em><small>💰 ${kMan(x.cash)}</small></button>`).join("")}</div>
     <div class="panel lf-detail"><div class="lf-dhead"><span class="lf-emo big">${C.emo}</span><div><b>${esc(C.name)} · ${C.age}세</b><small>${esc(C.job)} · 시작 거점 <b>${esc(B.t)}</b> · 시작 자본 <b>${kMan(C.cash)}</b></small></div></div>
       <div class="lf-cols"><ul class="lf-stats">${bars}</ul><div><b>👍 강점</b><ul>${C.pros.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><b>👎 약점</b><ul>${C.cons.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><b>✨ 패시브</b><ul>${C.passives.map(p=>`<li>${p[0]} <b>${esc(p[1])}</b> — ${esc(p[2])}</li>`).join("")}</ul>
-        <small class="note">매달: 수입 +${kMan(LF_INCOME[C.id])} · 월세·생활비 −${kMan(B.rent)}</small></div></div>
+        <small class="note">매달: 수입 ${kMan(LF_ECON[C.id].inc[0])}~${kMan(LF_ECON[C.id].inc[1])} · 고정비 −${kMan(LF_ECON[C.id].fixed)}</small></div></div>
       <button type="button" class="btn pri lf-go" data-lfstart="${C.id}">${C.emo} ${esc(C.name)}(으)로 시작하기</button>
       ${kcRec().cases ? `<small class="note down">⚠ 지금 커리어(보유자금·경매 기록)는 새 인생으로 바뀌어요. 레벨·도감·업적은 그대로예요.</small>` : ""}</div></div>`;
 }

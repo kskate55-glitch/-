@@ -10,10 +10,10 @@ for(const [w,h] of [[1280,800],[390,844]]){
  await p.click('[data-lfgo]'); await p.waitForTimeout(300); await bad('select');
  ok((await p.$$('[data-lfpick]')).length===6, w+' 캐릭터 6명');
  await p.click('[data-lfpick="taesik"]'); await p.waitForTimeout(200); await p.screenshot({path:`lf_select_${w}.png`});
- ok(/목동 오래된 자가 아파트/.test(await p.textContent('.lf-detail')), w+' 김태식 상세 — 시작 거점 표시');
+ ok(/목동 오래된 자가 아파트/.test(await p.textContent('.lf-focus')), w+' 김태식 상세 — 시작 거점 표시');
  await p.click('[data-lfpick="dohyun"]'); await p.waitForTimeout(150); await p.click('[data-lfstart="dohyun"]'); await p.waitForTimeout(400);
  ok(await p.evaluate(()=>lfOn() && lfChar().id==='dohyun' && kcRec().cash===7000), w+' 이도현 시작 — 자본 7,000만');
- await p.screenshot({path:`lf_intro_${w}.png`}); await p.waitForTimeout(3800); await p.click('[data-lfbegin]'); await p.waitForTimeout(300); await bad('base');
+ ok(!!(await p.$('#gxOp')), w+' 오프닝 재생'); await p.click('[data-gxskip]'); await p.waitForTimeout(300); await p.click('[data-gxskip]'); await p.waitForTimeout(1200); await bad('base');
  ok(/화곡동 6평 원룸/.test(await p.evaluate(()=>document.body.innerText)), w+' 거점 = 화곡동 6평 원룸');
  await p.screenshot({path:`lf_base_${w}.png`});
  // 생활 행동

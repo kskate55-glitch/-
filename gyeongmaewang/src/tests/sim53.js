@@ -20,7 +20,7 @@ await p.evaluate(()=>{
     const band = lfBand(), est = (band.lo+band.hi)/2;
     const risk = prop==='k1' ? (K.found.elec?120:0)+(K.found.fee?38:0)+(K.found.flip?50:0) : (K.found.leak?420:0)+(K.found.dump?250:0)+(K.found.loan?150:0)+(K.found.price?0:0);
     let bid = Math.round((est*0.84 - risk)/10)*10;
-    if(lfIs('eunkyung')){ const cost=est*0.08+500+(KP.estRepair||250); bid = Math.min(bid, Math.round((est-cost-600)/1.017/10)*10); }
+    if(lfIs('eunkyung')){ const cost=est*0.08+500+(KP.estRepair||250); bid = Math.min(bid, Math.round((est-cost-lfEkTarget())/1.017/10)*10); }
     bid = Math.max(KP.minBid, bid);
     const hunger = kcRec().cash < -8000;   // 빚이 많으면 무리하지 않는다
     kBid(bid);

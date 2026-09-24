@@ -75,8 +75,15 @@ PREFETCH_BUILDING = True
 
 @app.context_processor
 def _inject_version():
-    """모든 화면 푸터에 배포 버전을 꽂는다 — 48-5절."""
-    return {"deploy_version": _deploy_version()}
+    """모든 화면 푸터에 배포 버전을 꽂는다 — 48-5절.
+
+    72-26절 정비구역 선택지도 같이 넣는다 — `index.html`을 렌더링하는 곳이
+    여섯 군데라 호출부마다 넘기면 **한 군데 빠뜨렸을 때 그 경로에서만 칸이
+    빈 채로 뜬다**(화면을 봐도 알기 어렵다).
+    """
+    from estimate_price import REDEV_USER_CHOICES
+    return {"deploy_version": _deploy_version(),
+            "redev_choices": list(REDEV_USER_CHOICES.items())}
 
 
 # ── 응답 압축 (CLAUDE.md 72-11절) ──────────────────────────────────────
@@ -990,9 +997,12 @@ def estimate():
                 subject_detail.get("sub_no"), bool(subject_detail.get("is_mountain"))))
         except Exception:
             zone_check = None       # 참고 정보라 실패해도 계산을 막지 않는다
+    # 72-26절 — 사용자가 직접 알려준 정비구역 여부. 가격은 안 바뀌고
+    #            49절 경고 문구만 달라진다.
+    user_zone = form.get("redevelopment", "")
     estimate_warnings = compute_estimate_warnings(
         filtered, scen.get("model_divergence_pct"), redevelopment, zone_check,
-        build_year)
+        build_year, user_zone)
     conservative = scen["p25"]
     realistic = scen["median"]
     upper = scen["p75"]
@@ -1225,6 +1235,9 @@ def estimate():
     # 대신한다) 따로 걸러낸 세트를 만든다.
     _insp_keys = {f"insp_{key}" for key, _ in INSPECTION_FIELDS} | {"insp_clean"}
     resubmit_fields_no_inspection = {k: v for k, v in form.items() if k not in _insp_keys}
+    # 72-26절 — 정비구역 답을 그 자리에서 다시 받을 때는 그 칸만 빼고 echo한다
+    #            (43절 임장 체크와 같은 처리 — 셀렉트가 그 자리를 대신한다).
+    resubmit_fields_no_zone = {k: v for k, v in form.items() if k != "redevelopment"}
 
     # 19절 입지 체크 + 34절 주변 지형을 카드 하나로 합친다 — 사용자가
     # "두 개를 합쳐도 괜찮을 것 같은데? 교통·교육·생활·의료 다음에 자연이라는
@@ -1265,6 +1278,11 @@ def estimate():
         "inspection_bad": inspection_bad,
         "inspection_clean": inspection_clean,
         "resubmit_fields_no_inspection": resubmit_fields_no_inspection,
+        "resubmit_fields_no_zone": resubmit_fields_no_zone,
+        # 정비구역 관련 경고가 떴고 아직 사용자가 답하지 않았을 때만 되묻는다.
+        "zone_ask": (not user_zone.strip()
+                     and any(w["key"] in ("redevelopment", "zone")
+                             for w in estimate_warnings)),
         "condition_adjustment": condition_display,
         "villa_market_trend": villa_market_trend,
         "buyer_age": buyer_age,

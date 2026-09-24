@@ -1317,6 +1317,42 @@ REDEV_MIN_BASELINE_SAMPLE = 20  # 기준선(구 중앙값)을 믿으려면 이�
 #
 # ⚠️ **"지구단위계획구역"은 일부러 뺐다.** 전국에 널려 있어 신호가 되지 않는다 —
 #    넣으면 거의 모든 물건에 경고가 떠서 경고 자체가 무의미해진다.
+# ⭐ **사용자에게 직접 묻는 정비구역 답** (72-26절).
+#    50-1절 토지이용계획 조회가 막혀 있는 동안(71-1절 RemoteDisconnected)
+#    **지금 유일하게 작동하는 통로**다 — 50절 ⑤ 간접 추정 경고가 이미
+#    "대상 물건이 정비구역 안인지 먼저 확인하세요"라고 말하고 있었으니,
+#    그 고리를 닫는 셈이다.
+#    ⛔ **가격은 절대 바꾸지 않는다** — 50절이 프리미엄을 안 넣기로 한 세 이유 중
+#       사용자 답이 없애주는 건 첫 번째(구역 경계를 모른다)뿐이고, 나머지 둘
+#       (단계별로 0~수억 · 틀리면 한쪽으로만 과대평가돼 입찰가 과다로 이어짐)은
+#       그대로다. 검증된 배율도 없다(48-2절 0.97 과적합의 교훈).
+REDEV_USER_UNKNOWN = ""          # 기본값 — 지금까지와 완전히 동일하게 동작한다
+REDEV_USER_NO = "no"
+REDEV_USER_EARLY = "early"       # 추진위·조합설립 전후
+REDEV_USER_LATE = "late"         # 사업시행인가·관리처분 이후
+REDEV_USER_INSIDE = (REDEV_USER_EARLY, REDEV_USER_LATE)
+REDEV_USER_CHOICES = {
+    REDEV_USER_NO: "정비구역 아님",
+    REDEV_USER_EARLY: "정비구역 — 초기 (추진위·조합설립)",
+    REDEV_USER_LATE: "정비구역 — 진행 (사업시행인가·관리처분)",
+}
+
+
+def normalize_user_zone(value) -> str:
+    """폼/CLI에서 온 값을 REDEV_USER_* 중 하나로 맞춘다.
+
+    ⚠️ 모르는 값은 예외가 아니라 **빈 문자열(모름)** 로 떨어뜨린다 — 참고
+    정보 하나 때문에 매도가 계산이 멈추면 안 된다(20·21·26·50-1절 원칙).
+    """
+    # ⚠️ 문자열이 아닌 값(숫자·리스트·NaN)도 그냥 삼킨다 — 폼은 항상 문자열을
+    #    보내지만 CLI·다른 호출부는 그렇지 않고, 이 함수의 존재 이유가 애초에
+    #    "무엇이 와도 안 터진다"이다(72-13절 교훈 #1: 가드는 그냥 통과당한다).
+    if not isinstance(value, str):
+        return REDEV_USER_UNKNOWN
+    v = value.strip().lower()
+    return v if v in REDEV_USER_CHOICES else REDEV_USER_UNKNOWN
+
+
 REDEV_ZONE_KEYWORDS = (
     "정비구역", "재정비촉진", "재개발", "재건축",
     "도시환경정비", "주거환경개선", "가로주택정비", "소규모주택정비",
@@ -1563,7 +1599,8 @@ def compute_estimate_warnings(filtered: list[dict],
                                model_divergence_pct: float | None,
                                redevelopment: dict | None = None,
                                zone_check: dict | None = None,
-                               build_year=None) -> list[dict]:
+                               build_year=None,
+                               user_zone: str | None = None) -> list[dict]:
     """이 추정치를 얼마나 믿어도 되는지 경고등으로 돌려준다 (49절).
 
     ⚠️ **7절 시세 신뢰도 점수를 대체하는 게 아니라 보완한다.** 48절 실측에서
@@ -1642,7 +1679,54 @@ def compute_estimate_warnings(filtered: list[dict],
         })
         return warnings
 
+    zone_answer = normalize_user_zone(user_zone)
+
+    # ④-2 72-26절 — **사용자가 직접 "구역 안"이라고 알려준 경우.**
+    #     50-1절 자동 조회(④)보다는 약하지만 ⑤ 간접 추정보다는 훨씬 강한
+    #     근거라, ⑤ 대신 이것만 보여주고 끝낸다.
+    if zone_answer in REDEV_USER_INSIDE:
+        if zone_answer == REDEV_USER_LATE:
+            stage = ("사업시행인가·관리처분 단계라고 하셨으니 프리미엄이 이미 "
+                     "상당히 붙어 있을 수 있어요")
+        else:
+            stage = ("추진위·조합설립 단계라고 하셨으니 프리미엄이 아직 작을 수도, "
+                     "기대만 앞서 있을 수도 있어요")
+        warnings.append({
+            "key": "zone_user",
+            "label": "정비구역이라고 알려주셨습니다",
+            "detail": ("정비구역 빌라는 건물이 아니라 대지지분(입주권) 값으로 팔려서 "
+                       "이 계산기가 쓰는 전용면적 기준 시세와 전혀 다르게 형성됩니다. "
+                       f"{stage}. "
+                       "실제로 지은 지 오래된 구역 안 빌라가 동네 시세의 2.8배에 "
+                       "거래된 사례가 있었고, 그때 이 계산기는 48.5% 낮게 불렀어요."),
+            "advice": ("이 매도가는 정비구역 프리미엄이 하나도 안 들어간 값이라 "
+                       "하한으로만 보세요 — 실제 값은 대지지분과 진행 단계로 "
+                       "따로 따져야 합니다."),
+        })
+        return warnings
+
+    # ④-3 72-26절 — **사용자는 "구역 아님"이라는데 동네에는 신호가 뜨는 경우.**
+    #     ⑤를 그냥 띄우면 "대상이 구역 안일 수 있다"는 엉뚱한 안내가 된다.
+    #     실제로 위험한 건 반대 방향이다 — 비교거래에 남의 프리미엄이 섞여
+    #     **기준선이 올라가 우리가 높게 부르는 것**이고, 72-25절 꼬리의 구축
+    #     5건이 전부 그 모양이었다(동네 시세의 0.45~0.77배에 팔렸는데 우리는
+    #     +27~+75% 높게 불렀다).
+    if zone_answer == REDEV_USER_NO and redevelopment:
+        warnings.append({
+            "key": "zone_contaminated",
+            "label": "옆 물건들의 재개발 기대가 이 값에 섞였을 수 있습니다",
+            "detail": (f"{redevelopment['dong']}에는 시세의 "
+                       f"{redevelopment['max_ratio']:.1f}배까지 거래된 구축 빌라가 "
+                       f"{redevelopment['count']}건 있는데, 대상 물건은 구역 밖이라고 "
+                       "알려주셨어요. 그 비싼 거래들이 비교거래에 섞이면 기준선이 "
+                       "올라가서 매도가가 실제보다 높게 잡힙니다."),
+            "advice": "이 값을 상한으로 보시고, 비교거래 목록에서 유독 비싼 건을 직접 걸러서 보세요.",
+        })
+        return warnings
+
     # ⑤ 50절 — 정비구역(재개발) **의심**(동네 거래로 간접 추정).
+    #    ⚠️ 사용자가 "구역 아님"이라고 답했고 위 ④-3도 안 걸렸으면(동네 신호도
+    #       없으면) 여기 올 일이 없다 — 괜한 경고를 띄우지 않는다.
     if redevelopment:
         ex = redevelopment["examples"][0]
         warnings.append({
@@ -3226,6 +3310,9 @@ def main():
     ap.add_argument("--no-buyer-age", action="store_true", help="69절 매입자 연령대 참고 지표를 건너뛴다")
     ap.add_argument("--no-dong-compare", action="store_true", help="25절 인근 동 비교(거래활발도/가격상승률)를 건너뛴다")
     ap.add_argument("--station-premium", action="store_true", help="26절 역세권 프리미엄 참고(거리-가격 회귀)를 계산한다 — 카카오 키워드 검색을 비교거래마다 추가로 호출해서 기본은 꺼져 있다")
+    ap.add_argument("--redevelopment", choices=list(REDEV_USER_CHOICES), default=None,
+                     help="72-26절 정비구역(재개발) 여부 — 생략하면 '모름'으로 지금과 동일하게 동작한다. "
+                          "가격은 바뀌지 않고 49절 경고 문구만 달라진다")
     ap.add_argument("--condition", choices=list(CONDITION_MULTIPLIER), default=None,
                      help="35절/38절 현재 수리상태 — 주면 상태별 매도가 3단계 사다리를 보여준다 (검증된 수치가 아닌 경험적 참고치)")
     ap.add_argument("--repair-cost-basic", type=float, default=None,
@@ -3423,7 +3510,7 @@ def main():
     print_estimate_warnings(compute_estimate_warnings(
         filtered, scen.get("model_divergence_pct"),
         detect_redevelopment_signal(rows, args.dong, this_year), zone_check,
-        args.build_year))
+        args.build_year, args.redevelopment))
 
     # 41절 — "얼마"(8절)와 별개로 "얼마나 잘 팔릴까"를 강의 기준으로 진단한다.
     print_marketability_report(build_marketability_report(

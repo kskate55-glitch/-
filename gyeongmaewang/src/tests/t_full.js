@@ -17,7 +17,7 @@ for(const id of ids){ for(const mode of ['careful','careless']){
     if(mode==='careful') KP.actions.forEach(a=>kResearch(a.id));
     snap();
     const assume=KP.hidden.filter(h=>h.k==='assume'&&K.found[h.id]).reduce((s,h)=>s+h.cost,0);
-    let bid = mode==='careful' ? Math.max(KP.minBid, Math.round((KP.trueMid*0.80 - assume - KP.estRepair)/10)*10) : Math.round(KP.minBid*1.45/10)*10;
+    let bid = mode==='careful' ? Math.max(KP.minBid, Math.round((KP.trueMid*0.80 - assume - KP.estRepair)/(1+kAcqRate(KP.trueMid*0.7)+0.017-0.011)/10)*10) : Math.round(KP.minBid*1.45/10)*10;
     let tries=0; while(tries++<6){ kBid(bid); K.revealing=false; K.sealed=false; if(K.step==='won') break; bid=Math.round(bid*1.06/10)*10; K.step='brief'; }
     if(K.step!=='won') return {err:'never won'};
     K.loan={none:true}; snap();

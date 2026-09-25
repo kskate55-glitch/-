@@ -46,7 +46,7 @@ function frHome(){
 const FR_HOLD_DAYS = 90;   // 명도 한 달 + 수리 몇 주 + 매도 한 달 — 대략 석 달로 본다
 function frMoney(amt){
   amt = Math.max(+KP.minBid || 0, Math.round(+amt || 0));
-  const acq = Math.round(amt * 0.017), rep = +KP.estRepair || 0, hold = Math.round((+KP.dailyHold || 0) * FR_HOLD_DAYS);
+  const acq = Math.round(amt * kAcqRate(amt)), rep = +KP.estRepair || 0, hold = Math.round((+KP.dailyHold || 0) * FR_HOLD_DAYS);
   const move = 150, feeRate = amt * 0.005, fee = Math.round(Math.min(90, feeRate));
   const total = amt + acq + rep + hold + move;
   return {amt, dep:Math.round(KP.minBid * 0.1), acq, rep, hold, move, fee, total, be:total + fee};
@@ -54,7 +54,7 @@ function frMoney(amt){
 function frMoneyHTML(amt){
   const m = frMoney(amt), c = kcRec(), cash = +c.cash || 0, gap = cash - m.total;
   const first = !(+c.cases > 0);
-  const rows = [["낙찰가", m.amt], ["취득세 등(약 1.7%)", m.acq], ["겉보기 수리비", m.rep], ["명도 예비비(이사비 등)", m.move], [`이자·관리비(약 ${FR_HOLD_DAYS}일)`, m.hold]];
+  const rows = [["낙찰가", m.amt], [`취득세 등(약 ${kAcqPct(m.amt)}%)`, m.acq], ["겉보기 수리비", m.rep], ["명도 예비비(이사비 등)", m.move], [`이자·관리비(약 ${FR_HOLD_DAYS}일)`, m.hold]];
   return `<details class="fr-money" ${first ? "open" : ""}><summary>💰 이 금액이면 묶이는 돈 <b>${kMan(m.total)}</b></summary>
     <ul>${rows.map(([t, v], i) => `<li><span>${t}</span><b>${kMan(v)}</b></li>`).join("")}</ul>
     <p class="note fr-dep">입찰 날엔 보증금 ${kMan(m.dep)}(최저가의 10%)만 먼저 내고, 나머지는 낙찰 뒤 잔금으로 내요.</p><p class="fr-be">최소 <b>${kMan(m.be)}</b> 이상에 팔려야 본전이에요 <small>(중개보수 포함)</small></p>

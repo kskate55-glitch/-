@@ -36246,6 +36246,18 @@ function kStart(seed){
   if(KP.extraRivals) KP.extraRivals.forEach(v => { if(r() < 0.85) K.rivals.push(v); });
   if(KP.init) KP.init();
 }
+/* 취득세 등(취득세+지방교육세+농특세) — 매매사업자라도 주택 취득세 중과는 똑같이 따진다(주택 수로 판정).
+   게임에서는 전 물건을 팔고 다음 물건을 사므로 늘 '무주택 → 1주택' 취득이다:
+   6억 이하 1% + 지방교육세 0.1% = 1.1%, 6~9억은 (금액×2/3−3)% 사이, 9억 초과 3%(+교육세 0.3%), 전용 85㎡ 초과면 농특세 0.2% 추가.
+   상가·숙박·공장 같은 주택 아닌 건물은 4% + 농특세 0.2% + 지방교육세 0.4% = 4.6%.
+   ⚠️ 일반 원칙 요약 — 실제 세율은 주택 수·지역·면적·감면에 따라 달라지니 실제 거래는 세무 전문가와 확인. */
+function kAcqRate(amt, P){
+  P = P || (typeof KP !== "undefined" ? KP : null); amt = +amt || 0;
+  if(P && P.use === "commercial") return 0.046;
+  const r = amt <= 60000 ? 0.01 : amt <= 90000 ? (amt / 10000 * 2 / 3 - 3) / 100 : 0.03;
+  return r + r * 0.1 + (P && P.over85 ? 0.002 : 0);
+}
+function kAcqPct(amt, P){ return Math.round(kAcqRate(amt, P) * 1000) / 10; }
 function kDay(n){ K.day += n; K.cost.hold += Math.round(KP.dailyHold * n * 10) / 10; }
 function kMan(v){ v = Math.round(v); if(v < 0) return "−" + kMan(-v); const e = Math.floor(v/10000), m = v % 10000; return e ? `${e}억${m?` ${m.toLocaleString()}만`:""}원` : `${m.toLocaleString()}만원`; }
 
@@ -36266,7 +36278,7 @@ function kBid(amt){
   bids.push({who:"나", amt, me:true}); bids.sort((a,b)=>b.amt - a.amt);
   const win = bids[0].me, other = win ? (bids[1] || {who:"(없음 — 단독)", amt:KP.minBid, none:true}) : bids[0];
   K.result = {win, bids, gap: Math.abs(amt - other.amt), other, solo: win && !bids[1]};
-  if(win){ K.cost.bid = amt; K.cost.acq = Math.round(amt * 0.017); if(K.found.fee) K.cost.fee = 38; K.step = "won"; kAch(K.result.gap <= 30 ? "tight" : null); }
+  if(win){ K.cost.bid = amt; K.cost.acq = Math.round(amt * kAcqRate(amt)); if(K.found.fee) K.cost.fee = 38; K.step = "won"; kAch(K.result.gap <= 30 ? "tight" : null); }
   else { K.step = "lost"; if(K.result.gap <= 10) kAch("tenman"); }
 }
 /* ---------- 3. 명도 (보스전) ---------- */
@@ -36488,7 +36500,7 @@ function kingHTML(){
     <button type="button" class="btn pri" data-kgo="move" style="margin-top:12px">🔑 잔금 내고 점유자 만나러 가기 →</button>`;
   }
   if(K.step==="move"){
-    const o = K.occ, sc = K.scene || {who:"occ", t:"(문이 반쯤 열린다) …낙찰자요? 내 보증금도 몬 받는다 카대. 내가 뭘 잘못했는데!", ex:"angry"};
+    const o = K.occ, sc = K.scene || {who:"occ", t:"(문이 반쯤 벌어진다) …낙찰자요? 내 보증금도 몬 받는다 카대. 내가 뭘 잘못했는데!", ex:"angry"};
     const acts = K.pendingFlip ? `<div class="ag-acts vn-acts"><button type="button" class="ag-act" data-kflip="1"><span class="ag-ai">💸</span><span><b>50만원 더 준다</b><span class="note" style="display:block">오늘 끝내기</span></span></button><button type="button" class="ag-act" data-kflip="0"><span class="ag-ai">📝</span><span><b>"약속은 약속입니다" — 이번엔 합의서</b><span class="note" style="display:block">며칠 더 걸릴 수 있음</span></span></button></div>`
       : K.offering ? `<div class="ag-acts vn-acts"><div class="ag-act ag-offer"><span class="ag-ai">💰</span><div><b>이사비 제안</b><div class="note">점유자가 원하는 건 ${kMan(K.askNeed)} 안팎</div><div class="ag-amts">${K_OFFERS.map(v=>`<button type="button" class="chip" data-koffer="${v}">${v?kMan(v):"0원(날짜만)"}</button>`).join("")}</div></div></div></div>`
       : `<div class="ag-acts vn-acts">${K_MOVES.filter(m=>!m.need || m.need(o)).map(m=>`<button type="button" class="ag-act${m.id==="threat"?" ag-bad":""}" data-kmove="${m.id}"><span><b>${m.t}</b><span class="note" style="display:block">${m.day}일 소요</span></span></button>`).join("")}</div>`;
@@ -38883,7 +38895,7 @@ function k2Close(amt, buyer, checked){
 }
 /* ---------- 결과 ---------- */
 function k2Refs(){
-  const b = K.bid || 14200, a = Math.round(b * 0.017), hold = d => Math.round(KP2.dailyHold * d);
+  const b = K.bid || 14200, a = Math.round(b * kAcqRate(b, KP2)), hold = d => Math.round(KP2.dailyHold * d);
   return {ideal: 15800 - b - a - 520 - hold(59) - 79 - 50, early: K2_EXIT.cross - b - a - hold(10) - 30, worst: 14300 - b - a - 120 - 425 - 900 - hold(180) - 72};
 }
 function k2Outcome(profit){
@@ -40365,7 +40377,7 @@ if(typeof keBidSheet === "function"){
   keBidSheet = function(){
     const h = _lf_sheet(); if(!lfIs("eunkyung") || !K) return h;
     const band = lfBand(), mid = (band.lo + band.hi) / 2, known = KP.hidden.filter(x => K.found[x.id]).length;
-    const cost = mid * 0.08 + 500 + (KP.estRepair || 250), tgt = lfEkTarget(), cap = Math.round((mid - cost - tgt) / 1.017 / 10) * 10;
+    const cost = mid * 0.08 + 500 + (KP.estRepair || 250), tgt = lfEkTarget(), cap = Math.round((mid - cost - tgt) / (1 + kAcqRate(mid - cost - tgt)) / 10) * 10;
     return h.replace('<button type="button" class="btn pri" data-kcseal>', `<div class="lf-calc">🧮 <b>계산기부터 켠다</b> — 예상 매도 ${kMan(Math.round(mid))} · 비용(수리·명도·세금·이자) 약 ${kMan(Math.round(cost))}<br>${kMan(tgt)} 남기려면 <b>입찰 상한 ${kMan(cap)}</b>${known < KP.hidden.length ? ` <small class="down">(아직 모르는 위험 ${KP.hidden.length - known}개 — 상한을 더 낮춰도 돼요)</small>` : ""}</div><button type="button" class="btn pri" data-kcseal>`);
   };
 }
@@ -41323,8 +41335,8 @@ function qaBidModel(){
   const known = KP.hidden ? KP.hidden.filter(h => K.found[h.id]).length : 0, unk = KP.hidden ? KP.hidden.length - known : 0;
   const repair = (KP.estRepair || 250) + unk * 90;                   // 모르는 위험이 남을수록 비용 쪽 불확실성이 커진다
   const cost = m => m * 0.06 + 350 + repair;                         // 명도·이자·중개·세금 대략(매도가에 비례하는 몫 + 고정)
-  const net = (sale, bid) => sale - cost(sale) - bid * 1.017;
-  const zone = (sale, margin) => Math.round((sale - cost(sale) - margin) / 1.017 / 10) * 10;
+  const net = (sale, bid) => sale - cost(sale) - bid * (1 + kAcqRate(bid));
+  const zone = (sale, margin) => { const v = sale - cost(sale) - margin; return Math.round(v / (1 + kAcqRate(v)) / 10) * 10; };
   const mid = (band.lo + band.hi) / 2;
   return {band, unk, net, z:{safe:zone(band.lo, 800), bal:zone(mid, 700), agg:zone(band.hi, 300)}};
 }
@@ -41987,7 +41999,7 @@ function dpAfterLost(){
   const big = surprise.find(h => h.id === "elec") && r() < 0.4 ? 320 : 0;             // 누전이 '전체 배선'으로 커지는 경우
   const repair = (KP.estRepair || 300) + surprise.reduce((s, h) => s + h.cost, 0) + big;
   const months = 2 + Math.floor(r() * 4), hold = Math.round((KP.dailyHold || 1.7) * months * 30);
-  const profit = Math.round(sale - W * 1.017 - repair - hold - sale * 0.005);
+  const profit = Math.round(sale - W * (1 + kAcqRate(W)) - repair - hold - sale * 0.005);
   dpRec().after.push({kind:"lost", title:KP.title, my:K.bid, win:W, gap:R.gap, sale, repair, big, surprise:surprise.map(h => h.t), months, profit, due:kcRec().cases + 1, dueT:(typeof lfOn === "function" && lfOn()) ? lfRec().t + 3 * 1440 : null, at:Date.now()});
   if(typeof save === "function") save();
 }
@@ -41998,7 +42010,7 @@ function dpAfterDrop(it){
     e = {kind:"dodge", title:d.t, text:d.sold || "다른 사람이 낙찰받았다. 그 뒤로 한동안 매물로 나오지 않았다.", trap:true, read:!!it.read};
   } else { const P = K_PROPS[it.prop]; if(!P) return;
     const W = Math.round(bdMin(it) * (1.08 + r() * 0.14) / 10) * 10, sale = Math.round((P.trueMid + (r() * 2 - 1) * (P.trueSpread || 250)) / 10) * 10, repair = (P.estRepair || 300) + (P.hidden || []).reduce((s, h) => s + (h.cost && r() < 0.6 ? h.cost : 0), 0), months = 2 + Math.floor(r() * 4);
-    e = {kind:"drop", title:P.title, win:W, sale, repair, months, profit:Math.round(sale - W * 1.017 - repair - (P.dailyHold || 1.7) * months * 30 - sale * 0.005)}; }
+    e = {kind:"drop", title:P.title, win:W, sale, repair, months, profit:Math.round(sale - W * (1 + kAcqRate(W, P)) - repair - (P.dailyHold || 1.7) * months * 30 - sale * 0.005)}; }
   e.due = kcRec().cases + 1; e.at = Date.now(); dpRec().after.push(e); if(typeof save === "function") save();
 }
 function dpAfterText(e){
@@ -42786,7 +42798,7 @@ function frHome(){
 const FR_HOLD_DAYS = 90;   // 명도 한 달 + 수리 몇 주 + 매도 한 달 — 대략 석 달로 본다
 function frMoney(amt){
   amt = Math.max(+KP.minBid || 0, Math.round(+amt || 0));
-  const acq = Math.round(amt * 0.017), rep = +KP.estRepair || 0, hold = Math.round((+KP.dailyHold || 0) * FR_HOLD_DAYS);
+  const acq = Math.round(amt * kAcqRate(amt)), rep = +KP.estRepair || 0, hold = Math.round((+KP.dailyHold || 0) * FR_HOLD_DAYS);
   const move = 150, feeRate = amt * 0.005, fee = Math.round(Math.min(90, feeRate));
   const total = amt + acq + rep + hold + move;
   return {amt, dep:Math.round(KP.minBid * 0.1), acq, rep, hold, move, fee, total, be:total + fee};
@@ -42794,7 +42806,7 @@ function frMoney(amt){
 function frMoneyHTML(amt){
   const m = frMoney(amt), c = kcRec(), cash = +c.cash || 0, gap = cash - m.total;
   const first = !(+c.cases > 0);
-  const rows = [["낙찰가", m.amt], ["취득세 등(약 1.7%)", m.acq], ["겉보기 수리비", m.rep], ["명도 예비비(이사비 등)", m.move], [`이자·관리비(약 ${FR_HOLD_DAYS}일)`, m.hold]];
+  const rows = [["낙찰가", m.amt], [`취득세 등(약 ${kAcqPct(m.amt)}%)`, m.acq], ["겉보기 수리비", m.rep], ["명도 예비비(이사비 등)", m.move], [`이자·관리비(약 ${FR_HOLD_DAYS}일)`, m.hold]];
   return `<details class="fr-money" ${first ? "open" : ""}><summary>💰 이 금액이면 묶이는 돈 <b>${kMan(m.total)}</b></summary>
     <ul>${rows.map(([t, v], i) => `<li><span>${t}</span><b>${kMan(v)}</b></li>`).join("")}</ul>
     <p class="note fr-dep">입찰 날엔 보증금 ${kMan(m.dep)}(최저가의 10%)만 먼저 내고, 나머지는 낙찰 뒤 잔금으로 내요.</p><p class="fr-be">최소 <b>${kMan(m.be)}</b> 이상에 팔려야 본전이에요 <small>(중개보수 포함)</small></p>
@@ -43964,7 +43976,9 @@ function kfRate(court){ return KF_RATE30.includes(court) ? 0.3 : 0.2; }
 const KF_FAILS = {f11:2, f12:2, f13:1, f21:1, f22:1, f23:2, f31:2, f32:2, f33:2, f34:2, f41:2, f42:2, f43:2, f44:2, f51:3, f52:2, f53:2, f54:3, f61:2, f62:1, f63:2, f64:3};
 function kfPrice(S){
   const r = kfRate(S.court), n = S.fails != null ? S.fails : (KF_FAILS[S.id] != null ? KF_FAILS[S.id] : 2), k = Math.pow(1 - r, n);
-  if(S.appraisal * k > S.trueMid * 0.68) S.appraisal = Math.round(S.trueMid * 0.68 / k / 10) * 10;
+  // 상가·숙박·공장은 취득세가 4.6%(주택 1.1%)라 같은 비율이면 늘 적자 — 실제로도 낙찰가율이 주택보다 낮게 형성된다
+  const cap = ["f31","f32","f61","f63","f64"].includes(S.id) ? 0.60 : 0.68;
+  if(S.appraisal * k > S.trueMid * cap) S.appraisal = Math.round(S.trueMid * cap / k / 10) * 10;
   S.fails = n; S.rate = r; S.minBid = Math.round(S.appraisal * k);
 }
 
@@ -44247,7 +44261,7 @@ if(typeof qaBidModel === "function"){
   const _kf_qa = qaBidModel;
   qaBidModel = function(){
     const M = _kf_qa(), x = kfKnownExtra(); if(!x) return M;
-    const d = Math.round(x / 1.017 / 10) * 10;
+    const d = Math.round(x / (1 + kAcqRate(KP.trueMid * 0.7)) / 10) * 10;
     return Object.assign({}, M, {net:(sale, bid) => M.net(sale, bid) - x, z:{safe:M.z.safe - d, bal:M.z.bal - d, agg:M.z.agg - d}});
   };
 }
@@ -44479,6 +44493,16 @@ document.addEventListener("click", e => {
   of.heard = true; of.buyer = Object.assign({}, of.buyer, {flex:Math.max(0, of.buyer.flex - 0.02)});   // 사정을 들으면 역제안이 조금 더 통한다
   mtPlay(KF_BUYER_TALE[of.buyer.t], {name:"매수자 · " + of.buyer.t, face:kfBuyerFace(of.buyer.t), title:"🗣️ 매수자 사정 듣는 중", done:() => renderArena()});
 }, true);
+Object.assign(KF_BUYER_TALE, {
+ "은퇴한 선생님":[["","천천히 봐유. 집은 오래 사는 거니께. 삼십오 년 교단에 섰다가 작년에 정년퇴직했어유.","normal"],["","애들 다 키워 보내고 집사람이랑 둘이 살 집이유. 크게 욕심 안 내유. 해 잘 들고 조용하면 돼유.","normal"],["","값은… 연금으로 사는 형편이라, 조금만 맞춰 주면 바로 도장 찍지유.","worried"]],
+ "꼼꼼한 외국인 연구원":[["","안녕하세요. 근처 연구소에서 일해요. 한국에 온 지 6년 됐어요.","normal"],["","등기부 을구, 한 번 더 볼 수 있을까요? 근저당 말소 날짜를 확인하고 싶어요. 전에 친구가 전세 사기를 당했어요.","worried"],["","서류가 깔끔하면 가격은 조금 조정할 수 있어요. 저는 확실한 게 제일 중요해요.","normal"]],
+ "휠체어를 쓰는 실수요자":[["","현관 턱이 몇 센티예요? 욕실 문 폭도 재 봐도 될까요? 저한텐 이게 제일 중요해요.","angry"],["","집 보러 다니면 대부분 계단에서 끝나요. 여기는 승강기가 있어서 연락드렸어요.","worried"],["","턱만 조금 손보면 살 수 있을 것 같아요. 그 공사비 생각해서 조금만 맞춰 주시면 좋겠어요.","normal"]],
+ "야간 근무 마친 간호사":[["","방금 퇴근했어요. 밤새 병동에 있었거든요. 병원까지 20분이면 되는 집을 찾고 있어요.","angry"],["","지금 사는 데는 버스를 두 번 타요. 새벽에 퇴근하면 그게 너무 힘들어요.","worried"],["","이 가격이면 오늘 바로 할게요. 조금만 빼 주시면 가계약금 지금 보낼게요.","normal"]],
+ "아이 학교 가까운 집 찾는 식당 사장님":[["","학교까지 걸어서 몇 분이에요? 아이 혼자 다녀야 해서요. 저희는 새벽에 가게 문을 열거든요.","angry"],["","지금 집은 큰길을 건너야 해요. 아침마다 그게 걱정이에요.","worried"],["","가게 매출이 들쭉날쭉해서 큰돈은 어렵고요. 조금만 맞춰 주시면 이번 달 안에 잔금 할게요.","normal"]]});
+
+/* 취득세 구분 — 상가·숙박·공장은 주택이 아니다(4.6%), 전용 85㎡ 초과 주택은 농특세 0.2% */
+["f31","f32","f61","f63","f64"].forEach(id => { if(K_PROPS[id]) K_PROPS[id].use = "commercial"; });
+if(K_PROPS.f44) K_PROPS.f44.over85 = true;
 
 /* ================= 📖 에피소드 스토리 — 단계마다 물건 네 개 → 엔딩 → 다음 사람 해금 =================
    서윤(1단계) → 도현 → 미정 → 재훈 → 은경 → 태식(6단계). 이미 있는 사건(CASES)을 난이도 순으로

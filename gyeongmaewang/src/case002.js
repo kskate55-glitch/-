@@ -128,7 +128,7 @@ function k2Close(amt, buyer, checked){
 }
 /* ---------- 결과 ---------- */
 function k2Refs(){
-  const b = K.bid || 14200, a = Math.round(b * 0.017), hold = d => Math.round(KP2.dailyHold * d);
+  const b = K.bid || 14200, a = Math.round(b * kAcqRate(b, KP2)), hold = d => Math.round(KP2.dailyHold * d);
   return {ideal: 15800 - b - a - 520 - hold(59) - 79 - 50, early: K2_EXIT.cross - b - a - hold(10) - 30, worst: 14300 - b - a - 120 - 425 - 900 - hold(180) - 72};
 }
 function k2Outcome(profit){

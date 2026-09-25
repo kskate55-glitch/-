@@ -64,6 +64,18 @@ function kStart(seed){
   if(KP.extraRivals) KP.extraRivals.forEach(v => { if(r() < 0.85) K.rivals.push(v); });
   if(KP.init) KP.init();
 }
+/* 취득세 등(취득세+지방교육세+농특세) — 매매사업자라도 주택 취득세 중과는 똑같이 따진다(주택 수로 판정).
+   게임에서는 전 물건을 팔고 다음 물건을 사므로 늘 '무주택 → 1주택' 취득이다:
+   6억 이하 1% + 지방교육세 0.1% = 1.1%, 6~9억은 (금액×2/3−3)% 사이, 9억 초과 3%(+교육세 0.3%), 전용 85㎡ 초과면 농특세 0.2% 추가.
+   상가·숙박·공장 같은 주택 아닌 건물은 4% + 농특세 0.2% + 지방교육세 0.4% = 4.6%.
+   ⚠️ 일반 원칙 요약 — 실제 세율은 주택 수·지역·면적·감면에 따라 달라지니 실제 거래는 세무 전문가와 확인. */
+function kAcqRate(amt, P){
+  P = P || (typeof KP !== "undefined" ? KP : null); amt = +amt || 0;
+  if(P && P.use === "commercial") return 0.046;
+  const r = amt <= 60000 ? 0.01 : amt <= 90000 ? (amt / 10000 * 2 / 3 - 3) / 100 : 0.03;
+  return r + r * 0.1 + (P && P.over85 ? 0.002 : 0);
+}
+function kAcqPct(amt, P){ return Math.round(kAcqRate(amt, P) * 1000) / 10; }
 function kDay(n){ K.day += n; K.cost.hold += Math.round(KP.dailyHold * n * 10) / 10; }
 function kMan(v){ v = Math.round(v); if(v < 0) return "−" + kMan(-v); const e = Math.floor(v/10000), m = v % 10000; return e ? `${e}억${m?` ${m.toLocaleString()}만`:""}원` : `${m.toLocaleString()}만원`; }
 
@@ -84,7 +96,7 @@ function kBid(amt){
   bids.push({who:"나", amt, me:true}); bids.sort((a,b)=>b.amt - a.amt);
   const win = bids[0].me, other = win ? (bids[1] || {who:"(없음 — 단독)", amt:KP.minBid, none:true}) : bids[0];
   K.result = {win, bids, gap: Math.abs(amt - other.amt), other, solo: win && !bids[1]};
-  if(win){ K.cost.bid = amt; K.cost.acq = Math.round(amt * 0.017); if(K.found.fee) K.cost.fee = 38; K.step = "won"; kAch(K.result.gap <= 30 ? "tight" : null); }
+  if(win){ K.cost.bid = amt; K.cost.acq = Math.round(amt * kAcqRate(amt)); if(K.found.fee) K.cost.fee = 38; K.step = "won"; kAch(K.result.gap <= 30 ? "tight" : null); }
   else { K.step = "lost"; if(K.result.gap <= 10) kAch("tenman"); }
 }
 /* ---------- 3. 명도 (보스전) ---------- */
@@ -306,7 +318,7 @@ function kingHTML(){
     <button type="button" class="btn pri" data-kgo="move" style="margin-top:12px">🔑 잔금 내고 점유자 만나러 가기 →</button>`;
   }
   if(K.step==="move"){
-    const o = K.occ, sc = K.scene || {who:"occ", t:"(문이 반쯤 열린다) …낙찰자요? 내 보증금도 몬 받는다 카대. 내가 뭘 잘못했는데!", ex:"angry"};
+    const o = K.occ, sc = K.scene || {who:"occ", t:"(문이 반쯤 벌어진다) …낙찰자요? 내 보증금도 몬 받는다 카대. 내가 뭘 잘못했는데!", ex:"angry"};
     const acts = K.pendingFlip ? `<div class="ag-acts vn-acts"><button type="button" class="ag-act" data-kflip="1"><span class="ag-ai">💸</span><span><b>50만원 더 준다</b><span class="note" style="display:block">오늘 끝내기</span></span></button><button type="button" class="ag-act" data-kflip="0"><span class="ag-ai">📝</span><span><b>"약속은 약속입니다" — 이번엔 합의서</b><span class="note" style="display:block">며칠 더 걸릴 수 있음</span></span></button></div>`
       : K.offering ? `<div class="ag-acts vn-acts"><div class="ag-act ag-offer"><span class="ag-ai">💰</span><div><b>이사비 제안</b><div class="note">점유자가 원하는 건 ${kMan(K.askNeed)} 안팎</div><div class="ag-amts">${K_OFFERS.map(v=>`<button type="button" class="chip" data-koffer="${v}">${v?kMan(v):"0원(날짜만)"}</button>`).join("")}</div></div></div></div>`
       : `<div class="ag-acts vn-acts">${K_MOVES.filter(m=>!m.need || m.need(o)).map(m=>`<button type="button" class="ag-act${m.id==="threat"?" ag-bad":""}" data-kmove="${m.id}"><span><b>${m.t}</b><span class="note" style="display:block">${m.day}일 소요</span></span></button>`).join("")}</div>`;

@@ -328,7 +328,9 @@ function kfRate(court){ return KF_RATE30.includes(court) ? 0.3 : 0.2; }
 const KF_FAILS = {f11:2, f12:2, f13:1, f21:1, f22:1, f23:2, f31:2, f32:2, f33:2, f34:2, f41:2, f42:2, f43:2, f44:2, f51:3, f52:2, f53:2, f54:3, f61:2, f62:1, f63:2, f64:3};
 function kfPrice(S){
   const r = kfRate(S.court), n = S.fails != null ? S.fails : (KF_FAILS[S.id] != null ? KF_FAILS[S.id] : 2), k = Math.pow(1 - r, n);
-  if(S.appraisal * k > S.trueMid * 0.68) S.appraisal = Math.round(S.trueMid * 0.68 / k / 10) * 10;
+  // 상가·숙박·공장은 취득세가 4.6%(주택 1.1%)라 같은 비율이면 늘 적자 — 실제로도 낙찰가율이 주택보다 낮게 형성된다
+  const cap = ["f31","f32","f61","f63","f64"].includes(S.id) ? 0.60 : 0.68;
+  if(S.appraisal * k > S.trueMid * cap) S.appraisal = Math.round(S.trueMid * cap / k / 10) * 10;
   S.fails = n; S.rate = r; S.minBid = Math.round(S.appraisal * k);
 }
 
@@ -611,7 +613,7 @@ if(typeof qaBidModel === "function"){
   const _kf_qa = qaBidModel;
   qaBidModel = function(){
     const M = _kf_qa(), x = kfKnownExtra(); if(!x) return M;
-    const d = Math.round(x / 1.017 / 10) * 10;
+    const d = Math.round(x / (1 + kAcqRate(KP.trueMid * 0.7)) / 10) * 10;
     return Object.assign({}, M, {net:(sale, bid) => M.net(sale, bid) - x, z:{safe:M.z.safe - d, bal:M.z.bal - d, agg:M.z.agg - d}});
   };
 }
@@ -843,3 +845,13 @@ document.addEventListener("click", e => {
   of.heard = true; of.buyer = Object.assign({}, of.buyer, {flex:Math.max(0, of.buyer.flex - 0.02)});   // 사정을 들으면 역제안이 조금 더 통한다
   mtPlay(KF_BUYER_TALE[of.buyer.t], {name:"매수자 · " + of.buyer.t, face:kfBuyerFace(of.buyer.t), title:"🗣️ 매수자 사정 듣는 중", done:() => renderArena()});
 }, true);
+Object.assign(KF_BUYER_TALE, {
+ "은퇴한 선생님":[["","천천히 봐유. 집은 오래 사는 거니께. 삼십오 년 교단에 섰다가 작년에 정년퇴직했어유.","normal"],["","애들 다 키워 보내고 집사람이랑 둘이 살 집이유. 크게 욕심 안 내유. 해 잘 들고 조용하면 돼유.","normal"],["","값은… 연금으로 사는 형편이라, 조금만 맞춰 주면 바로 도장 찍지유.","worried"]],
+ "꼼꼼한 외국인 연구원":[["","안녕하세요. 근처 연구소에서 일해요. 한국에 온 지 6년 됐어요.","normal"],["","등기부 을구, 한 번 더 볼 수 있을까요? 근저당 말소 날짜를 확인하고 싶어요. 전에 친구가 전세 사기를 당했어요.","worried"],["","서류가 깔끔하면 가격은 조금 조정할 수 있어요. 저는 확실한 게 제일 중요해요.","normal"]],
+ "휠체어를 쓰는 실수요자":[["","현관 턱이 몇 센티예요? 욕실 문 폭도 재 봐도 될까요? 저한텐 이게 제일 중요해요.","angry"],["","집 보러 다니면 대부분 계단에서 끝나요. 여기는 승강기가 있어서 연락드렸어요.","worried"],["","턱만 조금 손보면 살 수 있을 것 같아요. 그 공사비 생각해서 조금만 맞춰 주시면 좋겠어요.","normal"]],
+ "야간 근무 마친 간호사":[["","방금 퇴근했어요. 밤새 병동에 있었거든요. 병원까지 20분이면 되는 집을 찾고 있어요.","angry"],["","지금 사는 데는 버스를 두 번 타요. 새벽에 퇴근하면 그게 너무 힘들어요.","worried"],["","이 가격이면 오늘 바로 할게요. 조금만 빼 주시면 가계약금 지금 보낼게요.","normal"]],
+ "아이 학교 가까운 집 찾는 식당 사장님":[["","학교까지 걸어서 몇 분이에요? 아이 혼자 다녀야 해서요. 저희는 새벽에 가게 문을 열거든요.","angry"],["","지금 집은 큰길을 건너야 해요. 아침마다 그게 걱정이에요.","worried"],["","가게 매출이 들쭉날쭉해서 큰돈은 어렵고요. 조금만 맞춰 주시면 이번 달 안에 잔금 할게요.","normal"]]});
+
+/* 취득세 구분 — 상가·숙박·공장은 주택이 아니다(4.6%), 전용 85㎡ 초과 주택은 농특세 0.2% */
+["f31","f32","f61","f63","f64"].forEach(id => { if(K_PROPS[id]) K_PROPS[id].use = "commercial"; });
+if(K_PROPS.f44) K_PROPS.f44.over85 = true;

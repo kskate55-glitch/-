@@ -22,8 +22,8 @@ function qaBidModel(){
   const known = KP.hidden ? KP.hidden.filter(h => K.found[h.id]).length : 0, unk = KP.hidden ? KP.hidden.length - known : 0;
   const repair = (KP.estRepair || 250) + unk * 90;                   // 모르는 위험이 남을수록 비용 쪽 불확실성이 커진다
   const cost = m => m * 0.06 + 350 + repair;                         // 명도·이자·중개·세금 대략(매도가에 비례하는 몫 + 고정)
-  const net = (sale, bid) => sale - cost(sale) - bid * 1.017;
-  const zone = (sale, margin) => Math.round((sale - cost(sale) - margin) / 1.017 / 10) * 10;
+  const net = (sale, bid) => sale - cost(sale) - bid * (1 + kAcqRate(bid));
+  const zone = (sale, margin) => { const v = sale - cost(sale) - margin; return Math.round(v / (1 + kAcqRate(v)) / 10) * 10; };
   const mid = (band.lo + band.hi) / 2;
   return {band, unk, net, z:{safe:zone(band.lo, 800), bal:zone(mid, 700), agg:zone(band.hi, 300)}};
 }

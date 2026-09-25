@@ -337,7 +337,7 @@ if(typeof keBidSheet === "function"){
   keBidSheet = function(){
     const h = _lf_sheet(); if(!lfIs("eunkyung") || !K) return h;
     const band = lfBand(), mid = (band.lo + band.hi) / 2, known = KP.hidden.filter(x => K.found[x.id]).length;
-    const cost = mid * 0.08 + 500 + (KP.estRepair || 250), tgt = lfEkTarget(), cap = Math.round((mid - cost - tgt) / 1.017 / 10) * 10;
+    const cost = mid * 0.08 + 500 + (KP.estRepair || 250), tgt = lfEkTarget(), cap = Math.round((mid - cost - tgt) / (1 + kAcqRate(mid - cost - tgt)) / 10) * 10;
     return h.replace('<button type="button" class="btn pri" data-kcseal>', `<div class="lf-calc">🧮 <b>계산기부터 켠다</b> — 예상 매도 ${kMan(Math.round(mid))} · 비용(수리·명도·세금·이자) 약 ${kMan(Math.round(cost))}<br>${kMan(tgt)} 남기려면 <b>입찰 상한 ${kMan(cap)}</b>${known < KP.hidden.length ? ` <small class="down">(아직 모르는 위험 ${KP.hidden.length - known}개 — 상한을 더 낮춰도 돼요)</small>` : ""}</div><button type="button" class="btn pri" data-kcseal>`);
   };
 }

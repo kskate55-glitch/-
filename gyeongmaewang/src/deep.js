@@ -17,7 +17,7 @@ function dpAfterLost(){
   const big = surprise.find(h => h.id === "elec") && r() < 0.4 ? 320 : 0;             // 누전이 '전체 배선'으로 커지는 경우
   const repair = (KP.estRepair || 300) + surprise.reduce((s, h) => s + h.cost, 0) + big;
   const months = 2 + Math.floor(r() * 4), hold = Math.round((KP.dailyHold || 1.7) * months * 30);
-  const profit = Math.round(sale - W * 1.017 - repair - hold - sale * 0.005);
+  const profit = Math.round(sale - W * (1 + kAcqRate(W)) - repair - hold - sale * 0.005);
   dpRec().after.push({kind:"lost", title:KP.title, my:K.bid, win:W, gap:R.gap, sale, repair, big, surprise:surprise.map(h => h.t), months, profit, due:kcRec().cases + 1, dueT:(typeof lfOn === "function" && lfOn()) ? lfRec().t + 3 * 1440 : null, at:Date.now()});
   if(typeof save === "function") save();
 }
@@ -28,7 +28,7 @@ function dpAfterDrop(it){
     e = {kind:"dodge", title:d.t, text:d.sold || "다른 사람이 낙찰받았다. 그 뒤로 한동안 매물로 나오지 않았다.", trap:true, read:!!it.read};
   } else { const P = K_PROPS[it.prop]; if(!P) return;
     const W = Math.round(bdMin(it) * (1.08 + r() * 0.14) / 10) * 10, sale = Math.round((P.trueMid + (r() * 2 - 1) * (P.trueSpread || 250)) / 10) * 10, repair = (P.estRepair || 300) + (P.hidden || []).reduce((s, h) => s + (h.cost && r() < 0.6 ? h.cost : 0), 0), months = 2 + Math.floor(r() * 4);
-    e = {kind:"drop", title:P.title, win:W, sale, repair, months, profit:Math.round(sale - W * 1.017 - repair - (P.dailyHold || 1.7) * months * 30 - sale * 0.005)}; }
+    e = {kind:"drop", title:P.title, win:W, sale, repair, months, profit:Math.round(sale - W * (1 + kAcqRate(W, P)) - repair - (P.dailyHold || 1.7) * months * 30 - sale * 0.005)}; }
   e.due = kcRec().cases + 1; e.at = Date.now(); dpRec().after.push(e); if(typeof save === "function") save();
 }
 function dpAfterText(e){

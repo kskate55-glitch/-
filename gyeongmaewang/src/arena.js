@@ -776,7 +776,7 @@ function chatHTML(){
   if(sampleFn === null) return `<div class="panel" style="padding:18px"><b>이 화면에서는 점유자 채팅을 쓸 수 없어요.</b><p class="note" style="margin-top:6px">Claude 앱이나 claude.ai에서 이 페이지를 열면 됩니다. 채팅을 처음 보낼 때 Claude 사용 허락을 한 번 물어봐요(내 Claude 사용량이 쓰여요). 도감과 명도왕 게임은 지금도 쓸 수 있어요.</p></div>`;
   if(!CH.pid){
     return `<p class="lead">명도할 점유자, 매도를 맡길 부동산 사장님, 인테리어 업자, 매수 희망자와 실제처럼 문자로 협상해 보세요. 한 마디마다 <b>코치가 한 줄 피드백</b>을 주고, 끝나면 <b>총평</b>을 받을 수 있어요. 모든 인물은 가상이에요.</p>
-    ${Object.keys(ROLE_LABEL).map(role => `<h3 class="ag-role">${ROLE_LABEL[role]}</h3><div class="ag-grid">${allPersonas().filter(P=>roleOf(P)===role).map(P=>{ const C = arenaRec().chats[P.id]; const T = occType(P.type); return `<button type="button" class="panel ag-card" data-chatwith="${P.id}">${avatarHTML(P,52)}<span class="ag-nm">${esc(P.name)}</span><span class="note">${esc(role==="occupant"?T.name:P.who)}</span>${C&&C.turns.length?`<span class="ag-best">대화 ${C.turns.length}개 · ${esc(C.status)}</span>`:""}</button>`; }).join("")}${role==="occupant"?`<button type="button" class="panel ag-card ag-new" data-cnew><span class="ag-emo">🎲</span><span class="ag-nm">새 점유자 만들기</span><span class="note">무작위 유형·사정</span></button>`:""}</div>`).join("")}`;
+    ${Object.keys(ROLE_LABEL).map(role => `<h3 class="ag-role">${ROLE_LABEL[role]}</h3><div class="ag-grid">${chatOrder(allPersonas().filter(P=>roleOf(P)===role), role).map(P=>{ const C = arenaRec().chats[P.id]; const T = occType(P.type); return `<button type="button" class="panel ag-card" data-chatwith="${P.id}">${role==="occupant"?chatDiffHTML(P):""}${avatarHTML(P,52)}<span class="ag-nm">${esc(P.name)}</span><span class="note">${esc(role==="occupant"?T.name:P.who)}</span>${C&&C.turns.length?`<span class="ag-best">대화 ${C.turns.length}개 · ${esc(C.status)}</span>`:""}</button>`; }).join("")}${role==="occupant"?`<button type="button" class="panel ag-card ag-new" data-cnew><span class="ag-emo">🎲</span><span class="ag-nm">새 점유자 만들기</span><span class="note">무작위 유형·사정</span></button>`:""}</div>`).join("")}`;
   }
   const P = personaById(CH.pid), T = occType(P.type), C = chatRec(P.id);
   const coachAt = {}; C.coach.forEach(k => coachAt[k.i] = k.t);
@@ -800,6 +800,17 @@ function chatHTML(){
     <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn" data-creview ${C.turns.length<2||CH.reviewBusy?"disabled":""}>${CH.reviewBusy?"총평 쓰는 중…":"🧑‍🏫 코치 총평 받기"}</button><button type="button" class="btn" data-creset>새로 시작</button><button type="button" class="btn" data-cback>다른 인물</button></div>
     ${CH.review!==null?`<div class="panel ag-review"><b>코치 총평</b><div id="chReview">${esc(CH.review||"생각하는 중… (10~40초)")}</div></div>`:""}`;
 }
+
+/* 문자 협상 목록 — 명도왕 단계(STAGES) 순서 = 쉬운 순. 단계 밖 인물(직접 만든 점유자 등)은 유형 난이도 순으로 뒤에. */
+function chatStageIdx(P){ return typeof STAGES!=="undefined" ? STAGES.indexOf(P.id) : -1; }
+function chatStars(P){ const i = chatStageIdx(P); if(i < 0) return Math.max(1, Math.min(3, occType(P.type).lv || 2)); return 1 + Math.min(2, Math.floor(i * 3 / STAGES.length)); }
+function chatOrder(list, role){
+  if(role !== "occupant") return list;
+  const key = P => { const i = chatStageIdx(P); return i >= 0 ? i : 1000 + chatStars(P) * 10; };
+  return list.map((P,n)=>[P,n]).sort((x,y)=> key(x[0]) - key(y[0]) || x[1] - y[1]).map(x=>x[0]);
+}
+function chatDiffHTML(P){ const i = chatStageIdx(P), n = chatStars(P);
+  return `<span class="ag-diff d${n}" title="난이도 ${n}/3">${i >= 0 ? `${i+1}단계 · ` : ""}${"★".repeat(n)}<i>${"★".repeat(3-n)}</i></span>`; }
 
 /* ============================== 도감 ============================== */
 function dexHTML(){

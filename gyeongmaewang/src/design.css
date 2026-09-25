@@ -351,3 +351,10 @@ img.st-img-fail{visibility:hidden}
 /* 🧑‍🤝‍🧑 매수자·법원 직원 (buyerface.js) */
 .ke-open>img.ke-clerk{inset:auto;right:6%;bottom:0;left:auto;top:auto;width:auto;height:min(64%, 430px);object-fit:contain;filter:drop-shadow(0 8px 16px rgba(0,0,0,.5)) brightness(.95);z-index:0;pointer-events:none;animation:lfvPop .5s ease-out both}
 @media (max-width:720px){.ke-open>img.ke-clerk{right:-6%;height:34%;opacity:.55}}
+
+/* 문자 협상 목록 난이도 배지 */
+.ag-card{position:relative}
+.ag-card .ag-diff{position:absolute;top:6px;right:8px;font-size:11px;font-weight:800;letter-spacing:.5px;padding:2px 7px;border-radius:999px;background:#fff6dd;color:#9a6a00;border:1px solid #f0d58a;white-space:nowrap}
+.ag-card .ag-diff i{font-style:normal;opacity:.25}
+.ag-card .ag-diff.d2{background:#ffeede;color:#b55a00;border-color:#f3c08c}
+.ag-card .ag-diff.d3{background:#ffe3e3;color:#b3261e;border-color:#f0a8a8}

@@ -21,14 +21,13 @@ const t0=await p.evaluate(()=>lfRec().t);
 await p.click('[data-ep="nextep"]'); await p.waitForTimeout(900);
 ok(await p.evaluate((t0)=>arenaTab==='life' && lfRec().t>t0+100*1440, t0), w+' 방으로 돌아오고 몇 달 흐름');
 for(let e=1;e<4;e++){
-  await p.click('.ep-alert [data-epgo]'); await p.waitForTimeout(500);
-  if(e===1) ok(await p.evaluate(()=>!!document.querySelector('#epRoot.ep-world .ep-bg') && (innerWidth<1000 || !!document.querySelector('.ep-hero'))), w+' 사건 에피소드 = 방 배경 무대 + 주인공');
-  if(e===1 && w===1280) await p.screenshot({path:'epw_intro.png'});
-  await p.click('[data-ep="play"]'); await p.waitForTimeout(300);
-  for(let s=0;s<10;s++){ const best=await p.evaluate(()=>{ const c=epCase(EP_PLAN[EP.ch].eps[EP.i].c); return c.steps[EP.step].o.findIndex(o=>o.g===2); });
-    await p.click(`[data-epick="${best}"]`); await p.waitForTimeout(120);
-    if(e===1&&s===0&&w===1280) await p.screenshot({path:'epw_play.png'});
-    const nx=await p.$('[data-ep="next"]'); if(nx){ await nx.click(); await p.waitForTimeout(120); continue; } await p.click('[data-ep="recap"]'); await p.waitForTimeout(300); break; }
+  await p.click('.ep-alert [data-epgo]'); await p.waitForTimeout(700);
+  const want=await p.evaluate((e)=>EP_PLAN.seoyun.eps[e].k,e);
+  ok(await p.evaluate((want)=>arenaTab==='king' && K && KP.id===want && K.epStory && KP.gen, want), w+` EP${e+1} = 새 풀 경매(${want})`);
+  if(e===1 && w===1280){ await p.evaluate(()=>{K.intro=false; renderArena();}); await p.waitForTimeout(700); await p.screenshot({path:'epw_full.png'}); }
+  await p.evaluate(()=>{ K.intro=false; K.step='result'; K.final={profit:800,total:KP.trueMid-800,rate:5,grades:{bid:'A',move:'A',repair:'S',sell:'B'},lesson:KP.lesson,found:2,hid:4,tips:[],style:['a','b']}; K.day=50; K.moveDays=20; K.repair=K_REPAIR[3]; K.sale={price:KP.trueMid,trueP:KP.trueMid,buyer:{t:'신혼부부'}}; renderArena(); }); await p.waitForTimeout(700);
+  await p.click('#epKBar [data-epkdone]'); await p.waitForTimeout(500);
+  ok(await p.evaluate((e)=>epOf('seoyun').res[e] && epOf('seoyun').res[e].full, e), w+` EP${e+1} 기록`);
   if(e<3){ await p.click('[data-ep="nextep"]'); await p.waitForTimeout(700); }
 }
 await p.click('[data-ep="end"]'); await p.waitForTimeout(700);

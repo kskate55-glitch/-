@@ -10,7 +10,7 @@ const SH_ART = {
   ev_fee:"7d19fff0c3d81c25a3ad947461f35142", ev_chat:"43cf1d7ce9b432ba5f0b57932a55a8d2", ev_bank:"284ecb37976c0d22f247e0f294d5c6c5", ev_keys:"4f5ab57802a7f77c3d58b22e3ab0f4ed",
   ev_bill:"ffad517e701a58c9a04d730bf383e900", ev_contract:"15db3d3601fb92a4eef07aabe7dece30", ev_doorlock:"c044c3e55f9ad1f203de6b4813d4a21b", ev_chat2:"03077c03e0c9715f42cf86620d7f5d6e",
   ev_trash:"ef53f0164fbd19986dcf450ca13246a0", ev_meter:"0bf141a58cca11893beee9f6bd9548e1", ev_cctv:"581da2bc7bdf7e88f1ef9bef8bc39dbf", ev_note:"c552a317e593c940a8346faf5b1aee1f",
-  ev_housekey:"4d922b74ee3dde167182fbcdf860c3e6", ev_bath:"ea838f451360127aa80b26f25e3d4de2",
+  ev_housekey:"4d922b74ee3dde167182fbcdf860c3e6", ev_bath:"ea838f451360127aa80b26f25e3d4de2", ev_leak:"648e4f36d7d0af9af21d08ec4114092b",
   bg_int_hall:"4ccd049d6bb6b2a8fcd541deae04c4f9", bg_int_goshi:"2fe334e85e925e6921d705ddf9dc5264", bg_int_shop:"e389b67fabd84d1ae23d859989800b1d", bg_int_factory:"5439c1dfe058fea4ce8c8b97e6564bd2",
   npc_type_debtor:"cb71ca6cbb2f43d341d8138707dbde58", npc_type_family:"b7c23a356895afae4f1dca7edb911479", npc_type_lien:"194718427e4c2d014d0b6a3383389a4c", npc_type_haggler:"f872d3ba1d7353e59976099c497f688a", npc_type_absent:"b36f62e99666879e384fb58e7145bbb3",
   npc_granny_normal:"ab4678eaa26e2df4ae8f694dde4c8fd9", npc_granny_angry:"1f9f4f82c8ea695fd2a89d432801866c", npc_granny_worried:"d1a74be8163ba9efd08e71dd7b090ec3", npc_granny_happy:"d5f28a25f930d2806b9064c44f5049a7", npc_granny_shocked:"351ed791c1e8d018056f7bd41f4082d9", npc_granny_soft:"58473e34d9a4cb9479858fbaa87285ca",
@@ -28,7 +28,7 @@ Object.keys(SH_ART).filter(k => /^ev_/.test(k)).forEach(k => A_(k, "prop", "증�
 
 function shUrl(k){ const a = SH_ART[k]; return a ? (window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a) : null; }
 // 조사 파일 카드 id → 증거 사진
-const SH_EV = {docs:"ev_docs", elec:"ev_meter", flip:"npc_granny_normal", price:"ev_chat", fee:"ev_fee", kim:"ev_chat2", leak:"ev_bath", dump:"ev_photos", loan:"ev_bank"};
+const SH_EV = {docs:"ev_docs", elec:"ev_meter", flip:"npc_granny_normal", price:"ev_chat", fee:"ev_fee", kim:"ev_chat2", leak:"ev_leak", dump:"ev_photos", loan:"ev_bank"};
 function shEvKey(c){ if(c.id === "inside") return KP && KP.id === "k2" ? "ev_doorlock" : "ev_housekey"; return SH_EV[c.id] || null; }
 // 게시판 물건 → 건물 사진
 function shBoardKey(it){ if(!it) return null; if(it.kind === "case") return "ext_" + it.prop; return "ext_" + it.decoy; }

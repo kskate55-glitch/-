@@ -40434,10 +40434,10 @@ const _gx_basePanel = lfPanel; lfPanel = function(id){
   return h;
 };
 // 📜 후일담 그림(받은 것만 — 없으면 글만 나온다)
-const LF_EPI_ART = {eunkyung:"6afe731dc314968ceaffbbbeac6cdf95", taesik:"e0de2d65e9e8a4d12170fe2fd1057037"};
+const LF_EPI_ART = {seoyun:"c3df39f3a36120ec5cf79e6211431a03", dohyun:"afbb2cd72cae47ae2f9083f088f3f424", mijeong:"b46ee9e6d7e460befd0ff135d8b6b100", jaehoon:"99f86598dcb8e03cbb03482e56f1fe74", eunkyung:"6afe731dc314968ceaffbbbeac6cdf95", taesik:"e0de2d65e9e8a4d12170fe2fd1057037"};
 function lfEpiArt(id){ const a = LF_EPI_ART[id]; return a ? `<div class="lf-epi-art"><img src="/_blob/${a}" alt="" loading="lazy"></div>` : ""; }
 // 🧭 갈림길 그림(선택하기 직전의 한 장면 — 받은 것만)
-const LF_PATH_ART = {seoyun:"ad0b9616be23554d9c7f33379aba8142", dohyun:"fed63df3aa0f18717cdf98f7e4e24b15", mijeong:"9668d079b4fd9e38179ee79dbe03eaf0", jaehoon:"0d749dade70a04fcbc90269967fc214a"};
+const LF_PATH_ART = {seoyun:"ad0b9616be23554d9c7f33379aba8142", dohyun:"fed63df3aa0f18717cdf98f7e4e24b15", mijeong:"9668d079b4fd9e38179ee79dbe03eaf0", jaehoon:"0d749dade70a04fcbc90269967fc214a", eunkyung:"82b76888cd5518170a2c3f4d66ddc296"};
 function lfPathArt(id){ const a = LF_PATH_ART[id]; return a ? `<div class="lf-epi-art lf-path-art"><img src="/_blob/${a}" alt="" loading="lazy"></div>` : ""; }
 function lfEpiCheck(){ const L = lfRec(); if(!L) return; L.epi = L.epi || {}; const E = LF_EPILOGUES[L.char]; if(E && !L.epi[L.char] && E.ok(kcRec(), L)){ L.epi[L.char] = L.t; if(typeof HUB_TOAST !== "undefined") HUB_TOAST.push({t:`📜 후일담 해금 — 「${E.t}」 (벽에서 읽기)`, big:true}); } }
 const _gx_titles = lfTitles; lfTitles = function(){ _gx_titles(); lfEpiCheck(); };

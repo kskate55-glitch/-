@@ -17,14 +17,14 @@ for(const [w,h] of [[1280,800],[390,844]]){
  ok(/화곡동 6평 원룸/.test(await p.evaluate(()=>document.body.innerText)), w+' 거점 = 화곡동 6평 원룸');
  await p.screenshot({path:`lf_base_${w}.png`});
  // 생활 행동
- for(const s of ['shelf','fridge','out','phone','calendar','bank','wall','file','bed','laptop']){ await p.click(`[data-lfspot="${s}"]`); await p.waitForTimeout(120); await bad('spot '+s); }
+ for(const s of ['desk','rest','out','phone','calendar','bank','wall','file']){ await p.click(`[data-lfspot="${s}"]`); await p.waitForTimeout(120); await bad('spot '+s); }
  const t0 = await p.evaluate(()=>lfRec().t);
- await p.click('[data-lfspot="shelf"]'); await p.click('[data-lfdo="study_law"]'); await p.waitForTimeout(150);
+ await p.click('[data-lfspot="desk"]'); await p.click('[data-lfdo="study_law"]'); await p.waitForTimeout(150);
  ok(await p.evaluate(t0=>lfRec().t - t0 >= 120 && (lfRec().xp.law||0) > 0, t0), w+' 공부 — 2시간 흐르고 법률 경험치');
- await p.click('[data-lfspot="bed"]'); await p.click('[data-lfdo="sleep"]'); await p.waitForTimeout(150);
+ await p.click('[data-lfspot="rest"]'); await p.click('[data-lfdo="sleep"]'); await p.waitForTimeout(150);
  ok(await p.evaluate(()=>{ const D=lfDate(); return D.h===8 && D.mi===0; }), w+' 자고 일어나면 아침 8시');
  await p.evaluate(()=>{ kcRec().cash += 2000; renderArena(); });
- await p.click('[data-lfspot="laptop"]'); await p.waitForTimeout(100); await p.click('[data-lfbuy="dual"]'); await p.waitForTimeout(150);
+ await p.click('[data-lfspot="desk"]'); await p.waitForTimeout(100); await p.click('[data-lfbuy="dual"]'); await p.waitForTimeout(150);
  ok(await p.evaluate(()=>lfHas('dual')), w+' 장비 구입(듀얼 모니터)');
  // 게시판 → 입찰
  await p.click('[data-lfspot="board"]'); await p.waitForTimeout(200); await bad('board');

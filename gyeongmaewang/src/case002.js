@@ -202,7 +202,7 @@ function k2HTML(){
   if(K.step === "defect"){
     const early = K.k2.leakEarly || K.found.leak;
     return kStage("bg_room_messy", "narr", null, "빈집. 안방 벽지를 뜯었다. …벽 뒤로 물길 자국이 번져 있다.") + kHud() + `
-     <div class="panel k-card"><h3>🧱 벽 뒤 누수</h3><p>인테리어 박실장: <b>“열어 봐야 알아요. 배관이면 400~600, 방수까지 가면 더 나올 수도 있고요.”</b></p>
+     <div class="panel k-card"><h3>🧱 벽 뒤 누수</h3>${typeof gmwSceneArt==="function" ? gmwSceneArt("k2leak") : ""}<p>인테리어 박실장: <b>“열어 봐야 알아요. 배관이면 400~600, 방수까지 가면 더 나올 수도 있고요.”</b></p>
       ${early ? `<p class="note">🔍 미리 알고 있었다 — 견적을 두 곳에서 받아 둘 시간이 있었다(제대로 수리 520만원).</p>` : `<p class="note">😱 몰랐다 — 급하게 한 곳 견적만 받았다(제대로 수리 620만원).</p>`}
       <p class="note">⚖️ 알고도 숨기고 팔면, 팔고 나서도 매수자에게 책임을 질 수 있다(하자담보책임).</p></div>
      <h3 class="vn-q">어떻게 할까?</h3><div class="ag-acts vn-acts">${K2_FIX.map(f=>`<button type="button" class="ag-act${f.bad?" ag-bad":""}" data-k2="fix:${f.id}"><span class="ag-ai">${f.ic}</span><span><b>${f.t} — ${kMan(f.cost())}</b><span class="note" style="display:block">${f.d}</span></span></button>`).join("")}${k2ExitBtn()}</div>` + k2SaysHTML() + quit;

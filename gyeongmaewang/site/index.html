@@ -38482,7 +38482,7 @@ function k2HTML(){
   if(K.step === "defect"){
     const early = K.k2.leakEarly || K.found.leak;
     return kStage("bg_room_messy", "narr", null, "빈집. 안방 벽지를 뜯었다. …벽 뒤로 물길 자국이 번져 있다.") + kHud() + `
-     <div class="panel k-card"><h3>🧱 벽 뒤 누수</h3><p>인테리어 박실장: <b>“열어 봐야 알아요. 배관이면 400~600, 방수까지 가면 더 나올 수도 있고요.”</b></p>
+     <div class="panel k-card"><h3>🧱 벽 뒤 누수</h3>${typeof gmwSceneArt==="function" ? gmwSceneArt("k2leak") : ""}<p>인테리어 박실장: <b>“열어 봐야 알아요. 배관이면 400~600, 방수까지 가면 더 나올 수도 있고요.”</b></p>
       ${early ? `<p class="note">🔍 미리 알고 있었다 — 견적을 두 곳에서 받아 둘 시간이 있었다(제대로 수리 520만원).</p>` : `<p class="note">😱 몰랐다 — 급하게 한 곳 견적만 받았다(제대로 수리 620만원).</p>`}
       <p class="note">⚖️ 알고도 숨기고 팔면, 팔고 나서도 매수자에게 책임을 질 수 있다(하자담보책임).</p></div>
      <h3 class="vn-q">어떻게 할까?</h3><div class="ag-acts vn-acts">${K2_FIX.map(f=>`<button type="button" class="ag-act${f.bad?" ag-bad":""}" data-k2="fix:${f.id}"><span class="ag-ai">${f.ic}</span><span><b>${f.t} — ${kMan(f.cost())}</b><span class="note" style="display:block">${f.d}</span></span></button>`).join("")}${k2ExitBtn()}</div>` + k2SaysHTML() + quit;
@@ -40497,7 +40497,7 @@ function lfEpiArt(id){ const a = LF_EPI_ART[id]; return a ? `<div class="lf-epi-
 // 🧭 갈림길 그림(선택하기 직전의 한 장면 — 받은 것만)
 const LF_PATH_ART = {seoyun:"ad0b9616be23554d9c7f33379aba8142", dohyun:"fed63df3aa0f18717cdf98f7e4e24b15", mijeong:"9668d079b4fd9e38179ee79dbe03eaf0", jaehoon:"0d749dade70a04fcbc90269967fc214a", eunkyung:"82b76888cd5518170a2c3f4d66ddc296", taesik:"5c27e9ea782b7ddc10065d26675bee87"};
 /* 장면 그림 — 첫 경매·패찰·1년 결산·돌아보기·CASE 002 수리 완료 */
-const GMW_SCENE_ART = {first:"32c2c87c3cd96d0c0e3485a69b9bae27", lost:"98e3c5a454615340ac6e02ea9f29ecf9", settle:"1e98eb088d86682b20d380b2c34c1573", review:"121e337265bfcb0de0d59f9a55b9c7d4", k2fixed:"0f50655c0e2f89baef264e2d226f9f21", k2cross:"4cc71a3f08658b459ec7e3fa2b7a87dd", k2recur:"92aab5e56f1016ca0291b6374b1f2faa", k2claim:"3286aea865d6e6f20f558a3f244bff8b", k2rival:"bda28edd1da122b04afe20372f65ee5e", k2deal:"278afc367148f5d7cc2edf6b253eacc2", k2exit:"bb29f8efc426535974e173b2d473dc22", k2forfeit:"476ab476bcacee6022fc6fa8292e0ee3", k2honest:"6d65591fbfacabbafb0a0ea14f98daf7"};
+const GMW_SCENE_ART = {k2leak:"2bf2c7447b56ac406d70f866359cbdec", first:"32c2c87c3cd96d0c0e3485a69b9bae27", lost:"98e3c5a454615340ac6e02ea9f29ecf9", settle:"1e98eb088d86682b20d380b2c34c1573", review:"121e337265bfcb0de0d59f9a55b9c7d4", k2fixed:"0f50655c0e2f89baef264e2d226f9f21", k2cross:"4cc71a3f08658b459ec7e3fa2b7a87dd", k2recur:"92aab5e56f1016ca0291b6374b1f2faa", k2claim:"3286aea865d6e6f20f558a3f244bff8b", k2rival:"bda28edd1da122b04afe20372f65ee5e", k2deal:"278afc367148f5d7cc2edf6b253eacc2", k2exit:"bb29f8efc426535974e173b2d473dc22", k2forfeit:"476ab476bcacee6022fc6fa8292e0ee3", k2honest:"6d65591fbfacabbafb0a0ea14f98daf7"};
 /* 자산 등급 물건 그림 — KC_TIERS 순서  */
 const KC_TIER_ART = ["febc232854a4dbad7083cf37390c73b5", "b6b3a4a90bc6c97b4d8bc086732b1c7c", "c627509e92c4ddcc893ebdcc0f7dd376", "df92584c05f9bc6d507b356657dfada6", "2a8dfdb772506c5c95f3cb52db0ace67"];
 function gmwSceneArt(k){ const a = GMW_SCENE_ART[k]; return a ? `<div class="lf-epi-art gmw-scene" data-scene="${k}"><img src="${window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a}" alt="" loading="lazy"></div>` : ""; }
@@ -40755,7 +40755,7 @@ document.addEventListener("click", e => {
    GPT 시트 5장에서 잘라 올린 그림. 지금 게임에 있는 자리에 바로 쓰고, 아직 없는 물건(상가·오피스텔·공장 등)
    그림은 그림 보관함에 칸으로만 등록해 둔다. */
 const SH_ART = {
-  ext_k1:"8da97d931981eacf7bc89f159d5ecc0d", ext_k2:"efc08f93c5f08b61f1131e7459cf8123", ext_tenant:"f8827b45287483e93de2935e8df096cb", ext_share:"b93fcb75df93465f28328ceda110434c",
+  ext_k1:"8da97d931981eacf7bc89f159d5ecc0d", ext_k2:"ed8ccd4a6e4ca92591c52d4103a7e58b", ext_tenant:"f8827b45287483e93de2935e8df096cb", ext_share:"b93fcb75df93465f28328ceda110434c",
   ext_lien:"f9c4caa71bf52b93182680a78ecd0f06", ext_land:"9d4666e0e392d8aaa647731fc97bef7f", ext_shop:"c0eec95cbb8b0f0a0637dd5bc4ac4872", ext_officetel:"e0c4425bf81ca76c4c1e56e744e60194",
   ext_factory:"0706878fb4c16a27c93627cd6adef425", ext_shopbldg:"8e6510a6bcb46a5af83db26b655d2010",
   wx_clear:"ed4df530449ca5cf199b65f0bb39480d", wx_cloud:"e1adf5935aa061063669da62172e5b1a", wx_rain:"49bf19d616f81c13bd10dfb515505bf7", wx_snow:"7e76e5eb47d99c38aeb5e78db6c695de", wx_dusk:"974fff7c9e566c2927ca8fc9fbe028cc",

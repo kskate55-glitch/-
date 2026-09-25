@@ -2,7 +2,7 @@
    GPT 시트 5장에서 잘라 올린 그림. 지금 게임에 있는 자리에 바로 쓰고, 아직 없는 물건(상가·오피스텔·공장 등)
    그림은 그림 보관함에 칸으로만 등록해 둔다. */
 const SH_ART = {
-  ext_k1:"8da97d931981eacf7bc89f159d5ecc0d", ext_k2:"efc08f93c5f08b61f1131e7459cf8123", ext_tenant:"f8827b45287483e93de2935e8df096cb", ext_share:"b93fcb75df93465f28328ceda110434c",
+  ext_k1:"8da97d931981eacf7bc89f159d5ecc0d", ext_k2:"ed8ccd4a6e4ca92591c52d4103a7e58b", ext_tenant:"f8827b45287483e93de2935e8df096cb", ext_share:"b93fcb75df93465f28328ceda110434c",
   ext_lien:"f9c4caa71bf52b93182680a78ecd0f06", ext_land:"9d4666e0e392d8aaa647731fc97bef7f", ext_shop:"c0eec95cbb8b0f0a0637dd5bc4ac4872", ext_officetel:"e0c4425bf81ca76c4c1e56e744e60194",
   ext_factory:"0706878fb4c16a27c93627cd6adef425", ext_shopbldg:"8e6510a6bcb46a5af83db26b655d2010",
   wx_clear:"ed4df530449ca5cf199b65f0bb39480d", wx_cloud:"e1adf5935aa061063669da62172e5b1a", wx_rain:"49bf19d616f81c13bd10dfb515505bf7", wx_snow:"7e76e5eb47d99c38aeb5e78db6c695de", wx_dusk:"974fff7c9e566c2927ca8fc9fbe028cc",

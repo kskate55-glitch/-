@@ -283,7 +283,7 @@ homeHTML = function(){
 };
 function recHTML(){
   const c = kcRec(), p = hubRec(), wk = kcWeek(), W = c.weekly[wk];
-  const tier = KC_TIERS.map(([need, t]) => `<li class="${c.cash >= need ? "on" : ""}"><span>${c.cash >= need ? "🔓" : "🔒"} ${esc(t)}</span><small>자산 ${kMan(need)}${c.cash >= need ? "" : ` · ${kMan(need - c.cash)} 더`}</small></li>`).join("");
+  const tier = KC_TIERS.map(([need, t], ti) => `<li class="${c.cash >= need ? "on" : ""}">${typeof KC_TIER_ART !== "undefined" && KC_TIER_ART[ti] ? `<img class="kc-tier-art" src="/_blob/${KC_TIER_ART[ti]}" alt="" loading="lazy">` : ""}<span>${c.cash >= need ? "🔓" : "🔒"} ${esc(t)}</span><small>자산 ${kMan(need)}${c.cash >= need ? "" : ` · ${kMan(need - c.cash)} 더`}</small></li>`).join("");
   const hist = c.history.slice(0, 12).map(e => `<tr><td>${e.mode==="weekly"?`📅 ${esc(e.week)}`:e.mode==="career"?`💼 ${e.n}호`:"🎮"}</td><td>${kcEok(e.bid)} → ${kcEok(e.sale)}</td><td class="${e.profit>=0?"up":"down"}">${kcSigned(e.profit)}</td><td>${e.biz} / ${e.judge}</td><td>${e.days}일</td></tr>`).join("");
   const weeks = Object.entries(c.weekly).sort((a,b)=>b[0].localeCompare(a[0])).slice(0, 8);
   return `<p class="lead">한 판이 끝나도 돈은 남아요. <b>1억 5천에서 10억까지</b> — 어떤 판단이 돈을 불렸는지 여기 쌓여요.</p>

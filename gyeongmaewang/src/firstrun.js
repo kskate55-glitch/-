@@ -34,7 +34,7 @@ function frHome(){
   if(panel && !panel.querySelector(".fr-guide")){
     panel.classList.add("fr-quiet");
     const g = document.createElement("div"); g.className = "panel fr-guide";
-    g.innerHTML = `<b>처음이세요? 한 판은 이렇게 흘러가요</b>
+    g.innerHTML = (typeof gmwSceneArt==="function" ? gmwSceneArt("first") : "") + `<b>처음이세요? 한 판은 이렇게 흘러가요</b>
       <ol class="fr-steps">${FR_STEPS.map(([ic, t, d]) => `<li><span>${ic}</span><b>${t}</b><small>${d}</small></li>`).join("")}</ol>
       <p class="note">모르는 정보가 남아 있어도 괜찮아요 — 100% 알고 입찰하는 사람은 없어요. 대신 <b>입찰하지 않는 것도 선택</b>이에요.</p>
       <button type="button" class="btn fr-all" data-frall>전체 메뉴 보기</button>`;
@@ -141,7 +141,7 @@ function frReviewHTML(){
   const miss = frMissed(), luck = frLuck(), ceil = frCeil(), over = K.bid > ceil;
   const pred = K.pred && K.pred.sale > 0;
   const next = miss.length ? `${miss[0].ic || "🔎"} ${miss[0].t} — ${miss[0].d}` : over ? "상한을 먼저 정하고 입찰표를 쓰기" : !pred ? "입찰 전에 예상 매도가를 적어 두기(판단 기록이 쌓여요)" : "지금처럼 — 같은 순서로 한 번 더";
-  return `<div class="panel fr-review"><b>🧭 이번 판 돌아보기</b><ol>
+  return `<div class="panel fr-review"><b>🧭 이번 판 돌아보기</b>${typeof gmwSceneArt==="function" ? gmwSceneArt("review") : ""}<ol>
     <li><span>📂 입찰 전에 알 수 있던 것</span><p>숨은 위험 ${F.hid}개 중 <b>${F.found}개</b>를 입찰 전에 찾았어요.${miss.length ? ` 못 본 것: ${esc(miss.map(c => c.t).join(", "))}.` : " 전부 찾았어요."}</p></li>
     <li><span>🧠 내 판단</span><p>입찰가 <b>${kMan(K.bid)}</b> — ${over ? "남기기 빠듯한 선을 넘었어요" : "남는 선 안이었어요"}.${pred ? ` 예상 매도가 ${kMan(K.pred.sale)}를 적어 뒀어요.` : " 예상 매도가는 적지 않았어요."}</p></li>
     <li><span>🎲 실제로 벌어진 일</span><p>순익 <b class="${F.profit >= 0 ? "up" : "down"}">${kcSigned ? kcSigned(Math.round(F.profit)) : kMan(F.profit)}</b>.${luck.length ? ` 입찰 전엔 알 방법이 없던 일: ${esc(luck.join(" · "))} — <b>이건 판단 점수에 넣지 않았어요.</b>` : " 운이 크게 끼어든 일은 없었어요."}</p></li>

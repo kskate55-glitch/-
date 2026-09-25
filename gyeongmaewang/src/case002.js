@@ -182,7 +182,7 @@ function k2HTML(){
   if(K.step === "cross"){
     const dep = K2_DEPOSIT(), knew = [K.found.leak && "💧 아래층이 말한 누수", K.found.price && "📝 박 중개사의 1.5 후반", K.found.loan && "🏦 얇은 매수자 대출"].filter(Boolean);
     return kStage("bg_realtor", "narr", null, `매각허가결정이 났다. 잔금 기한까지 한 달. 그런데 오늘 아침 — 같은 건물 3층이 1억 6,200만원 급매로 올라왔다.`) + kHud() + `
-     <div class="panel k2-cross"><h3>⚖️ 갈림길 — 잔금을 낼까?</h3><p class="note">낙찰가 ${kMan(K.bid)} · 보증금 ${kMan(dep)}은 이미 법원에 들어가 있다.</p>
+     <div class="panel k2-cross"><h3>⚖️ 갈림길 — 잔금을 낼까?</h3>${typeof gmwSceneArt==="function" ? gmwSceneArt("k2cross") : ""}<p class="note">낙찰가 ${kMan(K.bid)} · 보증금 ${kMan(dep)}은 이미 법원에 들어가 있다.</p>
       ${knew.length ? `<p>🔍 알고 있는 것: ${knew.join(" · ")}</p>` : `<p class="note">조사를 많이 못 했다. 이 급매가 무슨 뜻인지 아직 모른다.</p>`}</div>
      ${k2SaysHTML()}
      <div class="ag-acts vn-acts">
@@ -216,7 +216,7 @@ function k2HTML(){
     const S = K.sale, of = S.offer;
     const line = of ? `${S.weeks}주차. 중개사 전화: "${of.buyer.t} 손님이요, ${kMan(of.amt)}이면 계약한대요."` : `${S.weeks}주차. 집 보러 온 사람은 있었는데, 연락이 없다.${S.weeks <= 3 && S.list > 16200 ? " 다들 3층 급매부터 보고 간다." : ""}`;
     return kStage("bg_realtor", "narr", null, line) + kHud() + `
-     <div class="panel k-card"><div class="k-grid"><span>현재 호가</span><b>${kMan(S.list)}</b><span>보유 비용</span><b>매주 약 ${kMan(KP2.dailyHold * 7)}</b>${S.weeks<=3?`<span>경쟁</span><b>같은 건물 3층 1억 6,200 급매</b>`:""}</div>${S.note?`<div class="note" style="margin-top:6px">${esc(S.note)}</div>`:""}</div>
+     <div class="panel k-card"><div class="k-grid"><span>현재 호가</span><b>${kMan(S.list)}</b><span>보유 비용</span><b>매주 약 ${kMan(KP2.dailyHold * 7)}</b>${S.weeks<=3?`<span>경쟁</span><b>같은 건물 3층 1억 6,200 급매</b>`:""}</div>${S.note?`<div class="note" style="margin-top:6px">${esc(S.note)}</div>`:""}${typeof gmwSceneArt!=="function" ? "" : /또 물이 샌다/.test(S.note||"") ? gmwSceneArt("k2recur") : /급매가 .*팔렸다/.test(S.note||"") ? gmwSceneArt("k2rival") : ""}</div>
      <div class="ag-acts vn-acts">${of ? `<button type="button" class="ag-act" data-k2="sell:accept"><span><b>✅ ${kMan(of.amt)} 수락</b>${K.found.loan?"":`<span class="note" style="display:block">⚠️ 대출 파기 위험 모름</span>`}</span></button>
        ${K.found.loan?`<button type="button" class="ag-act" data-k2="sell:check"><span><b>🏦 대출 사전승인 확인 후 계약</b><span class="note" style="display:block">1주 걸리지만 파기 위험이 크게 준다</span></span></button>`:""}
        <button type="button" class="ag-act" data-k2="sell:counter"><span><b>↔️ 중간(${kMan(Math.round((of.amt+S.list)/2/10)*10)}) 역제안</b></span></button>
@@ -230,7 +230,7 @@ function k2ResultTop(){
   const F = K.final, X = F.k2, R = X.refs, me = Math.round(F.profit);
   const rows = [["🔧 제대로 고쳐 끝까지 갔다면", R.ideal], ["🏃 낙찰 직후 바로 정리했다면", R.early], ["🙈 덮고 버티다 터졌다면", R.worst]];
   const saved = me - R.worst;
-  return `<div class="panel k2-verdict g${X.og}"><div class="k2-v-top"><span class="k-g g${X.og==="F"?"C":X.og}">${X.og}</span><div><small>이번 판의 판단</small><b>${esc(X.otitle)}</b><p>“${esc(X.oquote)}”</p></div></div>
+  return `<div class="panel k2-verdict g${X.og}">${typeof gmwSceneArt!=="function" ? "" : K.k2.claim ? gmwSceneArt("k2claim") : K.k2.forfeited ? gmwSceneArt("k2forfeit") : K.k2.exit ? gmwSceneArt("k2exit") : K.k2.cond === "fix" ? gmwSceneArt("k2fixed") : !(K.sale && K.sale.done && K.sale.price > 0) ? "" : K.k2.cond === "min" ? gmwSceneArt("k2honest") : gmwSceneArt("k2deal")}<div class="k2-v-top"><span class="k-g g${X.og==="F"?"C":X.og}">${X.og}</span><div><small>이번 판의 판단</small><b>${esc(X.otitle)}</b><p>“${esc(X.oquote)}”</p></div></div>
     ${F.profit < 0 && X.og <= "B" && !K.k2.claim ? `<p class="k2-shield">🛡️ ${K.k2.exit ? "방어 성공 — 돈을 잃었지만, 더 큰 손실을 막았습니다." : "손실은 났지만, 최악보다는 멀리 있었습니다."}</p>` : ""}
     <table class="k2-if"><tbody>${rows.map(([t,v])=>`<tr><td>${t}</td><td class="${v>=0?"up":"down"}">≈ ${kcSigned(Math.round(v))}</td></tr>`).join("")}<tr class="me"><td>👉 당신</td><td class="${me>=0?"up":"down"}">${kcSigned(me)}</td></tr></tbody></table>
     <small class="note">같은 낙찰가(${kMan(K.bid)}) 기준 대략값이에요. 최악의 길보다 <b>${kcSigned(saved)}</b> 지켰습니다.</small></div>`;

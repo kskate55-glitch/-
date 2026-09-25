@@ -276,7 +276,7 @@ function kingHTML(){
   if(K.step==="lost"){
     const r = K.result;
     return kStage("bg_court","narr",null, r.gap <= 10 ? `패찰. ${kMan(r.gap)} 차이. …${kMan(r.gap)}.` : `패찰. 낙찰가 ${kMan(r.other.amt)}.`) + `
-    <div class="panel k-bidres lose"><h3>📭 패찰 <small class="note">이번엔 낙찰받지 못했어요</small></h3>${kBidTable()}<p class="k-lesson">📜 ${esc(r.gap <= 30 ? K_LESSONS.lose_close : K_LESSONS.lose_far)}</p></div>${kAchNew()}
+    <div class="panel k-bidres lose"><h3>📭 패찰 <small class="note">이번엔 낙찰받지 못했어요</small></h3>${typeof gmwSceneArt==="function" ? gmwSceneArt("lost") : ""}${kBidTable()}<p class="k-lesson">📜 ${esc(r.gap <= 30 ? K_LESSONS.lose_close : K_LESSONS.lose_far)}</p></div>${kAchNew()}
     <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn pri" data-kstart>↺ 같은 물건 다시 (다른 경쟁자)</button><button type="button" class="btn" data-kquit>목록</button></div>`;
   }
   if(K.step==="won"){

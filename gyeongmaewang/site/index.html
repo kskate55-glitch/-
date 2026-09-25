@@ -1589,6 +1589,13 @@ img.st-img-fail{visibility:hidden}
 /* 후일담 그림 */
 .lf-epi-art{margin:8px 0 6px;border-radius:10px;overflow:hidden;aspect-ratio:16/9;background:#e9e3d6}
 .lf-epi-art img{width:100%;height:100%;object-fit:cover;display:block}
+.gmw-scene{max-height:260px}
+.fr-review .gmw-scene,.cp-settle .gmw-scene{margin-top:10px}
+@media (max-width:600px){.gmw-scene{max-height:none}}
+.kc-tiers li{align-items:center}
+.kc-tiers li .kc-tier-art{width:72px;height:40px;object-fit:cover;border-radius:6px;flex:none;filter:grayscale(1) brightness(1.05);opacity:.55}
+.kc-tiers li.on .kc-tier-art{filter:none;opacity:1}
+.kc-tiers li > span{flex:1}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -35959,7 +35966,7 @@ function kingHTML(){
   if(K.step==="lost"){
     const r = K.result;
     return kStage("bg_court","narr",null, r.gap <= 10 ? `패찰. ${kMan(r.gap)} 차이. …${kMan(r.gap)}.` : `패찰. 낙찰가 ${kMan(r.other.amt)}.`) + `
-    <div class="panel k-bidres lose"><h3>📭 패찰 <small class="note">이번엔 낙찰받지 못했어요</small></h3>${kBidTable()}<p class="k-lesson">📜 ${esc(r.gap <= 30 ? K_LESSONS.lose_close : K_LESSONS.lose_far)}</p></div>${kAchNew()}
+    <div class="panel k-bidres lose"><h3>📭 패찰 <small class="note">이번엔 낙찰받지 못했어요</small></h3>${typeof gmwSceneArt==="function" ? gmwSceneArt("lost") : ""}${kBidTable()}<p class="k-lesson">📜 ${esc(r.gap <= 30 ? K_LESSONS.lose_close : K_LESSONS.lose_far)}</p></div>${kAchNew()}
     <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn pri" data-kstart>↺ 같은 물건 다시 (다른 경쟁자)</button><button type="button" class="btn" data-kquit>목록</button></div>`;
   }
   if(K.step==="won"){
@@ -37746,7 +37753,7 @@ homeHTML = function(){
 };
 function recHTML(){
   const c = kcRec(), p = hubRec(), wk = kcWeek(), W = c.weekly[wk];
-  const tier = KC_TIERS.map(([need, t]) => `<li class="${c.cash >= need ? "on" : ""}"><span>${c.cash >= need ? "🔓" : "🔒"} ${esc(t)}</span><small>자산 ${kMan(need)}${c.cash >= need ? "" : ` · ${kMan(need - c.cash)} 더`}</small></li>`).join("");
+  const tier = KC_TIERS.map(([need, t], ti) => `<li class="${c.cash >= need ? "on" : ""}">${typeof KC_TIER_ART !== "undefined" && KC_TIER_ART[ti] ? `<img class="kc-tier-art" src="/_blob/${KC_TIER_ART[ti]}" alt="" loading="lazy">` : ""}<span>${c.cash >= need ? "🔓" : "🔒"} ${esc(t)}</span><small>자산 ${kMan(need)}${c.cash >= need ? "" : ` · ${kMan(need - c.cash)} 더`}</small></li>`).join("");
   const hist = c.history.slice(0, 12).map(e => `<tr><td>${e.mode==="weekly"?`📅 ${esc(e.week)}`:e.mode==="career"?`💼 ${e.n}호`:"🎮"}</td><td>${kcEok(e.bid)} → ${kcEok(e.sale)}</td><td class="${e.profit>=0?"up":"down"}">${kcSigned(e.profit)}</td><td>${e.biz} / ${e.judge}</td><td>${e.days}일</td></tr>`).join("");
   const weeks = Object.entries(c.weekly).sort((a,b)=>b[0].localeCompare(a[0])).slice(0, 8);
   return `<p class="lead">한 판이 끝나도 돈은 남아요. <b>1억 5천에서 10억까지</b> — 어떤 판단이 돈을 불렸는지 여기 쌓여요.</p>
@@ -38410,7 +38417,7 @@ function k2HTML(){
   if(K.step === "cross"){
     const dep = K2_DEPOSIT(), knew = [K.found.leak && "💧 아래층이 말한 누수", K.found.price && "📝 박 중개사의 1.5 후반", K.found.loan && "🏦 얇은 매수자 대출"].filter(Boolean);
     return kStage("bg_realtor", "narr", null, `매각허가결정이 났다. 잔금 기한까지 한 달. 그런데 오늘 아침 — 같은 건물 3층이 1억 6,200만원 급매로 올라왔다.`) + kHud() + `
-     <div class="panel k2-cross"><h3>⚖️ 갈림길 — 잔금을 낼까?</h3><p class="note">낙찰가 ${kMan(K.bid)} · 보증금 ${kMan(dep)}은 이미 법원에 들어가 있다.</p>
+     <div class="panel k2-cross"><h3>⚖️ 갈림길 — 잔금을 낼까?</h3>${typeof gmwSceneArt==="function" ? gmwSceneArt("k2cross") : ""}<p class="note">낙찰가 ${kMan(K.bid)} · 보증금 ${kMan(dep)}은 이미 법원에 들어가 있다.</p>
       ${knew.length ? `<p>🔍 알고 있는 것: ${knew.join(" · ")}</p>` : `<p class="note">조사를 많이 못 했다. 이 급매가 무슨 뜻인지 아직 모른다.</p>`}</div>
      ${k2SaysHTML()}
      <div class="ag-acts vn-acts">
@@ -38444,7 +38451,7 @@ function k2HTML(){
     const S = K.sale, of = S.offer;
     const line = of ? `${S.weeks}주차. 중개사 전화: "${of.buyer.t} 손님이요, ${kMan(of.amt)}이면 계약한대요."` : `${S.weeks}주차. 집 보러 온 사람은 있었는데, 연락이 없다.${S.weeks <= 3 && S.list > 16200 ? " 다들 3층 급매부터 보고 간다." : ""}`;
     return kStage("bg_realtor", "narr", null, line) + kHud() + `
-     <div class="panel k-card"><div class="k-grid"><span>현재 호가</span><b>${kMan(S.list)}</b><span>보유 비용</span><b>매주 약 ${kMan(KP2.dailyHold * 7)}</b>${S.weeks<=3?`<span>경쟁</span><b>같은 건물 3층 1억 6,200 급매</b>`:""}</div>${S.note?`<div class="note" style="margin-top:6px">${esc(S.note)}</div>`:""}</div>
+     <div class="panel k-card"><div class="k-grid"><span>현재 호가</span><b>${kMan(S.list)}</b><span>보유 비용</span><b>매주 약 ${kMan(KP2.dailyHold * 7)}</b>${S.weeks<=3?`<span>경쟁</span><b>같은 건물 3층 1억 6,200 급매</b>`:""}</div>${S.note?`<div class="note" style="margin-top:6px">${esc(S.note)}</div>`:""}${typeof gmwSceneArt!=="function" ? "" : /또 물이 샌다/.test(S.note||"") ? gmwSceneArt("k2recur") : /급매가 .*팔렸다/.test(S.note||"") ? gmwSceneArt("k2rival") : ""}</div>
      <div class="ag-acts vn-acts">${of ? `<button type="button" class="ag-act" data-k2="sell:accept"><span><b>✅ ${kMan(of.amt)} 수락</b>${K.found.loan?"":`<span class="note" style="display:block">⚠️ 대출 파기 위험 모름</span>`}</span></button>
        ${K.found.loan?`<button type="button" class="ag-act" data-k2="sell:check"><span><b>🏦 대출 사전승인 확인 후 계약</b><span class="note" style="display:block">1주 걸리지만 파기 위험이 크게 준다</span></span></button>`:""}
        <button type="button" class="ag-act" data-k2="sell:counter"><span><b>↔️ 중간(${kMan(Math.round((of.amt+S.list)/2/10)*10)}) 역제안</b></span></button>
@@ -38458,7 +38465,7 @@ function k2ResultTop(){
   const F = K.final, X = F.k2, R = X.refs, me = Math.round(F.profit);
   const rows = [["🔧 제대로 고쳐 끝까지 갔다면", R.ideal], ["🏃 낙찰 직후 바로 정리했다면", R.early], ["🙈 덮고 버티다 터졌다면", R.worst]];
   const saved = me - R.worst;
-  return `<div class="panel k2-verdict g${X.og}"><div class="k2-v-top"><span class="k-g g${X.og==="F"?"C":X.og}">${X.og}</span><div><small>이번 판의 판단</small><b>${esc(X.otitle)}</b><p>“${esc(X.oquote)}”</p></div></div>
+  return `<div class="panel k2-verdict g${X.og}">${typeof gmwSceneArt!=="function" ? "" : K.k2.claim ? gmwSceneArt("k2claim") : K.k2.forfeited ? gmwSceneArt("k2forfeit") : K.k2.exit ? gmwSceneArt("k2exit") : K.k2.cond === "fix" ? gmwSceneArt("k2fixed") : !(K.sale && K.sale.done && K.sale.price > 0) ? "" : K.k2.cond === "min" ? gmwSceneArt("k2honest") : gmwSceneArt("k2deal")}<div class="k2-v-top"><span class="k-g g${X.og==="F"?"C":X.og}">${X.og}</span><div><small>이번 판의 판단</small><b>${esc(X.otitle)}</b><p>“${esc(X.oquote)}”</p></div></div>
     ${F.profit < 0 && X.og <= "B" && !K.k2.claim ? `<p class="k2-shield">🛡️ ${K.k2.exit ? "방어 성공 — 돈을 잃었지만, 더 큰 손실을 막았습니다." : "손실은 났지만, 최악보다는 멀리 있었습니다."}</p>` : ""}
     <table class="k2-if"><tbody>${rows.map(([t,v])=>`<tr><td>${t}</td><td class="${v>=0?"up":"down"}">≈ ${kcSigned(Math.round(v))}</td></tr>`).join("")}<tr class="me"><td>👉 당신</td><td class="${me>=0?"up":"down"}">${kcSigned(me)}</td></tr></tbody></table>
     <small class="note">같은 낙찰가(${kMan(K.bid)}) 기준 대략값이에요. 최악의 길보다 <b>${kcSigned(saved)}</b> 지켰습니다.</small></div>`;
@@ -40438,6 +40445,11 @@ const LF_EPI_ART = {seoyun:"c3df39f3a36120ec5cf79e6211431a03", dohyun:"afbb2cd72
 function lfEpiArt(id){ const a = LF_EPI_ART[id]; return a ? `<div class="lf-epi-art"><img src="/_blob/${a}" alt="" loading="lazy"></div>` : ""; }
 // 🧭 갈림길 그림(선택하기 직전의 한 장면 — 받은 것만)
 const LF_PATH_ART = {seoyun:"ad0b9616be23554d9c7f33379aba8142", dohyun:"fed63df3aa0f18717cdf98f7e4e24b15", mijeong:"9668d079b4fd9e38179ee79dbe03eaf0", jaehoon:"0d749dade70a04fcbc90269967fc214a", eunkyung:"82b76888cd5518170a2c3f4d66ddc296"};
+/* 장면 그림 — 첫 경매·패찰·1년 결산·돌아보기·CASE 002 수리 완료 */
+const GMW_SCENE_ART = {first:"32c2c87c3cd96d0c0e3485a69b9bae27", lost:"98e3c5a454615340ac6e02ea9f29ecf9", settle:"1e98eb088d86682b20d380b2c34c1573", review:"121e337265bfcb0de0d59f9a55b9c7d4", k2fixed:"0f50655c0e2f89baef264e2d226f9f21", k2cross:"4cc71a3f08658b459ec7e3fa2b7a87dd", k2recur:"92aab5e56f1016ca0291b6374b1f2faa", k2claim:"3286aea865d6e6f20f558a3f244bff8b", k2rival:"bda28edd1da122b04afe20372f65ee5e", k2deal:"278afc367148f5d7cc2edf6b253eacc2", k2exit:"bb29f8efc426535974e173b2d473dc22", k2forfeit:"476ab476bcacee6022fc6fa8292e0ee3", k2honest:"6d65591fbfacabbafb0a0ea14f98daf7"};
+/* 자산 등급 물건 그림 — KC_TIERS 순서  */
+const KC_TIER_ART = ["febc232854a4dbad7083cf37390c73b5", "b6b3a4a90bc6c97b4d8bc086732b1c7c", "c627509e92c4ddcc893ebdcc0f7dd376", "df92584c05f9bc6d507b356657dfada6", "2a8dfdb772506c5c95f3cb52db0ace67"];
+function gmwSceneArt(k){ const a = GMW_SCENE_ART[k]; return a ? `<div class="lf-epi-art gmw-scene" data-scene="${k}"><img src="/_blob/${a}" alt="" loading="lazy"></div>` : ""; }
 function lfPathArt(id){ const a = LF_PATH_ART[id]; return a ? `<div class="lf-epi-art lf-path-art"><img src="/_blob/${a}" alt="" loading="lazy"></div>` : ""; }
 function lfEpiCheck(){ const L = lfRec(); if(!L) return; L.epi = L.epi || {}; const E = LF_EPILOGUES[L.char]; if(E && !L.epi[L.char] && E.ok(kcRec(), L)){ L.epi[L.char] = L.t; if(typeof HUB_TOAST !== "undefined") HUB_TOAST.push({t:`📜 후일담 해금 — 「${E.t}」 (벽에서 읽기)`, big:true}); } }
 const _gx_titles = lfTitles; lfTitles = function(){ _gx_titles(); lfEpiCheck(); };
@@ -41188,7 +41200,7 @@ lfPanel = function(id){
     h = `<div class="panel"><b>🎬 엔딩 모음</b>${cpDots()}<ul class="cp-list">${rows}</ul></div>` + h;
     const L = lfRec(), o = cpPathOpt();
     if(L && L.mode !== "career" && !L.ended && o){
-      h = `<div class="panel cp-settle"><b>📅 1년 결산 D-${cpDaysLeft()}</b><p>고른 길: <b>${esc(o.t)}</b>. 결산 날 그동안의 수익·마음 상태·손해 본 CASE·인맥을 함께 보고 엔딩이 정해져요.</p><button type="button" class="btn" data-cpsettle>지금 결산하고 엔딩 보기</button> <small class="note">기다릴수록 결과를 바꿀 기회가 남아요.</small></div>` + h;
+      h = `<div class="panel cp-settle"><b>📅 1년 결산 D-${cpDaysLeft()}</b>${typeof gmwSceneArt==="function" ? gmwSceneArt("settle") : ""}<p>고른 길: <b>${esc(o.t)}</b>. 결산 날 그동안의 수익·마음 상태·손해 본 CASE·인맥을 함께 보고 엔딩이 정해져요.</p><button type="button" class="btn" data-cpsettle>지금 결산하고 엔딩 보기</button> <small class="note">기다릴수록 결과를 바꿀 기회가 남아요.</small></div>` + h;
     }
   }
   if(lfOn() && lfRec().mode !== "career" && lfPathDue() && id !== "board") h = h.replace('<small class="note">한 번 고르면 되돌릴 수 없어요 — 인생이니까요.</small>', '<small class="note">한 번 고르면 되돌릴 수 없어요. 엔딩은 이 선택만으로 정해지지 않아요 — 고른 길로 남은 시간을 산 뒤, 1년 결산 날 정해져요.</small>');
@@ -42136,7 +42148,7 @@ function frHome(){
   if(panel && !panel.querySelector(".fr-guide")){
     panel.classList.add("fr-quiet");
     const g = document.createElement("div"); g.className = "panel fr-guide";
-    g.innerHTML = `<b>처음이세요? 한 판은 이렇게 흘러가요</b>
+    g.innerHTML = (typeof gmwSceneArt==="function" ? gmwSceneArt("first") : "") + `<b>처음이세요? 한 판은 이렇게 흘러가요</b>
       <ol class="fr-steps">${FR_STEPS.map(([ic, t, d]) => `<li><span>${ic}</span><b>${t}</b><small>${d}</small></li>`).join("")}</ol>
       <p class="note">모르는 정보가 남아 있어도 괜찮아요 — 100% 알고 입찰하는 사람은 없어요. 대신 <b>입찰하지 않는 것도 선택</b>이에요.</p>
       <button type="button" class="btn fr-all" data-frall>전체 메뉴 보기</button>`;
@@ -42243,7 +42255,7 @@ function frReviewHTML(){
   const miss = frMissed(), luck = frLuck(), ceil = frCeil(), over = K.bid > ceil;
   const pred = K.pred && K.pred.sale > 0;
   const next = miss.length ? `${miss[0].ic || "🔎"} ${miss[0].t} — ${miss[0].d}` : over ? "상한을 먼저 정하고 입찰표를 쓰기" : !pred ? "입찰 전에 예상 매도가를 적어 두기(판단 기록이 쌓여요)" : "지금처럼 — 같은 순서로 한 번 더";
-  return `<div class="panel fr-review"><b>🧭 이번 판 돌아보기</b><ol>
+  return `<div class="panel fr-review"><b>🧭 이번 판 돌아보기</b>${typeof gmwSceneArt==="function" ? gmwSceneArt("review") : ""}<ol>
     <li><span>📂 입찰 전에 알 수 있던 것</span><p>숨은 위험 ${F.hid}개 중 <b>${F.found}개</b>를 입찰 전에 찾았어요.${miss.length ? ` 못 본 것: ${esc(miss.map(c => c.t).join(", "))}.` : " 전부 찾았어요."}</p></li>
     <li><span>🧠 내 판단</span><p>입찰가 <b>${kMan(K.bid)}</b> — ${over ? "남기기 빠듯한 선을 넘었어요" : "남는 선 안이었어요"}.${pred ? ` 예상 매도가 ${kMan(K.pred.sale)}를 적어 뒀어요.` : " 예상 매도가는 적지 않았어요."}</p></li>
     <li><span>🎲 실제로 벌어진 일</span><p>순익 <b class="${F.profit >= 0 ? "up" : "down"}">${kcSigned ? kcSigned(Math.round(F.profit)) : kMan(F.profit)}</b>.${luck.length ? ` 입찰 전엔 알 방법이 없던 일: ${esc(luck.join(" · "))} — <b>이건 판단 점수에 넣지 않았어요.</b>` : " 운이 크게 끼어든 일은 없었어요."}</p></li>

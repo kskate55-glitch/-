@@ -355,6 +355,11 @@ const LF_EPI_ART = {seoyun:"c3df39f3a36120ec5cf79e6211431a03", dohyun:"afbb2cd72
 function lfEpiArt(id){ const a = LF_EPI_ART[id]; return a ? `<div class="lf-epi-art"><img src="/_blob/${a}" alt="" loading="lazy"></div>` : ""; }
 // 🧭 갈림길 그림(선택하기 직전의 한 장면 — 받은 것만)
 const LF_PATH_ART = {seoyun:"ad0b9616be23554d9c7f33379aba8142", dohyun:"fed63df3aa0f18717cdf98f7e4e24b15", mijeong:"9668d079b4fd9e38179ee79dbe03eaf0", jaehoon:"0d749dade70a04fcbc90269967fc214a", eunkyung:"82b76888cd5518170a2c3f4d66ddc296"};
+/* 장면 그림 — 첫 경매·패찰·1년 결산·돌아보기·CASE 002 수리 완료 */
+const GMW_SCENE_ART = {first:"32c2c87c3cd96d0c0e3485a69b9bae27", lost:"98e3c5a454615340ac6e02ea9f29ecf9", settle:"1e98eb088d86682b20d380b2c34c1573", review:"121e337265bfcb0de0d59f9a55b9c7d4", k2fixed:"0f50655c0e2f89baef264e2d226f9f21", k2cross:"4cc71a3f08658b459ec7e3fa2b7a87dd", k2recur:"92aab5e56f1016ca0291b6374b1f2faa", k2claim:"3286aea865d6e6f20f558a3f244bff8b", k2rival:"bda28edd1da122b04afe20372f65ee5e", k2deal:"278afc367148f5d7cc2edf6b253eacc2", k2exit:"bb29f8efc426535974e173b2d473dc22", k2forfeit:"476ab476bcacee6022fc6fa8292e0ee3", k2honest:"6d65591fbfacabbafb0a0ea14f98daf7"};
+/* 자산 등급 물건 그림 — KC_TIERS 순서  */
+const KC_TIER_ART = ["febc232854a4dbad7083cf37390c73b5", "b6b3a4a90bc6c97b4d8bc086732b1c7c", "c627509e92c4ddcc893ebdcc0f7dd376", "df92584c05f9bc6d507b356657dfada6", "2a8dfdb772506c5c95f3cb52db0ace67"];
+function gmwSceneArt(k){ const a = GMW_SCENE_ART[k]; return a ? `<div class="lf-epi-art gmw-scene" data-scene="${k}"><img src="/_blob/${a}" alt="" loading="lazy"></div>` : ""; }
 function lfPathArt(id){ const a = LF_PATH_ART[id]; return a ? `<div class="lf-epi-art lf-path-art"><img src="/_blob/${a}" alt="" loading="lazy"></div>` : ""; }
 function lfEpiCheck(){ const L = lfRec(); if(!L) return; L.epi = L.epi || {}; const E = LF_EPILOGUES[L.char]; if(E && !L.epi[L.char] && E.ok(kcRec(), L)){ L.epi[L.char] = L.t; if(typeof HUB_TOAST !== "undefined") HUB_TOAST.push({t:`📜 후일담 해금 — 「${E.t}」 (벽에서 읽기)`, big:true}); } }
 const _gx_titles = lfTitles; lfTitles = function(){ _gx_titles(); lfEpiCheck(); };

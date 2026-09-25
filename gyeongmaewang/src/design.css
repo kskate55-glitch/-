@@ -218,3 +218,10 @@ img.st-img-fail{visibility:hidden}
 /* 후일담 그림 */
 .lf-epi-art{margin:8px 0 6px;border-radius:10px;overflow:hidden;aspect-ratio:16/9;background:#e9e3d6}
 .lf-epi-art img{width:100%;height:100%;object-fit:cover;display:block}
+.gmw-scene{max-height:260px}
+.fr-review .gmw-scene,.cp-settle .gmw-scene{margin-top:10px}
+@media (max-width:600px){.gmw-scene{max-height:none}}
+.kc-tiers li{align-items:center}
+.kc-tiers li .kc-tier-art{width:72px;height:40px;object-fit:cover;border-radius:6px;flex:none;filter:grayscale(1) brightness(1.05);opacity:.55}
+.kc-tiers li.on .kc-tier-art{filter:none;opacity:1}
+.kc-tiers li > span{flex:1}

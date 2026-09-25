@@ -293,7 +293,7 @@ lfPanel = function(id){
     h = `<div class="panel"><b>🎬 엔딩 모음</b>${cpDots()}<ul class="cp-list">${rows}</ul></div>` + h;
     const L = lfRec(), o = cpPathOpt();
     if(L && L.mode !== "career" && !L.ended && o){
-      h = `<div class="panel cp-settle"><b>📅 1년 결산 D-${cpDaysLeft()}</b><p>고른 길: <b>${esc(o.t)}</b>. 결산 날 그동안의 수익·마음 상태·손해 본 CASE·인맥을 함께 보고 엔딩이 정해져요.</p><button type="button" class="btn" data-cpsettle>지금 결산하고 엔딩 보기</button> <small class="note">기다릴수록 결과를 바꿀 기회가 남아요.</small></div>` + h;
+      h = `<div class="panel cp-settle"><b>📅 1년 결산 D-${cpDaysLeft()}</b>${typeof gmwSceneArt==="function" ? gmwSceneArt("settle") : ""}<p>고른 길: <b>${esc(o.t)}</b>. 결산 날 그동안의 수익·마음 상태·손해 본 CASE·인맥을 함께 보고 엔딩이 정해져요.</p><button type="button" class="btn" data-cpsettle>지금 결산하고 엔딩 보기</button> <small class="note">기다릴수록 결과를 바꿀 기회가 남아요.</small></div>` + h;
     }
   }
   if(lfOn() && lfRec().mode !== "career" && lfPathDue() && id !== "board") h = h.replace('<small class="note">한 번 고르면 되돌릴 수 없어요 — 인생이니까요.</small>', '<small class="note">한 번 고르면 되돌릴 수 없어요. 엔딩은 이 선택만으로 정해지지 않아요 — 고른 길로 남은 시간을 산 뒤, 1년 결산 날 정해져요.</small>');

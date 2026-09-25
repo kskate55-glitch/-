@@ -331,7 +331,11 @@ img.st-img-fail{visibility:hidden}
 #kfsRoot .lfv-say.room::after{right:30px}
 #kfsRoot .lfv-say.stage{left:6%;bottom:48%}
 #kfsRoot .lfv-say.stage::after{left:34px}
+#kfsRoot .k-stage .vn-player.lfv-hide{display:none}
+#kfsRoot .k-stage .vn-sprite.lfv-pose{left:38%}
+#kfsRoot .lfv-say.stage.pose{left:calc(38% + 110px);bottom:auto;top:max(190px,28%)}
+#kfsRoot .lfv-say.stage.pose::after{left:22px}
 #kfsRoot .lfv-sig{border-left:4px solid var(--lfv)}
 @keyframes lfvPop{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:none}}
-@media (max-width:720px){#kfsRoot .lfv-say{font-size:11.5px;padding:6px 10px;max-width:58%}#kfsRoot .lfv-say.room{right:4%;bottom:calc(37% + 33% + 4px)}#kfsRoot .lfv-say.stage{left:4%;bottom:52%}}
+@media (max-width:720px){#kfsRoot .lfv-say{font-size:11.5px;padding:6px 10px;max-width:58%}#kfsRoot .lfv-say.room{right:4%;bottom:calc(37% + 33% + 4px)}#kfsRoot .lfv-say.stage{left:4%;bottom:52%}#kfsRoot .k-stage .vn-sprite.lfv-pose{left:34%}#kfsRoot .lfv-say.stage.pose{left:auto;right:3%;top:40%;bottom:auto;max-width:48%}#kfsRoot .lfv-say.stage.pose::after{left:12px}}
 @media (prefers-reduced-motion:reduce){#kfsRoot .lfv-say{animation:none}}

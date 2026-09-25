@@ -83,8 +83,18 @@ const _lfv_kStage = kStage; kStage = function(bg, who, ex, text, name){
   else if(K.step === "brief" && K._krNew && K.rlog && K.rlog.length){ kind = K._krNew.useful ? "good" : "bad"; }
   if(!kind) return h;
   const t = lfvPick(LF_VOICE[L.char][kind], (K.rlog || []).length + (K.seed || 0));
+  const pid = (LFV_POSE[L.char] || {})[kind];
+  if(pid && typeof lfBlob === "function"){   // 낙찰·패찰 포즈 그림이 있으면 뒷모습 대신 정면 포즈로 크게
+    const out = h.replace(/class="vn-player/g, 'class="vn-player lfv-hide').replace(/<\/div>$/, `<img class="vn-sprite lfv-pose lfv-${kind}" src="${lfBlob(pid)}" alt="${esc(lfChar().name)}">` + lfvBubble(t, "stage pose") + "</div>");
+    return out;
+  }
   return h.replace(/<\/div>$/, lfvBubble(t, "stage") + "</div>");
 };
+// 낙찰·패찰 포즈 그림 (P 발주 — 받은 사람부터)
+const LFV_POSE = {
+  seoyun:{won:"fd7621303deddef2407af8c6816bfc6b", lost:"1e15acf99ad9a0140ebf19a753980995"},
+  dohyun:{won:"fd6fb8caad85ae763decc8233251573d", lost:"955649be6263b2d8847016c23a881e6a"},
+  mijeong:{won:"7f96fe2cbb81901934b84742468b9ac3", lost:"4354fe023f539f86bf6cb86a3d466e51"}};
 // ③ 그 사람만 하는 행동 (능력치 성장·관계에 조금씩)
 Object.assign(LF_ACTS, {
   sig_seoyun:{spot:"sig_seoyun", ic:"📱", t:"경매 카페·커뮤니티 눈팅", min:60, sta:2, stress:-3, grow:["info", 2], note:"정보 경험치 · 서윤 전용"},

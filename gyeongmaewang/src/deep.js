@@ -161,7 +161,7 @@ const DP_PROP_ART = {umb_wet:"70cf22ee2b5f2ea5d06db56f93a5a496",umb:"10c9db965f9
 function dpPropFace(id, ic){
   const a = DP_PROP_ART[id]; if(!a) return ic;
   const n = id === "papers" ? [...ic].filter(ch => ch === "🗂").length : 1;   // 서류는 쌓인 만큼(1~3) 겹쳐 그린다
-  return Array.from({length: Math.max(1, n)}, (_, i) => `<img src="/_blob/${a}" alt="" class="dp-img" style="${i ? "margin-left:-18px" : ""}">`).join("");
+  return Array.from({length: Math.max(1, n)}, (_, i) => `<img src="${window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a}" alt="" class="dp-img" style="${i ? "margin-left:-18px" : ""}">`).join("");
 }
 function dpPropsMount(){
   const st = document.querySelector(".lf-stage"); if(!st || st.querySelector(".dp-props")) return;

@@ -126,7 +126,7 @@ const CP_END_ART = {seoyun:{good:"3a2dfa19009b195097c610316cbe17c4", normal:"3eb
   dohyun:{good:"b130014b45d910125d391f4fc025028f", normal:"91fd1e215fa7f1abf519ecff4712b72c", bad:"cd5bd56e5e5bc37901fe290dc5a7006a"}, mijeong:{good:"949dc8b843be9a2537af925c7946f883"},
   jaehoon:{good:"512cbdda76ef7d042b6ace4a6718710a", special:"3b7903466c6a54be4ce04b2bbedff898", bad:"4be0641f87e4fe0d60764f72c617dc0f"}, eunkyung:{good:"6bc2d39a50a75547ab9b3c4942674bbe", normal:"018a9256c6986da591658efaaeb6497b", bad:"833a35fa6ab79a6fc484137ea4a7bab2", special:"6758f020a1955016f33250c23a372de3"},
   taesik:{good:"c44392566bd589b4389009e96982233a", normal:"37684c1fa8e5ec772f3ee69f5e0da5a9", bad:"5f3d3fbf18fd877a2b1d7054bd93be78", special:"b2b7a30c6d4abfbf64838c2a16e3147e"}};
-function cpEndArt(ch, t){ const a = CP_END_ART[ch] && CP_END_ART[ch][t]; return a ? "/_blob/" + a : null; }
+function cpEndArt(ch, t){ const a = CP_END_ART[ch] && CP_END_ART[ch][t]; return a ? (window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a) : null; }
 let CP_SHOW = null;       // 지금 떠 있는 엔딩 화면 {sum, step:"end"|"reveal", next, first}
 function cpFinish(o, forced){
   const L = lfRec(); if(!L || L.mode === "career" || L.ended) return;

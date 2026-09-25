@@ -8,7 +8,7 @@ for(const [prop,bi] of [['k1',0],['k1',1],['k1',2],['k1',3],['k1',4],['k2',2]]){
    const im=document.querySelector('.by-sprite'); let nw=0; if(im){ await new Promise(r=>{ if(im.complete&&im.naturalWidth) r(); im.onload=r; setTimeout(r,3000);}); nw=im.naturalWidth; }
    const nm=document.querySelector('.k-stage .vn-name'), box=document.querySelector('.k-stage .vn-box'); const ir=im&&im.getBoundingClientRect(), br=box.getBoundingClientRect();
    return {t:K_BUYERS[bi].t, sprite:nw, name:nm&&nm.innerText, headOk:!ir||ir.top>=br.bottom-5}; }, [prop,bi]);
- const want = r.t!=='급하게 이사해야 하는 사람';
+ const want = true;
  ok((want ? r.sprite>0 && r.name==='매수자 · '+r.t : r.sprite===0) && r.headOk, `${w} ${prop} ${JSON.stringify(r)}`);
  if(bi===2){ await p.waitForTimeout(2500); await p.screenshot({path:`t_buyer_${prop}_${w}.png`}); }
 }

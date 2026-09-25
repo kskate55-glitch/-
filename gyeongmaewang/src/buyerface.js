@@ -5,7 +5,8 @@ const BY_ART = {
   "신혼부부":{art:{normal:"42ba34ca9096587590a17c50d97ee66e", angry:"f9b432598dcce3ba5c51121bd89bf265", worried:"7bdbbfb80b88c53520125aa54a655954"}, ex:"normal"},
   "대출 최대한도형":{art:{normal:"afe41bc6b965e7c08d28f4a45fb8dc6d", angry:"d60ff4027a09cd1792564d7f5ae1b36e", worried:"1d931496364e3680bcd1f3be013f91c7"}, ex:"worried"},
   "가격 깎기형":{art:{normal:"f45c055e05ec53a8dea385f8724158b0", angry:"435b42a4c01e296722ba06fd89dba26b", worried:"16fa7e5d65b3b0de3e4ec6a4730bfbeb"}, ex:"angry"},
-  "부모 지원형":{art:{normal:"5a4c5f646deaacaf7f94b9bb026ecd3f", angry:"f2ad200297a815956d6dd23fca6f678d", worried:"03aef00ef60234a4721a3fe1198aa8ec"}, ex:"normal"}};
+  "부모 지원형":{art:{normal:"5a4c5f646deaacaf7f94b9bb026ecd3f", angry:"f2ad200297a815956d6dd23fca6f678d", worried:"03aef00ef60234a4721a3fe1198aa8ec"}, ex:"normal"},
+  "급하게 이사해야 하는 사람":{art:{normal:"c0c33a76490bcc192af94fa1751e9f1d", angry:"ae90a4254520fb80edc2cce8e774fa16", worried:"9886834a9f0cdf3227de37ba3b5ae5ea"}, ex:"angry"}};
 const BY_CLERK = {normal:"a5afb83a672e21ca2d83efae9e6abd06", angry:"cd585d3ffc6940277fcf41838c8e7328", worried:"5e338651ac3cd8f66b50192d29159bf0"};
 function byUrl(id){ return window.GMW_STANDALONE ? "assets/" + id + ".webp" : "/_blob/" + id; }
 const _by_kStage = kStage; kStage = function(bg, who, ex, text, name){

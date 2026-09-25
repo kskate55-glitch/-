@@ -6,7 +6,7 @@ const NF_WHO = {                         // 이름 → [그림 키 앞부분, �
   "은행 대출상담":["npc_banker","angry"], "최만식 할아버지":["npc_p_grandpa","worried"], "정은주 씨":["npc_p_coop","worried"],
   "전기기사 박기사":["npc_elec","angry"], "인테리어 박실장":["npc_interior","normal"],
   "관리인 할아버지":["npc_keeper","angry"], "관리인":["npc_keeper","angry"], "관리실(전화)":["npc_office","worried"],
-  "중개사 A":["npc_brokerA","normal"], "중개사 B":["npc_brokerB","angry"], "중개사 C":["npc_brokerC","angry"]};
+  "중개사 A":["npc_brokerA","normal"], "중개사 B":["npc_brokerB","angry"], "중개사 C":["npc_brokerC","angry"], "옆집 할머니":["npc_neighbor","worried"]};
 function nfArt(who, ex){ const m = NF_WHO[who]; if(!m || typeof artUrl !== "function") return null; return artUrl(`${m[0]}_${ex || m[1]}`) || artUrl(`${m[0]}_normal`); }
 const _nf_kResearch = kResearch; kResearch = function(id){
   const n = K ? K.says.length : 0; _nf_kResearch(id);

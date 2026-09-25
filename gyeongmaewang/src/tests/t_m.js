@@ -1,7 +1,7 @@
 const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();const errs=[];const ok=(c,m)=>{console.log((c?'✅':'❌')+' '+m);if(!c)errs.push(m);};
 const p=await b.newPage({viewport:{width:1280,height:900}}); p.on('pageerror',e=>errs.push(e.message));
 await p.addInitScript(()=>{window.MT_SKIP_TALE=true}); await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(900);
-const cases=[["k1","call3",/중개사 [ABC]/],["k1","mgmtcall",/관리실/],["k1","mgmt",/관리인/],["k1","brokers",/중개사 [ABC]/],["k2","call3",/중개사 [ABC]/],["k2","mgmt",/관리인/],["k2","brokers",/중개사|박 중개사/]];
+const cases=[["k1","call3",/중개사 [ABC]/],["k1","mgmtcall",/관리실/],["k1","mgmt",/관리인/],["k1","brokers",/중개사 [ABC]/],["k2","call3",/중개사 [ABC]/],["k2","mgmt",/관리인/],["k2","brokers",/중개사|박 중개사/],["k1","neigh",/옆집 할머니/]];
 for(const [prop,id,re] of cases){
   const r=await p.evaluate(async ([prop,id])=>{ localStorage.clear(); kcRec().fr={full:true}; arenaTab='king';KC_MODE='career';K_PROP_NEXT=prop;KC_INTRO=false; kStart(5); K.intro=false;
     K.rlog=K.rlog||[]; K.rlog.push(...Array(window._rl=(window._rl||0)+1).fill({id:'x',min:0,travel:0})); for(let t=0;t<20;t++){ K.timeLeft=9999; K.done=Object.fromEntries(KP.actions.map(a=>[a.id,true])); delete K.done[id]; K.says=[]; K._nfSay=null; kResearch(id); if(K._nfSay) break; }

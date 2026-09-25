@@ -381,7 +381,7 @@ kStart = function(seed){
   _kf_kStart(seed);
   if(!K) return;
   K_LIST.length = 0; (KP.gen ? KP.list : KF_K1_LIST).forEach(v => K_LIST.push(v));
-  K_MOVES.forEach((m, i) => { m.t = KF_MOVE_T[i]; });
+  K_MOVES.forEach((m, i) => { if(KF_MOVE_T[i] != null) m.t = KF_MOVE_T[i]; });   // 뒤에 추가된 행동(막힌 곳 행동 등)은 건드리지 않는다
   if(!KP.gen) return;
   const d = K_MOVES.find(m => m.id === "daughter"); d.t = KP.helper ? KP.helper.t : "📞 가족에게 연락한다";
   const c = K_MOVES.find(m => m.id === "center"); if(KP.centerT) c.t = KP.centerT;

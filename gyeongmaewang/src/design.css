@@ -740,3 +740,7 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .st-grid small{font-weight:500;opacity:.8}.st-net{color:#1f7a4f}
 .st-hint{margin-top:8px;padding:7px 10px;border-radius:8px;background:rgba(242,179,61,.14);font-size:14px}
 .st-acts{margin-top:8px}
+/* v126 — 명도 '막힌 곳' 판 */
+.mb-card{border-left:4px solid #c98a14}.mb-card.mb-ok{border-left-color:#1f9d62}
+.mb-list{list-style:none;margin:6px 0;padding:0;line-height:1.7}.mb-list li{opacity:.75}.mb-list li.on{opacity:1;font-weight:700}
+.ag-act.mb-act{border-left:4px solid #c98a14!important}

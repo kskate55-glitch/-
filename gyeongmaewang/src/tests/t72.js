@@ -40,4 +40,10 @@ await pg.screenshot({path:'mt_k.png'});
 // 엔딩 그림
 await pg.evaluate(()=>{ MT=null; mtPaint(); lfNew('jaehoon'); lfRec().intro=false; const L=lfRec(); cpFinish(null,null); CP_SHOW.sum.type='good'; cpPaint(); });
 ok(await pg.evaluate(()=>{const i=document.querySelector('.cp-art img'); return !!i && i.src.includes('512cbdda');}), '재훈 GOOD 엔딩 그림');
+for(const [ch,t,id] of [['seoyun','normal','3eb0ddf6'],['seoyun','bad','314c4b5a'],['seoyun','special','19ca4ac1'],['dohyun','normal','91fd1e21'],['dohyun','bad','cd5bd56e'],['dohyun','special',null]]){
+  const r=await pg.evaluate(([ch,t])=>{ lfNew(ch); lfRec().intro=false; cpFinish(null,null); CP_SHOW.sum.type=t; cpPaint(); const i=document.querySelector('.cp-art img'); return i?i.src:null; },[ch,t]);
+  await pg.waitForTimeout(150);
+  const loaded=id? await pg.evaluate(()=>{const i=document.querySelector('.cp-art img'); return !!i && i.complete && i.naturalWidth>0;}) : true;
+  ok(id ? (!!r && r.includes(id) && loaded) : !r, ch+' '+t+(id?' 엔딩 그림 표시':' 그림 없으면 글자만'));
+}
 console.log('errors',errs); await b.close();})();

@@ -121,7 +121,8 @@ function cpSummary(type, o, forced){
     rows:[["지난 날", `${days}일`], ["처리한 CASE", `${c.cases}건 (손해 ${+c.fails || 0}건)`], ["누적 수익", kMan(c.total)], ["지금 자금", c.cash < 0 ? "대출 " + kMan(-c.cash) : kMan(c.cash)], ["스트레스", `${Math.round(L.stress)}/100`], ["깊은 인맥", `${rels}명`]]};
 }
 // 🎬 엔딩 일러스트(받은 것만 — 없으면 글만 나온다)
-const CP_END_ART = {seoyun:{good:"3a2dfa19009b195097c610316cbe17c4"}, dohyun:{good:"b130014b45d910125d391f4fc025028f"}, mijeong:{good:"949dc8b843be9a2537af925c7946f883"},
+const CP_END_ART = {seoyun:{good:"3a2dfa19009b195097c610316cbe17c4", normal:"3eb0ddf64ca5df55f033a8d66a6d81c4", bad:"314c4b5a075ec2c1b5fd7eaf9430ad37", special:"19ca4ac1ac440192ef507b81437f0e07"},
+  dohyun:{good:"b130014b45d910125d391f4fc025028f", normal:"91fd1e215fa7f1abf519ecff4712b72c", bad:"cd5bd56e5e5bc37901fe290dc5a7006a"}, mijeong:{good:"949dc8b843be9a2537af925c7946f883"},
   jaehoon:{good:"512cbdda76ef7d042b6ace4a6718710a"}, eunkyung:{good:"6bc2d39a50a75547ab9b3c4942674bbe"}};
 function cpEndArt(ch, t){ const a = CP_END_ART[ch] && CP_END_ART[ch][t]; return a ? "/_blob/" + a : null; }
 let CP_SHOW = null;       // 지금 떠 있는 엔딩 화면 {sum, step:"end"|"reveal", next, first}

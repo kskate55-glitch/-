@@ -10,9 +10,9 @@ for(const [w,h] of [[1280,800],[390,844]]){
     const pl=document.querySelector('.k-stage .vn-player'), s=document.querySelector('.lfv-say.stage'); const box=document.querySelector('.k-stage .vn-box');
     const ir=im&&im.getBoundingClientRect(), br=box&&box.getBoundingClientRect(), sr=s&&s.getBoundingClientRect();
     return {step:K.step, pose:nw, playerHidden: !pl || getComputedStyle(pl).display==='none', say:s&&s.innerText, headOk: !ir || ir.top >= br.bottom-5, sayOk: !sr || (sr.top>=br.bottom-5 && sr.right<=innerWidth)}; }, [id,hi]);
-  const want = id!=='eunkyung';
+  const want = true;
   ok((want ? r.pose>0 && r.playerHidden : r.pose===0 && !r.playerHidden) && r.say && r.headOk && r.sayOk, `${w} ${id} ${r.step}: ${JSON.stringify(r)}`);
-  if(id==='jaehoon'||id==='taesik'){ await p.waitForTimeout(2500); await p.screenshot({path:`t_pose_${id}_${r.step}_${w}.png`}); }
+  if(id==='eunkyung'){ await p.waitForTimeout(2500); await p.screenshot({path:`t_pose_${id}_${r.step}_${w}.png`}); }
  }
  await p.close();}
 console.log('errors',errs); await b.close();})();

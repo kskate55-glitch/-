@@ -358,3 +358,7 @@ img.st-img-fail{visibility:hidden}
 .ag-card .ag-diff i{font-style:normal;opacity:.25}
 .ag-card .ag-diff.d2{background:#ffeede;color:#b55a00;border-color:#f3c08c}
 .ag-card .ag-diff.d3{background:#ffe3e3;color:#b3261e;border-color:#f0a8a8}
+
+/* 휠체어 매수자 — 앉은 그림이라 서 있는 인물과 키가 맞게 조금 작게 */
+#kfsRoot .k-stage .vn-sprite.by-seated{height:min(48%, calc(100% - 160px))}
+@media (min-width:901px){ #kfsRoot .k-stage .vn-sprite.by-seated{height:min(48%, calc(100% - 270px))} }

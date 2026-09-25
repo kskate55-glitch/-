@@ -13,7 +13,7 @@ const _by_kStage = kStage; kStage = function(bg, who, ex, text, name){
   const h = _by_kStage(bg, who, ex, text, name);
   const of = K && K.step === "sell" && K.sale && K.sale.offer; if(!of || !of.buyer || who !== "narr") return h;
   const B = BY_ART[of.buyer.t]; if(!B) return h;
-  return h.replace('<div class="vn-box narr">', `<img class="vn-sprite nf-sprite by-sprite" src="${byUrl(B.art[B.ex])}" alt="${esc(of.buyer.t)}"><div class="vn-box nf-box"><div class="vn-name">매수자 · ${esc(of.buyer.t)}</div>`);
+  return h.replace('<div class="vn-box narr">', `<img class="vn-sprite nf-sprite by-sprite${B.seated?" by-seated":""}" src="${byUrl(B.art[B.ex])}" alt="${esc(of.buyer.t)}"><div class="vn-box nf-box"><div class="vn-name">매수자 · ${esc(of.buyer.t)}</div>`);
 };
 // 개찰 화면(순위가 한 줄씩 올라오는 그 화면) — 오른쪽에 경매계 직원이 서류판을 들고 서 있다
 const _by_reveal = keRevealHTML; keRevealHTML = function(){

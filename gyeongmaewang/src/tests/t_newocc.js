@@ -3,7 +3,7 @@ const {chromium}=require('playwright');
 for(const [w,h] of [[1280,800],[390,844]]){
 const p=await b.newPage({viewport:{width:w,height:h}}); p.on('pageerror',e=>errs.push(String(e)));
 await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(800);
-for(const id of ['p_hawaii','p_live','p_tojuk','p_chain','p_gamer']){
+for(const id of ['p_hawaii','p_live','p_tojuk','p_chain','p_gamer','p_law','p_madam']){
   const r=await p.evaluate(async(id)=>{ const P=personaById(id); if(!P) return {err:'no persona'};
     const out={name:P.name, type:occType(P.type).name};
     ['normal','angry','worried'].forEach(e=>out[e]=!!artNpc(id,e));
@@ -15,7 +15,7 @@ for(const id of ['p_hawaii','p_live','p_tojuk','p_chain','p_gamer']){
   console.log(w,id,JSON.stringify(r)); if(!r.normal||!r.angry||!r.worried||!r.shown||!r.loaded||!r.grade) errs.push(w+' '+id);
   if(w===390) await p.screenshot({path:`t_newocc_${id}.png`});
 }
-const chat=await p.evaluate(()=>{ sampleFn=async()=>({text:""}); arenaTab='chat'; CH.pid=null; renderArena(); return ['p_hawaii','p_live','p_tojuk','p_chain','p_gamer'].map(id=>{const c=document.querySelector(`.ag-card[data-chatwith="${id}"]`); return c? c.querySelector('.ag-diff').textContent : null;}); });
+const chat=await p.evaluate(()=>{ sampleFn=async()=>({text:""}); arenaTab='chat'; CH.pid=null; renderArena(); return ['p_hawaii','p_live','p_tojuk','p_chain','p_gamer','p_law','p_madam'].map(id=>{const c=document.querySelector(`.ag-card[data-chatwith="${id}"]`); return c? c.querySelector('.ag-diff').textContent : null;}); });
 console.log(w,'chat',JSON.stringify(chat)); if(chat.some(x=>!x)) errs.push('chat '+w);
 }
 console.log('errors',errs); await b.close();})();

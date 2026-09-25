@@ -5,7 +5,9 @@ const NEWOCC_ART = {
   p_live:{normal:"fa002e9bb134aae648df505235d1f54c", angry:"ffddc146ccecb42616c632df4c979658", worried:"48b4c64fb03c037ddc59cf1d50d79c40"},
   p_tojuk:{normal:"53dca1692719afcdfda646e18dfc7d7f", angry:"8f17d657f0c4cdb20ea031dace9ed9bf", worried:"47d9e289cc0dfb6b5270097856223369"},
   p_chain:{normal:"bfd3cf495bcd6caada5e058b400e79ec", angry:"2a5a086e1d3261939f7367fa07b3d234", worried:"ed4ebb6f2871053313dc1640ba5409d6"},
-  p_gamer:{normal:"b477a384ffca76cbe3ede1b8fe21124e", angry:"ee5432b0aa1be76dfe3480d05f5b61c8", worried:"3b5d440154b8359f10a3761b85fcf88a"}};
+  p_gamer:{normal:"b477a384ffca76cbe3ede1b8fe21124e", angry:"ee5432b0aa1be76dfe3480d05f5b61c8", worried:"3b5d440154b8359f10a3761b85fcf88a"},
+  p_law:{normal:"0efa9fabfe464b0f3c18335d494a091c", angry:"7b49188d39741eadbf8692049ef36bd2", worried:"1da47388f3d39f6f159cc82e4e5ceb20"},
+  p_madam:{normal:"fedcaef10e4e39bc3feebad1727f4951", angry:"5a51c1db7226b05ba8ee41e2f8098dc8", worried:"50ea34a25518a2baa396079bac447671"}};
 Object.keys(NEWOCC_ART).forEach(pid => Object.keys(NEWOCC_ART[pid]).forEach(ex => { ART_DEFAULT[`npc_${pid}_${ex}`] = NEWOCC_ART[pid][ex]; }));
 const NEW_PERSONAS = [
  {id:"p_hawaii", type:"bully", emoji:"🌴", name:"황금철 씨 (63)", who:"전 소유자(채무자)",
@@ -52,5 +54,37 @@ const NEW_PERSONAS = [
   hard:"하루에 문자 수십 통, 밤에 문 두드리기, 게임이나 외모 비꼬기",
   opener:"(읽음) …… 아 네. 근데 저 집주인 아닌데요. 아버지한테 물어보세요.",
   minPay:50, execCost:350, weekly:30, par:400,
-  p:{resist:60, emo:0.9, legal:0.5, vanish:0.35, transfer:0.05, dividend:false}}];
+  p:{resist:60, emo:0.9, legal:0.5, vanish:0.35, transfer:0.05, dividend:false}},
+ {id:"p_law", type:"fake", emoji:"⚖️", name:"마재석 씨 (46)", who:"자칭 선순위 임차인(채무자의 사촌)",
+  story:"채무자의 사촌. 광택 도는 보라색 정장에 두꺼운 법전을 끼고 다니며 '판례가 있어요'를 입에 달고 산다. 근저당 설정 사흘 전에 전입했다며 보증금 1억 5천만원 계약서를 내밀지만, 보증금을 보낸 계좌 기록은 없다.",
+  legal:"주장상 선순위 임차인 · 보증금 지급 흔적 없음(가장임차인 의심) · 인도명령으로 다툼", style:"어려운 법률 용어를 섞어 가며 가르치듯 말한다. 증빙 이야기가 나오면 '그건 제 개인정보라서요'로 피하고 안경을 자꾸 치켜올린다.",
+  goal:"법을 아는 척 겁을 줘서 보증금 일부라도 받아 낼 수 있는지 떠 보는 중이다. 금융거래 자료를 요구하고 인도명령 신청서에 가장임차인 사유를 정리했다고 하면 태도가 급격히 바뀌어 이사비 80만원이면 나간다.",
+  soft:"법률 용어에 휘말리지 않고 '보증금을 보낸 이체 기록'만 담담히 요구, 인도명령·점유이전금지가처분 절차 안내, 모든 대화를 문자로 남기기",
+  hard:"법전 들이미는 데 겁먹고 보증금 이야기를 받아 주기, 같이 법 논쟁으로 언성 높이기",
+  opener:"주택임대차보호법 제3조 아시죠? 저는 대항력 있는 선순위 임차인이에요. 판례도 다 찾아 놨으니까 보증금 1억 5천 해결 전엔 못 나갑니다.",
+  minPay:80, execCost:400, weekly:40, par:470,
+  p:{resist:82, emo:0.5, legal:1.7, vanish:0.1, transfer:0.25, dividend:false, fake:true}},
+ {id:"p_madam", type:"bully", emoji:"🕶️", name:"구혜란 씨 (55)", who:"전 소유자(채무자)",
+  story:"모피 숄에 큰 선글라스를 쓰고 '이런 집에 내가 왜 급해요'라며 부자인 척하지만, 사업이 무너지며 집이 경매로 넘어갔다. 1년 넘게 관리비를 안 내서 공용부분 관리비만 400만원이 밀려 있다.",
+  legal:"전 소유자(채무자) · 배당 없음 · 인도명령 대상 · 체납 관리비 중 공용부분은 매수인이 떠안을 수 있다(연체료는 제외)", style:"콧대 높은 존댓말, 상대를 아래로 내려다보는 말투. 체면이 걸리면 언성을 높이지만, 남들 눈을 의식해서 조용히 끝내는 쪽을 원한다.",
+  goal:"체면을 지키며 나가고 싶다. 동네에 소문나지 않게 조용히, 이사 날짜를 자기 쪽에서 정한 것처럼 해 주고 이사비 150만원이면 나간다. 공개적으로 망신을 당하면 끝까지 버틴다.",
+  soft:"정중한 존댓말, 체면 세워 주기(이사 날짜 선택권), 관리비는 관리사무소와 따로 정리하겠다고 선 긋기, 조용한 곳에서 이야기",
+  hard:"이웃 앞에서 체납·경매 이야기 꺼내기, 비꼬기, 관리비를 핑계로 겁주기",
+  opener:"낙찰받으셨다고요? 뭐 급할 거 있나요. 저 이런 집 하나 없어도 사는 사람이에요. 날짜는 제가 정할게요.",
+  minPay:150, execCost:420, weekly:40, par:520,
+  p:{resist:80, emo:1.1, legal:0.9, vanish:0.06, transfer:0.05, dividend:false, greed:1.3}}];
 NEW_PERSONAS.forEach(P => { if(!PERSONAS.some(x => x.id === P.id)) PERSONAS.push(P); });
+
+/* 새 매수자 3명 (B 발주) — 매도 단계에 제안하는 사람으로 등장. 목록 끝에 붙이므로 기존 유형은 그대로다. */
+const NEW_BUYERS = [
+  {t:"은퇴한 선생님", flex:0.008, cancel:0.05, art:{normal:"6301eded5a19a84201be15062c0195c3", angry:"b912a35570ee57c839e2a4be57ef98c0", worried:"85615f463e1cdb01373b7e5651f11b20"}, ex:"normal",
+   say:["\"천천히 봅시다. 집은 오래 사는 거니까.\"", "뒷짐을 지고 베란다에 한참 서 있었다."]},
+  {t:"꼼꼼한 외국인 연구원", flex:0.005, cancel:0.12, art:{normal:"db28ff828c2e6584db866ab6048b38bc", angry:"eae5bfb3739ba8db3c87e91e60626322", worried:"eb34623badd6b8dec34c407d9a09f3a5"}, ex:"normal",
+   say:["\"등기부 을구, 한 번 더 보여 주실 수 있을까요?\"", "서류에 형광펜으로 줄을 그으며 하나씩 물었다."]},
+  {t:"휠체어를 쓰는 실수요자", flex:0.01, cancel:0.1, seated:true, art:{normal:"0e203d74094ba7b98a8627d4c1160878", angry:"363606027895554c03b944d533453593", worried:"743433849b189077bfe4d85f5bad719c"}, ex:"angry",
+   say:["\"현관 턱이 몇 센티예요? 욕실 문 폭도 재 봐도 될까요?\"", "줄자로 현관과 욕실 문을 꼼꼼히 쟀다."]}];
+NEW_BUYERS.forEach(b => {
+  if(!K_BUYERS.some(x => x.t === b.t)) K_BUYERS.push({t:b.t, flex:b.flex, cancel:b.cancel});
+  BY_ART[b.t] = {art:b.art, ex:b.ex, seated:!!b.seated};
+  if(typeof DP_BUYER_SAY !== "undefined") DP_BUYER_SAY[b.t] = b.say;
+});

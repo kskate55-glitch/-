@@ -16,9 +16,9 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; lfNew('mijeong'); lfRec().intro=false; renderArena(); });
  ok(await p.evaluate(()=>artUrl('npc_player_neutral')==='/_blob/3f5ff0ba1b1ee0e30979aa50d1fd5dae' && document.querySelector('.lf-me').src.includes('7908e88b') && /3d69a046/.test(document.body.innerHTML)), w+' 미정: 뒷모습·거실·앞모습');
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; lfNew('taesik'); lfRec().intro=false; renderArena(); });
- ok(await p.evaluate(()=>!document.querySelector('.lf-me')), w+' 태식은 아직 공용 그림');
+ ok(await p.evaluate(()=>document.querySelector('.lf-me') && document.querySelector('.lf-me').src.includes(LF_CHAR_ART.taesik.front)), w+' 태식: 태식 전신');
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; K=null; LF_PICK='dohyun'; renderArena(); }); await p.waitForTimeout(500);
- ok(await p.evaluate(()=>document.querySelectorAll('.lf-card .lf-face img').length===5 && /b9c749/.test(document.querySelector('.lf-focus-art').src)), w+' 선택: 다섯 명 얼굴·도현 일러스트');
+ ok(await p.evaluate(()=>document.querySelectorAll('.lf-card .lf-face img').length===6 && /b9c749/.test(document.querySelector('.lf-focus-art').src)), w+' 선택: 여섯 명 얼굴·도현 일러스트');
  await p.click('[data-lfstart="dohyun"]'); await p.waitForTimeout(1500); await p.click('#gxOp'); await p.waitForTimeout(1500); await p.screenshot({path:`ca_op_dh_${w}.png`});
  ok(await p.evaluate(()=>/3ff68bb1/.test(document.querySelector('#gxOp .gx-bgimg.on').style.backgroundImage)), w+' 도현 오프닝 첫 장면 = 퇴근길');
  await p.click('[data-gxskip]'); await p.waitForTimeout(300); await p.click('[data-gxskip]'); await p.waitForTimeout(1300); await p.screenshot({path:`ca_base_dh_${w}.png`});

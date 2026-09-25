@@ -1,0 +1,10 @@
+const { chromium } = require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const p=await b.newPage({viewport:{width:1280,height:800}});p.on('pageerror',e=>errs.push(e.message));
+await p.goto('http://localhost:8765/rights-study.html#arena');await p.waitForTimeout(700);
+await p.evaluate(()=>{const c=kcRec(); c.total=12000; c.cash=27000; arenaTab='home';renderArena();}); await p.waitForTimeout(1200); await p.screenshot({path:'nw1.png'});
+await p.evaluate(()=>{arenaTab='rec';renderArena();}); await p.waitForTimeout(500); await p.screenshot({path:'nw2.png',fullPage:true});
+await p.evaluate(()=>{arenaTab='king';kcStart('career');K.intro=false;renderArena();}); await p.waitForTimeout(400); await p.fill('#kBid','12650'); await p.waitForTimeout(700); await p.evaluate(()=>document.querySelectorAll('.nx-bar details[open]').forEach(o=>o.open=false)); await p.click('[data-kcseal]'); await p.waitForTimeout(1300); await p.screenshot({path:'nw3.png'});
+await p.click('[data-kbid]'); await p.waitForTimeout(1500); await p.screenshot({path:'nw4.png'}); await p.waitForTimeout(6000);
+await p.evaluate(()=>{K.step='move'; K.occ.coop=20; kMove('threat'); renderArena();}); await p.waitForTimeout(1800); await p.screenshot({path:'nw5.png'});
+console.log(await p.evaluate(()=>document.querySelector('.k-stage .vn-sprite').className));
+console.log('errors',errs);await b.close();})();

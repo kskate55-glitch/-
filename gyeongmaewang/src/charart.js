@@ -22,19 +22,26 @@ const LF_CHAR_ART = {
   eunkyung:{face:{normal:"8336de9700e8867cef7780f9eb5100b8", happy:"4af47be1b355fa6d1bb4cf6b33138034", shocked:"6ac2ed5732b7577e826f0faa7fde89a0",
                 worried:"9bc30ab83c619c296a59bb886e2cdccc", angry:"051cf9287aa3edef659dd6bcfd3ba3a9", tired:"37800e7039244c49f1057cb020a82930"},
           front:"161bb82508161fb9813ce4a1c2ef6b2e", back:"da966f6f11cff93debb276f20106cc14", select:"21337f6463a3fe6b47f7499ff4954b39",
-          morning:"e484c60840c93b1948e7870ab73d4d19", room:"75d039a099fc0a99a7efba48f6d09783"}};
+          morning:"e484c60840c93b1948e7870ab73d4d19", room:"75d039a099fc0a99a7efba48f6d09783"},
+  // 김태식 — 표정: 기본 · 허허 웃음(happy) · 놀람 · 서류 보며 걱정(worried) · 안경 벗어 들고 단호(angry) · 뒷목 주무름(tired)
+  taesik:{face:{normal:"15c1b2126eed366fc28b475d5a53cf4d", happy:"5a9a05d1f40badfdc2451dc2c3ede869", shocked:"a2658ef567cb0ac710ef90a84aad80e1",
+                worried:"6db1cdae5024e5daa6e5c0bb90fa8a4a", angry:"e13b034770f92fcfdcedab51a787c1f4", tired:"fd7209e092894569b2ec654bc0d19e14"},
+          front:"e38563f6d902753010dc4d6283980bf0", back:"845ed5f0e277b6d31d290543db5404d0", select:"2452f4871394a4843ed2e61f2a74d9cc",
+          morning:"3b86d1750b7daf85991c90dbccd52b74", room:"5590c2eb1aedda87ae1ffffc4c65752d"}};
 const LF_FACE_ALIAS = {soft:"happy", neutral:"normal", troubled:"worried", furious:"angry"};
 // 배경·컷 칸으로도 등록해 둔다(그림 관리 화면·오프닝이 같은 이름으로 찾게)
 Object.assign(ART_DEFAULT, {bg_base_sillim:LF_CHAR_ART.seoyun.room, cut_seoyun_found:LF_CHAR_ART.seoyun.found,
   bg_base_hwagok:LF_CHAR_ART.dohyun.room, cut_dohyun_commute:LF_CHAR_ART.dohyun.commute,
   bg_base_yeongdeungpo:LF_CHAR_ART.mijeong.room, cut_mijeong_shop:LF_CHAR_ART.mijeong.shop,
   bg_base_bulgwang:LF_CHAR_ART.jaehoon.room, cut_jaehoon_site:LF_CHAR_ART.jaehoon.site,
-  bg_base_mapo:LF_CHAR_ART.eunkyung.room, cut_eunkyung_morning:LF_CHAR_ART.eunkyung.morning});
+  bg_base_mapo:LF_CHAR_ART.eunkyung.room, cut_eunkyung_morning:LF_CHAR_ART.eunkyung.morning,
+  bg_base_mokdong:LF_CHAR_ART.taesik.room, cut_taesik_morning:LF_CHAR_ART.taesik.morning});
 if(LF_BASES.sillim) LF_BASES.sillim.bg = "bg_base_sillim";
 if(LF_BASES.hwagok) LF_BASES.hwagok.bg = "bg_base_hwagok";
 if(LF_BASES.yeongdeungpo) LF_BASES.yeongdeungpo.bg = "bg_base_yeongdeungpo";
 if(LF_BASES.bulgwang) LF_BASES.bulgwang.bg = "bg_base_bulgwang";
 if(LF_BASES.mapo) LF_BASES.mapo.bg = "bg_base_mapo";
+if(LF_BASES.mokdong) LF_BASES.mokdong.bg = "bg_base_mokdong";
 function lfArt(id){ id = id || (lfOn() ? lfRec().char : null); return id ? LF_CHAR_ART[id] || null : null; }
 function lfBlob(a){ return window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a; }
 function lfArtUrl(id, k){ const A = lfArt(id); return A && A[k] ? lfBlob(A[k]) : null; }
@@ -60,6 +67,7 @@ if(LF_OPENINGS.dohyun){ LF_OPENINGS.dohyun[0].bg = "cut_dohyun_commute"; [2,3,4]
 if(LF_OPENINGS.mijeong){ LF_OPENINGS.mijeong[0].bg = "cut_mijeong_shop"; LF_OPENINGS.mijeong[0].uiPos = "low"; LF_OPENINGS.mijeong[0].pos = "58% 50%"; LF_OPENINGS.mijeong[1].pos = "58% 50%"; LF_OPENINGS.mijeong[1].bg = "cut_mijeong_shop"; LF_OPENINGS.mijeong[2].bg = "bg_base_yeongdeungpo"; }
 // 재훈: 수리 현장에서 벽 두드리기(그림 속 본인, 오른쪽) → 국밥집 골목(그대로) → 불광동 작업방
 if(LF_OPENINGS.eunkyung){ [0,1].forEach(i => { LF_OPENINGS.eunkyung[i].bg = "cut_eunkyung_morning"; LF_OPENINGS.eunkyung[i].pos = "40% 45%"; }); LF_OPENINGS.eunkyung[0].uiPos = "right"; if(LF_OPENINGS.eunkyung[2]) LF_OPENINGS.eunkyung[2].bg = "bg_base_mapo"; }
+if(LF_OPENINGS.taesik){ [0,1].forEach(i => { LF_OPENINGS.taesik[i].bg = "cut_taesik_morning"; LF_OPENINGS.taesik[i].pos = "30% 45%"; }); [2,3].forEach(i => { if(LF_OPENINGS.taesik[i]) LF_OPENINGS.taesik[i].bg = "bg_base_mokdong"; }); }
 if(LF_OPENINGS.jaehoon){ [0,1].forEach(i => { LF_OPENINGS.jaehoon[i].bg = "cut_jaehoon_site"; LF_OPENINGS.jaehoon[i].pos = "72% 50%"; }); if(LF_OPENINGS.jaehoon[3]) LF_OPENINGS.jaehoon[3].bg = "bg_base_bulgwang"; }
 // 거점: 방 안에 내가 서 있다
 const _ca_base = lfBaseHTML; lfBaseHTML = function(){
@@ -80,4 +88,14 @@ const _ca_sel = lfSelectHTML; lfSelectHTML = function(){
 // 표정 추가분(유형별 공용 인물) — 사용자가 받아온 그림을 잘라 넣은 것
 Object.assign(ART_DEFAULT, {
   npc_oldman_angry:"fcc7cfffff7eacd0b17ef2826695465a", npc_oldman_troubled:"b0be3eb3877369e0f331140f4aa2a778",
-  npc_ajumma_angry:"794f4071761ea649ca0e624f07fb8cc0", npc_roughman_troubled:"19eea9a9f3405b0de67a53fac0188d68"});
+  npc_ajumma_angry:"794f4071761ea649ca0e624f07fb8cc0", npc_roughman_troubled:"19eea9a9f3405b0de67a53fac0188d68",
+  npc_youngwoman_angry:"24119c2a4221b7134f09674ef8e12ace", npc_youngwoman_troubled:"4c061c7eeb1e5a0e670645fd1cfacfa1",
+  npc_broker_angry:"a0314110d1f06801734397463698e2b6", npc_broker_troubled:"df0ef3afa8747d10455a68cf21968f62",
+  npc_mover_angry:"c82dc00671840d4938147d88dc1b78af", npc_mover_troubled:"83976aafef64c135db8d05114f04280e",
+  npc_bailiff_normal:"771b3c26f7242bd10265e921d6f69a38"});
+
+// 소품 시트 1
+Object.assign(ART_DEFAULT, { prop_keys:"7059fb81a6d57bc439fd5024522e5588", prop_doorlock:"06d82fa0eaac7d5f9bb76cc7298d05bc", prop_letter:"1e384ffbe93d01ac4965d8340ace2b35", prop_order:"d204d14461d036ac98090c161ad7c0a9", prop_confirm:"d64273376769a7d9db9681014b252e1a", prop_boxes:"bebc3ce4f786c807a14b77deb58c0e71", prop_cash:"a9b6410a700caaec777f99058f9c3ebf", prop_notice:"21747c71f0aafade4ae3da853f183c0e", prop_truck:"2339f9b18426feb1315879ff6ee20074"});
+
+// 소품 시트 2·3 + 사건 뒤 빈 거실 컷
+Object.assign(ART_DEFAULT, { prop_phone:"4a27e45a85728ea403c93c2d46b2bc49", prop_calendar:"4eb9ef8eee578c7727263a8b0d14328d", prop_bill:"f913b3f81e6a9488e77baaa5b25b3f8c", prop_drink:"5ecd637c980a8d4231b558051afc78d5", prop_toolbox:"217deb542ae1c274fa5dfe54f6a6d44d", prop_delivery_boxes:"437b82011ccdaf679260944b29a25915", prop_trash_bags:"d44b9b02fb1bc3216aa3cfb914840cdd", prop_mail_bundle:"c245b5a0f4a7723578f8a34b2df09297", prop_shoes_slippers:"55ee5095f373e186b2ee17fb69c87380", prop_safe_box:"6e47d37dbefd34858f7a448b1370870a", cut_empty_after:"ebb5e6cf420574784e9e1aad5dbc7bfa"});

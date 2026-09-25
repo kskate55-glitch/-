@@ -4,9 +4,9 @@ for(const [w,h] of [[1280,800],[390,844]]){const p=await b.newPage({viewport:{wi
 await p.goto('http://localhost:8765/rights-study.html#arena');await p.waitForTimeout(700);
 await p.evaluate(()=>{hubRec().cleared['king:k1']=1; kcRec().cases=1; arenaTab='home';renderArena();}); await p.waitForTimeout(1000); await p.screenshot({path:`c2_0_${w}.png`});
 await p.click('[data-kcnew="career"][data-prop="k2"]'); await p.waitForTimeout(600); await p.click('[data-kintro]'); await p.waitForTimeout(500);
-for(const r of ['docs','down','park','bank']){ const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){await el.click(); await p.waitForTimeout(150);} }
+for(const r of ['docs','down','park','bank']){ await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest("details"); document.querySelectorAll('.nx-bar details[open]').forEach(o=>{ if(o!==d) o.open=false; }); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){await el.click(); await p.waitForTimeout(150);} }
 await p.screenshot({path:`c2_1_${w}.png`});
-await p.fill('#kBid','14200'); await p.click('[data-kcseal]'); await p.waitForTimeout(300); await p.click('[data-kbid]'); await p.waitForTimeout(9000);
+await p.fill('#kBid','14200'); await p.evaluate(()=>document.querySelectorAll('.nx-bar details[open]').forEach(o=>o.open=false)); await p.click('[data-kcseal]'); await p.waitForTimeout(300); await p.click('[data-kbid]'); await p.waitForTimeout(9000);
 const st=await p.evaluate(()=>K.step); console.log(w,'after bid',st); if(st!=='won'){ await p.screenshot({path:`c2_lost_${w}.png`}); continue; }
 await p.click('[data-k2="go:cross"]'); await p.waitForTimeout(700); await p.screenshot({path:`c2_2_${w}.png`});
 await p.click('[data-k2="cross:go"]'); await p.waitForTimeout(900); await p.click('[data-k2="move:ask"]'); await p.waitForTimeout(1500); await p.screenshot({path:`c2_3_${w}.png`});

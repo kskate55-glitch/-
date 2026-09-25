@@ -12,11 +12,11 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  const r1 = await p.evaluate(()=>document.querySelector('#qaBid').innerText);
  await p.fill('#kBid', String(await p.evaluate(()=>KP.minBid+6000))); await p.waitForTimeout(100);
  const r2 = await p.evaluate(()=>document.querySelector('#qaBid').innerText); ok(r1!==r2, w+' 입력하면 수익 범위가 바뀜'); console.log(w, r2.replace(/\s+/g,' '));
- for(const r of ['docs','call3','mgmtcall']){ await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest('details'); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){ await el.click(); await p.waitForTimeout(500);} }
+ for(const r of ['docs','call3','mgmtcall']){ await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest('details'); document.querySelectorAll('.nx-bar details[open]').forEach(o=>{ if(o!==d) o.open=false; }); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){ await el.click(); await p.waitForTimeout(500);} }
  ok(await p.evaluate(()=>document.querySelectorAll('.ke-card.on .qa-who').length>=1), w+' 드러난 카드에 출처');
  await bad('brief');
  // 끝까지 봇
- await p.fill('#kBid', String(await p.evaluate(()=>KP.minBid+2600))); await p.click('[data-kcseal]'); await p.waitForTimeout(300); await p.click('[data-kbid]'); await p.waitForTimeout(8500);
+ await p.fill('#kBid', String(await p.evaluate(()=>KP.minBid+2600))); await p.evaluate(()=>document.querySelectorAll('.nx-bar details[open]').forEach(o=>o.open=false)); await p.click('[data-kcseal]'); await p.waitForTimeout(300); await p.click('[data-kbid]'); await p.waitForTimeout(8500);
  await p.evaluate(()=>{ if(K.revealing){ K.revealing=false; renderArena(); } let g=0; while(K.step!=='result' && K.step!=='lost' && g++<200){
     if(K.step==='won'){ K.step='move'; continue; }
     if(K.step==='move'){ if(K.pendingFlip) kFlipAnswer(false); else if(K.offering) kOffer(K.askNeed); else if(K.occ.agreed && !K.occ.paper) kMove('paper'); else if(K.occ.agreed) kMove('listen'); else kMove(K.occ.coop<45?'listen':(K.occ.dInvolved||!K.occ.daughter?'date':'daughter')); continue; }

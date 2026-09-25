@@ -89,3 +89,86 @@
   #kfsRoot .vn-box.has-me{padding-left:92px;min-height:92px}
   #kfsRoot .vn-face.me{width:74px;height:74px;left:8px}
 }
+
+/* 🖥️ 한 화면 게임 — 조사 행동 버튼 줄(그림 위) */
+#kfsRoot .nx-dock{position:absolute;left:12px;right:12px;top:12px;z-index:8;pointer-events:none}
+#kfsRoot .nx-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;pointer-events:auto;width:max-content;max-width:100%;position:relative}
+#kfsRoot .nx-grp{position:static;margin:0;border:0;background:none;padding:0}
+#kfsRoot .nx-grp > summary{list-style:none;display:flex;align-items:center;gap:7px;min-height:44px;padding:8px 14px;border-radius:12px;cursor:pointer;
+  background:rgba(14,18,28,.82);color:#f2f4f8;border:1.5px solid rgba(242,179,61,.55);font-weight:800;font-size:14.5px;white-space:nowrap;
+  box-shadow:0 6px 16px rgba(0,0,0,.35);backdrop-filter:blur(3px)}
+#kfsRoot .nx-grp > summary::-webkit-details-marker{display:none}
+#kfsRoot .nx-grp > summary:hover{border-color:var(--gx-amber,#f2b33d)}
+#kfsRoot .nx-grp[open] > summary{background:var(--gx-amber,#f2b33d);color:#1b1406;border-color:var(--gx-amber,#f2b33d)}
+#kfsRoot .nx-ts{display:none}
+#kfsRoot .nx-dock.mob .nx-t{display:none}
+#kfsRoot .nx-dock.mob .nx-ts{display:inline}
+#kfsRoot .nx-dock.mob .nx-grp > summary::after{display:none}
+#kfsRoot .nx-n{background:#f2f4f8;color:#141820;border-radius:999px;font-size:12px;font-weight:800;padding:1px 8px;min-width:22px;text-align:center}
+#kfsRoot .nx-grp[open] .nx-n{background:#1b1406;color:#f2b33d}
+#kfsRoot .nx-pop{position:absolute;left:0;top:calc(100% + 8px);width:min(470px,calc(100vw - 40px));max-height:var(--nx-room,420px);overflow:auto;
+  background:rgba(18,23,34,.97);border:1.5px solid rgba(242,179,61,.5);border-radius:14px;padding:10px 12px 12px;box-shadow:0 14px 36px rgba(0,0,0,.5);overscroll-behavior:contain}
+#kfsRoot .nx-pop-h{display:flex;align-items:baseline;gap:8px;position:sticky;top:-10px;background:inherit;padding:4px 0 8px;margin:-4px 0 6px;border-bottom:1px solid rgba(255,255,255,.1);z-index:1}
+#kfsRoot .nx-pop-h b{font-size:15px;color:var(--gx-amber,#f2b33d)}
+#kfsRoot .nx-pop-h small{color:#b9c0cc;font-size:12.5px;flex:1}
+#kfsRoot .nx-x{margin-left:auto;background:none;border:0;color:#c9ced8;font-size:18px;min-width:40px;min-height:36px;cursor:pointer;border-radius:8px}
+#kfsRoot .nx-x:hover{background:rgba(255,255,255,.08)}
+#kfsRoot .nx-quit{min-height:44px;padding:8px 12px;border-radius:12px;background:rgba(14,18,28,.6);color:#c9ced8;border:1px solid rgba(255,255,255,.2);font-size:13px;font-weight:700}
+/* 패널은 상태만 — 한 화면에 들어가게 */
+@media (min-width:900px){
+  #kfsRoot .kfs-panel .stg-wx{display:none}
+  #kfsRoot .kfs-panel > .panel, #kfsRoot .kfs-panel > details, #kfsRoot .kfs-panel > div{margin-top:6px;margin-bottom:6px}
+}
+@media (min-width:900px){ #kfsRoot .kr-left{white-space:nowrap;font-size:22px} }
+@media (min-width:900px) and (max-height:820px){
+  #kfsRoot .kr-clock{padding:8px 12px;margin:6px 0}
+  #kfsRoot .lf-day-row{gap:4px;margin-top:4px}
+  #kfsRoot .lf-day-row .note{font-size:11.5px;line-height:1.35}
+  #kfsRoot .kfs-panel .kc-mode{padding-top:6px;padding-bottom:6px}
+}
+/* 좁은 화면: 패널 맨 위에 한 줄로 붙고, 목록은 그림 위로 뜬다 */
+#kfsRoot .nx-dock.mob{position:sticky;top:0;left:auto;right:auto;margin:-2px 0 8px;padding:6px 0;background:var(--sheet,#161b25);z-index:9}
+#kfsRoot .nx-dock.mob .nx-bar{flex-wrap:nowrap;gap:5px;width:100%;overflow-x:auto;scrollbar-width:none}
+#kfsRoot .nx-dock.mob .nx-bar::-webkit-scrollbar{display:none}
+#kfsRoot .nx-dock.mob .nx-grp > summary{padding:6px 8px;font-size:12.5px;min-height:44px;gap:4px}
+#kfsRoot .nx-dock.mob .nx-n{padding:1px 6px;min-width:18px;font-size:11.5px}
+#kfsRoot .nx-dock.mob .nx-quit{min-height:44px;padding:6px 10px;font-size:12px;flex:none;white-space:nowrap}
+#kfsRoot .nx-dock.mob .nx-pop{position:fixed;left:8px;right:8px;top:var(--nx-top,66px);width:auto;max-height:var(--nx-room,60vh);z-index:30}
+
+/* 🔤 제목 글씨체 — 명조(궁서 느낌)를 걷어내고 게임스러운 굵은 고딕으로 통일
+   Black Han Sans는 굵기가 하나뿐이라 가짜 굵게(합성)가 번지지 않게 막는다 */
+:root{--serif:"Black Han Sans","Do Hyeon","IBM Plex Sans KR",sans-serif}
+h1,h2,h3,.stat .v,.go b,.flash .front,.choices.ox .choice,.result .big,.reg caption,.rcap,.stamp,.out .big,.unit-body b,.wb-num,.wb-exp-head,.ntitle,.ag-grade{font-synthesis:none;font-weight:400}
+h1,h2,h3{letter-spacing:.01em}
+/* 제목 옆 작은 설명(small·.note)은 본문 글씨로 — 굵은 제목 글씨를 작게 쓰면 뭉개진다 */
+h1 small,h2 small,h3 small,h1 .note,h2 .note,h3 .note,h1 .sg-note,h2 .sg-note,h3 .sg-note{font-family:var(--sans,"IBM Plex Sans KR",sans-serif);letter-spacing:0}
+
+/* 🎬 엔딩 일러스트 — 카드 맨 위 가로 그림, 천천히 밝아지며 살짝 당겨진다 */
+.cp-card.has-art{max-width:760px;padding-top:0}
+.cp-art{margin:0 -24px 16px;aspect-ratio:16/9;overflow:hidden;border-radius:14px 14px 0 0;background:#0b0d12}
+.cp-art img{width:100%;height:100%;object-fit:cover;display:block;animation:cpArtIn 2.4s ease both}
+@keyframes cpArtIn{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.cp-art img{animation:none}}
+@media (max-width:640px){.cp-art{margin:0 -16px 12px}}
+
+/* 🙇 사정 듣기 — 대사가 한 줄씩, 누르면 다음 */
+.mt-tale{position:fixed;inset:0;z-index:9000;display:flex;align-items:flex-end;justify-content:center;padding:20px}
+.mt-veil{position:absolute;inset:0;background:rgba(6,8,12,.55);backdrop-filter:blur(2px)}
+.mt-card{position:relative;width:min(760px,100%);margin-bottom:4vh;background:rgba(16,20,30,.97);color:#eef1f6;border:2px solid rgba(242,179,61,.7);border-radius:16px;
+  padding:14px 18px 16px;box-shadow:0 18px 50px rgba(0,0,0,.55);cursor:pointer;animation:mtIn .25s ease both}
+.mt-card.narr{border-style:dashed;border-color:rgba(255,255,255,.35)}
+.mt-card.other{border-color:#7fb0e6}
+@keyframes mtIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.mt-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.mt-top small{color:#b9c0cc;font-size:12.5px}
+.mt-skip{background:none;border:1px solid rgba(255,255,255,.25);color:#d8dde6;border-radius:8px;min-height:36px;padding:4px 10px;font-size:12.5px;cursor:pointer}
+.mt-body{display:flex;gap:14px;align-items:flex-start}
+.mt-face{flex:none;width:96px;height:96px;border-radius:12px;overflow:hidden;background:#232a3a;border:2px solid rgba(242,179,61,.6)}
+.mt-face img{width:100%;height:100%;object-fit:cover;object-position:50% 12%}
+.mt-say{flex:1;min-width:0}
+.mt-nm{display:inline-block;color:#f2b33d;font-size:14px;margin-bottom:4px}
+.mt-card.other .mt-nm{color:#9cc6f2}
+.mt-say p{margin:0;font-size:17px;line-height:1.7;word-break:keep-all}
+.mt-card.narr .mt-say p{font-style:italic;color:#cfd5de}
+.mt-next{text-align:right;color:#f2b33d;font-size:13px;margin-top:8px;font-weight:700}
+@media (max-width:640px){.mt-tale{padding:10px}.mt-card{padding:12px 13px 14px}.mt-face{width:68px;height:68px}.mt-say p{font-size:15.5px}}

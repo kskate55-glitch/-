@@ -1,12 +1,12 @@
 const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch();const errs=[];
-for(const w of [1280,390]){const p=await b.newPage({viewport:{width:w,height:900}});p.on('pageerror',e=>errs.push(e.message));
+for(const w of [1280,390]){const p=await b.newPage({viewport:{width:w,height:900}});await p.addInitScript(()=>{window.MT_SKIP_TALE=true});p.on('pageerror',e=>errs.push(e.message));
 await p.goto('http://localhost:8765/rights-study.html#arena');await p.waitForTimeout(400);
 await p.evaluate(()=>{arenaTab='king';renderArena();}); await p.waitForTimeout(1200); if(w===1280) await p.screenshot({path:'k1.png'});
 await p.evaluate(()=>{kStart(4242);renderArena();}); await p.waitForTimeout(300);
-for(const r of ['docs','site','neigh','broker']) { const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){await el.click(); await p.waitForTimeout(120);} }
+for(const r of ['docs','site','neigh','broker']) { await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest("details"); document.querySelectorAll('.nx-bar details[open]').forEach(o=>{ if(o!==d) o.open=false; }); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){await el.click(); await p.waitForTimeout(120);} }
 if(w===1280) await p.screenshot({path:'k2.png',fullPage:true});
-await p.fill('#kBid','12650'); await p.click('[data-kcseal]'); await p.waitForTimeout(300); await p.click('[data-kbid]'); await p.waitForTimeout(6000); await p.waitForTimeout(2300);
+await p.fill('#kBid','12650'); await p.evaluate(()=>document.querySelectorAll('.nx-bar details[open]').forEach(o=>o.open=false)); await p.click('[data-kcseal]'); await p.waitForTimeout(300); await p.click('[data-kbid]'); await p.waitForTimeout(6000); await p.waitForTimeout(2300);
 if(w===1280) await p.screenshot({path:'k3.png',fullPage:true});
 const st=await p.evaluate(()=>K.step); if(st!=="won"){ console.log(w,'lost'); continue; }
 await p.click('[data-kgo="move"]'); await p.waitForTimeout(500);

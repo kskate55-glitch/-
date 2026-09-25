@@ -3,7 +3,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&family=Do+Hyeon&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&family=Do+Hyeon&family=Black+Han+Sans&display=swap">
 <style>
 :root{
   --paper:#F2F4F3; --sheet:#FFFFFF; --sheet2:#F8FAF9;
@@ -1341,6 +1341,8 @@ html.px-still .lf-me,html.px-still .vn-player{animation:none}
 @keyframes dpIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
 .dp-props{position:absolute;left:3%;bottom:34%;z-index:3;display:flex;gap:4px;align-items:flex-end}
 .dp-prop{background:rgba(20,22,28,.35);border:0;border-radius:8px;min-width:44px;min-height:44px;padding:2px 6px;font-size:22px;line-height:1;cursor:pointer;filter:saturate(.8) drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+.dp-prop .dp-img{width:40px;height:40px;object-fit:contain;image-rendering:pixelated;vertical-align:bottom;pointer-events:none}
+@media (max-width:640px){.dp-prop .dp-img{width:32px;height:32px}}
 .dp-prop:hover{background:rgba(20,22,28,.55)}
 .dp-prop.wet{position:relative}.dp-prop.wet::after{content:"";position:absolute;left:50%;bottom:2px;width:24px;height:5px;margin-left:-12px;border-radius:50%;background:rgba(120,180,230,.55)}
 .dp-say-bubble{position:absolute;bottom:52px;min-width:150px;max-width:240px;background:#fffdf6;color:#2b2418;border:2px solid #2b2418;border-radius:10px;padding:6px 10px;font-size:13px;line-height:1.45;animation:dpPop .25s var(--px-ease)}
@@ -1458,6 +1460,89 @@ html.px-still .lf-me,html.px-still .vn-player{animation:none}
   #kfsRoot .vn-box.has-me{padding-left:92px;min-height:92px}
   #kfsRoot .vn-face.me{width:74px;height:74px;left:8px}
 }
+
+/* 🖥️ 한 화면 게임 — 조사 행동 버튼 줄(그림 위) */
+#kfsRoot .nx-dock{position:absolute;left:12px;right:12px;top:12px;z-index:8;pointer-events:none}
+#kfsRoot .nx-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;pointer-events:auto;width:max-content;max-width:100%;position:relative}
+#kfsRoot .nx-grp{position:static;margin:0;border:0;background:none;padding:0}
+#kfsRoot .nx-grp > summary{list-style:none;display:flex;align-items:center;gap:7px;min-height:44px;padding:8px 14px;border-radius:12px;cursor:pointer;
+  background:rgba(14,18,28,.82);color:#f2f4f8;border:1.5px solid rgba(242,179,61,.55);font-weight:800;font-size:14.5px;white-space:nowrap;
+  box-shadow:0 6px 16px rgba(0,0,0,.35);backdrop-filter:blur(3px)}
+#kfsRoot .nx-grp > summary::-webkit-details-marker{display:none}
+#kfsRoot .nx-grp > summary:hover{border-color:var(--gx-amber,#f2b33d)}
+#kfsRoot .nx-grp[open] > summary{background:var(--gx-amber,#f2b33d);color:#1b1406;border-color:var(--gx-amber,#f2b33d)}
+#kfsRoot .nx-ts{display:none}
+#kfsRoot .nx-dock.mob .nx-t{display:none}
+#kfsRoot .nx-dock.mob .nx-ts{display:inline}
+#kfsRoot .nx-dock.mob .nx-grp > summary::after{display:none}
+#kfsRoot .nx-n{background:#f2f4f8;color:#141820;border-radius:999px;font-size:12px;font-weight:800;padding:1px 8px;min-width:22px;text-align:center}
+#kfsRoot .nx-grp[open] .nx-n{background:#1b1406;color:#f2b33d}
+#kfsRoot .nx-pop{position:absolute;left:0;top:calc(100% + 8px);width:min(470px,calc(100vw - 40px));max-height:var(--nx-room,420px);overflow:auto;
+  background:rgba(18,23,34,.97);border:1.5px solid rgba(242,179,61,.5);border-radius:14px;padding:10px 12px 12px;box-shadow:0 14px 36px rgba(0,0,0,.5);overscroll-behavior:contain}
+#kfsRoot .nx-pop-h{display:flex;align-items:baseline;gap:8px;position:sticky;top:-10px;background:inherit;padding:4px 0 8px;margin:-4px 0 6px;border-bottom:1px solid rgba(255,255,255,.1);z-index:1}
+#kfsRoot .nx-pop-h b{font-size:15px;color:var(--gx-amber,#f2b33d)}
+#kfsRoot .nx-pop-h small{color:#b9c0cc;font-size:12.5px;flex:1}
+#kfsRoot .nx-x{margin-left:auto;background:none;border:0;color:#c9ced8;font-size:18px;min-width:40px;min-height:36px;cursor:pointer;border-radius:8px}
+#kfsRoot .nx-x:hover{background:rgba(255,255,255,.08)}
+#kfsRoot .nx-quit{min-height:44px;padding:8px 12px;border-radius:12px;background:rgba(14,18,28,.6);color:#c9ced8;border:1px solid rgba(255,255,255,.2);font-size:13px;font-weight:700}
+/* 패널은 상태만 — 한 화면에 들어가게 */
+@media (min-width:900px){
+  #kfsRoot .kfs-panel .stg-wx{display:none}
+  #kfsRoot .kfs-panel > .panel, #kfsRoot .kfs-panel > details, #kfsRoot .kfs-panel > div{margin-top:6px;margin-bottom:6px}
+}
+@media (min-width:900px){ #kfsRoot .kr-left{white-space:nowrap;font-size:22px} }
+@media (min-width:900px) and (max-height:820px){
+  #kfsRoot .kr-clock{padding:8px 12px;margin:6px 0}
+  #kfsRoot .lf-day-row{gap:4px;margin-top:4px}
+  #kfsRoot .lf-day-row .note{font-size:11.5px;line-height:1.35}
+  #kfsRoot .kfs-panel .kc-mode{padding-top:6px;padding-bottom:6px}
+}
+/* 좁은 화면: 패널 맨 위에 한 줄로 붙고, 목록은 그림 위로 뜬다 */
+#kfsRoot .nx-dock.mob{position:sticky;top:0;left:auto;right:auto;margin:-2px 0 8px;padding:6px 0;background:var(--sheet,#161b25);z-index:9}
+#kfsRoot .nx-dock.mob .nx-bar{flex-wrap:nowrap;gap:5px;width:100%;overflow-x:auto;scrollbar-width:none}
+#kfsRoot .nx-dock.mob .nx-bar::-webkit-scrollbar{display:none}
+#kfsRoot .nx-dock.mob .nx-grp > summary{padding:6px 8px;font-size:12.5px;min-height:44px;gap:4px}
+#kfsRoot .nx-dock.mob .nx-n{padding:1px 6px;min-width:18px;font-size:11.5px}
+#kfsRoot .nx-dock.mob .nx-quit{min-height:44px;padding:6px 10px;font-size:12px;flex:none;white-space:nowrap}
+#kfsRoot .nx-dock.mob .nx-pop{position:fixed;left:8px;right:8px;top:var(--nx-top,66px);width:auto;max-height:var(--nx-room,60vh);z-index:30}
+
+/* 🔤 제목 글씨체 — 명조(궁서 느낌)를 걷어내고 게임스러운 굵은 고딕으로 통일
+   Black Han Sans는 굵기가 하나뿐이라 가짜 굵게(합성)가 번지지 않게 막는다 */
+:root{--serif:"Black Han Sans","Do Hyeon","IBM Plex Sans KR",sans-serif}
+h1,h2,h3,.stat .v,.go b,.flash .front,.choices.ox .choice,.result .big,.reg caption,.rcap,.stamp,.out .big,.unit-body b,.wb-num,.wb-exp-head,.ntitle,.ag-grade{font-synthesis:none;font-weight:400}
+h1,h2,h3{letter-spacing:.01em}
+/* 제목 옆 작은 설명(small·.note)은 본문 글씨로 — 굵은 제목 글씨를 작게 쓰면 뭉개진다 */
+h1 small,h2 small,h3 small,h1 .note,h2 .note,h3 .note,h1 .sg-note,h2 .sg-note,h3 .sg-note{font-family:var(--sans,"IBM Plex Sans KR",sans-serif);letter-spacing:0}
+
+/* 🎬 엔딩 일러스트 — 카드 맨 위 가로 그림, 천천히 밝아지며 살짝 당겨진다 */
+.cp-card.has-art{max-width:760px;padding-top:0}
+.cp-art{margin:0 -24px 16px;aspect-ratio:16/9;overflow:hidden;border-radius:14px 14px 0 0;background:#0b0d12}
+.cp-art img{width:100%;height:100%;object-fit:cover;display:block;animation:cpArtIn 2.4s ease both}
+@keyframes cpArtIn{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.cp-art img{animation:none}}
+@media (max-width:640px){.cp-art{margin:0 -16px 12px}}
+
+/* 🙇 사정 듣기 — 대사가 한 줄씩, 누르면 다음 */
+.mt-tale{position:fixed;inset:0;z-index:9000;display:flex;align-items:flex-end;justify-content:center;padding:20px}
+.mt-veil{position:absolute;inset:0;background:rgba(6,8,12,.55);backdrop-filter:blur(2px)}
+.mt-card{position:relative;width:min(760px,100%);margin-bottom:4vh;background:rgba(16,20,30,.97);color:#eef1f6;border:2px solid rgba(242,179,61,.7);border-radius:16px;
+  padding:14px 18px 16px;box-shadow:0 18px 50px rgba(0,0,0,.55);cursor:pointer;animation:mtIn .25s ease both}
+.mt-card.narr{border-style:dashed;border-color:rgba(255,255,255,.35)}
+.mt-card.other{border-color:#7fb0e6}
+@keyframes mtIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.mt-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.mt-top small{color:#b9c0cc;font-size:12.5px}
+.mt-skip{background:none;border:1px solid rgba(255,255,255,.25);color:#d8dde6;border-radius:8px;min-height:36px;padding:4px 10px;font-size:12.5px;cursor:pointer}
+.mt-body{display:flex;gap:14px;align-items:flex-start}
+.mt-face{flex:none;width:96px;height:96px;border-radius:12px;overflow:hidden;background:#232a3a;border:2px solid rgba(242,179,61,.6)}
+.mt-face img{width:100%;height:100%;object-fit:cover;object-position:50% 12%}
+.mt-say{flex:1;min-width:0}
+.mt-nm{display:inline-block;color:#f2b33d;font-size:14px;margin-bottom:4px}
+.mt-card.other .mt-nm{color:#9cc6f2}
+.mt-say p{margin:0;font-size:17px;line-height:1.7;word-break:keep-all}
+.mt-card.narr .mt-say p{font-style:italic;color:#cfd5de}
+.mt-next{text-align:right;color:#f2b33d;font-size:13px;margin-top:8px;font-weight:700}
+@media (max-width:640px){.mt-tale{padding:10px}.mt-card{padding:12px 13px 14px}.mt-face{width:68px;height:68px}.mt-say p{font-size:15.5px}}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -37578,7 +37663,7 @@ const _kc_kingHTML = kingHTML; kingHTML = function(){
     const again = K.mode === "career" ? "▶ 다음 경매 (커리어)" : K.mode === "weekly" ? "↺ 이번 주 물건 다시 도전" : "↺ 한 판 더";
     h = h.replace('<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn pri" data-kstart>↺ 한 판 더 (다른 경쟁자·다른 사건)</button>', kcShareHTML() + `<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn pri" data-kstart>${again}</button><button type="button" class="btn" data-atab="rec">📊 기록 보기</button>`);
   }
-  if(K.step === "lost") h = h.replace("↺ 같은 물건 다시 (다른 경쟁자)", K.mode === "weekly" ? "↺ 이번 주 물건 다시 도전" : "↺ 다른 물건 기다리기 (보증금은 돌려받았어요)");
+  if(K.step === "lost") h = h.replace("↺ 같은 물건 다시 (다른 경쟁자)", K.mode === "weekly" ? "↺ 이번 주 물건 다시 도전" : "📋 경매 게시판에서 다른 물건 고르기 (보증금은 돌려받았어요)");
   return `<div class="kc-topbar">${kcSfxBtn()}</div>` + h;
 };
 
@@ -37657,6 +37742,12 @@ document.addEventListener("click", e => {
   let b;
   if((b = e.target.closest("[data-kcnew]"))){ e.stopImmediatePropagation(); arenaTab = "king"; kcStart(b.dataset.kcnew, b.dataset.prop); renderArena(); window.scrollTo(0,0); return; }
   if(e.target.closest("[data-hubnew]")){ e.stopImmediatePropagation(); arenaTab = "king"; kcStart("career"); renderArena(); window.scrollTo(0,0); return; }
+  // 패찰 뒤 "다른 물건" — 같은 물건을 바로 다시 띄우지 말고 경매 게시판으로 돌아가 고르게 한다
+  if(arenaTab === "king" && K && K.step === "lost" && (K.mode || "career") === "career" && e.target.closest("[data-kstart]")){
+    e.stopImmediatePropagation(); K = null;
+    if(typeof lfOn === "function" && lfOn()){ arenaTab = "life"; if(typeof LF_SPOT !== "undefined") LF_SPOT = "board"; }
+    else { arenaTab = "office"; if(typeof OF_SPOT !== "undefined") OF_SPOT = "board"; }
+    renderArena(); window.scrollTo(0,0); return; }
   if(arenaTab === "king" && e.target.closest("[data-kstart]")){ e.stopImmediatePropagation(); kcStart(K && K.mode || "career", K && K.prop); renderArena(); window.scrollTo(0,0); return; }
   if(arenaTab === "king" && K && e.target.closest("[data-kbid]")){
     const v = id => { const el = document.getElementById(id); if(!el || el.value === "") return null; const n = +el.value; return isFinite(n) && n >= 0 ? Math.round(n) : null; };
@@ -40398,19 +40489,26 @@ const LF_CHAR_ART = {
   eunkyung:{face:{normal:"8336de9700e8867cef7780f9eb5100b8", happy:"4af47be1b355fa6d1bb4cf6b33138034", shocked:"6ac2ed5732b7577e826f0faa7fde89a0",
                 worried:"9bc30ab83c619c296a59bb886e2cdccc", angry:"051cf9287aa3edef659dd6bcfd3ba3a9", tired:"37800e7039244c49f1057cb020a82930"},
           front:"161bb82508161fb9813ce4a1c2ef6b2e", back:"da966f6f11cff93debb276f20106cc14", select:"21337f6463a3fe6b47f7499ff4954b39",
-          morning:"e484c60840c93b1948e7870ab73d4d19", room:"75d039a099fc0a99a7efba48f6d09783"}};
+          morning:"e484c60840c93b1948e7870ab73d4d19", room:"75d039a099fc0a99a7efba48f6d09783"},
+  // 김태식 — 표정: 기본 · 허허 웃음(happy) · 놀람 · 서류 보며 걱정(worried) · 안경 벗어 들고 단호(angry) · 뒷목 주무름(tired)
+  taesik:{face:{normal:"15c1b2126eed366fc28b475d5a53cf4d", happy:"5a9a05d1f40badfdc2451dc2c3ede869", shocked:"a2658ef567cb0ac710ef90a84aad80e1",
+                worried:"6db1cdae5024e5daa6e5c0bb90fa8a4a", angry:"e13b034770f92fcfdcedab51a787c1f4", tired:"fd7209e092894569b2ec654bc0d19e14"},
+          front:"e38563f6d902753010dc4d6283980bf0", back:"845ed5f0e277b6d31d290543db5404d0", select:"2452f4871394a4843ed2e61f2a74d9cc",
+          morning:"3b86d1750b7daf85991c90dbccd52b74", room:"5590c2eb1aedda87ae1ffffc4c65752d"}};
 const LF_FACE_ALIAS = {soft:"happy", neutral:"normal", troubled:"worried", furious:"angry"};
 // 배경·컷 칸으로도 등록해 둔다(그림 관리 화면·오프닝이 같은 이름으로 찾게)
 Object.assign(ART_DEFAULT, {bg_base_sillim:LF_CHAR_ART.seoyun.room, cut_seoyun_found:LF_CHAR_ART.seoyun.found,
   bg_base_hwagok:LF_CHAR_ART.dohyun.room, cut_dohyun_commute:LF_CHAR_ART.dohyun.commute,
   bg_base_yeongdeungpo:LF_CHAR_ART.mijeong.room, cut_mijeong_shop:LF_CHAR_ART.mijeong.shop,
   bg_base_bulgwang:LF_CHAR_ART.jaehoon.room, cut_jaehoon_site:LF_CHAR_ART.jaehoon.site,
-  bg_base_mapo:LF_CHAR_ART.eunkyung.room, cut_eunkyung_morning:LF_CHAR_ART.eunkyung.morning});
+  bg_base_mapo:LF_CHAR_ART.eunkyung.room, cut_eunkyung_morning:LF_CHAR_ART.eunkyung.morning,
+  bg_base_mokdong:LF_CHAR_ART.taesik.room, cut_taesik_morning:LF_CHAR_ART.taesik.morning});
 if(LF_BASES.sillim) LF_BASES.sillim.bg = "bg_base_sillim";
 if(LF_BASES.hwagok) LF_BASES.hwagok.bg = "bg_base_hwagok";
 if(LF_BASES.yeongdeungpo) LF_BASES.yeongdeungpo.bg = "bg_base_yeongdeungpo";
 if(LF_BASES.bulgwang) LF_BASES.bulgwang.bg = "bg_base_bulgwang";
 if(LF_BASES.mapo) LF_BASES.mapo.bg = "bg_base_mapo";
+if(LF_BASES.mokdong) LF_BASES.mokdong.bg = "bg_base_mokdong";
 function lfArt(id){ id = id || (lfOn() ? lfRec().char : null); return id ? LF_CHAR_ART[id] || null : null; }
 function lfBlob(a){ return window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a; }
 function lfArtUrl(id, k){ const A = lfArt(id); return A && A[k] ? lfBlob(A[k]) : null; }
@@ -40436,6 +40534,7 @@ if(LF_OPENINGS.dohyun){ LF_OPENINGS.dohyun[0].bg = "cut_dohyun_commute"; [2,3,4]
 if(LF_OPENINGS.mijeong){ LF_OPENINGS.mijeong[0].bg = "cut_mijeong_shop"; LF_OPENINGS.mijeong[0].uiPos = "low"; LF_OPENINGS.mijeong[0].pos = "58% 50%"; LF_OPENINGS.mijeong[1].pos = "58% 50%"; LF_OPENINGS.mijeong[1].bg = "cut_mijeong_shop"; LF_OPENINGS.mijeong[2].bg = "bg_base_yeongdeungpo"; }
 // 재훈: 수리 현장에서 벽 두드리기(그림 속 본인, 오른쪽) → 국밥집 골목(그대로) → 불광동 작업방
 if(LF_OPENINGS.eunkyung){ [0,1].forEach(i => { LF_OPENINGS.eunkyung[i].bg = "cut_eunkyung_morning"; LF_OPENINGS.eunkyung[i].pos = "40% 45%"; }); LF_OPENINGS.eunkyung[0].uiPos = "right"; if(LF_OPENINGS.eunkyung[2]) LF_OPENINGS.eunkyung[2].bg = "bg_base_mapo"; }
+if(LF_OPENINGS.taesik){ [0,1].forEach(i => { LF_OPENINGS.taesik[i].bg = "cut_taesik_morning"; LF_OPENINGS.taesik[i].pos = "30% 45%"; }); [2,3].forEach(i => { if(LF_OPENINGS.taesik[i]) LF_OPENINGS.taesik[i].bg = "bg_base_mokdong"; }); }
 if(LF_OPENINGS.jaehoon){ [0,1].forEach(i => { LF_OPENINGS.jaehoon[i].bg = "cut_jaehoon_site"; LF_OPENINGS.jaehoon[i].pos = "72% 50%"; }); if(LF_OPENINGS.jaehoon[3]) LF_OPENINGS.jaehoon[3].bg = "bg_base_bulgwang"; }
 // 거점: 방 안에 내가 서 있다
 const _ca_base = lfBaseHTML; lfBaseHTML = function(){
@@ -40456,7 +40555,17 @@ const _ca_sel = lfSelectHTML; lfSelectHTML = function(){
 // 표정 추가분(유형별 공용 인물) — 사용자가 받아온 그림을 잘라 넣은 것
 Object.assign(ART_DEFAULT, {
   npc_oldman_angry:"fcc7cfffff7eacd0b17ef2826695465a", npc_oldman_troubled:"b0be3eb3877369e0f331140f4aa2a778",
-  npc_ajumma_angry:"794f4071761ea649ca0e624f07fb8cc0", npc_roughman_troubled:"19eea9a9f3405b0de67a53fac0188d68"});
+  npc_ajumma_angry:"794f4071761ea649ca0e624f07fb8cc0", npc_roughman_troubled:"19eea9a9f3405b0de67a53fac0188d68",
+  npc_youngwoman_angry:"24119c2a4221b7134f09674ef8e12ace", npc_youngwoman_troubled:"4c061c7eeb1e5a0e670645fd1cfacfa1",
+  npc_broker_angry:"a0314110d1f06801734397463698e2b6", npc_broker_troubled:"df0ef3afa8747d10455a68cf21968f62",
+  npc_mover_angry:"c82dc00671840d4938147d88dc1b78af", npc_mover_troubled:"83976aafef64c135db8d05114f04280e",
+  npc_bailiff_normal:"771b3c26f7242bd10265e921d6f69a38"});
+
+// 소품 시트 1
+Object.assign(ART_DEFAULT, { prop_keys:"7059fb81a6d57bc439fd5024522e5588", prop_doorlock:"06d82fa0eaac7d5f9bb76cc7298d05bc", prop_letter:"1e384ffbe93d01ac4965d8340ace2b35", prop_order:"d204d14461d036ac98090c161ad7c0a9", prop_confirm:"d64273376769a7d9db9681014b252e1a", prop_boxes:"bebc3ce4f786c807a14b77deb58c0e71", prop_cash:"a9b6410a700caaec777f99058f9c3ebf", prop_notice:"21747c71f0aafade4ae3da853f183c0e", prop_truck:"2339f9b18426feb1315879ff6ee20074"});
+
+// 소품 시트 2·3 + 사건 뒤 빈 거실 컷
+Object.assign(ART_DEFAULT, { prop_phone:"4a27e45a85728ea403c93c2d46b2bc49", prop_calendar:"4eb9ef8eee578c7727263a8b0d14328d", prop_bill:"f913b3f81e6a9488e77baaa5b25b3f8c", prop_drink:"5ecd637c980a8d4231b558051afc78d5", prop_toolbox:"217deb542ae1c274fa5dfe54f6a6d44d", prop_delivery_boxes:"437b82011ccdaf679260944b29a25915", prop_trash_bags:"d44b9b02fb1bc3216aa3cfb914840cdd", prop_mail_bundle:"c245b5a0f4a7723578f8a34b2df09297", prop_shoes_slippers:"55ee5095f373e186b2ee17fb69c87380", prop_safe_box:"6e47d37dbefd34858f7a448b1370870a", cut_empty_after:"ebb5e6cf420574784e9e1aad5dbc7bfa"});
 
 /* ================= 🗂️ 조사 화면 정리 — 서류는 그림 위에, 행동은 접어서 =================
    오른쪽 패널이 한없이 길어지던 걸 줄인다: 사건 파일·입찰표는 왼쪽 그림 위 종이로 겹쳐 띄우고,
@@ -40854,6 +40963,10 @@ function cpSummary(type, o, forced){
   return {type, title:E[0], text:E[1], why, char:L.char, emo:C.emo, name:C.name, choice:o ? o.t : (forced === "broke" ? "파산" : ""),
     rows:[["지난 날", `${days}일`], ["처리한 CASE", `${c.cases}건 (손해 ${+c.fails || 0}건)`], ["누적 수익", kMan(c.total)], ["지금 자금", c.cash < 0 ? "대출 " + kMan(-c.cash) : kMan(c.cash)], ["스트레스", `${Math.round(L.stress)}/100`], ["깊은 인맥", `${rels}명`]]};
 }
+// 🎬 엔딩 일러스트(받은 것만 — 없으면 글만 나온다)
+const CP_END_ART = {seoyun:{good:"3a2dfa19009b195097c610316cbe17c4"}, dohyun:{good:"b130014b45d910125d391f4fc025028f"}, mijeong:{good:"949dc8b843be9a2537af925c7946f883"},
+  jaehoon:{good:"512cbdda76ef7d042b6ace4a6718710a"}, eunkyung:{good:"6bc2d39a50a75547ab9b3c4942674bbe"}};
+function cpEndArt(ch, t){ const a = CP_END_ART[ch] && CP_END_ART[ch][t]; return a ? "/_blob/" + a : null; }
 let CP_SHOW = null;       // 지금 떠 있는 엔딩 화면 {sum, step:"end"|"reveal", next, first}
 function cpFinish(o, forced){
   const L = lfRec(); if(!L || L.mode === "career" || L.ended) return;
@@ -40874,7 +40987,8 @@ function cpEndHTML(){
   const s = S.sum, got = cpRec().endings[s.char] || {};
   if(S.step === "end"){
     const slots = ["normal", "good", "bad", "special"].map(t => `<span class="cp-slot ${got[t] ? "got" : ""} ${t === s.type ? "now" : ""}">${got[t] ? CP_ENDING_T[t] : "?"}</span>`).join("");
-    return `<div class="cp-card cp-${s.type}"><small class="cp-kick">${s.emo} ${esc(s.name)}의 인생 · ${CP_ENDING_T[s.type]} END</small><h2>「${esc(s.title)}」</h2><p class="cp-txt">${esc(s.text)}</p>
+    const ea = cpEndArt(s.char, s.type);
+    return `<div class="cp-card cp-${s.type}${ea ? " has-art" : ""}">${ea ? `<div class="cp-art"><img src="${ea}" alt=""></div>` : ""}<small class="cp-kick">${s.emo} ${esc(s.name)}의 인생 · ${CP_ENDING_T[s.type]} END</small><h2>「${esc(s.title)}」</h2><p class="cp-txt">${esc(s.text)}</p>
       ${s.choice ? `<p class="cp-choice">🧭 마지막 선택 — <b>${esc(s.choice)}</b></p>` : ""}<p class="cp-why">${esc(s.why)}</p>
       <dl class="cp-rows">${s.rows.map(r => `<div><dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd></div>`).join("")}</dl>
       <div class="cp-slots"><small>엔딩 모으기</small>${slots}</div>
@@ -41386,11 +41500,17 @@ function dpProps(){
   own.forEach(o => { if(o[0] === "tie"){ const D = lfDate(); if(D.dow === 0 || D.dow === 6 || D.h < 18) return; } if(o[0] === "coffee" && nightOwl < 1) return; if(o[0] === "ramen" && (c.cases || 0) + day % 3 < 1) return; items.push(o.concat([""])); });
   return items;
 }
+const DP_PROP_ART = {umb_wet:"70cf22ee2b5f2ea5d06db56f93a5a496",umb:"10c9db965f9b528631a2e528899db8b7",frame:"9e56b7050c90529d0669179f8b7e6363",memo:"37f400899fc59eefa8b7e25ff6a29d4d",papers:"0d9868170a22c77dcbc843a6e8b807f3",ramen:"951ee9ea3b26b6283b88ab236b92c70a",coffee:"c436badded707b714eaf20e3a3e56fce",tie:"9286efcf847040bce095a58b6e5afeb1",ledger:"0b42373099cffce647b5dfea85c9becb",tape:"f0afc19254fbb941869a89bb0bc06832",calc:"1869114785585f53d8caa1079262c4c6",notebook:"a9b4f6d5885788b21fb44ab76f43e08c"};   // 거점 소품 픽셀 아이콘(없으면 이모지로)
+function dpPropFace(id, ic){
+  const a = DP_PROP_ART[id]; if(!a) return ic;
+  const n = id === "papers" ? [...ic].filter(ch => ch === "🗂").length : 1;   // 서류는 쌓인 만큼(1~3) 겹쳐 그린다
+  return Array.from({length: Math.max(1, n)}, (_, i) => `<img src="/_blob/${a}" alt="" class="dp-img" style="${i ? "margin-left:-18px" : ""}">`).join("");
+}
 function dpPropsMount(){
   const st = document.querySelector(".lf-stage"); if(!st || st.querySelector(".dp-props")) return;
   const items = dpProps(); if(!items.length) return;
   const box = document.createElement("div"); box.className = "dp-props";
-  box.innerHTML = items.map(([id, ic, t, line, cls]) => `<button type="button" class="dp-prop ${cls}" data-dpprop="${id}" data-line="${esc(line)}" title="${esc(t)}" aria-label="${esc(t)}">${ic}</button>`).join("");
+  box.innerHTML = items.map(([id, ic, t, line, cls]) => `<button type="button" class="dp-prop ${cls}" data-dpprop="${id}" data-line="${esc(line)}" title="${esc(t)}" aria-label="${esc(t)}">${dpPropFace(id, ic)}</button>`).join("");
   st.appendChild(box);
 }
 document.addEventListener("click", e => {
@@ -41432,6 +41552,330 @@ renderArena = function(){
 };
 // 벽에 '지난 소식' 모음
 if(typeof lfPanel === "function"){ const _dp_panel = lfPanel; lfPanel = function(id){ let h = _dp_panel(id); if(id === "wall"){ const N = dpRec().news; if(N.length) h = `<div class="panel"><b>📰 그때 그 물건들</b><ul class="dp-newslist">${N.map(n => `<li class="${n.tone}"><b>${esc(n.head)}</b><small>${esc(n.lines[n.lines.length - 2] || "")} ${esc(n.lines[n.lines.length - 1])}</small></li>`).join("")}</ul></div>` + h; } return h; }; }
+
+/* ================= 🙇 사정 끝까지 들어주기 — 점유자마다 긴 사연 · 이벤트 카드 개연성 =================
+   현실 명도에서는 점유자가 구구절절 사정을 늘어놓고, 그걸 끝까지 들어주는 시간이 있다.
+   화풀이·비굴함·딴소리·같은 말 반복까지 그 사람 성격대로. 모두 가상의 인물이다.
+   줄 형식: [말하는 사람("" = 점유자 본인, 이름 = 같이 사는 사람, null = 지문), 대사, 표정] */
+const MT_TALES = {
+ p_grandpa:[
+  [[null,"할아버지가 현관 앞 계단에 털썩 앉는다. 담배를 꺼냈다가 도로 넣는다.","worried"],
+   ["","내가 말이여, 이 집 들어올 때 부동산이 뭐라 했는지 알어? '할아버지, 여기 주인 양반 좋은 사람이에요.' 그 말만 믿고 300 넣었어.","normal"],
+   ["","현장 일이 그래. 비 오면 공치고, 겨울엔 일이 없고. 그래도 월세 25만원은 한 번도 안 밀렸어. 통장 보여 줄까?","normal"],
+   ["","근데 어느 날 법원에서 누런 봉투가 오더니 경매래. 나는 경매가 뭔지도 몰라. 주인 양반한테 전화하니까 없는 번호래.","angry"],
+   ["","그래서 동사무소 가서 물었더니 뭐, 배당? 나는 한 푼도 없대. 들어온 날짜가 늦어서. 날짜가 늦은 게 내 잘못이여?","angry"],
+   ["","…아니, 젊은 양반한테 화낼 일은 아닌데. 미안혀. 요새 내가 말이 곱게 안 나와.","worried"]],
+  [["할머니","(방 안에서) 여보, 누구 왔어요? 우리 철수 왔어?","normal"],
+   ["","아니여, 손님이여. 들어가 있어. …집사람이 요새 깜빡깜빡혀. 병원에선 초기라는데, 아들 이름을 하루에도 몇 번씩 불러.","worried"],
+   ["","아들놈은 부산 살어. 지 살기도 바빠. 이런 얘기 하면 걱정만 하니까 안 했지.","worried"],
+   ["할머니","(문틈으로) 손님 오셨는데 커피라도 드려야지. 설탕 넣어요?","normal"],
+   ["","…저 사람한텐 이사 간다는 말을 못 했어. 짐 싸는 거 보면 불안해서 밤새 못 자거든. 익숙한 데서 떠나면 더 헤맨대.","worried"],
+   ["","그러니까 내 말은, 나가긴 나가야지. 근데 한 달은 줘야 혀. 방도 구하고, 저 사람한테 천천히 말할 시간.","normal"]],
+  [["","방은 알아봤어. 반지하 하나 있는데 보증금이 모자라. 150만 있으면 돼.","normal"],
+   ["","동사무소에서 주거급여 얘기는 들었어. 근데 서류가 한 보따리여. 나 같은 사람은 그런 거 쓸 줄을 몰라.","worried"],
+   ["","…고맙다는 말은 해야겄네. 여기 온 사람들 다 문 두드리고 '언제 나가요'만 했지, 이렇게 앉아서 들어 준 사람은 없었어.","normal"],
+   [null,"할아버지가 무릎을 짚고 일어선다. 목소리가 처음보다 한결 낮다.","normal"]]],
+ p_coop:[
+  [[null,"정은주 씨가 식탁을 가리킨다. 물컵 두 개가 놓여 있다.","normal"],
+   ["","앉으세요. 먼 데서 오셨죠. …이 집, 제가 식당 하면서 번 돈으로 산 거예요. 처음으로 제 이름 들어간 집.","normal"],
+   ["","코로나 때 가게 문을 두 달 닫았어요. 월세는 나가는데 손님은 없고. 대출을 대출로 막다 보니까 여기까지 왔네요.","worried"],
+   ["","저는요, 원망은 안 해요. 누가 사도 샀을 거고, 법대로 하시는 거 알아요. 그냥 좀… 창피해요. 동네 사람들이 다 알아서.","worried"]],
+  [["","문제는 딸이에요. 고3이에요. 수능이 두 달 남았어요.","worried"],
+   ["딸","(방에서 나오다가 멈칫) …안녕하세요.","normal"],
+   ["","들어가 있어, 괜찮아. …쟤는 몰라요. 아니, 아는데 모르는 척해요. 그게 더 마음 아파요.","worried"],
+   ["","수능 끝나는 날까지만 여기서 버티게 해 주시면, 그다음 주에 바로 나갈게요. 약속드릴게요. 글로 써 드릴게요.","normal"]],
+  [["","남편은 지방 현장 다녀서 주말에만 와요. 짐은 제가 거의 다 싸 놨어요. 보실래요? 베란다에 박스 쌓여 있죠.","normal"],
+   ["","이삿짐센터 견적이 120만원 나왔어요. 새 집 보증금 넣고 나니까 그 돈이 빠듯해요.","worried"],
+   ["","…이런 얘기까지 하게 될 줄은 몰랐네요. 들어 주셔서 고마워요. 날짜랑 금액, 오늘 정해요. 저도 빨리 끝내고 싶어요.","normal"]]],
+ p_phishing:[
+  [["오태석","들어오세요. 아니, 앉지는 마시고. 할 말만 하고 가요.","angry"],
+   ["한미정","여보, 그렇게 말하지 마…","worried"],
+   ["오태석","당신이 뭘 알아! …우리가 무슨 일을 당했는지 알아요? 검찰청이라고 전화가 왔어. 내 계좌가 범죄에 쓰였다고. 안전한 계좌로 옮기라고.","angry"],
+   ["오태석","십 년 모은 돈이 하루에 없어졌어요. 하루에. 그거 메우려고 대출 받고, 그 대출 막으려고 또 받고.","angry"],
+   ["오태석","그리고 당신이 나타났지. 헐값에 사 가지고. 사기꾼이랑 당신이랑 뭐가 달라요?","angry"]],
+  [[null,"한참 정적. 한미정 씨가 남편 팔을 붙잡는다.","worried"],
+   ["한미정","…죄송해요. 이 사람이 원래 이런 사람이 아니에요. 그 전화 받고 나서 잠을 못 자요.","worried"],
+   ["한미정","애들이 초등학생 둘이에요. 전학 가야 하는 거 알면 울 거예요. 제일 걱정되는 건 그거예요.","worried"],
+   ["오태석","…화내서 미안합니다. 당신 잘못 아닌 거 알아요. 근데 화낼 데가 없어서.","worried"],
+   ["한미정","학기 끝날 때까지만요. 그리고 이사비 조금만… 저희 정말 아무것도 없어요.","worried"]]],
+ p_ghost:[
+  [[null,"몇 주 만에 온 긴 문자. 띄어쓰기가 엉망이다.","worried"],
+   ["","연락못받아서죄송합니다 전화오면 가슴이뛰어서 못받겠더라구요 사업하다가 거래처가 부도나서 저까지 넘어갔습니다","worried"],
+   ["","지금 지방에서 형님 일 도와주면서 지냅니다 거기 짐은 거의 버릴거고 몇개만 챙기면 됩니다","normal"],
+   ["","솔직히 그집 다시 들어가기가 무섭습니다 거기서 제가 제일 바닥까지 갔거든요","worried"]],
+  [["동거녀","(대신 전화를 받는다) 저 그 사람이랑 같이 지냈던 사람인데요. 그 사람 지금 전화 못 받아요. 창피해서.","normal"],
+   ["동거녀","짐은 제가 가서 뺄 수 있어요. 열쇠 제가 갖고 있어요. 근데 그 사람 앨범이랑 아버님 사진은 꼭 챙겨 달래요.","normal"],
+   ["동거녀","나머지는 버려 주셔도 된대요. 그거 써 달라고 하시면 제가 받아 올게요.","normal"]]],
+ p_greedy:[
+  [["","아이고, 오셨어요. 앉으세요, 앉으세요. 커피? 믹스밖에 없는데.","normal"],
+   ["","내가 이 동네 20년 살았어요. 저기 부동산 사장이 내 친구야. 그 친구가 그러더라고. 저 윗동네 누구는 이사비 천만원 받고 나갔다고.","normal"],
+   ["","아니 내가 달라는 게 아니고요, 시세라는 게 있잖아요. 시세. 요즘 이사 한 번 하는 데 얼마 드는 줄 알아요?","normal"],
+   ["","포장이사에 새 집 복비에 도배에… 계산해 보면 천만원도 모자라요. 진짜로.","normal"]],
+  [["아내","(부엌에서) 당신 그 얘기 또 하지 마. 그 사람도 결국 오백 받았대.","normal"],
+   ["","…아, 거 참. 여자들은 꼭 이래. 아무튼요, 우리도 사정이 있어요. 아들이 취업 준비 3년째라.","worried"],
+   ["","솔직하게 말할게요. 버티면 더 준다는 얘기를 들었어요. 근데 법원 서류 날아오니까 겁도 나고. 적당히 맞춰 주시면 적당히 나가 드릴게.","normal"]]],
+ p_senior:[
+  [["","아, 오셨어요. 궁금한 게 너무 많았어요. 배당기일은 언제예요? 명도확인서는 언제 써 주세요?","normal"],
+   ["","제가 전세 들어오면서 확정일자 받고 전입도 바로 했거든요. 인터넷에 찾아보니까 전액 받을 수 있다고 하던데 맞죠?","normal"],
+   ["","새 집 계약금은 벌써 넣었어요. 잔금을 배당금으로 치러야 해서 날짜가 딱 맞아야 해요. 하루라도 어긋나면 새 집 주인한테 위약금 물어요.","worried"]],
+  [["룸메이트","(방에서) 서연아, 이사 트럭 날짜 그거 확정된 거야?","normal"],
+   ["","아직! …죄송해요. 친구랑 같이 살아서요. 제가 계약자라 제가 다 챙겨야 해요.","normal"],
+   ["","사실 이번에 처음 알았어요. 집이 경매로 넘어가도 제가 먼저 나가야 돈을 받는 거. 그러니까 저도 빨리 나가고 싶어요. 순서만 맞춰 주세요.","normal"]]],
+ p_fake:[
+  [["","저는요, 정식 임차인입니다. 계약서 여기 있어요. 보증금 2억. 도장도 찍혀 있고요.","normal"],
+   ["","언제 들어왔냐고요? 근저당 전날이요. 날짜 보시면 아시잖아요. 제가 먼저예요.","normal"],
+   ["","보증금은… 현금으로 드렸어요. 매형한테. 가족끼리 계좌이체 하는 사람이 어디 있어요.","worried"]],
+  [["누나","(뒤에서 작게) 상훈아, 그만해…","worried"],
+   ["","누나는 가만있어. …아무튼 보증금 받기 전엔 한 발짝도 못 나갑니다. 법대로 하세요.","angry"],
+   ["","…그래요. 솔직히 매형이 시켰어요. 이렇게 하면 돈 좀 나온다고. 저도 이게 맞는지 모르겠어요. 누나가 여기 살거든요. 갈 데가 없어요.","worried"]]],
+ p_lien:[
+  [["","한빛인테리어 현장소장입니다. 저희가 이 집 리모델링을 싹 다 했어요. 욕실, 주방, 샷시까지.","normal"],
+   ["","공사대금 4,800만원 중에 한 푼도 못 받았습니다. 전 주인이 잔금 날 전화를 안 받더니 경매가 들어갔더라고요.","angry"],
+   ["","우리 직원들 월급은 제 돈으로 줬습니다. 자재상에 외상도 깔려 있고요. 이거 해결 안 되면 저희 회사 문 닫아요.","angry"]],
+  [["","…점유요? 현수막 붙여 놨잖아요. 직원 둘이 교대로 봐요. 아, 요즘은 좀 뜸했죠. 다른 현장이 급해서.","worried"],
+   ["","저도 압니다. 유치권이 쉽지 않다는 거. 변호사도 반반이래요. 근데 가만있으면 0원이잖아요. 사장님이라면 가만있겠어요?","worried"]]],
+ p_hug:[
+  [["","뭐, 할 얘기 있으면 해 봐요. 나 바빠요.","angry"],
+   ["","6개월 치 360 선불로 냈어요. 현금으로. 집주인이 여기 문제없다 그래서. 들어온 지 두 달이야. 넉 달 치 돈은 누가 줘요? 당신이 줘요?","angry"],
+   ["","문신 보고 쫄았어요? 나 이거 젊을 때 한 거고, 지금은 택배 일 해요. 새벽 네 시에 나가서 밤에 들어와. 성실하게 산다고.","angry"]],
+  [["","…나도 사기 당한 거 알아요. 집주인 번호 없어진 지 한 달 됐어. 고양이 세 마리 데리고 방 구하기가 얼마나 어려운 줄 알아요?","worried"],
+   ["형님","(뒤에서) 동철아, 사장님이 뭐라시는데.","normal"],
+   ["","형님은 가만있어요. …사장님, 내가 험하게 말한 건 미안해요. 근데 돈 넉 달 치는 너무 억울해. 조금만 생각해 줘요.","worried"]]],
+ p_5000:[
+  [["서지은","(문을 열자마자 고개를 숙인다) 죄송해요, 죄송해요. 저희가 어떻게든 해 볼게요.","worried"],
+   ["서지은","보증금 4천에 들어왔는데 500밖에 못 받는대요. 그거 저희 전 재산이에요. 결혼할 때 양가에서 조금씩 보태 주신 거예요.","worried"],
+   ["서지은","저희 딸이 열 살이에요. 지금 학교 친구들이랑 정말 잘 지내요. 전학 가면 또 적응해야 하는데…","worried"]],
+  [["한정우","(뒤에서) 사장님, 저 막노동이라도 할게요. 월세라도 내면서 몇 달만 더 살면 안 될까요? 부탁드립니다.","worried"],
+   ["서지은","여보… 아니에요, 그런 부탁은 안 되는 거래요. 저도 알아요.","worried"],
+   ["서지은","…다만 이사비를 조금만 더 챙겨 주시면, 정말 빨리 나갈게요. 딸 방학 시작하는 날에 맞춰서요. 은혜 안 잊을게요.","worried"]]],
+ p_delay:[
+  [["","아이고 사장님, 오셨어요! 제가 먼저 연락드리려고 했는데. 다음 달 초에는 진짜로 나가요. 진짜로.","normal"],
+   ["","그게요, 새 집 잔금 대출이 은행에서 서류 하나가 빠졌다고 해서요. 그거만 되면 바로예요.","normal"],
+   ["","아 그리고 이삿짐센터가요, 손 없는 날은 다 찼대요. 그다음 날은 애 방학식이고요. 그 다음 주는…","normal"]],
+  [["아내","(작게) 여보, 대출 서류 아직 안 냈잖아…","worried"],
+   ["","아니 그게, 내려고 했지! …사장님, 솔직히 말씀드릴게요. 나가기가 무서워요. 새 동네도, 대출도, 다 처음이라.","worried"],
+   ["","날짜 박아 주시면 지킬게요. 제가 핑계가 많은 거 저도 알아요. 이번엔 종이에 써 주세요. 그래야 저도 움직여요.","normal"]]],
+ p_youth:[
+  [["","아… 안녕하세요. 문자 받고 무서워서 계속 검색해 봤어요. 경매요. 제가 뭘 잘못한 거예요?","worried"],
+   ["","저 보육원에서 나올 때 받은 돈으로 여기 들어왔어요. 500이요. 그게 제 전부예요. 이거 없어지면 저…","worried"],
+   ["","물어볼 사람이 없어요. 원장님한테 전화할까 하다가, 나와서까지 폐 끼치기 싫어서요.","worried"]],
+  [["친구","(옆에서) 하늘아, 이분이 돈 받을 수 있다잖아. 소액…뭐라고 했죠?","normal"],
+   ["","최우선변제… 그거요? 제가 받을 수 있어요? 진짜로요? 그럼 배당기일에 법원 가면 되는 거예요?","normal"],
+   ["","…고맙습니다. 저 이런 거 설명해 준 사람 처음이에요. 시키는 대로 할게요. 서류 뭐 챙겨야 하는지만 알려 주세요.","normal"]]],
+ p_basic:[
+  [[null,"할아버지가 문고리를 붙잡고 한참 만에 문을 연다. 무릎이 좋지 않다.","worried"],
+   ["","…누구시오. 아, 새 주인. 들어오시오. 앉을 데가 마땅찮은데.","normal"],
+   ["","나는 수급자요. 보증금 없이 월세 20만원. 나라에서 나오는 돈으로 월세 내고 약값 내고 나면 끝이여.","worried"],
+   ["","그 뭐, 요양보호사 선생이 일주일에 세 번 오는데 그 양반이 그러더만. 이 집 경매 넘어갔다고. 나는 그런 것도 몰랐어.","worried"]],
+  [["","자식이 있긴 있지. 연락 안 한 지 십 년 됐어. 내가 못 해 줬으니 원망도 못 혀.","worried"],
+   ["","계단 있는 데는 이제 못 가요. 이 집도 겨우 오르내렸어. 1층이나, 엘리베이터 있는 데라야 혀.","worried"],
+   ["","…이런 얘기 하면 뭐 하나 싶었는데. 들어 주니 좀 낫구먼. 동사무소 선생한테 같이 물어봐 줄 수 있겠소?","normal"]]],
+ p_mind:[
+  [[null,"장미자 씨가 문을 반쯤 연다. 말이 빠르고, 시선이 자꾸 창밖으로 간다.","normal"],
+   ["","아, 은행에서 오셨구나. 제가 이자 서류 다 드렸잖아요. 또 뭐가 필요해요?","normal"],
+   ["","저기 창밖에 감나무 보이죠. 아버지가 심으신 거예요. 아니, 이 집이 아니라 시골집에. 가을마다 감을 따서…","normal"],
+   ["","근데 누구시라고요? …아, 이 집을 사신 분. 죄송해요. 요즘 제가 자꾸 헷갈려요.","worried"]],
+  [["","약은 먹어요. 먹으면 괜찮아요. 안 먹으면 잠을 못 자고, 그러면 머릿속이 시끄러워요.","worried"],
+   ["노모","(안방에서) 미자야, 누구니?","normal"],
+   ["","엄마, 손님! …엄마도 제가 챙겨야 해요. 여동생은 대구에 살아요. 여동생한테 전화하면 다 알아서 해 줘요. 번호 드릴까요?","normal"],
+   [null,"장미자 씨가 수첩을 뒤져 번호를 적어 준다. 글씨가 삐뚤지만 또박또박하다.","normal"],
+   ["","…저 나가야 하는 거 알아요. 무섭긴 한데. 동생이랑 같이 이야기하면 할 수 있을 것 같아요.","worried"]]],
+ p_cn:[
+  [["","안녕하세요. 한국어 괜찮아요, 천천히 말해 주시면 다 알아들어요.","normal"],
+   ["","저는 대학원생이에요. 전 집주인한테 6개월 월세 420만원 먼저 냈어요. 한국 사람들 이렇게 한다고 해서요. 깔세.","normal"],
+   ["","근데 들어오고 한 달 뒤에 경매 서류가 왔어요. 집주인은 전화를 안 받아요. 저 지금 기말고사 기간이에요. 비자 연장 서류도 내야 해요.","worried"]],
+  [["","방학에 집에 가는 비행기표도 끊어 놨어요. 그 전에 이사하면 짐을 어디 둬야 할지 모르겠어요.","worried"],
+   ["룸메이트","(옆에서 휴대폰 번역기를 보여 준다) 저희 둘이 같이 나갈 수 있어요. 날짜만 알려 주세요.","normal"],
+   ["","돈은… 돌려받기 어렵다고 들었어요. 알아요. 그냥 시험 끝날 때까지만, 조용히 공부할 수 있게 해 주세요.","normal"]]],
+ p_hwagyo:[
+  [["","어서 오세요. 우리 가게 가 보셨어요? 저 모퉁이 짜장면집. 아버지 때부터 했어요.","normal"],
+   ["","저는 여기서 태어났어요. 국적은 대만인데, 말은 한국말이 더 편해요. 사람들이 가끔 중국 사람이라고 신기해하는데, 동네 토박이예요.","normal"],
+   ["","1년 치 월세 일부를 먼저 냈어요. 가게랑 가까워야 새벽에 장 보고 문을 열거든요.","worried"]],
+  [["아내","아들이 고등학생이에요. 학교가 여기서 걸어서 5분. 이사 가면 버스를 두 번 타야 해요.","worried"],
+   ["","이 동네를 떠나기가 싫어요. 단골들 얼굴이 다 여기 있어요. 근처로만 옮길 수 있으면 날짜는 맞춰 볼게요.","normal"],
+   ["","…짜장면 한 그릇 드시고 가세요. 얘기는 먹으면서 해도 되잖아요.","normal"]]],
+ p_mn:[
+  [[null,"낮 두 시. 바트 씨가 잠긴 목소리로 문을 연다. 야간 근무 주다.","worried"],
+   ["","죄송합니다… 자고 있었어요. 전화 많이 못 받았어요. 밤에 공장 일해요.","worried"],
+   ["","아는 사람이 소개했어요. 6개월 돈 먼저 줬어요. 계약서? 종이 한 장 있어요. 이거 괜찮아요?","normal"]],
+  [["아내","(몽골어로 뭔가 묻고, 바트 씨가 짧게 대답한다)","worried"],
+   ["","아내가 한국어 잘 몰라요. 무서워해요. 딸이 네 살이에요. 어린이집 이제 적응했어요.","worried"],
+   ["","나가야 하면 나가요. 근데 공장 가까운 데 찾아야 해요. 사장님이 도와준다고 했어요. 사장님 번호 드릴게요.","normal"]]],
+ p_pk:[
+  [["","안녕하세요. 제가 아메드예요. 계약서 제 이름으로 했어요. 근데 네 명이 같이 살아요. 돈은 똑같이 나눴어요.","normal"],
+   ["동료","(방에서 나와 인사한다) 안녕하세요. 저는 밤에 일해요. 지금 조금 자고 싶어요.","normal"],
+   ["","우리는 문제 만들고 싶지 않아요. 한국에서 일 잘하고 돈 모아서 가족한테 보내요. 경찰 문제 생기면 안 돼요.","worried"]],
+  [["","사장님(고용주)한테 말했어요. 기숙사 알아본대요. 근데 한 달은 걸린대요.","normal"],
+   ["","우리 넷 다 서명할 수 있어요. 날짜 정하면 지켜요. 우리는 약속 중요해요.","normal"]]]
+};
+// 무작위 점유자는 유형 틀 + 개인 사정(twist) + 같이 사는 사람으로 만든다
+const MT_TYPE_TALE = {
+ coop:[["","이야기 들어 주신다니 고마워요. 사실 누구한테도 제대로 말을 못 했어요.","normal"],["","빚이 한 번 밀리기 시작하니까 도미노처럼 넘어가더라고요. 정신 차려 보니까 경매 서류가 와 있었어요.","worried"]],
+ angry:[["","들어 준다고요? 좋아요, 들어 봐요. 우리가 어떻게 이 집을 샀는데. 은행이 대출 막 내줄 땐 언제고 이제 와서.","angry"],["","당신한테 화낼 일 아닌 거 알아요. 아는데, 그럼 누구한테 내요? 은행? 법원? 다 전화도 안 받아.","angry"]],
+ ghost:[["","(짧은 문자가 이어서 온다) 죄송합니다 요즘 전화를 못 받겠습니다 빚 독촉 전화인 줄 알고요","worried"],["","짐은 거의 정리했습니다 몇 개만 가지러 한 번 가겠습니다","normal"]],
+ poor:[["","나 같은 사람은 이사 한 번이 목숨 걸린 일이여. 보증금 모을 동안 어디서 살란 말인가.","worried"],["","월세 밀린 거 한 번도 없어. 그런데도 이렇게 되니까 억울하지. 억울해서 잠이 안 와.","angry"]],
+ greedy:[["","솔직히 말할게요. 주변에서 버티면 더 준다길래요. 나도 알아요, 욕심인 거.","normal"],["","근데 우리도 나가서 살아야 하잖아요. 적당한 선에서 서로 맞춰 봅시다.","normal"]],
+ bully:[["","우리가 당한 거 생각하면 이 정도는 양반이에요. 법대로 하려면 해 봐요. 나도 알아볼 만큼 알아봤으니까.","angry"],["","…말은 이렇게 해도, 버틴다고 뾰족한 수가 있는 건 아니더라고요.","worried"]],
+ fake:[["","저는 정식으로 계약했다니까요. 서류 다 있어요. 돈은 현금으로 줬고요.","normal"],["","…물어보시니까 말인데, 저도 누가 시켜서 한 거예요. 이러면 돈이 나온다고.","worried"]],
+ senior:[["","저는 배당받으면 바로 나가요. 새 집도 알아봤어요. 날짜만 맞춰 주세요.","normal"],["","명도확인서가 있어야 돈을 받는다고 해서 걱정했어요. 순서만 알려 주시면 따를게요.","normal"]],
+ lien:[["","공사대금을 한 푼도 못 받았습니다. 직원들 월급은 제 돈으로 줬어요.","angry"],["","가만있으면 0원이니까 이러는 거예요. 저도 속 편한 사람 아닙니다.","worried"]],
+ short:[["","돈 먼저 다 내고 들어왔어요. 그 돈은 누가 돌려줘요? 저도 사기 당한 거예요.","angry"],["","갈 데만 있으면 나가요. 날짜 조금만 여유를 주세요.","normal"]],
+ care:[["","아, 누구시더라… 죄송해요. 요즘 자꾸 헷갈려요. 천천히 말해 주세요.","worried"],["","가족한테 연락해 주시면 같이 이야기할 수 있을 것 같아요. 번호가 여기 어디 있는데…","normal"]],
+ shop:[["","장사하는 사람한테 가게를 옮기라는 건 단골을 버리라는 거예요. 권리금은요?","angry"],["","계약 끝날 때까지만이라도 영업하게 해 주시면, 그다음은 저도 준비할게요.","worried"]]
+};
+const MT_TWIST_LINE = [
+ [/기말고사/, ["","애가 지금 시험 기간이에요. 이사 얘기를 하면 공부가 되겠어요? 시험만 끝나면요.","worried"]],
+ [/반려견/, ["","개들 때문에 방 구하기가 하늘의 별 따기예요. 전화하면 '동물은 안 돼요'가 첫마디예요.","worried"]],
+ [/허리 수술/, ["","허리 수술하고 아직 무거운 걸 못 들어요. 짐을 누가 싸 주면 모를까.","worried"]],
+ [/잔금일/, ["","새 집 잔금이 한 달 뒤예요. 그날에 맞춰 나가면 딱 맞아요. 그 전엔 갈 데가 없어요.","normal"]],
+ [/부동산에서 이사비/, ["","부동산 사장님이 그러던데요. 요즘 이사비 많이들 받는다고. 그거 아니에요?","normal"]],
+ [/월세가 6개월/, ["","월세가 여섯 달 밀렸어요. 뭐부터 해결해야 할지 모르겠어요. 다 막막해요.","worried"]],
+ [/짐이 많아/, ["","짐이 많아서 견적만 200이 넘게 나와요. 그 돈이 어디서 나와요.","worried"]],
+ [/친척/, ["","사촌 형이 버티면 돈 준다더라고요. …그 말만 믿고 있었는데, 법원 서류 보니까 겁이 나요.","worried"]],
+ [/법률구조공단/, ["","법률구조공단에서 상담 받았어요. 인도명령 대상이라더군요. 그러니까 조건만 맞춰 봅시다.","normal"]],
+ [/치매 초기인 어머니/, ["","어머니가 치매 초기세요. 낯선 데 가면 더 헤매세요. 새 집을 천천히 익히게 해 드리고 싶어요.","worried"]]
+];
+function mtTaleOf(P){
+  if(!P) return [];
+  if(MT_TALES[P.id]) return MT_TALES[P.id];
+  const base = MT_TYPE_TALE[P.type] || MT_TYPE_TALE.coop, tw = MT_TWIST_LINE.find(x => x[0].test(P.twist || P.story || ""));
+  const hs = (typeof houseOf === "function" ? houseOf(P) : []).filter(h => h.adult && h.rel);
+  const c2 = [];
+  if(tw) c2.push(tw[1]);
+  if(hs.length) c2.push([hs[0].rel, `(옆에서) ${pick(["저도 한마디만 할게요. 저희 정말 갈 데가 없어요.","날짜만 확실하면 저희도 준비할게요.","이 사람 요즘 잠을 못 자요. 조금만 여유를 주세요."])}`, "worried"]);
+  c2.push(["", "…들어 주셔서 고마워요. 이런 얘기 할 데가 없었어요.", "normal"]);
+  return [base, c2];
+}
+
+/* ---------- 사연 장면(한 줄씩, 누르면 다음) ---------- */
+let MT = null;
+function mtPlay(lines, o){
+  if(!lines || !lines.length) return;
+  // 자동 흐름 테스트용: 이야기 창을 띄우지 않고 바로 끝낸다(게임 쪽 효과는 그대로).
+  if(window.MT_SKIP_TALE){ if(o && o.done) o.done(); return; }
+  MT = {lines, i:0, name:o.name || "", pid:o.pid || null, done:o.done || null};
+  mtPaint();
+  if(typeof kcSfx === "function") kcSfx("paper");
+}
+function mtFace(ex){
+  if(!MT || !MT.pid || typeof artNpc !== "function") return "";
+  try{ const u = artNpc(MT.pid, ex === "angry" ? "angry" : ex === "worried" ? "worried" : "normal"); return u ? `<img src="${u}" alt="">` : ""; }catch(e){ return ""; }
+}
+function mtPaint(){
+  let el = document.getElementById("mtTale");
+  if(!MT){ if(el) el.remove(); return; }
+  if(!el){ el = document.createElement("div"); el.id = "mtTale"; el.className = "mt-tale"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "사정 듣기"); document.body.appendChild(el); }
+  const [who, t, ex] = MT.lines[MT.i], last = MT.i === MT.lines.length - 1;
+  const face = who === "" ? mtFace(ex) : "";
+  const nm = who === null ? "" : who === "" ? MT.name : who;
+  el.innerHTML = `<div class="mt-veil" data-mtnext></div><div class="mt-card ${who === null ? "narr" : ""} ${who && who !== "" ? "other" : ""}" data-mtnext>
+    <div class="mt-top"><small>🙇 사정 끝까지 듣는 중 · ${MT.i + 1}/${MT.lines.length}</small><button type="button" class="mt-skip" data-mtskip>건너뛰기 ›</button></div>
+    <div class="mt-body">${face ? `<div class="mt-face">${face}</div>` : ""}<div class="mt-say">${nm ? `<b class="mt-nm">${esc(nm)}</b>` : ""}<p>${esc(t)}</p></div></div>
+    <div class="mt-next">${last ? "끝까지 들었다 ✓" : "▼ 계속 듣기"}</div></div>`;
+}
+function mtClose(){ const d = MT && MT.done; MT = null; mtPaint(); if(d) try{ d(); }catch(e){} }
+document.addEventListener("click", e => {
+  if(!MT) return;
+  if(e.target.closest("[data-mtskip]")){ e.stopPropagation(); mtClose(); return; }
+  if(e.target.closest("[data-mtnext]")){ e.stopPropagation(); if(MT.i < MT.lines.length - 1){ MT.i++; mtPaint(); if(typeof pxSyn === "function") try{ pxSyn("tap"); }catch(_){} } else mtClose(); }
+}, true);
+document.addEventListener("keydown", e => {
+  if(!MT) return;
+  if(e.key === "Escape"){ e.preventDefault(); mtClose(); }
+  else if(e.key === " " || e.key === "Enter"){ e.preventDefault(); if(MT.i < MT.lines.length - 1){ MT.i++; mtPaint(); } else mtClose(); }
+}, true);
+
+/* ---------- 명도왕: "사정 끝까지 들어주기" 행동 ---------- */
+if(typeof G_ACTIONS !== "undefined" && !G_ACTIONS.some(a => a.id === "listen"))
+  G_ACTIONS.splice(1, 0, {id:"listen", ic:"🙇", t:"사정 끝까지 들어주기", d:"한 주를 통째로 써서 구구절절한 사연을 다 듣는다. 속사정과 진짜 조건이 나온다"});
+let MT_PENDING = null;
+const _mt_gAvail = gAvail; gAvail = function(a, P){
+  if(a && a.id === "listen"){ if(G && G._mtGo) return true; if(!G || G.over || G.handover || G.gone || !G.met) return false; return (G.heard || 0) < mtTaleOf(P).length; }
+  return _mt_gAvail(a, P);
+};
+const _mt_gAct = gAct; gAct = function(id, amt){
+  if(id !== "listen" || !G) return _mt_gAct(id, amt);
+  const P = personaById(G.pid), a = G_ACTIONS.find(x => x.id === "listen"); if(!P || !a || !gAvail(a, P)) return;
+  const tale = mtTaleOf(P), k = G.heard || 0, chunk = tale[k] || [], pr = P.p || {};
+  gLog("me", "자리를 잡고 앉았다. 말을 끊지 않고 끝까지 들었다.");
+  chunk.forEach(([who, t]) => { if(who === null) gLog("sys", t); else gLog("them", (who ? who + ": " : "") + t); });
+  G.heard = k + 1;
+  const emo = pr.emo || 1;
+  G.mood = clamp(G.mood + 12 * emo); G.resist = clamp(G.resist - (5 + 3 * emo));
+  if(G.heard >= tale.length){
+    G.resist = clamp(G.resist - 6);
+    gLog("sys", `다 듣고 나니 보인다 — 이 사람이 진짜 원하는 건 ${P.goal ? P.goal.replace(/\.$/, "") : "갈 곳과 시간"}.`);
+    if(!G.hinted){ G.hinted = true; gLog("sys", `속마음 힌트: 대략 ${man0(Math.round(gNeed(P)/10)*10 || 0)} 안팎이면 움직일 것 같다.`); }
+    if(P.type === "care") gLog("sys", "정신건강·인지 문제가 보일 때는 다그치지 않는다. 본인 동의를 받아 가족과 연결하고, 필요하면 지역 정신건강복지센터·행정복지센터 상담을 함께 안내한다.");
+  }
+  MT_PENDING = {lines:chunk, name:P.name.replace(/\s*\(.*\)$/, ""), pid:P.id};
+  G._mtGo = true; try{ _mt_gAct("listen", amt); } finally { if(G) G._mtGo = false; }   // 한 주가 지나고(대출이자 등) 이벤트 판정까지 원래 흐름 그대로
+  G && (G.silent = 0);
+};
+const _mt_render = renderArena; renderArena = function(){
+  _mt_render();
+  if(MT_PENDING){ const p = MT_PENDING; MT_PENDING = null; if(p.delay) setTimeout(() => mtPlay(p.lines, p), p.delay); else queueMicrotask(() => mtPlay(p.lines, p)); }
+};
+
+/* ---------- 경매왕 본게임(명도 단계): "사정부터 듣는다" ---------- */
+const _mt_kMove = kMove; kMove = function(id){
+  const had = K && K.occ ? K.occ.turns : 0;
+  _mt_kMove(id);
+  if(id !== "listen" || !K || !K.occ || K.occ.turns === had) return;
+  const P = typeof personaById === "function" ? personaById(KP.occ.pid) : null, tale = mtTaleOf(P || {id:KP.occ.pid});
+  if(!tale.length) return;
+  const k = K.occ.heard || 0; if(k >= tale.length) return;
+  K.occ.heard = k + 1;
+  if(K.occ.heard >= tale.length){ K.occ.coop = Math.min(100, K.occ.coop + 6); if(typeof kLog === "function") kLog("🙇 사연을 끝까지 다 들었다 — 협조도가 더 올랐다."); }
+  MT_PENDING = {lines:tale[k], name:KP.occ.name, pid:KP.occ.pid, delay:1300};   // 하루가 지나는 DAY 배너가 걷힌 뒤에
+};
+
+/* ---------- 이벤트 카드: 덜 자주, 그 집 사정에 맞게 ---------- */
+const MT_CARD_MAX = 3, MT_CARD_GAP = 3, MT_CARD_P = 0.16;
+gMaybeCard = function(P){
+  if(G.over || G.card || G.week < 1) return;
+  G.cardsUsed = G.cardsUsed || [];
+  if(G.handover){ if(G.mood < 40 && !G.cardsUsed.includes("sabotage") && Math.random() < 0.5){ G.cardsUsed.push("sabotage"); G.card = {id:"sabotage", ord:shuffle([0,1,2])}; } return; }
+  const crisis = G_CARDS.filter(c => (c.id === "crisis" || c.id === "arson") && !G.cardsUsed.includes(c.id) && c.cond(P));
+  if(crisis.length && Math.random() < 0.3){ const c = pick(crisis); G.cardsUsed.push(c.id); G.card = {id:c.id, ord:shuffle(c.o.map((_, i) => i))}; G.lastCard = G.week; return; }
+  const normal = G.cardsUsed.filter(x => !/^(crisis|arson|sabotage)$/.test(x)).length;
+  if(normal >= MT_CARD_MAX) return;                                  // 한 판에 몇 장이면 충분하다
+  if(G.lastCard != null && G.week - G.lastCard < MT_CARD_GAP) return;  // 연달아 터지지 않게
+  if(Math.random() > MT_CARD_P) return;
+  const pool = G_CARDS.filter(c => !G.cardsUsed.includes(c.id) && !/^(crisis|arson|sabotage)$/.test(c.id) && c.cond(P));
+  if(!pool.length) return;
+  const c = pick(pool); G.cardsUsed.push(c.id); G.lastCard = G.week;
+  G.card = {id:c.id, ord:shuffle(c.o.map((_, i) => i))};
+};
+(function mtFixCards(){
+  const cur = () => (typeof G !== "undefined" && G && typeof personaById === "function") ? personaById(G.pid) : null;
+  const sns = G_CARDS.find(c => c.id === "sns"), sTxt = sns && sns.s;
+  if(sns) Object.defineProperty(sns, "s", {get(){ const P = cur(); return P && hasKids(P) ? sTxt : "\"낙찰자가 오갈 데 없는 사람을 길바닥으로 내몬다\"는 글이 동네 커뮤니티에 올라왔다."; }});
+  const hos = G_CARDS.find(c => c.id === "hospital");
+  if(hos) Object.defineProperty(hos, "s", {get(){
+    const P = cur(), h = P ? houseOf(P).find(x => x.old || /노모|아버지|할머니/.test(x.rel || "")) : null;
+    const who = !h ? "어머니" : /노모|어머니/.test(h.rel + h.desc) ? "어머니" : /아버지/.test(h.rel + h.desc) ? "아버지" : /할머니|아내/.test(h.rel + h.desc) ? "집사람" : h.rel;
+    const c = who.charCodeAt(who.length - 1), jong = c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 > 0;
+    return `"${who}${jong ? "이" : "가"} 쓰러져서 병원에 있어요. 이사 날짜를 좀…"`; }});
+})();
+
+/* ---------- 무작위 점유자: 사정·나이·같이 사는 사람이 서로 맞게 ---------- */
+function mtOccOk(o){
+  const age = +((o.name.match(/\((\d+)\)/) || [])[1] || 45), H = o.house || [], tw = o.twist || "";
+  const txt = H.map(h => h.desc + " " + h.rel).join(" ");
+  const kid = H.some(h => !h.adult && /아이|자녀|아들|딸/.test(h.rel + h.desc) && !/아기|백일/.test(h.desc));
+  if(/기말고사/.test(tw) && !kid) return false;
+  if(/치매 초기인 어머니/.test(tw) && (age >= 66 || !H.some(h => h.old || /노모|어머니/.test(h.rel)))) return false;
+  if(/반려견/.test(tw) && !H.some(h => h.pet && /개|견|강아지/.test(h.rel + h.desc))) return false;
+  if(age >= 60 && /아기|백일|초등학생|고등학생/.test(txt)) return false;
+  if(age >= 66 && /노모|거동이 불편한 아버지/.test(txt)) return false;
+  if(age <= 36 && /30대 자녀|고등학생 자녀/.test(txt)) return false;
+  return true;
+}
+if(typeof occGen === "function"){
+  const _mt_occGen = occGen;
+  occGen = function(typeId){ let o = _mt_occGen(typeId); for(let i = 0; i < 40 && !mtOccOk(o); i++) o = _mt_occGen(typeId); return o; };
+}
 
 /* ================= 🖥️ 전체 화면 게임 레이아웃 — 페이지 스크롤 없이 한 화면에 (프린세스메이커식) =================
    경매왕 한 판·홈 화면을 화면 전체를 덮는 '게임 창'으로 띄운다.
@@ -41495,6 +41939,84 @@ document.addEventListener("click", e => {
 });
 // 다른 페이지(노트·퀴즈 등)로 가면 게임 창을 걷는다
 setInterval(() => { if(document.getElementById("kfsRoot") && !kfsWanted()) kfsOff(); }, 400);
+
+/* ================= 🖥️ 한 화면 게임 — 조사 행동을 그림 위로 =================
+   오른쪽 패널에 세로로 쌓이던 "집·전화로 / 집 컴퓨터로 / 현장에서 / 조사 노트"를 대사창 아래
+   그림의 빈 자리에 버튼 줄로 올린다. 누르면 그 묶음의 행동 목록이 그림 위 카드로 뜬다.
+   패널에는 상태(체력·시간·시세 감)만 남겨 스크롤 없이 한 화면에 들어가게 한다.
+   렌더 뒤 DOM만 옮기므로 계산·클릭 처리(문서 위임)는 그대로다. */
+let NX = {note:false};
+function nxShort(sum){
+  const t = sum.cloneNode(true); t.querySelectorAll("small").forEach(s => s.remove());
+  const full = t.textContent.replace(/\s+/g, " ").trim(), [head, sub] = full.split(" — ");
+  const cnt = sum.querySelector(".stg-cnt"), m = full.match(/\((\d+)\)/);
+  return {head:head.replace(/\s*\(\d+\)\s*$/, "").replace("집·전화로", "집·전화").replace("집 컴퓨터로", "집 컴퓨터"), sub:sub || "", n:cnt ? cnt.textContent : (m ? m[1] : "")};
+}
+function nxApply(){
+  if(typeof stgActive !== "function" || !stgActive()) return;
+  const root = document.getElementById("kfsRoot"); if(!root) return;
+  const stage = root.querySelector(".kfs-stage"), panel = root.querySelector(".kfs-panel"); if(!stage || !panel) return;
+  const grps = [...panel.querySelectorAll(":scope > details.stg-grp")]; if(!grps.length) return;
+  const note = panel.querySelector(":scope > details.vn-more");
+  const quit = panel.querySelector("[data-kquit]");
+  stage.querySelectorAll(".nx-dock").forEach(x => x.remove());
+  const dock = document.createElement("div"); dock.className = "nx-dock";
+  const bar = document.createElement("div"); bar.className = "nx-bar"; bar.setAttribute("role", "toolbar"); bar.setAttribute("aria-label", "조사 행동");
+  const items = note ? grps.concat([note]) : grps;
+  items.forEach(d => {
+    const sum = d.querySelector(":scope > summary"); if(!sum) return;
+    const s = nxShort(sum), isNote = d === note;
+    if(isNote){ d.classList.add("nx-note"); d.open = !!NX.note; }
+    const pop = document.createElement("div"); pop.className = "nx-pop";
+    pop.innerHTML = `<div class="nx-pop-h"><b>${esc(s.head)}</b>${s.sub ? `<small>${esc(s.sub)}</small>` : ""}<button type="button" class="nx-x" aria-label="닫기">✕</button></div>`;
+    [...d.children].filter(c => c !== sum).forEach(c => pop.appendChild(c));
+    d.appendChild(pop);
+    const sh = s.head.replace("집·전화", "전화").replace("집 컴퓨터", "컴퓨터").replace("현장에서", "현장").replace("조사 노트", "");
+    sum.innerHTML = `<span class="nx-t">${esc(s.head)}</span><span class="nx-ts">${esc(sh)}</span>${s.n ? `<small class="nx-n">${esc(s.n)}</small>` : ""}`;
+    sum.title = s.sub ? `${s.head} — ${s.sub}` : s.head;
+    d.classList.add("nx-grp"); d.classList.remove("panel");
+    bar.appendChild(d);
+  });
+  if(quit && !nxMobile()){ const box = quit.parentElement; quit.classList.add("nx-quit"); quit.innerHTML = `<span class="nx-t">그만두기</span><span class="nx-ts" aria-hidden="true">⏏</span>`; quit.setAttribute("aria-label", "그만두기"); quit.title = "그만두기"; bar.appendChild(quit); if(box && !box.children.length) box.remove(); }
+  dock.appendChild(bar);
+  if(nxMobile()){ dock.classList.add("mob"); panel.insertBefore(dock, panel.firstChild); }   // 좁은 화면: 그림 위가 입찰표로 꽉 차서, 패널 맨 위 한 줄로
+  else stage.appendChild(dock);
+  nxPlace();
+}
+// 대사창 바로 아래에 붙인다(대사창 높이는 대사마다 다르다)
+function nxMobile(){ return window.matchMedia && matchMedia("(max-width:640px)").matches; }
+function nxPlace(){
+  const mob = document.querySelector("#kfsRoot .nx-dock.mob");
+  if(mob){   // 버튼 줄 위(= 그림 자리)까지만 덮는다 — 다른 묶음으로 바로 옮겨 갈 수 있게
+    const h = document.querySelector("#kfsRoot .kfs-head"), want = h ? Math.round(h.getBoundingClientRect().bottom) + 6 : 66;
+    const bt = Math.round(mob.getBoundingClientRect().top), room = Math.max(180, (bt > want + 120 ? bt : innerHeight) - want - 8);
+    // position:fixed 의 기준이 조상 상자일 수 있다 — 실제 위치를 재서 보정
+    let cb = 0; const op = mob.querySelector(".nx-grp[open] .nx-pop");
+    if(op){ cb = Math.round(op.getBoundingClientRect().top - (parseFloat(getComputedStyle(op).top) || 0)); }
+    else { const pr = document.querySelector("#kfsRoot .kfs-body"); cb = pr && getComputedStyle(pr).transform !== "none" ? Math.round(pr.getBoundingClientRect().top) : 0; }
+    mob.style.setProperty("--nx-top", (want - cb) + "px"); mob.style.setProperty("--nx-room", room + "px"); return; }
+  const stage = document.querySelector("#kfsRoot .kfs-stage"), dock = stage && stage.querySelector(".nx-dock"); if(!dock) return;
+  const box = stage.querySelector(".vn-box"), sr = stage.getBoundingClientRect();
+  let top = 12;
+  if(box){ const br = box.getBoundingClientRect(); if(br.bottom < sr.top + sr.height * 0.6) top = Math.round(br.bottom - sr.top + 10); }
+  dock.style.top = top + "px";
+  dock.style.setProperty("--nx-room", Math.max(160, Math.round(sr.height - top - 70)) + "px");
+}
+let NX_MOB = null;
+window.addEventListener("resize", () => { if(!document.querySelector(".nx-dock")) return; const m = nxMobile(); if(NX_MOB !== null && m !== NX_MOB && typeof renderArena === "function"){ NX_MOB = m; renderArena(); return; } NX_MOB = m; nxPlace(); });
+// 하나 열면 나머지는 닫힌다 · ✕ · 바깥 누르면 닫힘 · Esc
+function nxCloseAll(except){
+  document.querySelectorAll(".nx-bar > details[open]").forEach(o => { if(o === except) return; o.open = false; if(o.classList.contains("nx-note")) NX.note = false; else if(typeof STG !== "undefined") STG.grp[o.dataset.grp] = false; });
+}
+document.addEventListener("click", e => {
+  const t = e.target; if(!t.closest) return;
+  const x = t.closest(".nx-x"); if(x){ e.preventDefault(); nxCloseAll(null); return; }
+  const sm = t.closest(".nx-bar > details > summary");
+  if(sm){ const d = sm.parentElement; if(!d.open){ nxCloseAll(d); setTimeout(nxPlace, 0); } if(d.classList.contains("nx-note")) setTimeout(() => { NX.note = d.open; }, 0); return; }
+  if(!t.closest(".nx-dock") && document.querySelector(".nx-bar > details[open]") && (t.closest(".kfs-stage") || t.closest(".kfs-panel"))) nxCloseAll(null);
+}, true);
+document.addEventListener("keydown", e => { if(e.key === "Escape" && document.querySelector(".nx-bar > details[open]")) nxCloseAll(null); });
+const _nx_render = renderArena; renderArena = function(){ _nx_render(); queueMicrotask(() => queueMicrotask(nxApply)); };
 
 window.GMW_STANDALONE = true;
 var _gmwArt0 = artUrl; artUrl = function(id){ var u = _gmwArt0(id); return u ? u.replace(/^\/_blob\/([0-9a-f]{32})$/, "assets/$1.webp") : null; };

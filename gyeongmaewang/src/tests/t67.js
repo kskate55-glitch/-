@@ -11,8 +11,9 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  let s = await imgs(); ok(s.length && !hasOld(s) && s.every(x=>x.includes(ART.seoyun.back)||Object.values(ART.seoyun.face).some(f=>x.includes(f))), w+' 인생 없이 시작 → 서윤 뒷모습');
  await p.evaluate(()=>{ kBid(Math.round(KP.minBid*1.3)); K.revealing=false; renderArena(); }); await p.waitForTimeout(400);
  s = await imgs(); ok(!hasOld(s), w+' 낙찰 얼굴도 옛 주인공 아님');
- await p.evaluate(()=>{ cpUnlockAll(); lfNew('taesik'); lfRec().intro=false; arenaTab='king'; kcStart('career'); K.intro=false; renderArena(); }); await p.waitForTimeout(500);
- s = await imgs(); ok(!hasOld(s), w+' 그림 없는 은경 → 옛 주인공 안 나옴 ('+s.length+'장)');
+ await p.evaluate(()=>{ cpUnlockAll(); window._tkArt=LF_CHAR_ART.taesik; delete LF_CHAR_ART.taesik; lfNew('taesik'); lfRec().intro=false; arenaTab='king'; kcStart('career'); K.intro=false; renderArena(); }); await p.waitForTimeout(500);
+ s = await imgs(); ok(!hasOld(s), w+' 그림 없는 캐릭터 → 옛 주인공 안 나옴 ('+s.length+'장)');
+ await p.evaluate(()=>{ LF_CHAR_ART.taesik=window._tkArt; });
  await p.evaluate(()=>{ lfNew('dohyun'); lfRec().intro=false; arenaTab='king'; kcStart('career'); K.intro=false; renderArena(); }); await p.waitForTimeout(500);
  s = await imgs(); ok(s.length && s.every(x=>x.includes(ART.dohyun.back)), w+' 도현은 도현 뒷모습');
  await p.close(); }

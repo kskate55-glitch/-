@@ -120,6 +120,10 @@ function cpSummary(type, o, forced){
   return {type, title:E[0], text:E[1], why, char:L.char, emo:C.emo, name:C.name, choice:o ? o.t : (forced === "broke" ? "파산" : ""),
     rows:[["지난 날", `${days}일`], ["처리한 CASE", `${c.cases}건 (손해 ${+c.fails || 0}건)`], ["누적 수익", kMan(c.total)], ["지금 자금", c.cash < 0 ? "대출 " + kMan(-c.cash) : kMan(c.cash)], ["스트레스", `${Math.round(L.stress)}/100`], ["깊은 인맥", `${rels}명`]]};
 }
+// 🎬 엔딩 일러스트(받은 것만 — 없으면 글만 나온다)
+const CP_END_ART = {seoyun:{good:"3a2dfa19009b195097c610316cbe17c4"}, dohyun:{good:"b130014b45d910125d391f4fc025028f"}, mijeong:{good:"949dc8b843be9a2537af925c7946f883"},
+  jaehoon:{good:"512cbdda76ef7d042b6ace4a6718710a"}, eunkyung:{good:"6bc2d39a50a75547ab9b3c4942674bbe"}};
+function cpEndArt(ch, t){ const a = CP_END_ART[ch] && CP_END_ART[ch][t]; return a ? "/_blob/" + a : null; }
 let CP_SHOW = null;       // 지금 떠 있는 엔딩 화면 {sum, step:"end"|"reveal", next, first}
 function cpFinish(o, forced){
   const L = lfRec(); if(!L || L.mode === "career" || L.ended) return;
@@ -140,7 +144,8 @@ function cpEndHTML(){
   const s = S.sum, got = cpRec().endings[s.char] || {};
   if(S.step === "end"){
     const slots = ["normal", "good", "bad", "special"].map(t => `<span class="cp-slot ${got[t] ? "got" : ""} ${t === s.type ? "now" : ""}">${got[t] ? CP_ENDING_T[t] : "?"}</span>`).join("");
-    return `<div class="cp-card cp-${s.type}"><small class="cp-kick">${s.emo} ${esc(s.name)}의 인생 · ${CP_ENDING_T[s.type]} END</small><h2>「${esc(s.title)}」</h2><p class="cp-txt">${esc(s.text)}</p>
+    const ea = cpEndArt(s.char, s.type);
+    return `<div class="cp-card cp-${s.type}${ea ? " has-art" : ""}">${ea ? `<div class="cp-art"><img src="${ea}" alt=""></div>` : ""}<small class="cp-kick">${s.emo} ${esc(s.name)}의 인생 · ${CP_ENDING_T[s.type]} END</small><h2>「${esc(s.title)}」</h2><p class="cp-txt">${esc(s.text)}</p>
       ${s.choice ? `<p class="cp-choice">🧭 마지막 선택 — <b>${esc(s.choice)}</b></p>` : ""}<p class="cp-why">${esc(s.why)}</p>
       <dl class="cp-rows">${s.rows.map(r => `<div><dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd></div>`).join("")}</dl>
       <div class="cp-slots"><small>엔딩 모으기</small>${slots}</div>

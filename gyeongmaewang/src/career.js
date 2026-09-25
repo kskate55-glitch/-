@@ -246,7 +246,7 @@ const _kc_kingHTML = kingHTML; kingHTML = function(){
     const again = K.mode === "career" ? "▶ 다음 경매 (커리어)" : K.mode === "weekly" ? "↺ 이번 주 물건 다시 도전" : "↺ 한 판 더";
     h = h.replace('<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn pri" data-kstart>↺ 한 판 더 (다른 경쟁자·다른 사건)</button>', kcShareHTML() + `<div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn pri" data-kstart>${again}</button><button type="button" class="btn" data-atab="rec">📊 기록 보기</button>`);
   }
-  if(K.step === "lost") h = h.replace("↺ 같은 물건 다시 (다른 경쟁자)", K.mode === "weekly" ? "↺ 이번 주 물건 다시 도전" : "↺ 다른 물건 기다리기 (보증금은 돌려받았어요)");
+  if(K.step === "lost") h = h.replace("↺ 같은 물건 다시 (다른 경쟁자)", K.mode === "weekly" ? "↺ 이번 주 물건 다시 도전" : "📋 경매 게시판에서 다른 물건 고르기 (보증금은 돌려받았어요)");
   return `<div class="kc-topbar">${kcSfxBtn()}</div>` + h;
 };
 
@@ -325,6 +325,12 @@ document.addEventListener("click", e => {
   let b;
   if((b = e.target.closest("[data-kcnew]"))){ e.stopImmediatePropagation(); arenaTab = "king"; kcStart(b.dataset.kcnew, b.dataset.prop); renderArena(); window.scrollTo(0,0); return; }
   if(e.target.closest("[data-hubnew]")){ e.stopImmediatePropagation(); arenaTab = "king"; kcStart("career"); renderArena(); window.scrollTo(0,0); return; }
+  // 패찰 뒤 "다른 물건" — 같은 물건을 바로 다시 띄우지 말고 경매 게시판으로 돌아가 고르게 한다
+  if(arenaTab === "king" && K && K.step === "lost" && (K.mode || "career") === "career" && e.target.closest("[data-kstart]")){
+    e.stopImmediatePropagation(); K = null;
+    if(typeof lfOn === "function" && lfOn()){ arenaTab = "life"; if(typeof LF_SPOT !== "undefined") LF_SPOT = "board"; }
+    else { arenaTab = "office"; if(typeof OF_SPOT !== "undefined") OF_SPOT = "board"; }
+    renderArena(); window.scrollTo(0,0); return; }
   if(arenaTab === "king" && e.target.closest("[data-kstart]")){ e.stopImmediatePropagation(); kcStart(K && K.mode || "career", K && K.prop); renderArena(); window.scrollTo(0,0); return; }
   if(arenaTab === "king" && K && e.target.closest("[data-kbid]")){
     const v = id => { const el = document.getElementById(id); if(!el || el.value === "") return null; const n = +el.value; return isFinite(n) && n >= 0 ? Math.round(n) : null; };

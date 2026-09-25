@@ -6,11 +6,11 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  await p.click('[data-bdplay]:not([disabled])'); await p.waitForTimeout(500);
  await p.evaluate(()=>{ if(K.intro){K.intro=false;renderArena();} }); await p.waitForTimeout(1500);
  ok(await p.evaluate(()=>!document.querySelector('.kfs-panel .kc-pred') && !document.querySelector('.kfs-panel .ke-case') && !!document.querySelector('.kfs-stage .ke-sheet #kBid')), w+' 판단기록 없음 · 사건파일/입찰표는 그림 위로');
- ok(await p.evaluate(()=>document.querySelectorAll('.kfs-panel details.stg-grp').length===3 && document.querySelectorAll('.kfs-panel details.stg-grp[open]').length<=1), w+' 조사 행동 3묶음 접기');
- for(const r of ['trade','docs']){ await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest("details"); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){ await el.click(); await p.waitForTimeout(700);} }
+ ok(await p.evaluate(()=>document.querySelectorAll('.nx-bar details.stg-grp').length===3 && document.querySelectorAll('.nx-bar details.stg-grp[open]').length<=1), w+' 조사 행동 3묶음 — 그림 위 버튼 줄');
+ for(const r of ['trade','docs']){ await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest("details"); document.querySelectorAll('.nx-bar details[open]').forEach(o=>{ if(o!==d) o.open=false; }); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){ await el.click(); await p.waitForTimeout(700);} }
  ok(await p.evaluate(()=>!!document.querySelector('.stg-tab.new')), w+' 새 조사 결과 → 사건 파일 탭 NEW');
- ok(await p.evaluate(()=>document.querySelector('details.stg-grp').open), w+' 다시 그려져도 펼친 묶음 유지');
- await p.click('[data-stg="file"]'); await p.waitForTimeout(400);
+ ok(await p.evaluate(()=>document.querySelector('[data-kres="docs"]').closest('details').open), w+' 다시 그려져도 펼친 묶음 유지');
+ await p.evaluate(()=>document.querySelectorAll('.nx-bar details[open]').forEach(d=>d.open=false)); await p.evaluate(()=>document.querySelectorAll('.nx-bar details[open]').forEach(o=>o.open=false)); await p.click('[data-stg="file"]'); await p.waitForTimeout(400);
  ok(await p.evaluate(()=>!document.querySelector('.stg-file').hidden && !!document.querySelector('.stg-file .ke-card.on')), w+' 사건 파일 열림 · 드러난 카드');
  await p.screenshot({path:`stg_file_${w}.png`});
  await p.click('.stg-x'); await p.waitForTimeout(200);

@@ -10,8 +10,8 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  await p.click('[data-bdplay]:not([disabled])'); await p.waitForTimeout(500);
  await p.evaluate(()=>{ if(K.intro){K.intro=false;renderArena();} }); await p.waitForTimeout(1500);
  ok(await p.evaluate(()=>!!document.querySelector('.kfs-panel .stg-wx')), w+' 오늘 날씨 그림');
- for(const r of ['docs','trade']){ await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest("details"); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){ await el.click(); await p.waitForTimeout(700);} }
- await p.click('[data-stg="file"]'); await p.waitForTimeout(500);
+ for(const r of ['docs','trade']){ await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest("details"); document.querySelectorAll('.nx-bar details[open]').forEach(o=>{ if(o!==d) o.open=false; }); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){ await el.click(); await p.waitForTimeout(700);} }
+ await p.evaluate(()=>document.querySelectorAll('.nx-bar details[open]').forEach(o=>o.open=false)); await p.click('[data-stg="file"]'); await p.waitForTimeout(500);
  ok(await p.evaluate(()=>document.querySelectorAll('.stg-file .ke-card.on .ke-photo').length>=1), w+' 조사 파일에 증거 사진');
  await p.screenshot({path:`sh_file_${w}.png`});
  ok(broken.length===0, w+' 깨진 그림 없음 '+broken.slice(0,3).join(','));

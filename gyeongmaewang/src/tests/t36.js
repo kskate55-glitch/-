@@ -6,12 +6,12 @@ await p.evaluate(()=>{arenaTab='home';renderArena();});
 await p.click('[data-kcnew="career"]'); await p.waitForTimeout(400);
 console.log(w,'bgm',await p.evaluate(()=>[KA_UNLOCKED, KA_PLAY.filter(x=>!x.dead).map(x=>x.id).join(), KA&&KA.ac.state]));
 await p.click('[data-kintro]'); await p.waitForTimeout(300);
-for(const r of ['docs','site','neigh','broker']) { const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){await el.click(); await p.waitForTimeout(150);} }
+for(const r of ['docs','site','neigh','broker']) { await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest("details"); document.querySelectorAll('.nx-bar details[open]').forEach(o=>{ if(o!==d) o.open=false; }); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){await el.click(); await p.waitForTimeout(150);} }
 await p.fill('#kPredSale','15500'); await p.fill('#kPredRepair','400'); await p.fill('#kPredMove','14');
 await p.fill('#kBid','12650'); await p.waitForTimeout(100);
 console.log(w,'hangul',await p.evaluate(()=>document.getElementById('kHangul').textContent));
 const hs=await p.evaluate(()=>document.documentElement.scrollHeight);
-await p.waitForTimeout(900); await p.evaluate(()=>{ window._clk=[]; document.addEventListener('click',e=>_clk.push(e.target.outerHTML.slice(0,60)),true); }); await p.click('[data-kcseal]'); console.log(await p.evaluate(()=>_clk)); console.log(w,'sealed?',await p.evaluate(()=>JSON.stringify(K.sealed)), await p.evaluate(()=>document.getElementById('kBidErr')&&document.getElementById('kBidErr').textContent)); await p.waitForTimeout(1500); await p.screenshot({path:`ke2_${w}.png`});
+await p.waitForTimeout(900); await p.evaluate(()=>{ window._clk=[]; document.addEventListener('click',e=>_clk.push(e.target.outerHTML.slice(0,60)),true); }); await p.evaluate(()=>document.querySelectorAll('.nx-bar details[open]').forEach(o=>o.open=false)); await p.click('[data-kcseal]'); console.log(await p.evaluate(()=>_clk)); console.log(w,'sealed?',await p.evaluate(()=>JSON.stringify(K.sealed)), await p.evaluate(()=>document.getElementById('kBidErr')&&document.getElementById('kBidErr').textContent)); await p.waitForTimeout(1500); await p.screenshot({path:`ke2_${w}.png`});
 await p.click('[data-kbid]'); await p.waitForTimeout(2600); await p.screenshot({path:`ke3_${w}.png`});
 console.log(w,'bgm2',await p.evaluate(()=>KA_PLAY.filter(x=>!x.dead).map(x=>x.id).join()), await p.evaluate(()=>[K.revealMs, JSON.stringify(K.pred)]));
 await p.waitForTimeout(4500); const st=await p.evaluate(()=>[K.step,K.revealing]); console.log(w,st);

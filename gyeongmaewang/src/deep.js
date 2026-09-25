@@ -157,11 +157,17 @@ function dpProps(){
   own.forEach(o => { if(o[0] === "tie"){ const D = lfDate(); if(D.dow === 0 || D.dow === 6 || D.h < 18) return; } if(o[0] === "coffee" && nightOwl < 1) return; if(o[0] === "ramen" && (c.cases || 0) + day % 3 < 1) return; items.push(o.concat([""])); });
   return items;
 }
+const DP_PROP_ART = {umb_wet:"70cf22ee2b5f2ea5d06db56f93a5a496",umb:"10c9db965f9b528631a2e528899db8b7",frame:"9e56b7050c90529d0669179f8b7e6363",memo:"37f400899fc59eefa8b7e25ff6a29d4d",papers:"0d9868170a22c77dcbc843a6e8b807f3",ramen:"951ee9ea3b26b6283b88ab236b92c70a",coffee:"c436badded707b714eaf20e3a3e56fce",tie:"9286efcf847040bce095a58b6e5afeb1",ledger:"0b42373099cffce647b5dfea85c9becb",tape:"f0afc19254fbb941869a89bb0bc06832",calc:"1869114785585f53d8caa1079262c4c6",notebook:"a9b4f6d5885788b21fb44ab76f43e08c"};   // 거점 소품 픽셀 아이콘(없으면 이모지로)
+function dpPropFace(id, ic){
+  const a = DP_PROP_ART[id]; if(!a) return ic;
+  const n = id === "papers" ? [...ic].filter(ch => ch === "🗂").length : 1;   // 서류는 쌓인 만큼(1~3) 겹쳐 그린다
+  return Array.from({length: Math.max(1, n)}, (_, i) => `<img src="/_blob/${a}" alt="" class="dp-img" style="${i ? "margin-left:-18px" : ""}">`).join("");
+}
 function dpPropsMount(){
   const st = document.querySelector(".lf-stage"); if(!st || st.querySelector(".dp-props")) return;
   const items = dpProps(); if(!items.length) return;
   const box = document.createElement("div"); box.className = "dp-props";
-  box.innerHTML = items.map(([id, ic, t, line, cls]) => `<button type="button" class="dp-prop ${cls}" data-dpprop="${id}" data-line="${esc(line)}" title="${esc(t)}" aria-label="${esc(t)}">${ic}</button>`).join("");
+  box.innerHTML = items.map(([id, ic, t, line, cls]) => `<button type="button" class="dp-prop ${cls}" data-dpprop="${id}" data-line="${esc(line)}" title="${esc(t)}" aria-label="${esc(t)}">${dpPropFace(id, ic)}</button>`).join("");
   st.appendChild(box);
 }
 document.addEventListener("click", e => {

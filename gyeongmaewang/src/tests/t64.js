@@ -21,7 +21,7 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  ok(/계량기|차단기/.test(th), w+' 새 CASE — 지난 실수 혼잣말: '+th);
  await p.screenshot({path:`dp_thought_${w}.png`});
  // 전화 습관
- await p.evaluate(()=>{ document.querySelectorAll('details').forEach(d=>d.open=true); });
+ await p.evaluate(()=>{ const b=document.querySelector('[data-kres="call1"]:not([disabled])')||document.querySelector('[data-kres="mgmtcall"]:not([disabled])'); const d=b&&b.closest('details'); document.querySelectorAll('.nx-bar details[open]').forEach(o=>{ if(o!==d) o.open=false; }); if(d) d.open=true; });   // 사람처럼 그 묶음 하나만 연다
  const callBtn = await p.$('[data-kres="call1"]:not([disabled])') || await p.$('[data-kres="mgmtcall"]:not([disabled])');
  if(callBtn){ await callBtn.click(); await p.waitForTimeout(150);
    ok(await p.evaluate(()=>/연결 중/.test((document.querySelector('.dp-call')||{}).innerText||'')), w+' 전화: 연결 중… 뚜—');

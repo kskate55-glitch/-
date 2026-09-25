@@ -68,7 +68,7 @@ if(typeof keBidSheet === "function"){
     const skip = `<button type="button" class="btn fr-skipbtn" data-frskip>🚪 입찰 안 하고 유찰 기다리기</button>`;
     const add = `<div id="frMoney">${frMoneyHTML(KP.minBid + 1000)}</div>
       <div class="fr-skip"><small class="note">정보가 모자라거나 본전 가격이 불안하면 <b>입찰하지 않는 것도 좋은 선택</b>이에요. 유찰되면 다음 회차에 최저가가 20% 내려가요.</small></div>`;
-    if(/data-kcseal>[^<]*<\/button>/.test(h)) h = h.replace(/(<button type="button" class="btn pri" data-kcseal>[^<]*<\/button>)/, `<div class="fr-sealrow">$1${skip}</div>`);
+    if(/data-kcseal>[\s\S]*?<\/button>/.test(h)) h = h.replace(/(<button type="button" class="btn pri" data-kcseal>[\s\S]*?<\/button>)/, `<div class="fr-sealrow">$1${skip}</div>`);
     else h = h.replace(/<\/div>\s*$/, skip + "</div>");
     return h.replace(/<\/div>\s*$/, add + "</div>");
   };

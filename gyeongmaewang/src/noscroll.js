@@ -17,7 +17,7 @@ function nxApply(){
   const grps = [...panel.querySelectorAll(":scope > details.stg-grp")]; if(!grps.length) return;
   const note = panel.querySelector(":scope > details.vn-more");
   const quit = panel.querySelector("[data-kquit]");
-  stage.querySelectorAll(".nx-dock").forEach(x => x.remove());
+  root.querySelectorAll(".nx-dock").forEach(x => x.remove());
   const dock = document.createElement("div"); dock.className = "nx-dock";
   const bar = document.createElement("div"); bar.className = "nx-bar"; bar.setAttribute("role", "toolbar"); bar.setAttribute("aria-label", "조사 행동");
   // PC: 조사 노트는 버튼 줄에서 빼서 '사건 파일' 옆 탭(공책)으로 — 행동 버튼과 섞여 헷갈렸다
@@ -41,7 +41,12 @@ function nxApply(){
   if(quit && !nxMobile()){ const box = quit.parentElement; quit.classList.add("nx-quit"); quit.innerHTML = `<span class="nx-t">그만두기</span><span class="nx-ts" aria-hidden="true">⏏</span>`; quit.setAttribute("aria-label", "그만두기"); quit.title = "그만두기"; bar.appendChild(quit); if(box && !box.children.length) box.remove(); }
   dock.appendChild(bar);
   if(nxMobile()){ dock.classList.add("mob"); panel.insertBefore(dock, panel.firstChild); }   // 좁은 화면: 그림 위가 입찰표로 꽉 차서, 패널 맨 위 한 줄로
-  else stage.appendChild(dock);
+  else {
+    // PC: 맨 위 머리줄 가운데 빈자리로 — 그림(점유자·주인공·말풍선)을 가리지 않게
+    const head = root.querySelector(".kfs-head"), tools = head && head.querySelector(".kfs-tools");
+    if(head && tools){ dock.classList.add("inhead"); head.classList.add("has-dock"); head.insertBefore(dock, tools); }
+    else stage.appendChild(dock);
+  }
   nxPlace();
 }
 // 대사창 바로 아래에 붙인다(대사창 높이는 대사마다 다르다)
@@ -56,6 +61,8 @@ function nxPlace(){
     if(op){ cb = Math.round(op.getBoundingClientRect().top - (parseFloat(getComputedStyle(op).top) || 0)); }
     else { const pr = document.querySelector("#kfsRoot .kfs-body"); cb = pr && getComputedStyle(pr).transform !== "none" ? Math.round(pr.getBoundingClientRect().top) : 0; }
     mob.style.setProperty("--nx-top", (want - cb) + "px"); mob.style.setProperty("--nx-room", room + "px"); return; }
+  const hd = document.querySelector("#kfsRoot .nx-dock.inhead");
+  if(hd){ const st = document.querySelector("#kfsRoot .kfs-stage"), r = st ? st.getBoundingClientRect() : null; hd.style.setProperty("--nx-room", Math.max(200, Math.round((r ? r.bottom : innerHeight) - hd.getBoundingClientRect().bottom - 20)) + "px"); return; }
   const stage = document.querySelector("#kfsRoot .kfs-stage"), dock = stage && stage.querySelector(".nx-dock"); if(!dock) return;
   const box = stage.querySelector(".vn-box"), sr = stage.getBoundingClientRect();
   let top = 12;

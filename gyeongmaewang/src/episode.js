@@ -5,41 +5,41 @@
    다음 단계가 생긴다(cpRec().unlocked를 캠페인과 같이 쓴다). 6단계까지 끝나면 엔딩 크레딧이 올라간다. */
 const EP_PLAN = {
   seoyun:{stars:1, base:1500, hold:3, eps:[
-    {k:"k1", when:"1년차 · 봄", lines:["노트북에 관심지역 알림이 떴다. 서울 오래된 빌라 3층, 대항력 없는 세입자.","'처음부터 끝까지 내 손으로. 조사하고, 입찰하고, 명도하고, 팔아 보자.'"]},
-    {k:"f11", when:"1년차 · 여름", lines:["두 번째 물건은 보증금 대부분을 배당받는 세입자가 사는 빌라.","'배당받는 세입자면 명도확인서가 열쇠라던데. 순서만 안 틀리면 돼.'"]},
-    {k:"f12", when:"1년차 · 가을", lines:["작은 원룸. 세입자는 스물한 살, 보증금 500이 전 재산이라고 한다.","'나도 스물한 살 땐 아무것도 몰랐어. 알려 줄 수 있는 건 알려 주자.'"]},
-    {k:"f13", when:"2년차 · 겨울", lines:["고양 화정동 소형 아파트. 문을 두드려도 아무도 안 나온다.","'문이 안 열리면, 다른 문을 찾아야지.'"]}]},
+    {k:"k1", name:"담배는 주머니에만", sub:"대항력 없는 할아버지 세입자", when:"1년차 · 봄", lines:["노트북에 관심지역 알림이 떴다. 서울 오래된 빌라 3층, 대항력 없는 세입자.","'처음부터 끝까지 내 손으로. 조사하고, 입찰하고, 명도하고, 팔아 보자.'"]},
+    {k:"f11", name:"서류 한 장과 이삿날", sub:"배당받는 세입자", when:"1년차 · 여름", lines:["두 번째 물건은 보증금 대부분을 배당받는 세입자가 사는 빌라.","'배당받는 세입자면 명도확인서가 열쇠라던데. 순서만 안 틀리면 돼.'"]},
+    {k:"f12", name:"스물한 살의 보증금 500", sub:"보호종료 청년의 원룸", when:"1년차 · 가을", lines:["작은 원룸. 세입자는 스물한 살, 보증금 500이 전 재산이라고 한다.","'나도 스물한 살 땐 아무것도 몰랐어. 알려 줄 수 있는 건 알려 주자.'"]},
+    {k:"f13", name:"문 너머의 키보드 소리", sub:"문을 안 여는 아들", when:"2년차 · 겨울", lines:["고양 화정동 소형 아파트. 문을 두드려도 아무도 안 나온다.","'문이 안 열리면, 다른 문을 찾아야지.'"]}]},
   dohyun:{stars:2, base:2600, hold:4, eps:[
-    {k:"k2", when:"1년차 · 봄", lines:["퇴근길 지하철에서 관심 물건 알림. 은평구 투룸, 겉 마진이 어마어마하다.","'싸 보이는 데는 이유가 있겠지. 멈출 줄 아는 것도 실력이다.'"]},
-    {k:"f21", when:"1년차 · 여름", lines:["점심시간에 걸려 온 전화. '이사비 500은 주셔야죠.'","'회의 5분 전인데… 숫자부터 부르는 사람한테는 어떻게 하더라.'"]},
-    {k:"f22", when:"1년차 · 가을", lines:["HUG가 넘긴 투룸. 안에는 월세를 6개월 치 선불로 냈다는 사람이 산다.","'그 사람도 피해자네. 그래도 집은 비워야 하고.'"]},
-    {k:"f23", when:"2년차 · 봄", lines:["대학가 원룸. 번역기로 주고받은 문자가 벌써 스무 통.","'말이 안 통하면 목소리를 높이는 게 아니라 사람을 한 명 더 부르는 거야.'"]}]},
+    {k:"k2", name:"싸 보이는 데는 이유가 있다", sub:"겉 마진이 큰 투룸", when:"1년차 · 봄", lines:["퇴근길 지하철에서 관심 물건 알림. 은평구 투룸, 겉 마진이 어마어마하다.","'싸 보이는 데는 이유가 있겠지. 멈출 줄 아는 것도 실력이다.'"]},
+    {k:"f21", name:"500이라는 숫자의 출처", sub:"이사비 500을 부르는 전 소유자", when:"1년차 · 여름", lines:["점심시간에 걸려 온 전화. '이사비 500은 주셔야죠.'","'회의 5분 전인데… 숫자부터 부르는 사람한테는 어떻게 하더라.'"]},
+    {k:"f22", name:"고양이 셋과 선불 360", sub:"사기당한 깔세 점유자", when:"1년차 · 가을", lines:["HUG가 넘긴 투룸. 안에는 월세를 6개월 치 선불로 냈다는 사람이 산다.","'그 사람도 피해자네. 그래도 집은 비워야 하고.'"]},
+    {k:"f23", name:"번역기로 스무 통", sub:"월세를 선불 낸 유학생", when:"2년차 · 봄", lines:["대학가 원룸. 번역기로 주고받은 문자가 벌써 스무 통.","'말이 안 통하면 목소리를 높이는 게 아니라 사람을 한 명 더 부르는 거야.'"]}]},
   mijeong:{stars:3, base:3600, hold:5, eps:[
-    {k:"f31", when:"1년차 · 봄", lines:["가게 브레이크 타임에 낙찰받은 상가를 보러 갔다.","손님이 앉아 있는 미용실. '장사하는 사람 마음은 내가 알지.'"]},
-    {k:"f32", when:"1년차 · 가을", lines:["동네에서 30년 식당을 한 부부의 가게.","'말이 잘 안 통해도 밥 냄새는 통하지.'"]},
-    {k:"f33", when:"2년차 · 봄", lines:["약속한 날이 오면 늘 새 핑계가 생기는 사람.","'착한 사람일수록 날짜는 종이에 박아야 해.'"]},
-    {k:"f34", when:"2년차 · 가을", lines:["소리 지르는 남편, 말 없는 아내. 둘 중 누가 결정하는지부터 안 보인다.","'사람 장사 15년, 진짜 결정권자는 따로 있더라.'"]}]},
+    {k:"f31", name:"가위 소리가 멈추는 날", sub:"영업 중인 1층 미용실", when:"1년차 · 봄", lines:["가게 브레이크 타임에 낙찰받은 상가를 보러 갔다.","손님이 앉아 있는 미용실. '장사하는 사람 마음은 내가 알지.'"]},
+    {k:"f32", name:"30년 짜장면 냄새", sub:"동네가 편드는 중식당", when:"1년차 · 가을", lines:["동네에서 30년 식당을 한 부부의 가게.","'말이 잘 안 통해도 밥 냄새는 통하지.'"]},
+    {k:"f33", name:"진짜로 이번 주예요", sub:"핑계 많은 전 소유자", when:"2년차 · 봄", lines:["약속한 날이 오면 늘 새 핑계가 생기는 사람.","'착한 사람일수록 날짜는 종이에 박아야 해.'"]},
+    {k:"f34", name:"목소리 큰 쪽이 정하지 않는다", sub:"결정권자가 따로인 부부", when:"2년차 · 가을", lines:["소리 지르는 남편, 말 없는 아내. 둘 중 누가 결정하는지부터 안 보인다.","'사람 장사 15년, 진짜 결정권자는 따로 있더라.'"]}]},
   jaehoon:{stars:4, base:4800, hold:6, eps:[
-    {k:"f41", when:"1년차 · 봄", lines:["두 번 유찰된 반지하. 최저가만 보면 반값이다.","'봐라, 벽은 거짓말을 안 한다 아이가. 비 온 다음 날 가 보자.'"]},
-    {k:"f42", when:"1년차 · 가을", lines:["현관 앞까지 상자가 쌓인 집. 안에서 고양이 소리.","'이건 공사보다 사람이 먼저다.'"]},
-    {k:"f43", when:"2년차 · 봄", lines:["세입자가 휴대폰을 들이댄다. '지금 방송 중이에요.'","'카메라 앞이라고 달라질 건 없다. 절차대로 간다.'"]},
-    {k:"f44", when:"2년차 · 겨울", lines:["40년 된 단독주택. 지붕도 담장도 사람도 오래됐다.","'공구함 들고 옥상부터 보자.'"]}]},
+    {k:"f41", name:"비 온 다음 날의 누런 선", sub:"침수 흔적 반지하", when:"1년차 · 봄", lines:["두 번 유찰된 반지하. 최저가만 보면 반값이다.","'봐라, 벽은 거짓말을 안 한다 아이가. 비 온 다음 날 가 보자.'"]},
+    {k:"f42", name:"상자 너머의 사람", sub:"물건이 가득 찬 집", when:"1년차 · 가을", lines:["현관 앞까지 상자가 쌓인 집. 안에서 고양이 소리.","'이건 공사보다 사람이 먼저다.'"]},
+    {k:"f43", name:"지금 방송 중이에요", sub:"카메라 든 세입자", when:"2년차 · 봄", lines:["세입자가 휴대폰을 들이댄다. '지금 방송 중이에요.'","'카메라 앞이라고 달라질 건 없다. 절차대로 간다.'"]},
+    {k:"f44", name:"마당 있는 집의 큰언니", sub:"40년 된 단독주택", when:"2년차 · 겨울", lines:["40년 된 단독주택. 지붕도 담장도 사람도 오래됐다.","'공구함 들고 옥상부터 보자.'"]}]},
   eunkyung:{stars:4, base:6800, hold:8, eps:[
-    {k:"f51", when:"1년차 · 봄", lines:["선순위 임차인이 보증금 1억을 신고했다. …채무자와 성이 같다.","'서류가 있다고 권리가 있는 건 아니지. 근거부터 찾자.'"]},
-    {k:"f52", when:"1년차 · 가을", lines:["점유자가 임대차보호법 조항을 줄줄 외운다.","'조항엔 조항 말고 날짜로 답한다.'"]},
-    {k:"f53", when:"2년차 · 봄", lines:["세 번 유찰, 최저가 반값. 전입세대 열람엔 아무도 없다.","'다들 안 들어오는 데는 이유가 있어. 비고란까지 읽자.'"]},
-    {k:"f54", when:"2년차 · 가을", lines:["대항력 있는 전세 세입자. 다 배당될 것 같은데, 세금 체납이 걸려 있다.","'숫자가 틀린 게 아니라 순서가 틀렸을 수도 있어.'"]}]},
+    {k:"f51", name:"성이 같은 임차인", sub:"자칭 선순위 · 가장임차인", when:"1년차 · 봄", lines:["선순위 임차인이 보증금 1억을 신고했다. …채무자와 성이 같다.","'서류가 있다고 권리가 있는 건 아니지. 근거부터 찾자.'"]},
+    {k:"f52", name:"제3조를 외우는 남자", sub:"전입일 다툼", when:"1년차 · 가을", lines:["점유자가 임대차보호법 조항을 줄줄 외운다.","'조항엔 조항 말고 날짜로 답한다.'"]},
+    {k:"f53", name:"열람에 없는 6천만원", sub:"외국인 선순위 임차인", when:"2년차 · 봄", lines:["세 번 유찰, 최저가 반값. 전입세대 열람엔 아무도 없다.","'다들 안 들어오는 데는 이유가 있어. 비고란까지 읽자.'"]},
+    {k:"f54", name:"세금이 먼저 줄을 선다", sub:"당해세와 미배당 보증금", when:"2년차 · 가을", lines:["대항력 있는 전세 세입자. 다 배당될 것 같은데, 세금 체납이 걸려 있다.","'숫자가 틀린 게 아니라 순서가 틀렸을 수도 있어.'"]}]},
   taesik:{stars:5, base:12000, hold:14, eps:[
-    {k:"f61", when:"1년차 · 봄", lines:["현관에 붙은 현수막. '유치권 행사 중'.","'삼십 년 동안 이런 현수막 많이 봤지. 진짜는 드물어.'"]},
-    {k:"f62", when:"1년차 · 가을", lines:["여섯 세대가 사는 다가구 한 동을 통째로 노린다.","'한 집씩 따로 봐야 해. 사람마다 사정이 다르거든.'"]},
-    {k:"f63", when:"2년차 · 봄", lines:["영업 중인 모텔 건물. 카운터엔 알로하 셔츠의 사장님.","'손님이 드나드는 건물은 예약 장부부터 봐야지.'"]},
-    {k:"f64", when:"2년차 · 가을", lines:["마지막 물건. 공장 안엔 CNC 다섯 대, 현관엔 자물쇠.","'끝까지 가 보자. 이게 마지막이야.'"]}]}};
+    {k:"f61", name:"현수막에 적힌 날짜", sub:"유치권 신고된 상가 빌딩", when:"1년차 · 봄", lines:["현관에 붙은 현수막. '유치권 행사 중'.","'삼십 년 동안 이런 현수막 많이 봤지. 진짜는 드물어.'"]},
+    {k:"f62", name:"초인종이 여섯 개", sub:"6세대 다가구 통건물", when:"1년차 · 가을", lines:["여섯 세대가 사는 다가구 한 동을 통째로 노린다.","'한 집씩 따로 봐야 해. 사람마다 사정이 다르거든.'"]},
+    {k:"f63", name:"예약 장부가 끝나는 날", sub:"영업 중인 모텔 건물", when:"2년차 · 봄", lines:["영업 중인 모텔 건물. 카운터엔 알로하 셔츠의 사장님.","'손님이 드나드는 건물은 예약 장부부터 봐야지.'"]},
+    {k:"f64", name:"명판을 읽는 사람", sub:"유치권 · 남의 기계가 든 공장", when:"2년차 · 가을", lines:["마지막 물건. 공장 안엔 CNC 다섯 대, 현관엔 자물쇠.","'끝까지 가 보자. 이게 마지막이야.'"]}]}};
 
 /* ---------- 기록 ---------- */
 function epRec(){ const P = cpRec(); if(!P.ep || typeof P.ep !== "object") P.ep = {}; return P.ep; }
 function epOf(id){ const R = epRec(); if(!R[id] || !Array.isArray(R[id].res)) R[id] = {res:[]}; return R[id]; }
 function epInfo(ep){
-  if(ep.k){ const P = (typeof K_PROPS !== "undefined" && K_PROPS[ep.k]) || {}; return {title:P.title || ep.k, cat:(P.court ? `${P.court} ${P.caseNum || ""} · ` : "") + "풀 경매 · 입찰→대출→명도→수리→매도", lv:P.stars || 1, full:true}; }
+  if(ep.k){ const P = (typeof K_PROPS !== "undefined" && K_PROPS[ep.k]) || {}; return {title:ep.name ? `「${ep.name}」` : (P.title || ep.k), sub:ep.sub || "", place:P.title || "", court:P.court ? `${P.court} ${P.caseNum || ""}`.trim() : "", cat:[ep.sub, P.title].filter(Boolean).join(" · "), lv:P.stars || 1, full:true}; }
   const c = epCase(ep.c); return c ? {title:c.title, cat:c.cat, lv:c.lv, full:false} : {title:"?", cat:"", lv:1};
 }
 function epCase(id){ return (typeof CASES !== "undefined" ? CASES : []).find(c => c.id === id) || null; }
@@ -447,7 +447,7 @@ if(typeof lfBaseHTML === "function"){
       if(R.pendingK && typeof bdRunning === "function" && bdRunning()) card = `<div class="ep-alert"><small>📖 STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${R.pendingK.i + 1} 진행 중</small><b>${esc(epInfo(Pl.eps[R.pendingK.i]).title)}</b><div class="ep-alert-btns"><button type="button" class="btn pri" data-atab="king">▶ 이어하기</button></div></div>`;
       else if(i >= n) card = `<div class="ep-alert end"><small>📖 STAGE ${CP_ORDER.indexOf(L.char) + 1} · 네 물건을 모두 끝냈다</small><b>이 시기를 돌아볼 시간</b><div class="ep-alert-btns"><button type="button" class="btn pri" data-epfin="${L.char}">🎬 엔딩 보기</button></div></div>`;
       else { const ep = Pl.eps[i], c = epInfo(ep);
-        card = `<div class="ep-alert" ${epAlertStyle()}><small>📱 새 알림 · STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${i + 1}/${n} · ${esc(ep.when)}</small><b>${esc(c.title)}</b><p>${esc(ep.lines[0])}</p><em>${esc(c.cat)} · ${"★".repeat(c.lv)}</em>
+        card = `<div class="ep-alert" ${epAlertStyle()}><small>📱 새 알림 · STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${i + 1}/${n} · ${esc(ep.when)}</small><b>${esc(c.title)}</b>${c.sub ? `<span class="ep-alert-sub">${esc(c.sub)}</span>` : ""}<p>${esc(ep.lines[0])}</p><em>📍 ${esc(c.place || c.cat)}${c.court ? ` · 🏛️ ${esc(c.court)}` : ""} · ${"★".repeat(c.lv)}</em>
           <div class="ep-alert-btns"><button type="button" class="btn pri" data-epgo="${L.char}">📂 이 물건 보러 가기</button><button type="button" class="btn" data-eplist="${L.char}">📋 에피소드 목록</button></div></div>`; }
       h = h.replace(/(<div class="vn of-stage lf-stage[^"]*">)/, `$1${card}`);
     }catch(e){}
@@ -504,3 +504,6 @@ function epAlertStyle(){ const P = epAlertPos(); return P && isFinite(P.x) && is
   document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
   document.addEventListener("dblclick", e => { const el = e.target.closest && e.target.closest(".lf-stage .ep-alert"); if(!el || e.target.closest("button")) return; try{ localStorage.removeItem("ep_alert_pos"); }catch(_){} el.removeAttribute("style"); delete el.dataset.moved; });
 })();
+
+/* 케이스 상자·사건파일에서도 같은 에피소드 이름을 쓰게 물건에 붙여 둔다 */
+Object.values(EP_PLAN).forEach(Pl => Pl.eps.forEach(ep => { if(ep.k && K_PROPS[ep.k]){ K_PROPS[ep.k].epName = ep.name; K_PROPS[ep.k].epSub = ep.sub; } }));

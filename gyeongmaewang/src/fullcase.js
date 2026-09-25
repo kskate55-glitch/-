@@ -621,7 +621,7 @@ if(typeof kcIntroHTML === "function"){
 }
 if(typeof keCaseHTML === "function"){
   const _kf_case = keCaseHTML;
-  keCaseHTML = function(){ const h = _kf_case(); return kfCourt() ? h.replace('<h3 class="ke-title">', `<div class="ke-court">🏛️ ${esc(kfCourt())}</div><h3 class="ke-title">`) : h; };
+  keCaseHTML = function(){ const h = _kf_case(); const nm = KP && KP.epName ? `<div class="ke-epname">「${esc(KP.epName)}」${KP.epSub ? ` <small>${esc(KP.epSub)}</small>` : ""}</div>` : ""; return (kfCourt() || nm) ? h.replace('<h3 class="ke-title">', `${nm}${kfCourt() ? `<div class="ke-court">🏛️ ${esc(kfCourt())}</div>` : ""}<h3 class="ke-title">`) : h; };
 }
 if(typeof keBidSheet === "function"){
   const _kf_sheet = keBidSheet;
@@ -638,6 +638,6 @@ if(typeof kcCaseButtons === "function"){
     if(!c.cases && open.length <= 1) return `<button type="button" class="btn ${running ? "" : "pri"}" data-kcnew="career" data-prop="k1">▶ 새 게임 <small>보유 현금 1억 5,000만원으로 시작</small></button>`;
     const rec = open.find(P => !p.cleared["king:" + P.id]) || open[open.length - 1];
     return open.map(P => { const st = order.indexOf(KF_STAGE_OF[P.id]) + 1;
-      return `<button type="button" class="btn ${!running && P === rec ? "pri" : ""}" data-kcnew="career" data-prop="${P.id}">📁 ${st ? `STAGE ${st} · ` : ""}${esc(P.title)}${!p.cleared["king:" + P.id] ? ' <em class="kc-new">NEW</em>' : ""} <small>${P.court ? `🏛️ ${esc(P.court)} · ` : ""}${"★".repeat(P.stars || 1)}${"☆".repeat(5 - (P.stars || 1))} · ${esc(P.tagline || "")}</small></button>`; }).join("");
+      return `<button type="button" class="btn ${!running && P === rec ? "pri" : ""}" data-kcnew="career" data-prop="${P.id}">📁 ${st ? `STAGE ${st} · ` : ""}${P.epName ? `「${esc(P.epName)}」 <span class="kc-sub">${esc(P.epSub || "")}</span>` : esc(P.title)}${!p.cleared["king:" + P.id] ? ' <em class="kc-new">NEW</em>' : ""} <small>${P.epName ? `📍 ${esc(P.title)} · ` : ""}${P.court ? `🏛️ ${esc(P.court)} · ` : ""}${"★".repeat(P.stars || 1)}${"☆".repeat(5 - (P.stars || 1))} · ${esc(P.tagline || "")}</small></button>`; }).join("");
   };
 }

@@ -148,12 +148,10 @@ function lnHTML(){
   const cards = LN.cards.map(id => lnCard(LN_PRODUCTS.find(x => x.id === id), !!LN.heard[id])).join("");
   if(LN.step === "chat"){
     const p = LN_PRODUCTS.find(x => x.id === LN.chat);
-    const bub = LN.msgs.map(([w, t]) => w === "me" ? `<div class="kt-row me"><span class="kt-b">${esc(t)}</span></div>`
-      : w === "think" ? `<div class="kt-row think"><span>${esc(t)}</span></div>`
-      : `<div class="kt-row them"><span class="kt-av">${p.cap ? "💳" : "🏦"}</span><div><small class="kt-nm">${esc(p.who)} · ${esc(p.org)}</small><span class="kt-b">${esc(t)}</span></div></div>`).join("");
-    return `<div class="ln-box ln-chatbox"><div class="kt-head"><button type="button" class="kt-back" data-lnback title="명함으로">‹</button><b>${esc(p.who)}</b><small>${esc(p.org)} ${p.cap ? "· 캐피탈" : "· 2금융권"}</small></div>
-      <div class="kt-body" id="ktBody">${bub}${LN.typing ? `<div class="kt-row them"><span class="kt-av">${p.cap ? "💳" : "🏦"}</span><span class="kt-b kt-typing"><i></i><i></i><i></i></span></div>` : ""}</div>
-      <div class="kt-foot">${LN.queue ? `<span class="note">상담 중…</span>` : `<button type="button" class="btn pri" data-lntake="${p.id}">이 조건으로 진행</button><button type="button" class="btn" data-lnback>다른 곳도 들어 볼게요</button>`}</div></div>`;
+    const bub = LN.msgs.map(m => lnRowHTML(p, m)).join("");
+    return `<div class="ln-box ln-chatbox" data-chat="${p.id}"><div class="kt-head"><button type="button" class="kt-back" data-lnback title="명함으로">‹</button><b>${esc(p.who)}</b><small>${esc(p.org)} ${p.cap ? "· 캐피탈" : "· 2금융권"}</small></div>
+      <div class="kt-body" id="ktBody">${bub}${LN.typing ? `<div class="kt-row them kt-typrow"><span class="kt-av">${p.cap ? "💳" : "🏦"}</span><span class="kt-b kt-typing"><i></i><i></i><i></i></span></div>` : ""}</div>
+      <div class="kt-foot" data-st="${LN.queue ? "q" : "d"}">${lnFootHTML(p)}</div></div>`;
   }
   return `<div class="ln-box"><h3>🏦 잔금 대출 — 대출상담사 명함 ${LN.cards.length}장</h3>
     <p>${LN.must ? `잔금 <b>${kMan(N.bal)}</b> 중 현금 ${kMan(N.cash)}을 빼면 <b class="down">${kMan(N.short)}</b>이 모자라요. 잔금일 전에 대출을 정해야 해요.` : `잔금은 현금으로도 되지만, 대출을 받으면 현금을 남겨 둘 수 있어요.`}</p>
@@ -162,8 +160,30 @@ function lnHTML(){
     <p class="note ln-disc">※ 게임용 예시 조건이에요. 실제 금리·한도는 시기·지역·신용·소득·규제에 따라 달라지니 실제 대출은 금융기관 상담으로 확인하세요.</p>
     ${LN.must ? "" : `<div class="ln-btns"><button type="button" class="btn" data-lnask="no">그냥 현금으로 낸다</button></div>`}</div>`;
 }
+function lnRowHTML(p, [w, t]){
+  return w === "me" ? `<div class="kt-row me"><span class="kt-b">${esc(t)}</span></div>`
+    : w === "think" ? `<div class="kt-row think"><span>${esc(t)}</span></div>`
+    : `<div class="kt-row them"><span class="kt-av">${p.cap ? "💳" : "🏦"}</span><div><small class="kt-nm">${esc(p.who)} · ${esc(p.org)}</small><span class="kt-b">${esc(t)}</span></div></div>`;
+}
+/* 카톡처럼 — 새 말풍선만 아래에 붙인다. 화면 전체를 다시 그리면 모든 말풍선이 매번 다시 나타나 깜빡였다 */
+function lnChatSync(el){
+  const box = el.querySelector(".ln-chatbox"), body = el.querySelector("#ktBody");
+  if(LN.step !== "chat" || !box || !body || box.dataset.chat !== LN.chat) return false;
+  const p = LN_PRODUCTS.find(x => x.id === LN.chat), have = body.querySelectorAll(".kt-row:not(.kt-typrow)").length;
+  const ty = body.querySelector(".kt-typrow");
+  if(LN.msgs.length > have){ if(ty) ty.remove(); LN.msgs.slice(have).forEach(m => body.insertAdjacentHTML("beforeend", lnRowHTML(p, m))); }
+  const ty2 = body.querySelector(".kt-typrow");
+  if(LN.typing && !ty2) body.insertAdjacentHTML("beforeend", `<div class="kt-row them kt-typrow"><span class="kt-av">${p.cap ? "💳" : "🏦"}</span><span class="kt-b kt-typing"><i></i><i></i><i></i></span></div>`);
+  if(!LN.typing && ty2) ty2.remove();
+  const foot = box.querySelector(".kt-foot"), want = LN.queue ? "q" : "d";
+  if(foot && foot.dataset.st !== want){ foot.dataset.st = want; foot.innerHTML = lnFootHTML(p); }
+  body.scrollTop = body.scrollHeight;
+  return true;
+}
+function lnFootHTML(p){ return LN.queue ? `<span class="note">상담 중…</span>` : `<button type="button" class="btn pri" data-lntake="${p.id}">이 조건으로 진행</button><button type="button" class="btn" data-lnback>다른 곳도 들어 볼게요</button>`; }
 function lnPaint(){
   let el = document.getElementById("lnRoot");
+  if(LN && el && lnChatSync(el)) return;
   if(!LN){ if(el) el.remove(); return; }
   if(!el){ el = document.createElement("div"); el.id = "lnRoot"; el.className = "ln-root"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "잔금 대출"); document.body.appendChild(el); }
   el.innerHTML = `<div class="ln-veil"></div><div class="ln-scroll">${lnHTML()}</div>`;

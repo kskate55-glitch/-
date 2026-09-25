@@ -650,3 +650,29 @@ body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .h
 @media (max-width:600px){ .lf-stage .ep-alert{right:14px;left:14px;width:auto} .lf-stage .ep-alert[data-moved]{right:auto;width:min(420px,calc(100% - 28px))} }
 .lf-stage .ep-alert{animation:epAlert2 .5s cubic-bezier(.2,1.4,.4,1)}
 @keyframes epAlert2{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:none}}
+/* ===== v121: 조사 버튼 줄을 머리줄 가운데로 ===== */
+#kfsRoot .kfs-head.has-dock{grid-template-columns:auto minmax(0,auto) 1fr auto}
+#kfsRoot .nx-dock.inhead{position:static;inset:auto;display:flex;justify-content:center;pointer-events:auto;min-width:0;z-index:31}
+#kfsRoot .nx-dock.inhead .nx-bar{flex-wrap:nowrap;gap:6px;margin:0}
+#kfsRoot .nx-dock.inhead .nx-grp>summary,#kfsRoot .nx-dock.inhead .nx-quit{min-height:36px;padding:5px 11px;font-size:13.5px;white-space:nowrap}
+#kfsRoot .nx-dock.inhead .nx-pop{top:calc(100% + 8px);max-height:var(--nx-room,70vh)}
+@media (max-width:1400px){ #kfsRoot .nx-dock.inhead .nx-t{display:none} #kfsRoot .nx-dock.inhead .nx-ts{display:inline} #kfsRoot .nx-dock.inhead .nx-grp>summary{padding:5px 9px} }
+/* 입찰표: '입찰금액'과 금액 칸을 한 줄에, 봉투·유찰 버튼도 한 줄에 서로 다른 색으로 */
+#kfsRoot .ke-amt,.ke-amt{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+#kfsRoot .ke-amt input{width:150px}
+#kfsRoot .ke-hangul{margin:4px 0 8px}
+#kfsRoot .fr-sealrow{flex-wrap:nowrap;gap:8px;align-items:stretch}
+#kfsRoot .fr-sealrow .btn{flex:1 1 0;min-width:0;min-height:48px;padding:8px 10px;font-size:14.5px;line-height:1.25;white-space:normal}
+#kfsRoot .fr-sealrow [data-kcseal]{background:#1f5c3a;border-color:#1f5c3a;color:#fff;box-shadow:0 3px 0 #123b25}
+#kfsRoot .fr-sealrow .fr-skipbtn{background:#fff8ea;color:#5a4210;border:1.5px dashed #a58a55;box-shadow:none}
+#kfsRoot .fr-sealrow .fr-skipbtn:hover{background:#fdeecb}
+/* 주인공 뒷모습이 왼쪽 끝에서 잘리지 않게 안쪽으로 */
+#kfsRoot .k-stage .vn-player:not(.front){left:3%}
+@media (max-width:640px){ #kfsRoot .k-stage .vn-player:not(.front){left:-6%} }
+/* 카톡: 새 말풍선만 살짝 올라온다(깜빡임 없이) — 기존 말풍선은 다시 안 그린다 */
+.kt-row{animation:ktIn2 .22s ease-out}
+@keyframes ktIn2{from{transform:translateY(8px)}to{transform:none}}
+.lf-stage .ep-alert .ep-alert-sub{display:inline-block;font-size:12.5px;font-weight:800;color:#1b2430;background:#f5cf7c;border-radius:99px;padding:2px 10px;margin:0 0 6px}
+.kc-box .kc-sub{font-weight:700;font-size:.86em;opacity:.8}
+.ke-epname{font-size:15px;font-weight:900;color:#2a2317;margin-bottom:2px}.ke-epname small{font-weight:700;color:#8a5a12;font-size:12.5px}
+.ep-li .ep-lt b{letter-spacing:-.01em}

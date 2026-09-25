@@ -2021,6 +2021,32 @@ body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .h
 @media (max-width:600px){ .lf-stage .ep-alert{right:14px;left:14px;width:auto} .lf-stage .ep-alert[data-moved]{right:auto;width:min(420px,calc(100% - 28px))} }
 .lf-stage .ep-alert{animation:epAlert2 .5s cubic-bezier(.2,1.4,.4,1)}
 @keyframes epAlert2{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:none}}
+/* ===== v121: 조사 버튼 줄을 머리줄 가운데로 ===== */
+#kfsRoot .kfs-head.has-dock{grid-template-columns:auto minmax(0,auto) 1fr auto}
+#kfsRoot .nx-dock.inhead{position:static;inset:auto;display:flex;justify-content:center;pointer-events:auto;min-width:0;z-index:31}
+#kfsRoot .nx-dock.inhead .nx-bar{flex-wrap:nowrap;gap:6px;margin:0}
+#kfsRoot .nx-dock.inhead .nx-grp>summary,#kfsRoot .nx-dock.inhead .nx-quit{min-height:36px;padding:5px 11px;font-size:13.5px;white-space:nowrap}
+#kfsRoot .nx-dock.inhead .nx-pop{top:calc(100% + 8px);max-height:var(--nx-room,70vh)}
+@media (max-width:1400px){ #kfsRoot .nx-dock.inhead .nx-t{display:none} #kfsRoot .nx-dock.inhead .nx-ts{display:inline} #kfsRoot .nx-dock.inhead .nx-grp>summary{padding:5px 9px} }
+/* 입찰표: '입찰금액'과 금액 칸을 한 줄에, 봉투·유찰 버튼도 한 줄에 서로 다른 색으로 */
+#kfsRoot .ke-amt,.ke-amt{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+#kfsRoot .ke-amt input{width:150px}
+#kfsRoot .ke-hangul{margin:4px 0 8px}
+#kfsRoot .fr-sealrow{flex-wrap:nowrap;gap:8px;align-items:stretch}
+#kfsRoot .fr-sealrow .btn{flex:1 1 0;min-width:0;min-height:48px;padding:8px 10px;font-size:14.5px;line-height:1.25;white-space:normal}
+#kfsRoot .fr-sealrow [data-kcseal]{background:#1f5c3a;border-color:#1f5c3a;color:#fff;box-shadow:0 3px 0 #123b25}
+#kfsRoot .fr-sealrow .fr-skipbtn{background:#fff8ea;color:#5a4210;border:1.5px dashed #a58a55;box-shadow:none}
+#kfsRoot .fr-sealrow .fr-skipbtn:hover{background:#fdeecb}
+/* 주인공 뒷모습이 왼쪽 끝에서 잘리지 않게 안쪽으로 */
+#kfsRoot .k-stage .vn-player:not(.front){left:3%}
+@media (max-width:640px){ #kfsRoot .k-stage .vn-player:not(.front){left:-6%} }
+/* 카톡: 새 말풍선만 살짝 올라온다(깜빡임 없이) — 기존 말풍선은 다시 안 그린다 */
+.kt-row{animation:ktIn2 .22s ease-out}
+@keyframes ktIn2{from{transform:translateY(8px)}to{transform:none}}
+.lf-stage .ep-alert .ep-alert-sub{display:inline-block;font-size:12.5px;font-weight:800;color:#1b2430;background:#f5cf7c;border-radius:99px;padding:2px 10px;margin:0 0 6px}
+.kc-box .kc-sub{font-weight:700;font-size:.86em;opacity:.8}
+.ke-epname{font-size:15px;font-weight:900;color:#2a2317;margin-bottom:2px}.ke-epname small{font-weight:700;color:#8a5a12;font-size:12.5px}
+.ep-li .ep-lt b{letter-spacing:-.01em}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -42537,7 +42563,7 @@ function nxApply(){
   const grps = [...panel.querySelectorAll(":scope > details.stg-grp")]; if(!grps.length) return;
   const note = panel.querySelector(":scope > details.vn-more");
   const quit = panel.querySelector("[data-kquit]");
-  stage.querySelectorAll(".nx-dock").forEach(x => x.remove());
+  root.querySelectorAll(".nx-dock").forEach(x => x.remove());
   const dock = document.createElement("div"); dock.className = "nx-dock";
   const bar = document.createElement("div"); bar.className = "nx-bar"; bar.setAttribute("role", "toolbar"); bar.setAttribute("aria-label", "조사 행동");
   // PC: 조사 노트는 버튼 줄에서 빼서 '사건 파일' 옆 탭(공책)으로 — 행동 버튼과 섞여 헷갈렸다
@@ -42561,7 +42587,12 @@ function nxApply(){
   if(quit && !nxMobile()){ const box = quit.parentElement; quit.classList.add("nx-quit"); quit.innerHTML = `<span class="nx-t">그만두기</span><span class="nx-ts" aria-hidden="true">⏏</span>`; quit.setAttribute("aria-label", "그만두기"); quit.title = "그만두기"; bar.appendChild(quit); if(box && !box.children.length) box.remove(); }
   dock.appendChild(bar);
   if(nxMobile()){ dock.classList.add("mob"); panel.insertBefore(dock, panel.firstChild); }   // 좁은 화면: 그림 위가 입찰표로 꽉 차서, 패널 맨 위 한 줄로
-  else stage.appendChild(dock);
+  else {
+    // PC: 맨 위 머리줄 가운데 빈자리로 — 그림(점유자·주인공·말풍선)을 가리지 않게
+    const head = root.querySelector(".kfs-head"), tools = head && head.querySelector(".kfs-tools");
+    if(head && tools){ dock.classList.add("inhead"); head.classList.add("has-dock"); head.insertBefore(dock, tools); }
+    else stage.appendChild(dock);
+  }
   nxPlace();
 }
 // 대사창 바로 아래에 붙인다(대사창 높이는 대사마다 다르다)
@@ -42576,6 +42607,8 @@ function nxPlace(){
     if(op){ cb = Math.round(op.getBoundingClientRect().top - (parseFloat(getComputedStyle(op).top) || 0)); }
     else { const pr = document.querySelector("#kfsRoot .kfs-body"); cb = pr && getComputedStyle(pr).transform !== "none" ? Math.round(pr.getBoundingClientRect().top) : 0; }
     mob.style.setProperty("--nx-top", (want - cb) + "px"); mob.style.setProperty("--nx-room", room + "px"); return; }
+  const hd = document.querySelector("#kfsRoot .nx-dock.inhead");
+  if(hd){ const st = document.querySelector("#kfsRoot .kfs-stage"), r = st ? st.getBoundingClientRect() : null; hd.style.setProperty("--nx-room", Math.max(200, Math.round((r ? r.bottom : innerHeight) - hd.getBoundingClientRect().bottom - 20)) + "px"); return; }
   const stage = document.querySelector("#kfsRoot .kfs-stage"), dock = stage && stage.querySelector(".nx-dock"); if(!dock) return;
   const box = stage.querySelector(".vn-box"), sr = stage.getBoundingClientRect();
   let top = 12;
@@ -42705,7 +42738,7 @@ if(typeof keBidSheet === "function"){
     const skip = `<button type="button" class="btn fr-skipbtn" data-frskip>🚪 입찰 안 하고 유찰 기다리기</button>`;
     const add = `<div id="frMoney">${frMoneyHTML(KP.minBid + 1000)}</div>
       <div class="fr-skip"><small class="note">정보가 모자라거나 본전 가격이 불안하면 <b>입찰하지 않는 것도 좋은 선택</b>이에요. 유찰되면 다음 회차에 최저가가 20% 내려가요.</small></div>`;
-    if(/data-kcseal>[^<]*<\/button>/.test(h)) h = h.replace(/(<button type="button" class="btn pri" data-kcseal>[^<]*<\/button>)/, `<div class="fr-sealrow">$1${skip}</div>`);
+    if(/data-kcseal>[\s\S]*?<\/button>/.test(h)) h = h.replace(/(<button type="button" class="btn pri" data-kcseal>[\s\S]*?<\/button>)/, `<div class="fr-sealrow">$1${skip}</div>`);
     else h = h.replace(/<\/div>\s*$/, skip + "</div>");
     return h.replace(/<\/div>\s*$/, add + "</div>");
   };
@@ -44059,7 +44092,7 @@ if(typeof kcIntroHTML === "function"){
 }
 if(typeof keCaseHTML === "function"){
   const _kf_case = keCaseHTML;
-  keCaseHTML = function(){ const h = _kf_case(); return kfCourt() ? h.replace('<h3 class="ke-title">', `<div class="ke-court">🏛️ ${esc(kfCourt())}</div><h3 class="ke-title">`) : h; };
+  keCaseHTML = function(){ const h = _kf_case(); const nm = KP && KP.epName ? `<div class="ke-epname">「${esc(KP.epName)}」${KP.epSub ? ` <small>${esc(KP.epSub)}</small>` : ""}</div>` : ""; return (kfCourt() || nm) ? h.replace('<h3 class="ke-title">', `${nm}${kfCourt() ? `<div class="ke-court">🏛️ ${esc(kfCourt())}</div>` : ""}<h3 class="ke-title">`) : h; };
 }
 if(typeof keBidSheet === "function"){
   const _kf_sheet = keBidSheet;
@@ -44076,7 +44109,7 @@ if(typeof kcCaseButtons === "function"){
     if(!c.cases && open.length <= 1) return `<button type="button" class="btn ${running ? "" : "pri"}" data-kcnew="career" data-prop="k1">▶ 새 게임 <small>보유 현금 1억 5,000만원으로 시작</small></button>`;
     const rec = open.find(P => !p.cleared["king:" + P.id]) || open[open.length - 1];
     return open.map(P => { const st = order.indexOf(KF_STAGE_OF[P.id]) + 1;
-      return `<button type="button" class="btn ${!running && P === rec ? "pri" : ""}" data-kcnew="career" data-prop="${P.id}">📁 ${st ? `STAGE ${st} · ` : ""}${esc(P.title)}${!p.cleared["king:" + P.id] ? ' <em class="kc-new">NEW</em>' : ""} <small>${P.court ? `🏛️ ${esc(P.court)} · ` : ""}${"★".repeat(P.stars || 1)}${"☆".repeat(5 - (P.stars || 1))} · ${esc(P.tagline || "")}</small></button>`; }).join("");
+      return `<button type="button" class="btn ${!running && P === rec ? "pri" : ""}" data-kcnew="career" data-prop="${P.id}">📁 ${st ? `STAGE ${st} · ` : ""}${P.epName ? `「${esc(P.epName)}」 <span class="kc-sub">${esc(P.epSub || "")}</span>` : esc(P.title)}${!p.cleared["king:" + P.id] ? ' <em class="kc-new">NEW</em>' : ""} <small>${P.epName ? `📍 ${esc(P.title)} · ` : ""}${P.court ? `🏛️ ${esc(P.court)} · ` : ""}${"★".repeat(P.stars || 1)}${"☆".repeat(5 - (P.stars || 1))} · ${esc(P.tagline || "")}</small></button>`; }).join("");
   };
 }
 
@@ -44087,41 +44120,41 @@ if(typeof kcCaseButtons === "function"){
    다음 단계가 생긴다(cpRec().unlocked를 캠페인과 같이 쓴다). 6단계까지 끝나면 엔딩 크레딧이 올라간다. */
 const EP_PLAN = {
   seoyun:{stars:1, base:1500, hold:3, eps:[
-    {k:"k1", when:"1년차 · 봄", lines:["노트북에 관심지역 알림이 떴다. 서울 오래된 빌라 3층, 대항력 없는 세입자.","'처음부터 끝까지 내 손으로. 조사하고, 입찰하고, 명도하고, 팔아 보자.'"]},
-    {k:"f11", when:"1년차 · 여름", lines:["두 번째 물건은 보증금 대부분을 배당받는 세입자가 사는 빌라.","'배당받는 세입자면 명도확인서가 열쇠라던데. 순서만 안 틀리면 돼.'"]},
-    {k:"f12", when:"1년차 · 가을", lines:["작은 원룸. 세입자는 스물한 살, 보증금 500이 전 재산이라고 한다.","'나도 스물한 살 땐 아무것도 몰랐어. 알려 줄 수 있는 건 알려 주자.'"]},
-    {k:"f13", when:"2년차 · 겨울", lines:["고양 화정동 소형 아파트. 문을 두드려도 아무도 안 나온다.","'문이 안 열리면, 다른 문을 찾아야지.'"]}]},
+    {k:"k1", name:"담배는 주머니에만", sub:"대항력 없는 할아버지 세입자", when:"1년차 · 봄", lines:["노트북에 관심지역 알림이 떴다. 서울 오래된 빌라 3층, 대항력 없는 세입자.","'처음부터 끝까지 내 손으로. 조사하고, 입찰하고, 명도하고, 팔아 보자.'"]},
+    {k:"f11", name:"서류 한 장과 이삿날", sub:"배당받는 세입자", when:"1년차 · 여름", lines:["두 번째 물건은 보증금 대부분을 배당받는 세입자가 사는 빌라.","'배당받는 세입자면 명도확인서가 열쇠라던데. 순서만 안 틀리면 돼.'"]},
+    {k:"f12", name:"스물한 살의 보증금 500", sub:"보호종료 청년의 원룸", when:"1년차 · 가을", lines:["작은 원룸. 세입자는 스물한 살, 보증금 500이 전 재산이라고 한다.","'나도 스물한 살 땐 아무것도 몰랐어. 알려 줄 수 있는 건 알려 주자.'"]},
+    {k:"f13", name:"문 너머의 키보드 소리", sub:"문을 안 여는 아들", when:"2년차 · 겨울", lines:["고양 화정동 소형 아파트. 문을 두드려도 아무도 안 나온다.","'문이 안 열리면, 다른 문을 찾아야지.'"]}]},
   dohyun:{stars:2, base:2600, hold:4, eps:[
-    {k:"k2", when:"1년차 · 봄", lines:["퇴근길 지하철에서 관심 물건 알림. 은평구 투룸, 겉 마진이 어마어마하다.","'싸 보이는 데는 이유가 있겠지. 멈출 줄 아는 것도 실력이다.'"]},
-    {k:"f21", when:"1년차 · 여름", lines:["점심시간에 걸려 온 전화. '이사비 500은 주셔야죠.'","'회의 5분 전인데… 숫자부터 부르는 사람한테는 어떻게 하더라.'"]},
-    {k:"f22", when:"1년차 · 가을", lines:["HUG가 넘긴 투룸. 안에는 월세를 6개월 치 선불로 냈다는 사람이 산다.","'그 사람도 피해자네. 그래도 집은 비워야 하고.'"]},
-    {k:"f23", when:"2년차 · 봄", lines:["대학가 원룸. 번역기로 주고받은 문자가 벌써 스무 통.","'말이 안 통하면 목소리를 높이는 게 아니라 사람을 한 명 더 부르는 거야.'"]}]},
+    {k:"k2", name:"싸 보이는 데는 이유가 있다", sub:"겉 마진이 큰 투룸", when:"1년차 · 봄", lines:["퇴근길 지하철에서 관심 물건 알림. 은평구 투룸, 겉 마진이 어마어마하다.","'싸 보이는 데는 이유가 있겠지. 멈출 줄 아는 것도 실력이다.'"]},
+    {k:"f21", name:"500이라는 숫자의 출처", sub:"이사비 500을 부르는 전 소유자", when:"1년차 · 여름", lines:["점심시간에 걸려 온 전화. '이사비 500은 주셔야죠.'","'회의 5분 전인데… 숫자부터 부르는 사람한테는 어떻게 하더라.'"]},
+    {k:"f22", name:"고양이 셋과 선불 360", sub:"사기당한 깔세 점유자", when:"1년차 · 가을", lines:["HUG가 넘긴 투룸. 안에는 월세를 6개월 치 선불로 냈다는 사람이 산다.","'그 사람도 피해자네. 그래도 집은 비워야 하고.'"]},
+    {k:"f23", name:"번역기로 스무 통", sub:"월세를 선불 낸 유학생", when:"2년차 · 봄", lines:["대학가 원룸. 번역기로 주고받은 문자가 벌써 스무 통.","'말이 안 통하면 목소리를 높이는 게 아니라 사람을 한 명 더 부르는 거야.'"]}]},
   mijeong:{stars:3, base:3600, hold:5, eps:[
-    {k:"f31", when:"1년차 · 봄", lines:["가게 브레이크 타임에 낙찰받은 상가를 보러 갔다.","손님이 앉아 있는 미용실. '장사하는 사람 마음은 내가 알지.'"]},
-    {k:"f32", when:"1년차 · 가을", lines:["동네에서 30년 식당을 한 부부의 가게.","'말이 잘 안 통해도 밥 냄새는 통하지.'"]},
-    {k:"f33", when:"2년차 · 봄", lines:["약속한 날이 오면 늘 새 핑계가 생기는 사람.","'착한 사람일수록 날짜는 종이에 박아야 해.'"]},
-    {k:"f34", when:"2년차 · 가을", lines:["소리 지르는 남편, 말 없는 아내. 둘 중 누가 결정하는지부터 안 보인다.","'사람 장사 15년, 진짜 결정권자는 따로 있더라.'"]}]},
+    {k:"f31", name:"가위 소리가 멈추는 날", sub:"영업 중인 1층 미용실", when:"1년차 · 봄", lines:["가게 브레이크 타임에 낙찰받은 상가를 보러 갔다.","손님이 앉아 있는 미용실. '장사하는 사람 마음은 내가 알지.'"]},
+    {k:"f32", name:"30년 짜장면 냄새", sub:"동네가 편드는 중식당", when:"1년차 · 가을", lines:["동네에서 30년 식당을 한 부부의 가게.","'말이 잘 안 통해도 밥 냄새는 통하지.'"]},
+    {k:"f33", name:"진짜로 이번 주예요", sub:"핑계 많은 전 소유자", when:"2년차 · 봄", lines:["약속한 날이 오면 늘 새 핑계가 생기는 사람.","'착한 사람일수록 날짜는 종이에 박아야 해.'"]},
+    {k:"f34", name:"목소리 큰 쪽이 정하지 않는다", sub:"결정권자가 따로인 부부", when:"2년차 · 가을", lines:["소리 지르는 남편, 말 없는 아내. 둘 중 누가 결정하는지부터 안 보인다.","'사람 장사 15년, 진짜 결정권자는 따로 있더라.'"]}]},
   jaehoon:{stars:4, base:4800, hold:6, eps:[
-    {k:"f41", when:"1년차 · 봄", lines:["두 번 유찰된 반지하. 최저가만 보면 반값이다.","'봐라, 벽은 거짓말을 안 한다 아이가. 비 온 다음 날 가 보자.'"]},
-    {k:"f42", when:"1년차 · 가을", lines:["현관 앞까지 상자가 쌓인 집. 안에서 고양이 소리.","'이건 공사보다 사람이 먼저다.'"]},
-    {k:"f43", when:"2년차 · 봄", lines:["세입자가 휴대폰을 들이댄다. '지금 방송 중이에요.'","'카메라 앞이라고 달라질 건 없다. 절차대로 간다.'"]},
-    {k:"f44", when:"2년차 · 겨울", lines:["40년 된 단독주택. 지붕도 담장도 사람도 오래됐다.","'공구함 들고 옥상부터 보자.'"]}]},
+    {k:"f41", name:"비 온 다음 날의 누런 선", sub:"침수 흔적 반지하", when:"1년차 · 봄", lines:["두 번 유찰된 반지하. 최저가만 보면 반값이다.","'봐라, 벽은 거짓말을 안 한다 아이가. 비 온 다음 날 가 보자.'"]},
+    {k:"f42", name:"상자 너머의 사람", sub:"물건이 가득 찬 집", when:"1년차 · 가을", lines:["현관 앞까지 상자가 쌓인 집. 안에서 고양이 소리.","'이건 공사보다 사람이 먼저다.'"]},
+    {k:"f43", name:"지금 방송 중이에요", sub:"카메라 든 세입자", when:"2년차 · 봄", lines:["세입자가 휴대폰을 들이댄다. '지금 방송 중이에요.'","'카메라 앞이라고 달라질 건 없다. 절차대로 간다.'"]},
+    {k:"f44", name:"마당 있는 집의 큰언니", sub:"40년 된 단독주택", when:"2년차 · 겨울", lines:["40년 된 단독주택. 지붕도 담장도 사람도 오래됐다.","'공구함 들고 옥상부터 보자.'"]}]},
   eunkyung:{stars:4, base:6800, hold:8, eps:[
-    {k:"f51", when:"1년차 · 봄", lines:["선순위 임차인이 보증금 1억을 신고했다. …채무자와 성이 같다.","'서류가 있다고 권리가 있는 건 아니지. 근거부터 찾자.'"]},
-    {k:"f52", when:"1년차 · 가을", lines:["점유자가 임대차보호법 조항을 줄줄 외운다.","'조항엔 조항 말고 날짜로 답한다.'"]},
-    {k:"f53", when:"2년차 · 봄", lines:["세 번 유찰, 최저가 반값. 전입세대 열람엔 아무도 없다.","'다들 안 들어오는 데는 이유가 있어. 비고란까지 읽자.'"]},
-    {k:"f54", when:"2년차 · 가을", lines:["대항력 있는 전세 세입자. 다 배당될 것 같은데, 세금 체납이 걸려 있다.","'숫자가 틀린 게 아니라 순서가 틀렸을 수도 있어.'"]}]},
+    {k:"f51", name:"성이 같은 임차인", sub:"자칭 선순위 · 가장임차인", when:"1년차 · 봄", lines:["선순위 임차인이 보증금 1억을 신고했다. …채무자와 성이 같다.","'서류가 있다고 권리가 있는 건 아니지. 근거부터 찾자.'"]},
+    {k:"f52", name:"제3조를 외우는 남자", sub:"전입일 다툼", when:"1년차 · 가을", lines:["점유자가 임대차보호법 조항을 줄줄 외운다.","'조항엔 조항 말고 날짜로 답한다.'"]},
+    {k:"f53", name:"열람에 없는 6천만원", sub:"외국인 선순위 임차인", when:"2년차 · 봄", lines:["세 번 유찰, 최저가 반값. 전입세대 열람엔 아무도 없다.","'다들 안 들어오는 데는 이유가 있어. 비고란까지 읽자.'"]},
+    {k:"f54", name:"세금이 먼저 줄을 선다", sub:"당해세와 미배당 보증금", when:"2년차 · 가을", lines:["대항력 있는 전세 세입자. 다 배당될 것 같은데, 세금 체납이 걸려 있다.","'숫자가 틀린 게 아니라 순서가 틀렸을 수도 있어.'"]}]},
   taesik:{stars:5, base:12000, hold:14, eps:[
-    {k:"f61", when:"1년차 · 봄", lines:["현관에 붙은 현수막. '유치권 행사 중'.","'삼십 년 동안 이런 현수막 많이 봤지. 진짜는 드물어.'"]},
-    {k:"f62", when:"1년차 · 가을", lines:["여섯 세대가 사는 다가구 한 동을 통째로 노린다.","'한 집씩 따로 봐야 해. 사람마다 사정이 다르거든.'"]},
-    {k:"f63", when:"2년차 · 봄", lines:["영업 중인 모텔 건물. 카운터엔 알로하 셔츠의 사장님.","'손님이 드나드는 건물은 예약 장부부터 봐야지.'"]},
-    {k:"f64", when:"2년차 · 가을", lines:["마지막 물건. 공장 안엔 CNC 다섯 대, 현관엔 자물쇠.","'끝까지 가 보자. 이게 마지막이야.'"]}]}};
+    {k:"f61", name:"현수막에 적힌 날짜", sub:"유치권 신고된 상가 빌딩", when:"1년차 · 봄", lines:["현관에 붙은 현수막. '유치권 행사 중'.","'삼십 년 동안 이런 현수막 많이 봤지. 진짜는 드물어.'"]},
+    {k:"f62", name:"초인종이 여섯 개", sub:"6세대 다가구 통건물", when:"1년차 · 가을", lines:["여섯 세대가 사는 다가구 한 동을 통째로 노린다.","'한 집씩 따로 봐야 해. 사람마다 사정이 다르거든.'"]},
+    {k:"f63", name:"예약 장부가 끝나는 날", sub:"영업 중인 모텔 건물", when:"2년차 · 봄", lines:["영업 중인 모텔 건물. 카운터엔 알로하 셔츠의 사장님.","'손님이 드나드는 건물은 예약 장부부터 봐야지.'"]},
+    {k:"f64", name:"명판을 읽는 사람", sub:"유치권 · 남의 기계가 든 공장", when:"2년차 · 가을", lines:["마지막 물건. 공장 안엔 CNC 다섯 대, 현관엔 자물쇠.","'끝까지 가 보자. 이게 마지막이야.'"]}]}};
 
 /* ---------- 기록 ---------- */
 function epRec(){ const P = cpRec(); if(!P.ep || typeof P.ep !== "object") P.ep = {}; return P.ep; }
 function epOf(id){ const R = epRec(); if(!R[id] || !Array.isArray(R[id].res)) R[id] = {res:[]}; return R[id]; }
 function epInfo(ep){
-  if(ep.k){ const P = (typeof K_PROPS !== "undefined" && K_PROPS[ep.k]) || {}; return {title:P.title || ep.k, cat:(P.court ? `${P.court} ${P.caseNum || ""} · ` : "") + "풀 경매 · 입찰→대출→명도→수리→매도", lv:P.stars || 1, full:true}; }
+  if(ep.k){ const P = (typeof K_PROPS !== "undefined" && K_PROPS[ep.k]) || {}; return {title:ep.name ? `「${ep.name}」` : (P.title || ep.k), sub:ep.sub || "", place:P.title || "", court:P.court ? `${P.court} ${P.caseNum || ""}`.trim() : "", cat:[ep.sub, P.title].filter(Boolean).join(" · "), lv:P.stars || 1, full:true}; }
   const c = epCase(ep.c); return c ? {title:c.title, cat:c.cat, lv:c.lv, full:false} : {title:"?", cat:"", lv:1};
 }
 function epCase(id){ return (typeof CASES !== "undefined" ? CASES : []).find(c => c.id === id) || null; }
@@ -44529,7 +44562,7 @@ if(typeof lfBaseHTML === "function"){
       if(R.pendingK && typeof bdRunning === "function" && bdRunning()) card = `<div class="ep-alert"><small>📖 STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${R.pendingK.i + 1} 진행 중</small><b>${esc(epInfo(Pl.eps[R.pendingK.i]).title)}</b><div class="ep-alert-btns"><button type="button" class="btn pri" data-atab="king">▶ 이어하기</button></div></div>`;
       else if(i >= n) card = `<div class="ep-alert end"><small>📖 STAGE ${CP_ORDER.indexOf(L.char) + 1} · 네 물건을 모두 끝냈다</small><b>이 시기를 돌아볼 시간</b><div class="ep-alert-btns"><button type="button" class="btn pri" data-epfin="${L.char}">🎬 엔딩 보기</button></div></div>`;
       else { const ep = Pl.eps[i], c = epInfo(ep);
-        card = `<div class="ep-alert" ${epAlertStyle()}><small>📱 새 알림 · STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${i + 1}/${n} · ${esc(ep.when)}</small><b>${esc(c.title)}</b><p>${esc(ep.lines[0])}</p><em>${esc(c.cat)} · ${"★".repeat(c.lv)}</em>
+        card = `<div class="ep-alert" ${epAlertStyle()}><small>📱 새 알림 · STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${i + 1}/${n} · ${esc(ep.when)}</small><b>${esc(c.title)}</b>${c.sub ? `<span class="ep-alert-sub">${esc(c.sub)}</span>` : ""}<p>${esc(ep.lines[0])}</p><em>📍 ${esc(c.place || c.cat)}${c.court ? ` · 🏛️ ${esc(c.court)}` : ""} · ${"★".repeat(c.lv)}</em>
           <div class="ep-alert-btns"><button type="button" class="btn pri" data-epgo="${L.char}">📂 이 물건 보러 가기</button><button type="button" class="btn" data-eplist="${L.char}">📋 에피소드 목록</button></div></div>`; }
       h = h.replace(/(<div class="vn of-stage lf-stage[^"]*">)/, `$1${card}`);
     }catch(e){}
@@ -44586,6 +44619,9 @@ function epAlertStyle(){ const P = epAlertPos(); return P && isFinite(P.x) && is
   document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
   document.addEventListener("dblclick", e => { const el = e.target.closest && e.target.closest(".lf-stage .ep-alert"); if(!el || e.target.closest("button")) return; try{ localStorage.removeItem("ep_alert_pos"); }catch(_){} el.removeAttribute("style"); delete el.dataset.moved; });
 })();
+
+/* 케이스 상자·사건파일에서도 같은 에피소드 이름을 쓰게 물건에 붙여 둔다 */
+Object.values(EP_PLAN).forEach(Pl => Pl.eps.forEach(ep => { if(ep.k && K_PROPS[ep.k]){ K_PROPS[ep.k].epName = ep.name; K_PROPS[ep.k].epSub = ep.sub; } }));
 
 /* ================= 🏦 잔금 대출 — 대출상담사 명함 3장 → 카톡처럼 조건 듣기 → 고르기 =================
    낙찰 뒤 잔금(낙찰가 − 보증금 + 취득세 등)이 현금보다 크면 대출은 필수, 현금이 넉넉하면 "받을지" 묻는다.
@@ -44737,12 +44773,10 @@ function lnHTML(){
   const cards = LN.cards.map(id => lnCard(LN_PRODUCTS.find(x => x.id === id), !!LN.heard[id])).join("");
   if(LN.step === "chat"){
     const p = LN_PRODUCTS.find(x => x.id === LN.chat);
-    const bub = LN.msgs.map(([w, t]) => w === "me" ? `<div class="kt-row me"><span class="kt-b">${esc(t)}</span></div>`
-      : w === "think" ? `<div class="kt-row think"><span>${esc(t)}</span></div>`
-      : `<div class="kt-row them"><span class="kt-av">${p.cap ? "💳" : "🏦"}</span><div><small class="kt-nm">${esc(p.who)} · ${esc(p.org)}</small><span class="kt-b">${esc(t)}</span></div></div>`).join("");
-    return `<div class="ln-box ln-chatbox"><div class="kt-head"><button type="button" class="kt-back" data-lnback title="명함으로">‹</button><b>${esc(p.who)}</b><small>${esc(p.org)} ${p.cap ? "· 캐피탈" : "· 2금융권"}</small></div>
-      <div class="kt-body" id="ktBody">${bub}${LN.typing ? `<div class="kt-row them"><span class="kt-av">${p.cap ? "💳" : "🏦"}</span><span class="kt-b kt-typing"><i></i><i></i><i></i></span></div>` : ""}</div>
-      <div class="kt-foot">${LN.queue ? `<span class="note">상담 중…</span>` : `<button type="button" class="btn pri" data-lntake="${p.id}">이 조건으로 진행</button><button type="button" class="btn" data-lnback>다른 곳도 들어 볼게요</button>`}</div></div>`;
+    const bub = LN.msgs.map(m => lnRowHTML(p, m)).join("");
+    return `<div class="ln-box ln-chatbox" data-chat="${p.id}"><div class="kt-head"><button type="button" class="kt-back" data-lnback title="명함으로">‹</button><b>${esc(p.who)}</b><small>${esc(p.org)} ${p.cap ? "· 캐피탈" : "· 2금융권"}</small></div>
+      <div class="kt-body" id="ktBody">${bub}${LN.typing ? `<div class="kt-row them kt-typrow"><span class="kt-av">${p.cap ? "💳" : "🏦"}</span><span class="kt-b kt-typing"><i></i><i></i><i></i></span></div>` : ""}</div>
+      <div class="kt-foot" data-st="${LN.queue ? "q" : "d"}">${lnFootHTML(p)}</div></div>`;
   }
   return `<div class="ln-box"><h3>🏦 잔금 대출 — 대출상담사 명함 ${LN.cards.length}장</h3>
     <p>${LN.must ? `잔금 <b>${kMan(N.bal)}</b> 중 현금 ${kMan(N.cash)}을 빼면 <b class="down">${kMan(N.short)}</b>이 모자라요. 잔금일 전에 대출을 정해야 해요.` : `잔금은 현금으로도 되지만, 대출을 받으면 현금을 남겨 둘 수 있어요.`}</p>
@@ -44751,8 +44785,30 @@ function lnHTML(){
     <p class="note ln-disc">※ 게임용 예시 조건이에요. 실제 금리·한도는 시기·지역·신용·소득·규제에 따라 달라지니 실제 대출은 금융기관 상담으로 확인하세요.</p>
     ${LN.must ? "" : `<div class="ln-btns"><button type="button" class="btn" data-lnask="no">그냥 현금으로 낸다</button></div>`}</div>`;
 }
+function lnRowHTML(p, [w, t]){
+  return w === "me" ? `<div class="kt-row me"><span class="kt-b">${esc(t)}</span></div>`
+    : w === "think" ? `<div class="kt-row think"><span>${esc(t)}</span></div>`
+    : `<div class="kt-row them"><span class="kt-av">${p.cap ? "💳" : "🏦"}</span><div><small class="kt-nm">${esc(p.who)} · ${esc(p.org)}</small><span class="kt-b">${esc(t)}</span></div></div>`;
+}
+/* 카톡처럼 — 새 말풍선만 아래에 붙인다. 화면 전체를 다시 그리면 모든 말풍선이 매번 다시 나타나 깜빡였다 */
+function lnChatSync(el){
+  const box = el.querySelector(".ln-chatbox"), body = el.querySelector("#ktBody");
+  if(LN.step !== "chat" || !box || !body || box.dataset.chat !== LN.chat) return false;
+  const p = LN_PRODUCTS.find(x => x.id === LN.chat), have = body.querySelectorAll(".kt-row:not(.kt-typrow)").length;
+  const ty = body.querySelector(".kt-typrow");
+  if(LN.msgs.length > have){ if(ty) ty.remove(); LN.msgs.slice(have).forEach(m => body.insertAdjacentHTML("beforeend", lnRowHTML(p, m))); }
+  const ty2 = body.querySelector(".kt-typrow");
+  if(LN.typing && !ty2) body.insertAdjacentHTML("beforeend", `<div class="kt-row them kt-typrow"><span class="kt-av">${p.cap ? "💳" : "🏦"}</span><span class="kt-b kt-typing"><i></i><i></i><i></i></span></div>`);
+  if(!LN.typing && ty2) ty2.remove();
+  const foot = box.querySelector(".kt-foot"), want = LN.queue ? "q" : "d";
+  if(foot && foot.dataset.st !== want){ foot.dataset.st = want; foot.innerHTML = lnFootHTML(p); }
+  body.scrollTop = body.scrollHeight;
+  return true;
+}
+function lnFootHTML(p){ return LN.queue ? `<span class="note">상담 중…</span>` : `<button type="button" class="btn pri" data-lntake="${p.id}">이 조건으로 진행</button><button type="button" class="btn" data-lnback>다른 곳도 들어 볼게요</button>`; }
 function lnPaint(){
   let el = document.getElementById("lnRoot");
+  if(LN && el && lnChatSync(el)) return;
   if(!LN){ if(el) el.remove(); return; }
   if(!el){ el = document.createElement("div"); el.id = "lnRoot"; el.className = "ln-root"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "잔금 대출"); document.body.appendChild(el); }
   el.innerHTML = `<div class="ln-veil"></div><div class="ln-scroll">${lnHTML()}</div>`;

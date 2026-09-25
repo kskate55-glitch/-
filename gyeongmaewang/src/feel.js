@@ -254,7 +254,7 @@ const _ke_kingHTML = kingHTML; kingHTML = function(){
   if(!K || K.intro) return h;
   if(K.step === "brief"){
     h = h.replace(/<div class="panel k-card"><div class="k-grid">[\s\S]*?<\/b><\/div><\/div>/, keCaseHTML());
-    h = h.replace(/<div class="panel k-bidbox">[\s\S]*?<\/div><\/div>(?=<div style="margin-top:12px"><button type="button" class="btn" data-kquit>)/, keBidSheet());
+    h = h.replace(/<div class="panel k-bidbox">[\s\S]*?<\/div><\/div>(?=<div style="margin-top:12px"><button type="button" class="btn" data-kquit>|\s*$)/, keBidSheet());   // 그만두기 버튼을 없앤 뒤엔 입찰함이 맨 끝이다
     h = h.replace(/<details class="panel vn-more" open><summary>🗂️ 조사 노트/, '<details class="panel vn-more"><summary>🗂️ 조사 노트');
   }
   if(K.step === "won"){

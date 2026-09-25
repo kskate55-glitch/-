@@ -171,13 +171,13 @@ const LF_OPENINGS = {
   seoyun:[
     {bg:"bg_banjiha", amb:"room|rain|in", lines:[[null,"비 오는 밤. 신림동 반지하 원룸."],[null,"창문 밖으로 자동차 바퀴가 물을 튀기며 지나간다."]]},
     {bg:"bg_banjiha", amb:"room|rain|in", ui:{type:"bank", t:"₩35,000,000", s:"입출금 통장 잔액"}, lines:[[null,"스물다섯. 취업 준비를 시작한 지도 벌써 1년이 넘었다."],[null,"통장에는 대학 때부터 모은 돈과 아르바이트로 모은 돈이 조금 있었다."],["서윤","회사 들어가서 월급 모으면…"],["서윤","…집은 언제 사지?"]]},
-    {bg:"bg_banjiha", amb:"room|rain|in", sfx:"reveal", ui:{type:"listing", t:"서울 오래된 빌라 3층", a:"감정가 1억 4,500만원", b:"최저가 1억 200만원"}, lines:[["서윤","잠깐."],["서윤","이거 왜 이렇게 싸?"]]}],
+    {bg:"bg_banjiha", amb:"room|rain|in", sfx:"reveal", ui:{type:"listing", t:"서울 오래된 빌라 3층", a:"감정가 1억 5,900만원", b:"최저가 1억 176만원 (2회 유찰)"}, lines:[["서윤","잠깐."],["서윤","이거 왜 이렇게 싸?"]]}],
   dohyun:[
     {bg:"bg_alley", amb:"site_night|clear|out", sfx:"door", lines:[[null,"저녁 8시 43분. 지하철 문이 닫힌다. 화곡역."],[null,"골목을 두 번 꺾으면 6평짜리 원룸."]]},
     {bg:"bg_front_door", amb:"site_night|clear|out", sfx:"key", lines:[[null,"도어락 — 띠리릭."]]},
     {bg:"bg_oneroom", amb:"room|clear|in", sfx:"message", ui:{type:"phone", rows:[["급여 입금","+3,900,000","up"],["월세","−750,000","down"],["관리비","−70,000","down"],["카드대금","−1,120,000","down"]]}, lines:[[null,"넥타이를 풀고 의자에 앉는다. 휴대폰이 연달아 울린다."],["도현","……."]]},
     {bg:"bg_oneroom", amb:"room|clear|in", lines:[[null,"점심때 동료가 한 말이 떠오른다."],["동료","내 친구가 경매로 빌라 하나 샀다던데."],["도현","경매…"]]},
-    {bg:"bg_oneroom", amb:"room|clear|in", sfx:"reveal", ui:{type:"listing", t:"검색: 서울 빌라 경매", a:"감정가 1억 4,500만원", b:"최저가 1억 200만원"}, lines:[["도현","일단 공부만 해 보자."],[null,"그렇게 시작한 검색이 새벽 2시까지 이어졌다."]]}],
+    {bg:"bg_oneroom", amb:"room|clear|in", sfx:"reveal", ui:{type:"listing", t:"검색: 서울 빌라 경매", a:"감정가 1억 5,900만원", b:"최저가 1억 176만원 (2회 유찰)"}, lines:[["도현","일단 공부만 해 보자."],[null,"그렇게 시작한 검색이 새벽 2시까지 이어졌다."]]}],
   mijeong:[
     {bg:"bg_shop_closed", amb:"office|clear|in", ui:{type:"pos", t:"오늘 매출 ₩1,237,000"}, lines:[[null,"밤 10시 17분. 가게 마감. 의자를 테이블 위에 올린다."],["미정","오늘은 좀 했네."]]},
     {bg:"bg_shop_closed", amb:"office|clear|in", lines:[["직원","사장님, 그 건물 주인 바뀐다면서요?"],["미정","응?"],["직원","경매 넘어갔다던데요."]]},
@@ -187,7 +187,7 @@ const LF_OPENINGS = {
     {bg:"bg_stairs", amb:"empty|clear|in", sfx:"knock", lines:[[null,"낡은 빌라 수리 현장."],["전기기사","형님, 여기 선이 이상한데요."],["재훈","잠깐."],[null,"벽을 두드린다. 톡, 톡."],["재훈","여기도 비었네, 마."]]},
     {bg:"bg_stairs", amb:"empty|clear|in", lines:[["집주인","그걸 어떻게 아셨어요?"],["재훈","이런 집을 몇 개를 봤는데예."]]},
     {bg:"bg_alley", amb:"site_night|clear|out", lines:[[null,"일 끝나고 국밥집."],["동료","형, 그거 알아? 경매로 집 받아서 고쳐 파는 사람 많대."],["재훈","얼마에 받아가?"]]},
-    {bg:"bg_living_clean_old", amb:"room|clear|in", sfx:"reveal", ui:{type:"listing", t:"검색: 부동산 경매", a:"감정가 1억 4,500만원", b:"최저가 1억 200만원"}, lines:[[null,"마우스를 어색하게 움직인다. 독수리 타법."],["재훈","집은 괜찮은데."],["재훈","가격이 문제네, 이거."]]}],
+    {bg:"bg_living_clean_old", amb:"room|clear|in", sfx:"reveal", ui:{type:"listing", t:"검색: 부동산 경매", a:"감정가 1억 5,900만원", b:"최저가 1억 176만원 (2회 유찰)"}, lines:[[null,"마우스를 어색하게 움직인다. 독수리 타법."],["재훈","집은 괜찮은데."],["재훈","가격이 문제네, 이거."]]}],
   eunkyung:[
     {bg:"bg_room_clean", amb:"room|clear|in", ui:{type:"bank", t:"정기예금 연 2.9%", s:"은행 앱 · 금리 안내"}, lines:[[null,"마포 오피스텔. 아침 커피, 태블릿, 은행 앱."],["은경","이걸로는…"],[null,"계산기를 두드린다."],["은경","물가도 못 따라가겠네."]]},
     {bg:"bg_room_clean", amb:"room|clear|in", sfx:"message", lines:[["친구(전화)","너 퇴직했으니까 이제 좀 쉬어."],["은경","돈이 쉬면 안 되지."]]},
@@ -196,7 +196,7 @@ const LF_OPENINGS = {
     {bg:"bg_living_clean_old", amb:"house|clear|in", lines:[[null,"아침. 목동 오래된 아파트. TV 뉴스가 혼자 떠든다."],[null,"신문과 부동산 전단을 넘긴다."]]},
     {bg:"bg_living_clean_old", amb:"house|clear|in", sfx:"message", lines:[["중개사(전화)","형님, 요즘도 집 보세요?"],["태식","심심해서 보는 거지."],["중개사(전화)","그럼 경매 하나 있는데…"],["태식","경매?"],["중개사(전화)","싸긴 싸요."],["태식","싸다는 말이 제일 비싼 말인데."]]},
     {bg:"bg_living_clean_old", amb:"house|clear|in", ui:{type:"login", t:"비밀번호가 일치하지 않습니다 (5회 오류)"}, lines:[[null,"안경을 쓰고 컴퓨터를 켠다. 로그인 화면."],["태식","아니, 비밀번호가 또 뭐야."],["손녀(전화)","할아버지, 대문자요. 첫 글자 대문자!"]]},
-    {bg:"bg_living_clean_old", amb:"house|clear|in", sfx:"reveal", ui:{type:"listing", t:"서울 오래된 빌라 3층", a:"감정가 1억 4,500만원", b:"최저가 1억 200만원"}, lines:[["태식","음…"],["태식","이 가격이면 한번 볼 만한데."]]}]};
+    {bg:"bg_living_clean_old", amb:"house|clear|in", sfx:"reveal", ui:{type:"listing", t:"서울 오래된 빌라 3층", a:"감정가 1억 5,900만원", b:"최저가 1억 176만원 (2회 유찰)"}, lines:[["태식","음…"],["태식","이 가격이면 한번 볼 만한데."]]}]};
 const LF_PRELUDE = ["서울, 2026년.", "누군가는 집을 사려고 경매를 시작하고,", "누군가는 돈을 벌려고 시작한다.", "그리고 누군가는 — 그냥, 싸게 나온 집 하나를 발견했을 뿐이었다."];
 let GX_OP = null;      // {id, i(장면), j(대사), el, t, done}
 function gxUiHTML(ui){

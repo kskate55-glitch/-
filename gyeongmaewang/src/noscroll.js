@@ -101,12 +101,13 @@ function nxNoteTab(stage, tabs, note){
   tb.innerHTML = `📒 조사 노트 <small>${n}</small>${fresh ? "<i>NEW</i>" : ""}`;
   tabs.insertBefore(tb, tabs.firstChild);
   const dock = stage.querySelector(".stg-dock"); if(!dock) return;
-  const p = document.createElement("div"); p.className = "stg-paper nx-notepaper"; p.hidden = !NX.note;
+  const who = nxNoteWho(), float = window.innerWidth >= 1100;
+  const p = document.createElement("div"); p.className = `stg-paper nx-notepaper nx-hand-${who.id}${float ? " nx-float" : ""}`; p.hidden = !NX.note;
   p.innerHTML = `<button type="button" class="stg-x" data-nxnote aria-label="조사 노트 닫기">✕</button>
-    <div class="nx-book"><h3>📒 조사 노트 <small>${n}줄 · 조사할 때마다 한 줄씩 적혀요</small></h3>
+    <div class="nx-book"><div class="nx-spiral" aria-hidden="true"></div><h3 class="nx-grip" title="끌어서 옮기기">${esc(who.name)}의 조사 노트 <small>${n}줄 · ${float ? "위쪽을 잡고 끌면 옮겨져요" : "조사할 때마다 한 줄씩"}</small></h3>
     <ol>${items.map((t, i) => `<li class="${i === n - 1 ? "last" : ""}">${esc(t)}</li>`).join("")}</ol></div>`;
-  dock.appendChild(p);
-  dock.classList.toggle("nx-noteopen", !!NX.note);
+  if(float){ stage.appendChild(p); nxNotePlace(stage, p); }   // 넓은 화면: 주인공 바로 옆에 떠 있는 공책
+  else { dock.appendChild(p); dock.classList.toggle("nx-noteopen", !!NX.note); }
 }
 document.addEventListener("click", e => {
   const t = e.target; if(!t.closest) return;
@@ -121,3 +122,38 @@ document.addEventListener("click", e => {
     document.querySelectorAll(".nx-notetab.on").forEach(b => b.classList.remove("on"));
   }
 }, true);
+
+/* ---------- 📒 조사 노트 — 주인공이 직접 쓴 공책처럼, 주인공 옆에 뜨고, 끌어서 옮길 수 있다 ---------- */
+const NX_HAND = {seoyun:"Gaegu", dohyun:"Nanum Pen Script", mijeong:"Hi Melody", jaehoon:"Nanum Brush Script", eunkyung:"Gowun Dodum", taesik:"Song Myung"};
+(function(){ try{ if(document.getElementById("nxHandFont")) return; const l = document.createElement("link"); l.id = "nxHandFont"; l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nanum+Pen+Script&family=Hi+Melody&family=Nanum+Brush+Script&family=Gowun+Dodum&family=Song+Myung&display=swap"; document.head.appendChild(l); }catch(e){} })();
+function nxNoteWho(){
+  try{ const L = typeof lfRec === "function" ? lfRec() : null; if(L && L.char && typeof LF_CHARS !== "undefined"){ const C = LF_CHARS.find(x => x.id === L.char); if(C) return {id:C.id, name:C.name}; } }catch(e){}
+  return {id:"me", name:"나"};
+}
+function nxNoteKey(){ return "nx_note_pos_" + nxNoteWho().id; }
+function nxNotePlace(stage, p){
+  let P = null; try{ P = JSON.parse(localStorage.getItem(nxNoteKey()) || "null"); }catch(e){}
+  if(P && isFinite(P.x) && isFinite(P.y)){ p.style.setProperty("--nx-l", (P.x * 100).toFixed(2) + "%"); p.style.setProperty("--nx-t", (P.y * 100).toFixed(2) + "%"); return; }
+  // 기본 자리: 주인공 그림 바로 오른쪽, 대사창 아래
+  const pl = stage.querySelector(".vn-player:not(.lfv-hide), .lfv-pose"), sr = stage.getBoundingClientRect(), box = stage.querySelector(".vn-box");
+  const left = pl ? Math.max(12, pl.getBoundingClientRect().right - sr.left - 30) : Math.round(sr.width * 0.28);
+  const top = box ? Math.round(box.getBoundingClientRect().bottom - sr.top + 12) : 90;
+  p.style.setProperty("--nx-l", Math.min(left, Math.max(12, sr.width - 400)) + "px"); p.style.setProperty("--nx-t", Math.min(top, Math.max(12, sr.height - 260)) + "px");
+}
+(function(){
+  let D = null;
+  document.addEventListener("pointerdown", e => {
+    const g = e.target.closest && e.target.closest(".nx-notepaper.nx-float .nx-grip"); if(!g) return;
+    const p = g.closest(".nx-notepaper"), st = p.parentElement, r = p.getBoundingClientRect(), sr = st.getBoundingClientRect();
+    D = {p, sr, dx:e.clientX - r.left, dy:e.clientY - r.top}; p.classList.add("dragging"); try{ g.setPointerCapture(e.pointerId); }catch(_){} e.preventDefault();
+  });
+  document.addEventListener("pointermove", e => {
+    if(!D) return; const {p, sr} = D;
+    const x = Math.max(0, Math.min(sr.width - p.offsetWidth, e.clientX - sr.left - D.dx)), y = Math.max(0, Math.min(sr.height - 80, e.clientY - sr.top - D.dy));
+    p.style.setProperty("--nx-l", x + "px"); p.style.setProperty("--nx-t", y + "px"); D.x = x / sr.width; D.y = y / sr.height;
+  });
+  const end = () => { if(!D) return; D.p.classList.remove("dragging"); if(D.x != null){ try{ localStorage.setItem(nxNoteKey(), JSON.stringify({x:D.x, y:D.y})); }catch(_){} } D = null; };
+  document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
+  document.addEventListener("dblclick", e => { const g = e.target.closest && e.target.closest(".nx-notepaper.nx-float .nx-grip"); if(!g) return; try{ localStorage.removeItem(nxNoteKey()); }catch(_){} const p = g.closest(".nx-notepaper"); nxNotePlace(p.parentElement, p); });
+})();

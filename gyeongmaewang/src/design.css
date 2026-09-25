@@ -676,3 +676,31 @@ body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .h
 .kc-box .kc-sub{font-weight:700;font-size:.86em;opacity:.8}
 .ke-epname{font-size:15px;font-weight:900;color:#2a2317;margin-bottom:2px}.ke-epname small{font-weight:700;color:#8a5a12;font-size:12.5px}
 .ep-li .ep-lt b{letter-spacing:-.01em}
+.ke-fail{display:block;font-size:11.5px;font-weight:700;color:#8a5a12;margin-top:1px}
+/* ===== 📒 조사 노트 = 스프링 공책 (주인공 손글씨) ===== */
+#kfsRoot .nx-notepaper{background:#fffdf3 !important;border:1px solid #d9cfa6 !important;border-radius:6px 12px 12px 6px;box-shadow:0 2px 0 #e9dfb8,0 4px 0 #ded3a6,0 16px 36px rgba(0,0,0,.45);padding:0;overflow:hidden auto}
+#kfsRoot .nx-notepaper.nx-float{position:absolute;right:auto;bottom:auto;width:min(380px,40%);max-height:calc(100% - 24px);z-index:12;transform:rotate(-.6deg);animation:nxNoteIn .28s ease-out}
+#kfsRoot .nx-notepaper.nx-float.dragging{transform:rotate(0) scale(1.01);box-shadow:0 26px 50px rgba(0,0,0,.55);transition:none;animation:none}
+@keyframes nxNoteIn{from{opacity:0;transform:translateY(10px) rotate(-.6deg)}to{opacity:1;transform:rotate(-.6deg)}}
+#kfsRoot .nx-notepaper .nx-book{position:relative;padding:14px 16px 16px 46px;min-height:100%;
+  background:linear-gradient(90deg,transparent 38px,#f0a3a3 38px,#f0a3a3 40px,transparent 40px),repeating-linear-gradient(#fffdf3 0,#fffdf3 31px,#bcd3e8 31px,#bcd3e8 32px);background-attachment:local}
+#kfsRoot .nx-spiral{position:absolute;left:8px;top:10px;bottom:10px;width:18px;background:radial-gradient(circle at 9px 9px,#3b3b3b 3.5px,#8c8c8c 4.5px,transparent 5.5px) 0 0/18px 26px repeat-y}
+#kfsRoot .nx-notepaper .nx-grip{cursor:grab;user-select:none;touch-action:none;margin:0 0 6px;font-size:22px;line-height:32px;color:#2a2317;border-bottom:2px solid #f0a3a3}
+#kfsRoot .nx-notepaper:not(.nx-float) .nx-grip{cursor:default}
+#kfsRoot .nx-notepaper .nx-grip small{display:block;font-family:var(--sans,"IBM Plex Sans KR",sans-serif);font-size:11px;line-height:1.4;color:#8a7a52;font-weight:500}
+#kfsRoot .nx-notepaper ol{margin:0;padding-left:1.4em}
+#kfsRoot .nx-notepaper li{font-size:18px;line-height:32px;color:#27406a;border:0 !important;padding:0 !important}
+#kfsRoot .nx-notepaper li.last{color:#b3261e}
+#kfsRoot .nx-notepaper .stg-x{position:sticky;float:right;top:8px;margin:8px 8px 0 0;z-index:2}
+#kfsRoot .nx-hand-seoyun .nx-book{font-family:"Gaegu",cursive} #kfsRoot .nx-hand-seoyun li{color:#b0306a}
+#kfsRoot .nx-hand-dohyun .nx-book{font-family:"Nanum Pen Script",cursive} #kfsRoot .nx-hand-dohyun li{font-size:21px;color:#1f3f7a}
+#kfsRoot .nx-hand-mijeong .nx-book{font-family:"Hi Melody",cursive} #kfsRoot .nx-hand-mijeong li{font-size:19px;color:#8a4a10}
+#kfsRoot .nx-hand-jaehoon .nx-book{font-family:"Nanum Brush Script",cursive} #kfsRoot .nx-hand-jaehoon li{font-size:21px;color:#2f4a1e}
+#kfsRoot .nx-hand-eunkyung .nx-book{font-family:"Gowun Dodum",sans-serif} #kfsRoot .nx-hand-eunkyung li{font-size:15.5px;color:#4b2d7a}
+#kfsRoot .nx-hand-taesik .nx-book{font-family:"Song Myung",serif} #kfsRoot .nx-hand-taesik li{font-size:16.5px;color:#3a2a12}
+.kf-talk{display:flex;align-items:center;gap:6px;width:100%;justify-content:center;margin:8px 0;min-height:46px;background:#fff7e0;color:#5a4210;border:1.5px solid #e2c275;font-weight:800}
+.kf-talk small{font-weight:600;opacity:.8}
+#kfsRoot .kf-talk{background:#2b2616;color:#f5cf7c;border-color:#8a6a2a}
+/* 떠 있는 공책 자리는 변수로 — 옛 배치 규칙(!important)이 left/top을 덮어써서 */
+#kfsRoot .nx-notepaper.nx-float,#kfsRoot.sf-slim .nx-notepaper.nx-float{left:var(--nx-l,30%)!important;top:var(--nx-t,90px)!important;right:auto!important;bottom:auto!important;width:min(380px,40%)!important;max-height:calc(100% - 24px)!important}
+#kfsRoot .nx-hand-me .nx-book{font-family:"Gaegu",cursive} #kfsRoot .nx-hand-me li{color:#27406a}

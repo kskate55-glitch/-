@@ -5,24 +5,24 @@
 /* ---------- 함정 물건(서류만 보면 피할 수 있는 물건) ----------
    법률 설명은 일반적인 원칙만 — 실제 물건은 반드시 서류와 전문가로 확인. */
 const BD_DECOYS = [
-  {id:"tenant", ic:"🧾", t:"선순위 임차인이 있는 투룸", tag:"감정가 대비 유난히 싸다", apr:21000, min:10750, stars:2,
+  {id:"tenant", ic:"🧾", t:"선순위 임차인이 있는 투룸", tag:"감정가 대비 유난히 싸다", apr:21000, min:10752, fails:3, court:"서울남부지방법원", stars:2,
    trap:"전입일이 말소기준권리보다 빠른 임차인이 있고, 배당요구를 하지 않았어요. 이런 임차인(대항력 있는 임차인)의 보증금은 낙찰자가 물어줘야 합니다 — 서류상 보증금 1억 2천만원.",
    bid:{kind:"lose", t:"낙찰은 됐다. 잔금 대출을 알아보다가 은행에서 먼저 짚었다 — 선순위 임차인 보증금 1억 2천을 떠안아야 한다. 잔금을 포기했다. 입찰보증금은 돌려받지 못한다."},
    sold:"다른 사람이 낙찰받았다가 잔금을 못 내 재매각 공고가 났다. 앞 사람의 입찰보증금은 몰수됐다."},
-  {id:"share", ic:"➗", t:"빌라 1/2 지분만 나온 물건", tag:"최저가가 절반 이하", apr:16000, min:5240, stars:3,
+  {id:"share", ic:"➗", t:"빌라 1/2 지분만 나온 물건", tag:"최저가가 절반 이하", apr:16000, min:5243, fails:5, court:"서울북부지방법원", stars:3,
    trap:"건물 전체가 아니라 절반 지분만 파는 경매예요. 다른 공유자가 매각기일에 '우선매수'를 신고하면 같은 값에 그 사람에게 넘어가고, 지분만으로는 대출도 잘 나오지 않습니다.",
    bid:{kind:"void", t:"최고가를 썼지만, 공유자가 우선매수를 신고해 그 사람에게 넘어갔다. 보증금은 돌려받았다 — 하루와 교통비만 날렸다."},
    sold:"공유자가 우선매수로 가져갔다."},
-  {id:"lien", ic:"🔧", t:"유치권 신고가 들어온 신축 빌라", tag:"신축인데 2회 유찰", apr:26000, min:16640, stars:4,
+  {id:"lien", ic:"🔧", t:"유치권 신고가 들어온 신축 빌라", tag:"신축인데 2회 유찰", apr:26000, min:16640, fails:2, court:"서울동부지방법원", stars:4,
    trap:"공사업체가 공사대금을 못 받았다며 유치권을 신고했어요. 유치권이 성립하면 그 돈을 떠안을 수 있고, 다툼이 끝날 때까지 대출과 입주가 막힙니다. 성립하려면 적법한 '점유'가 이어지고 있어야 해서, 현장 확인이 핵심이에요.",
    bid:{kind:"gamble", p:0.4, good:[1800,"현장에 아무도 점유하고 있지 않았다는 사실이 확인돼 유치권이 인정되지 않았다. 싸게 산 값을 했다."], bad:[-2600,"업체가 실제로 점유하고 있었다. 소송이 1년 넘게 이어졌고, 이자와 소송비가 쌓였다."]},
    sold:"낙찰자와 공사업체의 소송이 시작됐다는 소문이 돈다."},
-  {id:"land", ic:"🗺️", t:"대지권 미등기 빌라", tag:"준신축인데 싸다", apr:19000, min:12160, stars:3,
+  {id:"land", ic:"🗺️", t:"대지권 미등기 빌라", tag:"준신축인데 싸다", apr:19000, min:12160, fails:2, court:"서울서부지방법원", stars:3,
    trap:"대지권(땅에 대한 권리)이 등기되어 있지 않아요. 감정평가에 땅값이 포함됐는지, 나중에 대지권을 넘겨받을 수 있는지를 서류로 확인해야 합니다. 확인이 안 되면 매수자 대출이 막혀 되팔기가 어렵습니다.",
    bid:{kind:"gamble", p:0.55, good:[1400,"감정서에 대지권 가격이 포함돼 있었고, 분양자 쪽 서류로 대지권 등기를 넘겨받았다."], bad:[-1900,"대지권을 넘겨받지 못했다. 매수자 대출이 안 나와서 한참 싸게 팔았다."]},
    sold:"누군가 가져갔다. 매수자 대출이 안 나와 매물로 오래 떠 있다는 얘기가 들린다."}
 ];
-const BD_STEP = 0.8;          // 한 번 유찰될 때마다 최저가 20% 내림(법원마다 20~30% — 게임은 20%)
+const BD_STEP = 0.8;          // (예전 기본값) 이제는 물건마다 그 법원 저감률(20% 또는 30%)을 쓴다 — bdStep()
 function bdRng(a, b){ return kRng(((a * 2654435761) ^ (b * 40503) ^ 0x5bd1e995) >>> 0); }
 function bdRec(){
   const c = kcRec();
@@ -50,9 +50,10 @@ function bdFill(b){
     b.items.push({key:b.key++, kind:"decoy", decoy:d.id, seed:(Math.floor(r() * 9e8) + 1), extra:0, status:"open", since:b.n});
   }
 }
-function bdBase(it){ if(it.kind === "case"){ const P = K_PROPS[it.prop]; return {apr:P.appraisal, min:P.minBid}; } const d = BD_DECOYS.find(x=>x.id===it.decoy); return {apr:d.apr, min:d.min}; }
-function bdMin(it){ return Math.round(bdBase(it).min * Math.pow(BD_STEP, it.extra) / 10) * 10; }
-function bdRounds(it){ const B = bdBase(it); return Math.max(0, Math.round(Math.log(B.min / B.apr) / Math.log(BD_STEP))) + it.extra; }
+function bdBase(it){ if(it.kind === "case"){ const P = K_PROPS[it.prop]; return {apr:P.appraisal, min:P.minBid, rate:P.rate || 0.2, fails:P.fails || 0, court:P.court || ""}; } const d = BD_DECOYS.find(x=>x.id===it.decoy); return {apr:d.apr, min:d.min, rate:d.rate || 0.2, fails:d.fails || 0, court:d.court || ""}; }
+function bdStep(it){ return 1 - bdBase(it).rate; }
+function bdMin(it){ const B = bdBase(it); return Math.round(B.apr * Math.pow(1 - B.rate, B.fails + it.extra)); }   // 감정가 × (1−저감률)^총 유찰횟수
+function bdRounds(it){ return bdBase(it).fails + it.extra; }
 function bdDeposit(it){ return Math.round(bdMin(it) * 0.1 / 10) * 10; }
 function bdNeed(it){ return Math.round(bdMin(it) * 1.1 + 1500); }     // 최저가 근처 낙찰 + 취득세 + 수리·명도 여유(대략)
 function bdRunning(){ return typeof K !== "undefined" && K && K.step && K.step !== "result" && K.step !== "lost"; }
@@ -98,8 +99,8 @@ const _bd_kStart = kStart; kStart = function(seed){
   if(!it) return;
   K.board = {key:it.key, extra:it.extra, rounds:bdRounds(it)};
   if(it.extra){
-    const base = KP, f = Math.pow(BD_STEP, it.extra);
-    KP = Object.create(base); KP.minBid = Math.round(base.minBid * f / 10) * 10;
+    const base = KP, f = Math.pow(bdStep(it), it.extra);
+    KP = Object.create(base); KP.minBid = bdMin(it); KP.fails = bdRounds(it);
     // 경쟁자는 물건값을 보고 쓴다 — 최저가가 내려간 만큼 따라 내려가진 않는다(대신 사람이 몰린다)
     const s = Math.pow(0.94, it.extra) / f;
     K.rivals.forEach(v => { v.lo *= s; v.hi *= s; });
@@ -127,7 +128,7 @@ function bdDecoyBid(it){
   const d = BD_DECOYS.find(x => x.id === it.decoy), c = kcRec(), dep = bdDeposit(it);
   let amt = 0, t = d.bid.t || "";
   if(d.bid.kind === "lose") amt = -dep;
-  else if(d.bid.kind === "gamble"){ const good = bdRng(it.seed, 999)() < d.bid.p; const o = good ? d.bid.good : d.bid.bad; amt = Math.round(o[0] * Math.pow(BD_STEP, -it.extra * 0.5) / 10) * 10; t = o[1]; if(good) amt = Math.round(amt); }
+  else if(d.bid.kind === "gamble"){ const good = bdRng(it.seed, 999)() < d.bid.p; const o = good ? d.bid.good : d.bid.bad; amt = Math.round(o[0] * Math.pow(bdStep(it), -it.extra * 0.5) / 10) * 10; t = o[1]; if(good) amt = Math.round(amt); }
   c.cash = Math.round(c.cash + amt); c.total = Math.round(c.total + amt);
   c.history.unshift({n:"함정", mode:"quick", at:Date.now(), title:d.t, bid:bdMin(it), sale:bdMin(it) + Math.max(0, amt), profit:amt, after:amt, days:1, biz:amt >= 1000 ? "A" : amt >= 0 ? "C" : "F", judge:it.read ? "B" : "F"});
   c.history = c.history.slice(0, 40);
@@ -155,7 +156,7 @@ function boardHTML(){
     const canDep = c.cash >= dep, loan = Math.max(0, need - c.cash);
     const st = {open:"", watch:"⭐ 관심", wait:"⏳ 유찰 대기", playing:"▶ 진행 중"}[it.status];
     return `<div class="panel bd-card ${it.status}"><div class="bd-top"><span class="bd-ic">${isCase ? "📁" : d.ic}</span><div class="bd-tt"><b>${esc(isCase ? bdName(it) : d.t)}</b>
-       <small>${isCase ? esc(P.tagline || "") : esc(d.tag)} · ${"★".repeat(isCase ? (P.stars||1) : d.stars)}</small></div>${st?`<em class="bd-st">${st}</em>`:""}</div>
+       <small>${isCase ? esc(P.tagline || "") : esc(d.tag)} · ${"★".repeat(isCase ? (P.stars||1) : d.stars)}${B.court ? ` · 🏛️ ${esc(B.court)}(유찰 시 ${Math.round(B.rate * 100)}%↓)` : ""}</small></div>${st?`<em class="bd-st">${st}</em>`:""}</div>
      <div class="bd-nums"><span>감정가</span><b>${kMan(B.apr)}</b><span>최저가</span><b>${kMan(min)} <small>(${rounds ? `${rounds}회 유찰` : "신건"} · ${Math.round(min / B.apr * 100)}%)</small></b>
        <span>입찰보증금</span><b class="${canDep?"":"down"}">${kMan(dep)}</b><span>필요 자금(대략)</span><b>${kMan(need)}${loan ? ` <small class="down">대출 ${kMan(loan)}</small>` : ""}</b>
        <span>관심도</span><b class="kp-sig"><em class="lv-${bdHeat(it).replace(/\s/g,"")}">🔥 <b>${bdHeat(it)}</b></em></b></div>
@@ -165,7 +166,7 @@ function boardHTML(){
         : `${it.read ? "" : `<button type="button" class="btn pri" data-bdread="${it.key}">📄 서류 열람</button>`}<button type="button" class="btn" data-bddecoy="${it.key}" ${canDep ? "" : "disabled"}>🔨 입찰</button>`}
        ${it.status !== "playing" ? `<button type="button" class="btn" data-bdwait="${it.key}" ${it.extra >= 2 ? "disabled" : ""}>⏳ 유찰 노리기</button>
        <button type="button" class="btn" data-bdwatch="${it.key}">${it.status === "watch" ? "☆ 관심 해제" : "⭐ 관심"}</button><button type="button" class="btn" data-bddrop="${it.key}">✖ 포기</button>` : ""}</div>
-     ${it.status === "wait" ? `<small class="note">다음 주에 유찰되면 최저가 ${kMan(Math.round(min * BD_STEP / 10) * 10)} — 대신 사람이 더 몰리고, 그 전에 누가 가져갈 수도 있어요.</small>` : ""}
+     ${it.status === "wait" ? `<small class="note">다음 주에 유찰되면 최저가 ${kMan(Math.round(B.apr * Math.pow(1 - B.rate, rounds + 1)))} (이 법원은 한 번에 ${Math.round(B.rate * 100)}%씩) — 대신 사람이 더 몰리고, 그 전에 누가 가져갈 수도 있어요.</small>` : ""}
      ${!canDep ? `<small class="note down">보증금(최저가의 10%)이 모자라요.</small>` : ""}</div>`;
   };
   const pastLi = past.map(it => `<li><b>${esc(bdName(it))}</b> — ${esc(it.res || it.status)}</li>`).join("");

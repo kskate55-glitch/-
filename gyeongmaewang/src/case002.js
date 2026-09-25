@@ -178,7 +178,7 @@ function k2SaysHTML(){
 function k2ExitBtn(label){ const v = k2ExitValue(); return `<button type="button" class="ag-act k2-exit" data-k2="exit"><span class="ag-ai">🏃</span><span><b>${label || "손실 감수하고 즉시 정리"} — 업자 현황 매입 ${kMan(v)}</b><span class="note" style="display:block">지금 넘기면 예상 손익 ${kcSigned(Math.round(v - k2Spent() - 30 - KP2.dailyHold*3))} · 더 이상의 위험은 끝</span></span></button>`; }
 function k2Spent(){ const c = K.cost; return c.bid + c.acq + c.move + c.repair + c.hold + c.fee + c.broker + c.legal; }
 function k2HTML(){
-  const quit = `<div style="margin-top:12px"><button type="button" class="btn" data-kquit>그만두기</button></div>`;
+  const quit = "";   // 그만두기 버튼은 없앴다 — 누르면 판이 통째로 꺼졌다. 나가려면 머리줄 🏠(판은 저장돼 이어하기로 돌아온다)
   if(K.step === "cross"){
     const dep = K2_DEPOSIT(), knew = [K.found.leak && "💧 아래층이 말한 누수", K.found.price && "📝 박 중개사의 1.5 후반", K.found.loan && "🏦 얇은 매수자 대출"].filter(Boolean);
     return kStage("bg_realtor", "narr", null, `매각허가결정이 났다. 잔금 기한까지 한 달. 그런데 오늘 아침 — 같은 건물 3층이 1억 6,200만원 급매로 올라왔다.`) + kHud() + `

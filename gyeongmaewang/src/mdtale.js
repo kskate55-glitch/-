@@ -204,11 +204,12 @@ function mtPlay(lines, o){
   if(!lines || !lines.length) return;
   // 자동 흐름 테스트용: 이야기 창을 띄우지 않고 바로 끝낸다(게임 쪽 효과는 그대로).
   if(window.MT_SKIP_TALE){ if(o && o.done) o.done(); return; }
-  MT = {lines, i:0, name:o.name || "", pid:o.pid || null, done:o.done || null, title:o.title || ""};
+  MT = {lines, i:0, name:o.name || "", pid:o.pid || null, face:o.face || null, done:o.done || null, title:o.title || ""};
   mtPaint();
   if(typeof kcSfx === "function") kcSfx("paper");
 }
 function mtFace(ex){
+  if(MT && MT.face){ try{ const u = MT.face(ex === "angry" ? "angry" : ex === "worried" ? "worried" : "normal"); return u ? `<img src="${u}" alt="">` : ""; }catch(e){ return ""; } }
   if(!MT || !MT.pid || typeof artNpc !== "function") return "";
   try{ const u = artNpc(MT.pid, ex === "angry" ? "angry" : ex === "worried" ? "worried" : "normal"); return u ? `<img src="${u}" alt="">` : ""; }catch(e){ return ""; }
 }
@@ -272,8 +273,12 @@ const _mt_render = renderArena; renderArena = function(){
 const _mt_kMove = kMove; kMove = function(id){
   const had = K && K.occ ? K.occ.turns : 0;
   _mt_kMove(id);
-  if(id !== "listen" || !K || !K.occ || K.occ.turns === had) return;
-  const P = typeof personaById === "function" ? personaById(KP.occ.pid) : null, tale = mtTaleOf(P || {id:KP.occ.pid});
+  if(id === "listen") mtAfterListen(had);
+};
+// 물건마다 따로 쓴 사연(KP.tale)이 있으면 그걸, 없으면 인물 공용 사연을 — 새 풀 경매 물건도 같은 길로 부른다
+function mtAfterListen(had){
+  if(!K || !K.occ || K.occ.turns === had) return;
+  const P = typeof personaById === "function" ? personaById(KP.occ.pid) : null, tale = (KP && KP.tale) || mtTaleOf(P || {id:KP.occ.pid});
   if(!tale.length) return;
   const k = K.occ.heard || 0; if(k >= tale.length) return;
   K.occ.heard = k + 1;

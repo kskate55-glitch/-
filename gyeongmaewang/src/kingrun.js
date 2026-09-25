@@ -283,7 +283,7 @@ function kingHTML(){
       ${["2. 임차인 있는 투룸 (중급)","3. 가족이 얽힌 빌라 (고급)","4. 전소유자+임차인+누수 (악몽)"].map(t=>`<div class="panel k-prop locked"><b>🔒 ${t}</b><div class="note">준비 중 — 1번 물건 먼저</div></div>`).join("")}</div>
     <details class="panel ag-brief" style="margin-top:10px"><summary>🏅 업적</summary><div class="ag-badgewall">${ach.map(([id,a])=>`<span class="ag-badge ${R.ach[id]?"":"off"}">${a[0]} ${a[1]}<small>${a[2]}</small></span>`).join("")}</div></details>`;
   }
-  const quit = `<div style="margin-top:12px"><button type="button" class="btn" data-kquit>그만두기</button></div>`;
+  const quit = "";   // 그만두기 버튼은 없앴다 — 누르면 판이 통째로 꺼졌다. 나가려면 머리줄 🏠(판은 저장돼 이어하기로 돌아온다)
   if(K.step==="brief"){
     return kStage("bg_villa_day","narr",null,`${KP.title}. 감정가 ${kMan(KP.appraisal)}, 최저가 ${kMan(KP.minBid)}. ${KP.briefLine || "서류만 보면 쉬운 물건이다. …정말?"}`) + `
     <div class="panel k-card"><div class="k-grid"><span>감정가</span><b>${kMan(KP.appraisal)}</b><span>최저가</span><b>${kMan(KP.minBid)}</b><span>최근 실거래</span><b>${KP.recent}</b><span>중개사 한마디</span><b>"${kMan(KP.brokerSays)}이면 바로 나가요"</b><span>예상 수리비</span><b>${kMan(KP.estRepair)} (겉보기)</b><span>점유자</span><b>${esc(KP.occ.name)} (${KP.occ.age}) · ${esc(KP.occ.legal)}</b><span>경쟁자</span><b>${K.found.rivals?`약 ${K.rivals.length}명`:"??"}</b></div></div>

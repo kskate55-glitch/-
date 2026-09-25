@@ -5,12 +5,12 @@
    다음 단계가 열린다(cpRec().unlocked를 캠페인과 같이 쓴다). 6단계까지 끝나면 엔딩 크레딧이 올라간다. */
 const EP_PLAN = {
   seoyun:{stars:1, base:1500, hold:3, eps:[
-    {c:"c01", when:"1년차 · 봄", lines:["첫 낙찰. 법원 계단을 내려오는데 다리가 풀렸다.","'잔금 치르면 끝인 줄 알았는데… 이제 사람이랑 이야기해야 하는구나.'"]},
+    {k:"k1", when:"1년차 · 봄", lines:["노트북에 관심지역 알림이 떴다. 서울 오래된 빌라 3층, 대항력 없는 세입자.","'처음부터 끝까지 내 손으로. 조사하고, 입찰하고, 명도하고, 팔아 보자.'"]},
     {c:"c06", when:"1년차 · 여름", lines:["두 번째 물건은 대항력 없는 임차인이 사는 빌라.","'배당받는 세입자면 명도확인서가 열쇠라던데. 순서만 안 틀리면 돼.'"]},
     {c:"c54", when:"1년차 · 가을", lines:["명도는 끝났다. 이제 도배·장판 견적서가 세 장.","'제일 싼 데로 하면 되는 거 아니야? …아닌가?'"]},
     {c:"c14", when:"2년차 · 겨울", lines:["수리한 집을 팔 차례. 부동산 사장님이 사진부터 다시 찍자고 한다.","'첫 매도. 이것까지 끝나야 진짜 한 바퀴야.'"]}]},
   dohyun:{stars:2, base:2600, hold:4, eps:[
-    {c:"c07", when:"1년차 · 봄", lines:["퇴근길 지하철에서 매각결정 문자를 받았다.","점유자는 보증금을 한 푼도 못 받는 임차인. '이 사람한텐 내가 제일 미운 사람이겠지.'"]},
+    {k:"k2", when:"1년차 · 봄", lines:["퇴근길 지하철에서 관심 물건 알림. 은평구 투룸, 겉 마진이 어마어마하다.","'싸 보이는 데는 이유가 있겠지. 멈출 줄 아는 것도 실력이다.'"]},
     {c:"c08", when:"1년차 · 여름", lines:["점심시간에 걸려 온 전화. '이사비 500은 주셔야죠.'","'회의 5분 전인데… 숫자부터 부르는 사람한테는 어떻게 하더라.'"]},
     {c:"c27", when:"1년차 · 가을", lines:["우편함이 넘치는 집. 사람은 없는데 짐은 그대로다.","'빈집이면 편할 줄 알았는데, 빈집이 제일 조심하라던데.'"]},
     {c:"c32", when:"2년차 · 봄", lines:["잔금 20일 전, 은행에서 전화가 왔다. 한도가 줄었단다.","'연차를 쓸 때가 왔다.'"]}]},
@@ -39,6 +39,10 @@ const EP_PLAN = {
 /* ---------- 기록 ---------- */
 function epRec(){ const P = cpRec(); if(!P.ep || typeof P.ep !== "object") P.ep = {}; return P.ep; }
 function epOf(id){ const R = epRec(); if(!R[id] || !Array.isArray(R[id].res)) R[id] = {res:[]}; return R[id]; }
+function epInfo(ep){
+  if(ep.k){ const P = (typeof K_PROPS !== "undefined" && K_PROPS[ep.k]) || {}; return {title:P.title || ep.k, cat:"풀 경매 · 조사→입찰→명도→매도", lv:P.stars || 1, full:true}; }
+  const c = epCase(ep.c); return c ? {title:c.title, cat:c.cat, lv:c.lv, full:false} : {title:"?", cat:"", lv:1};
+}
 function epCase(id){ return (typeof CASES !== "undefined" ? CASES : []).find(c => c.id === id) || null; }
 function epShuffle(a){ a = a.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function epTotals(c, picks){ const t = {d:0, w:0, m:0}; picks.forEach((p, i) => { const fx = c.steps[i] && c.steps[i].o[p] && c.steps[i].o[p].fx; if(fx){ t.d += fx.d || 0; t.w += fx.w || 0; t.m += fx.m || 0; } }); return t; }
@@ -83,8 +87,8 @@ function epStars(n){ return "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n)); 
 function epChapterHTML(){
   const E = EP, C = LF_CHARS.find(x => x.id === E.ch), Pl = EP_PLAN[E.ch], R = epOf(E.ch), n = CP_ORDER.indexOf(E.ch) + 1;
   const list = Pl.eps.map((ep, i) => {
-    const c = epCase(ep.c), r = R.res[i], cur = i === R.res.length;
-    return `<li class="ep-li ${r ? "done" : cur ? "cur" : "lock"}"><span class="ep-no">EP ${i + 1}</span><span class="ep-lt"><b>${r || cur ? esc(c ? c.title : "?") : "??? — 앞 에피소드를 끝내면 열려요"}</b><small>${esc(ep.when)}${c && (r || cur) ? ` · ${esc(c.cat)} · ${"★".repeat(c.lv)}` : ""}</small></span>${r ? `<em class="ep-pct">${r.pct}점</em>` : cur ? `<em class="ep-now">지금</em>` : `<em>🔒</em>`}</li>`;
+    const c = epInfo(ep), r = R.res[i], cur = i === R.res.length;
+    return `<li class="ep-li ${r ? "done" : cur ? "cur" : "lock"}"><span class="ep-no">EP ${i + 1}</span><span class="ep-lt"><b>${r || cur ? esc(c.title) : "??? — 앞 에피소드를 끝내면 열려요"}</b><small>${esc(ep.when)}${r || cur ? ` · ${esc(c.cat)} · ${"★".repeat(c.lv)}` : ""}</small></span>${r ? `<em class="ep-pct">${r.pct}점</em>` : cur ? `<em class="ep-now">지금</em>` : `<em>🔒</em>`}</li>`;
   }).join("");
   const got = (cpRec().endings[E.ch]) || {};
   return `<div class="ep-card ep-chapter"><div class="ep-face">${epFace(E.ch)}</div>
@@ -96,7 +100,7 @@ function epChapterHTML(){
     <div class="ep-btns"><button type="button" class="btn pri" data-ep="intro">▶ EP ${R.res.length + 1} 시작</button><button type="button" class="btn" data-ep="close">나가기</button></div></div>`;
 }
 function epIntroHTML(){
-  const E = EP, ep = EP_PLAN[E.ch].eps[E.i], c = epCase(ep.c), C = LF_CHARS.find(x => x.id === E.ch);
+  const E = EP, ep = EP_PLAN[E.ch].eps[E.i], c = epInfo(ep), C = LF_CHARS.find(x => x.id === E.ch);
   return `<div class="ep-card ep-intro"><small class="ep-kick">EPISODE ${E.i + 1} / ${EP_PLAN[E.ch].eps.length} · ${esc(ep.when)}</small>
     <h2>${esc(c.title)}</h2><div class="ep-tags"><span>${esc(c.cat)}</span><span>${"★".repeat(c.lv)}</span></div>
     <div class="ep-mono"><div class="ep-face sm">${epFace(E.ch)}</div><div>${ep.lines.map((l, i) => `<p style="animation-delay:${0.15 + i * 0.5}s">${esc(l)}</p>`).join("")}<small>— ${esc(C.name)}</small></div></div>
@@ -124,7 +128,7 @@ function epPlayHTML(){
     ${reveal ? `<div class="ep-btns"><button type="button" class="btn pri" data-ep="${last ? "recap" : "next"}">${last ? "결과 보기 →" : "다음 장면 →"}</button></div>` : ""}</div>`;
 }
 function epRecapHTML(){
-  const E = EP, R = epOf(E.ch), r = R.res[E.i], c = epCase(r.id), Pl = EP_PLAN[E.ch], lastEp = E.i === Pl.eps.length - 1;
+  const E = EP, R = epOf(E.ch), r = R.res[E.i], c = epCase(r.id) || {lesson:r.lesson ? [r.lesson] : [], trap:null}, Pl = EP_PLAN[E.ch], lastEp = E.i === Pl.eps.length - 1;
   const head = r.pct >= 85 ? "깔끔하게 끝냈다" : r.pct >= 60 ? "그럭저럭 넘겼다" : "비싼 수업료를 냈다";
   const tot = R.res.reduce((s, x) => s + x.profit, 0);
   return `<div class="ep-card ep-recap"><small class="ep-kick">EP ${E.i + 1} 결과</small><h2>${head} — ${r.pct}점</h2>
@@ -133,7 +137,7 @@ function epRecapHTML(){
       <div><small>💰 이번 물건 추정 수익</small><b class="${r.profit >= 0 ? "up" : "down"}">${typeof kcSigned === "function" ? kcSigned(r.profit) : kMan(r.profit)}</b><em>지금까지 ${kMan(tot)}</em></div></div>
     ${c.lesson && c.lesson.length ? `<div class="ep-lesson"><b>📌 이 물건에서 배운 것</b><ul>${c.lesson.map(l => `<li>${esc(l)}</li>`).join("")}</ul>${c.trap ? `<p class="ep-trap">⚠️ ${esc(c.trap)}</p>` : ""}</div>` : ""}
     <p class="note">추정 수익은 게임용 근사치예요 — 판단 점수가 높을수록, 최선 경로보다 날짜·돈을 덜 쓸수록 커집니다.</p>
-    <div class="ep-btns">${lastEp ? `<button type="button" class="btn pri" data-ep="end">🎬 엔딩 보기</button>` : `<button type="button" class="btn pri" data-ep="nextep">다음 에피소드 →</button>`}<button type="button" class="btn" data-ep="close">잠깐 쉬기(저장됨)</button></div></div>`;
+    <div class="ep-btns">${lastEp ? `<button type="button" class="btn pri" data-ep="end">🎬 엔딩 보기</button>` : `<button type="button" class="btn pri" data-ep="nextep">🏠 방으로 돌아가기 — 다음 에피소드 준비</button>`}</div></div>`;
 }
 function epPaint(){
   let el = document.getElementById("epRoot");
@@ -173,7 +177,7 @@ function epFinish(){
 document.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-ep],[data-epick],[data-epopen]");
   if(!b) return;
-  if(b.dataset.epopen){ e.preventDefault(); e.stopImmediatePropagation(); epOpen(b.dataset.epopen); return; }
+  if(b.dataset.epopen){ e.preventDefault(); e.stopImmediatePropagation(); epEnter(b.dataset.epopen); return; }
   if(!EP) return;
   e.preventDefault(); e.stopPropagation();
   const E = EP, a = b.dataset.ep;
@@ -187,7 +191,7 @@ document.addEventListener("click", e => {
   }
   if(a === "close"){ epClose(); return; }
   if(a === "chapter"){ E.scr = "chapter"; epPaint(); epTop(); return; }
-  if(a === "intro"){ E.i = epOf(E.ch).res.length; if(E.i >= EP_PLAN[E.ch].eps.length){ epFinish(); return; } E.scr = "intro"; epPaint(); epTop(); return; }
+  if(a === "intro"){ E.i = epOf(E.ch).res.length; if(E.i >= EP_PLAN[E.ch].eps.length){ epFinish(); return; } if(EP_PLAN[E.ch].eps[E.i].k){ epStartK(E.ch, E.i); return; } E.scr = "intro"; epPaint(); epTop(); return; }
   if(a === "play"){ epStartCase(); return; }
   if(a === "next"){ E.step++; epPaint(); epTop(); return; }
   if(a === "recap"){
@@ -198,7 +202,7 @@ document.addEventListener("click", e => {
     if(typeof kcSfx === "function") kcSfx(R.res[E.i].pct >= 60 ? "fanfare" : "warning");
     return;
   }
-  if(a === "nextep"){ E.i++; E.scr = "intro"; epPaint(); epTop(); return; }
+  if(a === "nextep"){ epHome(E.ch); return; }
   if(a === "end"){ epFinish(); return; }
 }, true);
 document.addEventListener("keydown", e => { if(EP && e.key === "Escape"){ e.preventDefault(); epClose(); } });
@@ -209,7 +213,7 @@ window.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-cp]"); if(!b) return;
   const a = b.dataset.cp;
   if(a === "go" && CP_SHOW.step === "end" && CP_SHOW.finale){ e.preventDefault(); e.stopImmediatePropagation(); CP_SHOW = null; cpPaint(); crOpen(); return; }
-  if(a === "new"){ e.preventDefault(); e.stopImmediatePropagation(); const n = CP_SHOW.next; CP_SHOW = null; cpPaint(); epOpen(n); return; }
+  if(a === "new"){ e.preventDefault(); e.stopImmediatePropagation(); const n = CP_SHOW.next; CP_SHOW = null; cpPaint(); epEnter(n); return; }
   if(a === "career" || a === "menu"){ e.preventDefault(); e.stopImmediatePropagation(); CP_SHOW = null; cpPaint(); if(typeof renderArena === "function") try{ renderArena(); }catch(_){} return; }
 }, true);
 
@@ -334,7 +338,7 @@ if(typeof homeHTML === "function"){
       }
       const box = [];
       h = h.replace(/<button type="button" class="btn[^"]*" data-(?:kcnew="career"[^>]*|ofgo="board"|kcnew="weekly")>[\s\S]*?<\/button>/g, m => { box.push(m.replace(/class="btn pri"/, 'class="btn"')); return ""; });
-      h = h.replace(/class="btn pri lf-home-go" data-atab="life">🏠 /, 'class="btn lf-home-go" data-atab="life">🕰️ 자유 인생 이어하기 · ');
+      h = h.replace(/<button type="button" class="btn pri lf-home-go"[^>]*>[\s\S]*?<\/button>/, "");   // 자유 인생 버튼은 없앤다 — 스토리가 곧 인생
       const boxHTML = box.length ? `<details class="kc-box"><summary>🗂️ 케이스 상자 <small>CASE ${box.filter(b => /data-kcnew="career"/.test(b)).length}개 · 게시판 · 이번 주 경매</small></summary><div class="kc-box-in">${box.join("")}</div></details>` : "";
       h = h.replace(/(<div class="kc-menu">)/, `$1${top}`);
       h = h.replace(/(<div class="kc-menu-row">)/, `${boxHTML}$1`);
@@ -343,3 +347,138 @@ if(typeof homeHTML === "function"){
   };
 }
 document.addEventListener("click", e => { if(e.target.closest && e.target.closest("[data-crreplay]")){ e.preventDefault(); e.stopImmediatePropagation(); crOpen(); } }, true);
+
+/* ================= 🏠 스토리는 '그 사람의 방'에서 진행된다 =================
+   스토리를 누르면 그 인물의 인생(방·시간·돈)이 시작되고, 방에 '📱 새 알림 — EP n'이 뜬다.
+   · 풀 경매 에피소드(k1·k2): 진짜 한 판(조사→입찰→명도→수리→매도)을 그대로 한다.
+   · 사건 에피소드: 방 위에 게임 화면처럼 뜬다(흰 퀴즈 카드가 아니라 어두운 무대 + 주인공 전신).
+   한 에피소드가 끝나면 몇 달이 흐르고 방으로 돌아온다. 네 개를 끝내면 엔딩 → 다음 단계. */
+const EP_GAP_DAYS = 110;   // 에피소드 사이에 흐르는 시간(네 개면 1년 남짓)
+function epStoryLife(ch){ const L = typeof lfRec === "function" ? lfRec() : null; return !!(L && L.story && L.char === ch); }
+function epEnter(ch){
+  if(!ch || !EP_PLAN[ch]) return;
+  if(typeof cpUnlocked === "function" && !cpUnlocked(ch)){ if(typeof safeAlert === "function") safeAlert(`🔒 ${cpName(cpPrev(ch))}의 엔딩을 보면 열려요.`); return; }
+  EP = null; epPaint();
+  const R = epOf(ch), done = R.res.length >= EP_PLAN[ch].eps.length;
+  if(typeof page !== "undefined") page = "arena";
+  if(epStoryLife(ch) && !done){
+    if(typeof bdRunning === "function" && bdRunning()){ arenaTab = "king"; }
+    else { K = null; arenaTab = "life"; LF_SPOT = "laptop"; }
+    renderArena(); window.scrollTo(0, 0); return;
+  }
+  if(done) R.res = [];
+  R.pendingK = null;
+  const L0 = lfRec(); if(L0 && L0.mode === "career" && typeof cpStashNow === "function") cpStashNow();
+  lfNew(ch); const L = lfRec(); L.story = true; L.intro = true; K = null; LF_SPOT = "laptop"; LF_PICK = null;
+  if(typeof save === "function") save();
+  if(typeof gxOpStart === "function"){ gxOpStart(ch); }
+  else { L.intro = false; arenaTab = "life"; renderArena(); }
+}
+function epHome(ch){
+  EP = null; epPaint();
+  if(typeof lfAdvance === "function" && lfRec()) lfAdvance(EP_GAP_DAYS * 1440, "story");
+  K = null; arenaTab = "life"; LF_SPOT = "laptop";
+  if(typeof save === "function") save();
+  renderArena(); window.scrollTo(0, 0);
+  if(typeof gxBanner === "function") try{ gxBanner("place", {big:"📆 몇 달 뒤", sub:esc(lfClock())}); }catch(e){}
+}
+function epGo(ch){
+  const R = epOf(ch), i = R.res.length, ep = EP_PLAN[ch].eps[i];
+  if(!ep){ EP = {ch, i:EP_PLAN[ch].eps.length - 1, scr:"chapter"}; epFinish(); return; }
+  if(ep.k){ epStartK(ch, i); return; }
+  EP = {ch, i, scr:"intro"}; epPaint();
+  if(typeof kcSfx === "function") kcSfx("paper");
+}
+function epStartK(ch, i){
+  EP = null; epPaint();
+  const R = epOf(ch), ep = EP_PLAN[ch].eps[i];
+  R.pendingK = {i, k:ep.k};
+  KC_MODE = "career"; K_PROP_NEXT = ep.k; KC_INTRO = true;
+  kStart();
+  K.epStory = {ch, i};
+  arenaTab = "king"; if(typeof save === "function") save(); renderArena(); window.scrollTo(0, 0);
+}
+/* 풀 경매가 끝나면(결과·패찰) 화면 아래에 '에피소드 정리' 버튼 */
+const EP_GRADE = {S:100, A:85, B:65, C:40, D:25};
+function epKDone(){
+  if(typeof K === "undefined" || !K || !K.epStory) return null;
+  if(K.step === "result" && K.final) return "result";
+  if(K.step === "lost") return "lost";
+  return null;
+}
+function epKRecord(){
+  const st = K.epStory, R = epOf(st.ch), kind = epKDone(); if(!kind) return;
+  let rec;
+  if(kind === "result"){
+    const g = K.final.grades || {}, vals = Object.values(g).map(x => EP_GRADE[x] != null ? EP_GRADE[x] : 60);
+    let pct = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 60;
+    if(K.final.profit < 0) pct = Math.min(pct, 50);
+    rec = {id:K.prop || KP.id, pct, d:K.day || 0, w:Math.round((K.cost.move || 0) + (K.cost.legal || 0) + (K.cost.repair || 0)), dBest:K.day || 0, wBest:0, dExtra:0, wExtra:0, profit:Math.round(K.final.profit), lesson:K.final.lesson || null, full:true};
+  } else {
+    rec = {id:K.prop || KP.id, pct:45, d:0, w:0, dBest:0, wBest:0, dExtra:0, wExtra:0, profit:0, lesson:"패찰했다 — 욕심내지 않은 값이면 괜찮다. 경매는 다음 물건이 또 온다.", full:true, lost:true};
+  }
+  R.res[st.i] = rec; R.res = R.res.slice(0, st.i + 1); R.pendingK = null;
+  K.epStory = null;
+  if(typeof save === "function") save();
+  EP = {ch:st.ch, i:st.i, scr:"recap"}; epPaint();
+}
+function epKBar(){
+  let el = document.getElementById("epKBar");
+  const kind = epKDone(), show = kind && typeof page !== "undefined" && page === "arena" && arenaTab === "king" && !EP && !(typeof LN !== "undefined" && LN);
+  if(!show){ if(el) el.remove(); return; }
+  if(!el){ el = document.createElement("div"); el.id = "epKBar"; el.className = "ep-kbar"; document.body.appendChild(el); }
+  const st = K.epStory, h = `<span>📖 STAGE ${CP_ORDER.indexOf(st.ch) + 1} · EP ${st.i + 1} ${kind === "lost" ? "— 패찰" : "끝"}</span><button type="button" class="btn pri" data-epkdone>에피소드 정리하고 방으로 →</button>`;
+  if(el.innerHTML !== h) el.innerHTML = h;
+}
+setInterval(epKBar, 500);
+document.addEventListener("click", e => { if(e.target.closest && e.target.closest("[data-epkdone]")){ e.preventDefault(); e.stopImmediatePropagation(); const el = document.getElementById("epKBar"); if(el) el.remove(); epKRecord(); } }, true);
+/* 스토리 인생은 1년 갈림길·1년 결산(자유 인생 규칙)을 쓰지 않는다 — 엔딩은 에피소드 네 개가 정한다 */
+if(typeof lfPathDue === "function"){ const _ep_pathDue = lfPathDue; lfPathDue = function(){ const L = lfRec(); if(L && L.story) return false; return _ep_pathDue(); }; }
+if(typeof cpSettleCheck === "function"){ const _ep_settle = cpSettleCheck; cpSettleCheck = function(){ const L = lfRec(); if(L && L.story) return; return _ep_settle(); }; }
+
+/* ---------- 방 화면: '📱 새 알림 — EP n' ---------- */
+if(typeof lfBaseHTML === "function"){
+  const _ep_base = lfBaseHTML;
+  lfBaseHTML = function(){
+    let h = _ep_base();
+    try{
+      const L = lfRec(); if(!L || !L.story || !EP_PLAN[L.char]) return h;
+      const R = epOf(L.char), Pl = EP_PLAN[L.char], i = R.res.length, n = Pl.eps.length;
+      let card;
+      if(R.pendingK && typeof bdRunning === "function" && bdRunning()) card = `<div class="ep-alert"><small>📖 STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${R.pendingK.i + 1} 진행 중</small><b>${esc(epInfo(Pl.eps[R.pendingK.i]).title)}</b><div class="ep-alert-btns"><button type="button" class="btn pri" data-atab="king">▶ 이어하기</button></div></div>`;
+      else if(i >= n) card = `<div class="ep-alert end"><small>📖 STAGE ${CP_ORDER.indexOf(L.char) + 1} · 네 물건을 모두 끝냈다</small><b>이 시기를 돌아볼 시간</b><div class="ep-alert-btns"><button type="button" class="btn pri" data-epfin="${L.char}">🎬 엔딩 보기</button></div></div>`;
+      else { const ep = Pl.eps[i], c = epInfo(ep);
+        card = `<div class="ep-alert"><small>📱 새 알림 · STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${i + 1}/${n} · ${esc(ep.when)}</small><b>${esc(c.title)}</b><p>${esc(ep.lines[0])}</p><em>${esc(c.cat)} · ${"★".repeat(c.lv)}</em>
+          <div class="ep-alert-btns"><button type="button" class="btn pri" data-epgo="${L.char}">📂 이 물건 보러 가기</button><button type="button" class="btn" data-eplist="${L.char}">📋 에피소드 목록</button></div></div>`; }
+      h = h.replace(/(<div class="vn of-stage lf-stage[^"]*">)/, `$1${card}`);
+    }catch(e){}
+    return h;
+  };
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("[data-epgo],[data-eplist],[data-epfin]"); if(!b) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if(b.dataset.epgo) epGo(b.dataset.epgo);
+  else if(b.dataset.eplist) epOpen(b.dataset.eplist);
+  else if(b.dataset.epfin){ EP = {ch:b.dataset.epfin, i:EP_PLAN[b.dataset.epfin].eps.length - 1, scr:"chapter"}; epFinish(); }
+}, true);
+/* 사건 에피소드 무대 — 방 그림 위에 주인공 전신을 세운다 */
+function epHeroArt(ch){ try{ if(typeof LF_CHAR_ART !== "undefined" && LF_CHAR_ART[ch] && LF_CHAR_ART[ch].front && typeof lfBlob === "function") return lfBlob(LF_CHAR_ART[ch].front); }catch(e){} return null; }
+function epBgArt(){ try{ const B = lfBaseInfo(); return typeof vnBgHTML === "function" ? vnBgHTML(B.bg) : ""; }catch(e){ return ""; } }
+{
+  const _ep_paint = epPaint;
+  epPaint = function(){
+    _ep_paint();
+    const el = document.getElementById("epRoot"); if(!el || !EP) return;
+    el.classList.add("ep-world");
+    const hero = epHeroArt(EP.ch);
+    const bg = document.createElement("div"); bg.className = "ep-bg"; bg.innerHTML = epBgArt(); el.insertBefore(bg, el.firstChild);
+    if(hero && EP.scr !== "chapter"){ const im = document.createElement("img"); im.className = "ep-hero" + (EP._hero ? " still" : ""); im.src = hero; im.alt = ""; el.appendChild(im); EP._hero = true; }
+  };
+}
+
+/* 머리 칩: 스토리 인생이면 CH·ACT 대신 STAGE·EP */
+if(typeof cpActChip === "function"){
+  const _ep_chip = cpActChip;
+  cpActChip = function(){ const L = lfRec(); if(L && L.story && EP_PLAN[L.char]){ const R = epOf(L.char), n = EP_PLAN[L.char].eps.length; return `<span class="cp-act" title="스토리 진행">STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${Math.min(n, R.res.length + 1)}/${n}</span>`; } return _ep_chip(); };
+}

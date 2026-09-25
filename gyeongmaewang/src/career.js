@@ -218,7 +218,9 @@ function kcResultTop(){
   if(K.mode === "weekly") html = `<div class="panel kc-cash weekly"><small>📅 ${esc(K.week)} 이번 주 경매 · ${F.weekTries}번째 도전</small><div class="kc-cashrow"><b>${kcSigned(Math.round(F.profit))}</b></div><div class="kc-cashmeta"><span>이번 주 내 최고 ${kcSigned(kcRec().weekly[K.week].profit)}</span><span>커리어 자금엔 반영되지 않아요 — 모두 같은 조건으로 비교하는 판</span></div>${F.newBest?`<div class="kc-best">🏅 이번 주 내 최고기록 갱신!</div>`:""}</div>` + html;
   return html;
 }
-function kcShareHTML(){
+function kcShareHTML(){ return "";   // 🗑️ 공유카드(단톡방 던지기)는 뺐다 — 사용자 요청
+}
+function kcShareHTML_old(){
   const t = kcShareText();
   return `<details class="panel kc-share" open><summary>📤 공유카드 — 경매 모임 단톡방에 던지기</summary><pre>${esc(t)}</pre><textarea id="kcShareTa" readonly aria-hidden="true" tabindex="-1">${esc(t)}</textarea>
     <button type="button" class="btn pri" data-kshare>📋 카드 복사</button> <span class="note">순위·백분위는 전체 기록을 모으는 서버가 생기면 붙일게요 — 지금은 가짜 숫자를 안 써요.</span></details>`;

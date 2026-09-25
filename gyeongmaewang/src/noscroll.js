@@ -103,6 +103,14 @@ function nxNoteTab(stage, tabs, note){
 }
 document.addEventListener("click", e => {
   const t = e.target; if(!t.closest) return;
-  if(t.closest("[data-nxnote]")){ e.preventDefault(); NX.note = !NX.note; if(NX.note && typeof STG !== "undefined") STG.file = false; if(typeof renderArena === "function") renderArena(); return; }
-  if(t.closest("[data-stg]") && NX.note){ NX.note = false; }
+  // 넓은 화면: 조사 노트는 사건 파일 '왼쪽 옆'에 따로 떠서 둘 다 동시에 볼 수 있다. 좁은 화면만 하나씩.
+  const wide = window.innerWidth >= 1100;
+  if(t.closest("[data-nxnote]")){ e.preventDefault(); NX.note = !NX.note; if(NX.note && !wide && typeof STG !== "undefined") STG.file = false; if(typeof renderArena === "function") renderArena(); return; }
+  if(t.closest("[data-stg]") && NX.note && !wide){
+    // 노트를 닫고 사건 파일이 바로 보이게 — 예전엔 노트 종이가 그대로 남아 파일을 덮었다
+    NX.note = false;
+    document.querySelectorAll(".nx-notepaper").forEach(p => { p.hidden = true; });
+    document.querySelectorAll(".stg-dock.nx-noteopen").forEach(d => d.classList.remove("nx-noteopen"));
+    document.querySelectorAll(".nx-notetab.on").forEach(b => b.classList.remove("on"));
+  }
 }, true);

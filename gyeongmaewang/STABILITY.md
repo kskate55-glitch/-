@@ -1,0 +1,68 @@
+# 🛡️ 경매왕 — 안정성 점검 기록 (v76)
+
+새 기능 없이 **"이미 있는 것이 깨지지 않게"** 만 본 점검이다. 항목마다 무엇을 봤고, 무엇을 고쳤고, 어느 테스트가 그걸 고정하는지를 적는다.
+
+## ① 단계마다 저장 → 새로고침
+
+| 단계 | 새로고침하면 |
+|---|---|
+| 조사·입찰 중(`brief`) | 진행 중이던 판은 저장되지 않는다(`K`는 메모리에만 있음). 게시판 물건은 "⏸️ 진행 중이던 판이 새로고침으로 멈췄어요" 알림과 함께 **대기**로 돌아간다 |
+| 낙찰·명도·수리·매도 | 같음 — 돈·경험치는 **결산(`kFinish`) 때 한 번에** 반영되므로 중간에 끊겨도 장부가 어긋나지 않는다 |
+| 결과·갈림길·1년 결산 | 이미 저장된 상태라 그대로 남는다 |
+
+→ `t80` (단계별 새로고침 · 갈림길 · 결산)
+
+## ② 탭 두 개 동시에
+
+`save()`가 저장 직전에 `rights-study-v1:ts`(마지막 저장 시각)를 읽어, **다른 탭이 더 최근에 저장했으면 덮어쓰지 않고** 상단에 "다른 창에서 진행했어요 — 새로고침" 막대를 띄운다. `storage` 이벤트로 다른 탭 저장도 바로 감지한다. 클라우드 동기화도 같은 시각 키를 쓴다.
+
+→ `t80` (두 탭)
+
+## ③ 옛 저장본 정리 (`sturdy.js`)
+
+불러오는 즉시(첫 화면을 그리기 전에) 돈·경험치·체력·스트레스·시각의 **NaN/undefined/null/무한대**를 기본값으로, 범위를 벗어난 값을 범위 안으로, 모르는 인물·상태 값을 버린다. v64·v65·v74 모양의 저장본과 망가진 저장본을 fixture로 넣어 확인한다.
+
+→ `t80` (fixture)
+
+## ④ 더블클릭·연타
+
+| 버튼 | 결과 |
+|---|---|
+| 입찰표 제출 | 입찰 1회만 반영 |
+| 판 전체(모든 버튼을 두 번씩) | 처리 건수 = 기록 수, 누적 수익 = 기록 합, 같은 판이 두 번 기록되지 않음 |
+| "입찰하지 않기" · "지금 결산" · 위험 확인창 | **두 번 눌러야 하는 확인 버튼이 더블클릭 한 번에 넘어가지 않게** 350ms 안의 두 번째 누름은 무시 |
+
+→ `t81`
+
+## ⑤ 함수 덮어쓰기 지도
+
+게임은 `const _x = fn; fn = function(){…}` 방식으로 기능을 겹쳐 쌓는다. **42개 파일 · 166번 · 75개 함수.** 순서는 `merge.py`의 파일 순서 그대로다.
+
+- ⚠️ **고친 것**: 공부 사이트의 `homeHTML`과 게임 허브의 `homeHTML`이 이름이 같아, 공부 첫 화면에 게임 허브가 뜨고 있었다 → 공부 쪽을 `studyHomeHTML`로 바꿨다.
+- ⚠️ **알고만 두는 것**: `kfsHeader`·`kfsWanted`는 `layout.js`에서 선언되는데 그보다 **앞 파일**(week·sense·life)이 먼저 감싼다. 모든 코드가 **한 `<script>` 안**에 있어 함수 선언이 끌어올려지므로 지금은 정상이다. 파일을 여러 `<script>`로 쪼개면 깨진다.
+
+가장 많이 덮어쓴 함수:
+
+| 함수 | 덮어쓴 횟수 | 순서(먼저 → 나중) |
+|---|---|---|
+| `renderArena` | 20 | hub → career → feel → polish2 → week → sense → life → cine → stage → sheetart → qa1 → campaign → polish → deep → mdtale → layout → noscroll → firstrun → sidefold → lostflow |
+| `kingHTML` | 11 | career → feel → case002 → research → polish2 → week → sense → life → qa1 → firstrun → lostflow |
+| `kStart` | 8 | hub → career → feel → research → polish2 → week → sense → life |
+| `kBid` | 7 | hub → career → feel → polish2 → week → life → deep |
+| `kFinish` | 7 | hub → career → case002 → research → week → life → deep |
+| `kResearch` | 7 | career → feel → research → polish2 → week → sense → life |
+| `kfsHeader` | 6 | week → sense → life → campaign → polish |
+| `kMove` | 4 | feel → sense → life → mdtale |
+| `lfPanel` | 4 | cine → qa1 → campaign → deep |
+| `vnType` | 3 | growth → story → sense |
+| `homeHTML` | 3 | feel → week → life |
+| `keBidSheet` | 3 | feel → life → firstrun |
+
+## ⑥ 몽키 테스트
+
+무작위 클릭 + 새로고침 + 뒤로가기를 섞어 수백 걸음 돌리고, **매 걸음** 저장본을 검사한다:
+돈·경험치가 유한한 숫자인지 · 체력·스트레스가 범위 안인지 · 모르는 인물이 없는지 · 같은 판 결과가 두 번 기록되지 않았는지 · 처리 건수 = 기록 수 · 누적 수익 = 기록 합 · 끝난 물건이 진행 중으로도 남지 않았는지 · 현재 단계가 알려진 단계인지.
+
+→ `t82 [걸음 수] [시드]`
+
+RESULTS

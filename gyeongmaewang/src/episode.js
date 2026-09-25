@@ -309,3 +309,37 @@ function mbSync(){
   if(!el){ el = document.createElement("div"); el.id = "madeBy"; el.className = "made-by"; el.textContent = "made by 쥬루"; document.body.appendChild(el); }
 }
 setInterval(mbSync, 600); setTimeout(mbSync, 50);
+
+/* ---------- 🏠 첫 화면 정리 ----------
+   ① 맨 위는 '스토리 STAGE n'(아직 안 끝낸 가장 앞 단계) — 예전 세이브의 이도현 인생이 1순위로 떠서
+      "1단계도 안 했는데 왜 도현이야?"가 되던 문제. 자유 인생(시뮬레이션)은 그 아래 보조 버튼으로.
+   ② CASE 001·002·게시판·이번 주 경매는 '케이스 상자' 하나로 접는다(누르면 목록). */
+function epStageNow(){
+  const P = cpRec();
+  const id = CP_ORDER.find(x => !P.cleared[x]) || null;
+  return id;
+}
+if(typeof homeHTML === "function"){
+  const _ep_home = homeHTML;
+  homeHTML = function(){
+    let h = _ep_home();
+    try{
+      const id = epStageNow(), P = cpRec();
+      let top;
+      if(id){
+        const C = LF_CHARS.find(x => x.id === id), R = epOf(id), n = EP_PLAN[id].eps.length, doing = R.res.length > 0 && R.res.length < n;
+        top = `<button type="button" class="btn pri ep-home" data-epopen="${id}">📖 스토리 STAGE ${CP_ORDER.indexOf(id) + 1} · ${esc(C.name)} <small>${doing ? `EP ${R.res.length + 1}/${n} 이어하기` : `물건 ${n}개 · ${epStars(EP_PLAN[id].stars)}`} · 클리어 ${CP_ORDER.filter(x => P.cleared[x]).length}/6</small></button>`;
+      } else {
+        top = `<button type="button" class="btn pri ep-home" data-crreplay>🎬 여섯 단계 모두 클리어 <small>엔딩 크레딧 다시 보기 · 스테이지는 인생 고르기에서 다시 할 수 있어요</small></button>`;
+      }
+      const box = [];
+      h = h.replace(/<button type="button" class="btn[^"]*" data-(?:kcnew="career"[^>]*|ofgo="board"|kcnew="weekly")>[\s\S]*?<\/button>/g, m => { box.push(m.replace(/class="btn pri"/, 'class="btn"')); return ""; });
+      h = h.replace(/class="btn pri lf-home-go" data-atab="life">🏠 /, 'class="btn lf-home-go" data-atab="life">🕰️ 자유 인생 이어하기 · ');
+      const boxHTML = box.length ? `<details class="kc-box"><summary>🗂️ 케이스 상자 <small>CASE ${box.filter(b => /data-kcnew="career"/.test(b)).length}개 · 게시판 · 이번 주 경매</small></summary><div class="kc-box-in">${box.join("")}</div></details>` : "";
+      h = h.replace(/(<div class="kc-menu">)/, `$1${top}`);
+      h = h.replace(/(<div class="kc-menu-row">)/, `${boxHTML}$1`);
+    }catch(e){}
+    return h;
+  };
+}
+document.addEventListener("click", e => { if(e.target.closest && e.target.closest("[data-crreplay]")){ e.preventDefault(); e.stopImmediatePropagation(); crOpen(); } }, true);

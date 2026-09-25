@@ -524,3 +524,61 @@ img.st-img-fail{visibility:hidden}
 .cr-roll .cr-row b{color:#fff7e6}
 .cr-roll button.cr-skip{background:rgba(20,28,44,.75)!important;color:#fff!important;border:1px solid rgba(255,255,255,.4)!important;width:auto!important;height:auto!important;min-height:44px}
 .cr-roll button.cr-skip.end{background:#e0a63a!important;color:#1b1b1b!important;border-color:#e0a63a!important}
+
+/* 👷 아메드 씨 일행(무릎 아래가 잘린 단체 그림) — 잘린 면을 무대 바닥에 붙여 떠 보이지 않게, 픽셀 선명하게 */
+img[src*="d934d843a6ee1ccdc0e4aad748263bae"], img[src*="66fcffef1b56a7bd4110523b5109a8e8"], img[src*="bf31796584ca616f8c533687ce4270be"]{image-rendering:pixelated}
+img.vn-sprite[src*="d934d843a6ee1ccdc0e4aad748263bae"], img.vn-sprite[src*="66fcffef1b56a7bd4110523b5109a8e8"], img.vn-sprite[src*="bf31796584ca616f8c533687ce4270be"]{bottom:0!important;height:84%!important;max-width:92%!important}
+.kc-menu .ep-home{background:linear-gradient(135deg,#f2b33d,#e0a63a)!important;color:#1b1406!important;border-color:#f2b33d!important;font-weight:900}
+.kc-menu .ep-home small{color:#4a3508!important}
+.kc-box{border:1px solid rgba(255,255,255,.18);border-radius:14px;background:rgba(20,28,44,.72)}
+.kc-box>summary{list-style:none;cursor:pointer;padding:13px 16px;font-weight:800;color:#f3efe4;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:48px;justify-content:center}
+.kc-box>summary::-webkit-details-marker{display:none}
+.kc-box>summary small{font-weight:600;opacity:.75;font-size:12.5px}
+.kc-box[open]>summary{border-bottom:1px solid rgba(255,255,255,.14);color:#f2b33d}
+.kc-box-in{display:grid;gap:8px;padding:10px}
+
+/* ================= 🏦 잔금 대출 ================= */
+.ln-root{position:fixed;inset:0;z-index:9400;display:flex;justify-content:center}
+.ln-veil{position:absolute;inset:0;background:rgba(8,14,24,.82);backdrop-filter:blur(3px)}
+.ln-scroll{position:relative;width:100%;overflow-y:auto;padding:26px 14px 50px;display:flex;justify-content:center;align-items:flex-start}
+.ln-box{width:min(760px,100%);background:#fffdf7;color:#1c2430;border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.45);animation:epIn .35s ease}
+.ln-box h3{margin:0 0 8px;font-size:21px}.ln-box p{line-height:1.6;margin:6px 0}
+.ln-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.ln-card{position:relative;text-align:left;font:inherit;cursor:pointer;border:1px solid #d9dee6;border-radius:10px;padding:14px 14px 12px;background:linear-gradient(160deg,#fff,#f3f5f9);box-shadow:0 6px 14px rgba(20,30,50,.12);display:flex;flex-direction:column;gap:4px;min-height:132px;transition:transform .15s}
+.ln-card:hover{transform:translateY(-3px) rotate(-.6deg)}
+.ln-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;border-radius:10px 0 0 10px;background:#1e8449}
+.ln-card.cap::before{background:#c0392b}.ln-card.cap{background:linear-gradient(160deg,#fff8f5,#fbeee9)}
+.ln-kind{font-size:11.5px;font-weight:800;color:#1e8449;letter-spacing:.05em}.ln-card.cap .ln-kind{color:#c0392b}
+.ln-org{font-size:17px}.ln-who{font-size:12.5px;color:#556}
+.ln-tel{margin-top:auto;font-size:13px;font-weight:800;color:#23476b}
+.ln-card.heard .ln-tel{color:#889}.ln-got{font-size:12.5px;font-weight:800;color:#1c2430;background:#fff3cc;border-radius:6px;padding:3px 6px;align-self:flex-start}
+.ln-cmp{background:#f3f6fa;border-radius:12px;padding:12px;overflow-x:auto}
+.ln-cmp table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px;min-width:560px}
+.ln-cmp th,.ln-cmp td{padding:7px 6px;border-bottom:1px solid #e1e6ee;text-align:left;vertical-align:middle}
+.ln-cmp td small{display:block;color:#667;font-size:11.5px}.ln-cmp tr.cap td:first-child{color:#c0392b;font-weight:700}
+.ln-cmp .btn{padding:6px 12px;min-height:34px;font-size:13px}
+.ln-btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}.ln-btns .btn{min-height:46px;padding:10px 18px;font-size:15px}
+.ln-disc{font-size:12px;color:#778}
+.ln-chatbox{padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 60px)}
+.kt-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#a9bdce;color:#1b2430}
+.kt-head b{font-size:16px}.kt-head small{color:#3d4c5c}
+.kt-back{border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:#1b2430;padding:0 6px}
+.kt-body{background:#b2c7d9;padding:14px 12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:320px;flex:1}
+.kt-row{display:flex;gap:8px;align-items:flex-start;animation:ktIn .25s ease}
+@keyframes ktIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.kt-row.me{justify-content:flex-end}
+.kt-row.me .kt-b{background:#fee500;color:#191919;border-radius:14px 4px 14px 14px}
+.kt-row.them .kt-b{background:#fff;color:#191919;border-radius:4px 14px 14px 14px}
+.kt-b{display:inline-block;max-width:min(460px,78vw);padding:9px 12px;font-size:14.5px;line-height:1.5;box-shadow:0 1px 1px rgba(0,0,0,.08);white-space:pre-line}
+.kt-av{width:36px;height:36px;border-radius:13px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+.kt-nm{display:block;font-size:12px;color:#3d4c5c;margin-bottom:3px}
+.kt-row.think{justify-content:center}.kt-row.think span{background:rgba(0,0,0,.18);color:#fff;border-radius:99px;padding:5px 12px;font-size:12.5px}
+.kt-typing{display:inline-flex!important;gap:4px;align-items:center;min-height:20px}
+.kt-typing i{width:6px;height:6px;border-radius:50%;background:#999;animation:ktDot 1s infinite}.kt-typing i:nth-child(2){animation-delay:.15s}.kt-typing i:nth-child(3){animation-delay:.3s}
+@keyframes ktDot{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+.kt-foot{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:12px;background:#fff}.kt-foot .btn{min-height:44px}
+.ln-done{position:relative}.ln-stamp{position:absolute;right:22px;top:18px;width:74px;height:74px;border:4px solid #c0392b;color:#c0392b;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px;transform:rotate(-14deg);animation:keStamp .5s cubic-bezier(.2,1.6,.4,1) both}
+.ln-dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:14px 0}.ln-dl div{background:#f3f6fa;border-radius:10px;padding:10px}.ln-dl dt{font-size:12.5px;color:#556;font-weight:700}.ln-dl dd{margin:3px 0 0;font-weight:800;font-size:16px}
+@media (max-width:600px){ .ln-cards{grid-template-columns:1fr}.ln-card{min-height:auto} .ln-box{padding:18px 14px} .ln-chatbox{padding:0;max-height:calc(100vh - 40px)} }
+/* 대출·에피소드·크레딧 창이 떠 있을 땐 작은 알림이 버튼을 가리지 않게 */
+body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .hub-toast{display:none}

@@ -58,7 +58,7 @@ function frMoneyHTML(amt){
   return `<details class="fr-money" ${first ? "open" : ""}><summary>💰 이 금액이면 묶이는 돈 <b>${kMan(m.total)}</b></summary>
     <ul>${rows.map(([t, v], i) => `<li><span>${t}</span><b>${kMan(v)}</b></li>`).join("")}</ul>
     <p class="note fr-dep">입찰 날엔 보증금 ${kMan(m.dep)}(최저가의 10%)만 먼저 내고, 나머지는 낙찰 뒤 잔금으로 내요.</p><p class="fr-be">최소 <b>${kMan(m.be)}</b> 이상에 팔려야 본전이에요 <small>(중개보수 포함)</small></p>
-    <p class="note">${gap >= 0 ? `내 현금 ${kMan(cash)}으로 감당돼요 — 남는 현금 약 <b>${kMan(gap)}</b>.` : `내 현금 ${kMan(Math.max(0, cash))}으로는 <b>${kMan(-gap)}</b>이 모자라요 — 그만큼은 대출이고, 이자는 위 '이자·관리비'에 대략 들어 있어요.`} 수리비·명도비는 조사 결과에 따라 더 늘 수 있어요.</p></details>`;
+    <p class="note">${gap >= 0 ? `내 현금 ${kMan(cash)}으로 감당돼요 — 남는 현금 약 <b>${kMan(gap)}</b>.` : `내 현금 ${kMan(Math.max(0, cash))}으로는 <b>${kMan(-gap)}</b>이 모자라요 — 낙찰되면 대출상담사 명함 3장이 나오고, 전화로 조건(금리·한도)을 비교해 대출을 정해요.`} 수리비·명도비는 조사 결과에 따라 더 늘 수 있어요.</p></details>`;
 }
 if(typeof keBidSheet === "function"){
   const _fr_sheet = keBidSheet;

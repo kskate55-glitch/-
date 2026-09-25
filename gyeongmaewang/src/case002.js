@@ -209,7 +209,7 @@ function k2HTML(){
   }
   if(K.step === "list"){
     return kStage(K.k2.cond === "fix" ? "bg_room_clean" : "bg_room_messy", "narr", null, "이제 얼마에 내놓을까. 김사장과 박 중개사의 말이 다르다.") + kHud() + `
-     <div class="panel k-card"><div class="k-grid"><span>김사장</span><b>"1억 7천 무조건 됩니다"</b><span>박 중개사</span><b>${K.found.price?`"1억 5천 후반이 현실적"`:"(만나 보지 못함)"}</b><span>같은 건물 급매</span><b>${K.found.dump?"3층 1억 6,200만원 — 아직 안 팔림":"??"}</b>${K.k2.cond==="min"?`<span>고지</span><b>누수 수리 이력 고지 → 가격 할인</b>`:""}</div></div>
+     <div class="panel k-card">${K.k2.cond==="hide" && typeof gmwSceneArt==="function" ? gmwSceneArt("k2cover") : ""}<div class="k-grid"><span>김사장</span><b>"1억 7천 무조건 됩니다"</b><span>박 중개사</span><b>${K.found.price?`"1억 5천 후반이 현실적"`:"(만나 보지 못함)"}</b><span>같은 건물 급매</span><b>${K.found.dump?"3층 1억 6,200만원 — 아직 안 팔림":"??"}</b>${K.k2.cond==="min"?`<span>고지</span><b>누수 수리 이력 고지 → 가격 할인</b>`:""}</div></div>
      <h3 class="vn-q">호가를 정하세요</h3><div class="ag-acts vn-acts">${K2_LIST.map(([v,t])=>`<button type="button" class="ag-act" data-k2="list:${v}"><span><b>${kMan(v)}</b><span class="note" style="display:block">${t}</span></span></button>`).join("")}</div>` + k2SaysHTML() + quit;
   }
   if(K.step === "sell"){

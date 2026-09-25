@@ -284,4 +284,8 @@ img.st-img-fail{visibility:hidden}
 
 /* 조사에서 만난 사람 — 이름은 말상자 안에, 인물은 입찰표에 안 가리게 가운데 쪽으로 */
 .k-stage .nf-box .vn-name{position:static;display:inline-block;margin:0 0 6px}
-@media (min-width:901px){ #kfsRoot .k-stage .vn-sprite.nf-sprite{left:40%;height:60%;bottom:6%} }
+/* 무대 인물은 위쪽 대사창·조사 버튼 줄에 머리가 가리지 않게 — 화면 폭이 아니라 무대 높이 기준으로 발을 바닥에 붙이고 키를 제한한다 */
+#kfsRoot .k-stage .vn-sprite:not(.who-dog){bottom:2%;height:min(64%, calc(100% - 140px))}
+@media (min-width:901px){ #kfsRoot .k-stage .vn-sprite:not(.who-dog){height:min(64%, calc(100% - 250px))} }
+@media (max-width:640px){ #kfsRoot .k-stage .vn-sprite:not(.who-dog){bottom:2%;height:min(62%, calc(100% - 125px))} }
+#kfsRoot .k-stage .vn-sprite.nf-sprite{left:40%}

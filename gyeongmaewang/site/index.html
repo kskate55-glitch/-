@@ -2115,6 +2115,7 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .mb-card{border-left:4px solid #c98a14}.mb-card.mb-ok{border-left-color:#1f9d62}
 .mb-list{list-style:none;margin:6px 0;padding:0;line-height:1.7}.mb-list li{opacity:.75}.mb-list li.on{opacity:1;font-weight:700}
 .ag-act.mb-act{border-left:4px solid #c98a14!important}
+.mb-tip{margin-top:6px;padding:6px 9px;border-radius:8px;background:rgba(242,179,61,.14);color:inherit!important;opacity:1!important}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -45506,7 +45507,7 @@ function mbPanelHTML(){
   if(!B.known) return `<div class="panel k-card mb-card"><b>🧩 이 사람이 못 나가는 진짜 이유</b><div class="note">아직 몰라요 — 사정을 들어 보면 무엇이 막혀 있는지 알 수 있어요. 협조도만으로는 안 풀릴 수도 있어요.</div></div>`;
   return `<div class="panel k-card mb-card ${ok ? "mb-ok" : ""}"><b>${D.ic} 막힌 곳: ${esc(D.title)}</b>
     <ul class="mb-list">${D.items.map(([id, t]) => `<li class="${mbItemOn(id) ? "on" : ""}">${mbItemOn(id) ? "✅" : "⬜"} ${esc(t)}</li>`).join("")}</ul>
-    <div class="note">${ok ? "풀렸어요 — 이제 날짜와 금액을 정하면 돼요." : esc(D.alt)}${k === "f11" && B.dates ? ` · 배당기일 ${B.divDay}일째` : ""}</div></div>`;
+    <div class="note">${ok ? "풀렸어요 — 이제 날짜와 금액을 정하면 돼요." : esc(D.alt)}${k === "f11" && B.dates ? ` · 배당기일 ${B.divDay}일째` : ""}</div>${B.tip && D.tip ? `<div class="note mb-tip">💡 ${esc(D.tip)}</div>` : !ok ? `<div class="note">사연을 끝까지 들으면 어디부터 풀어야 할지 힌트가 나와요.</div>` : ""}</div>`;
 }
 const _mb_kingHTML = kingHTML;
 kingHTML = function(){
@@ -45514,12 +45515,147 @@ kingHTML = function(){
   if(!K || K.step !== "move" || !mbKey()) return h;
   mbInit();
   // 이 사건만의 행동 버튼은 목록 맨 아래가 아니라 '사정부터 듣는다' 바로 다음에 — 안 보이면 없는 거나 같다
-  const re = /<button type="button" class="ag-act[^"]*" data-kmove="mb_[^"]+">[\s\S]*?<\/button>/g, mbBtns = h.match(re) || [];
+  const re = /<button type="button" class="ag-act[^"]*" data-kmove="mbg?_[^"]+">[\s\S]*?<\/button>/g, mbBtns = h.match(re) || [];
   if(mbBtns.length){ h = h.replace(re, ""); const li = h.search(/<button type="button" class="ag-act[^"]*" data-kmove="listen">[\s\S]*?<\/button>/);
     if(li >= 0){ const end = h.indexOf("</button>", li) + 9; h = h.slice(0, end) + mbBtns.map(x => x.replace('class="ag-act', 'class="ag-act mb-act')).join("") + h.slice(end); } else h = h.replace('<div class="ag-acts vn-acts">', '<div class="ag-acts vn-acts">' + mbBtns.join("")); }
   const i = h.indexOf('<div class="panel k-occ">'); if(i < 0) return h;
   return h.slice(0, i) + mbPanelHTML() + h.slice(i);
 };
+
+/* ============================== 🧩 나머지 사건 — 같은 틀, 사건마다 다른 막힌 곳 ==============================
+   각 막힌 곳은 두 갈래로 풀린다: ⏳ 시간을 쓰는 길 / 💵 돈을 쓰는 길(또는 추가 확인). 정답 버튼 하나가 아니다.
+   풀지 않고 합의하면 '나가고는 싶은데…'로 이삿날이 한참 밀리고, 풀면 당겨진다.
+   gate:true 인 사건은 막힌 곳이 풀리기 전엔 날짜 이야기 자체가 안 된다(연락이 안 닿거나, 결정권자가 아니거나). */
+const MBG = {
+  f13:{ic:"📨", title:"연락 — 문을 두드리는 방식으론 닿지 않는다", gate:true,
+    hint:"(문틈으로 쪽지가 밀려 나온다) '문 두드리지 마세요. 할 말 있으면 문자로.'",
+    tip:"사연을 끝까지 들어 보니 — 부모님 얘기를 꺼내면 오히려 닫힌다. 문자로, 그가 고를 수 있게.",
+    items:[["contact","📨 닿는 연락 방법", [{t:"📨 방문 가능한 시간 세 개를 문자로 보내고 고르게 한다", day:2, coop:10, say:"(문자) …목요일 저녁 7시요. 문 앞 말고 1층 편의점 앞에서요."}, {t:"📞 부모님께 먼저 연락해 대신 전해 달라고 한다", day:1, coop:-6, say:"(문자) 엄마한테 왜 말했어요. …알았어요, 만나요. 짧게요."}]],
+           ["room","🏠 나가서 지낼 곳", [{t:"🧭 청년 임대·고시원 시세를 같이 찾아 문자로 보낸다", day:2, coop:6}, {t:"💵 첫 달 방값을 보태 준다", cost:60, day:1, coop:8}]]]},
+  f21:{ic:"🧾", title:"숫자 — 500이 무엇으로 이뤄졌는지 모른다",
+    hint:"500은 주셔야죠. 그게 상식이에요. 이사 가려면 돈이 한두 푼 드는 줄 알아요?",
+    tip:"사연을 끝까지 들어 보니 — 500 중 제일 큰 건 짐 맡길 곳이다. 그걸 풀면 나머지는 줄어든다.",
+    items:[["breakdown","🧾 500의 내역", [{t:"🧾 '500이 어디에 들어가는지 하나씩 적어 봐요' — 내역을 같이 쓴다", day:2, cut:0.72, say:"…이사 150, 짐 맡길 창고 100, 나머지는… 급한 카드값이오."}, {t:"💵 짐 맡길 창고비 100만원은 내가 직접 낸다", cost:100, day:1, cut:0.7}]],
+           ["when","📆 원하는 날짜", [{t:"📆 '언제까지면 되세요?' 날짜부터 묻는다", day:1, coop:4, say:"다음 달 10일이면 돼요. 그 전엔 갈 데가 없어요."}, {t:"🚚 이삿짐센터를 내가 예약해 날짜를 박는다", cost:80, day:1}]]]},
+  f22:{ic:"🐈", title:"동물 — 고양이 셋을 받아 주는 방이 없다",
+    hint:"나가라면 나가요. 근데 고양이 셋 받아 주는 방이 어딨어요. 얘들 버리고는 못 가요.",
+    tip:"사연을 끝까지 들어 보니 — 돈보다 '고양이랑 같이'가 먼저다. 방만 찾으면 요구액이 확 준다.",
+    items:[["pets","🐈 반려동물 가능한 방", [{t:"🔎 반려동물 가능한 방을 같이 찾아본다", day:3, coop:8, cut:0.85}, {t:"🏠 반려동물 가능 방 중개수수료를 내 준다", cost:50, day:1, cut:0.85}]],
+           ["carry","🚐 고양이 이동 방법", [{t:"🙋 이삿날 케이지 들고 같이 옮긴다", day:2, coop:6}, {t:"🚐 반려동물 이동 택시를 예약해 준다", cost:20, day:1}]]]},
+  f23:{ic:"🗣️", title:"말 — 서로 이해한 금액·날짜가 같은지 모른다",
+    hint:"(번역기 문자) '네 알겠습니다. 다음 달 나가요. 돈은 얼마예요?' …앞 문자에선 '이번 달'이라고 했다.",
+    tip:"사연을 끝까지 들어 보니 — 모르는 단어가 나오면 '네'라고 먼저 답하는 습관이 있다. 되물어 확인해야 한다.",
+    items:[["same","🗣️ 같은 금액·날짜로 이해했는지", [{t:"✍️ 쉬운 문장으로 쓰고 '제가 쓴 날짜를 다시 말해 줄래요?' 되묻는다", day:2, coop:6}, {t:"🧑‍🏫 학교 국제처 통역 도움을 받는다(통역비)", cost:15, day:1, coop:4}]],
+           ["room","🏠 갈 곳", [{t:"🏫 학교 기숙사 빈자리를 같이 알아본다", day:3, coop:6}, {t:"💵 첫 달 고시원비를 보태 준다", cost:40, day:1}]]]},
+  f31:{ic:"✂️", title:"영업 — 예약 손님과 설비가 걸려 있다",
+    hint:"당장 문을 닫으라고요? 예약 손님이 다음 달까지 잡혀 있어요. 의자랑 샴푸대는 어떡하고요.",
+    tip:"사연을 끝까지 들어 보니 — 마지막 영업일만 정해지면 스스로 정리할 사람이다.",
+    items:[["book","📒 예약 손님 정리", [{t:"📅 마지막 영업일을 정하고 그날까지만 예약을 받게 한다", day:4, coop:8}, {t:"💵 남은 예약 손님 위약금을 보태 준다", cost:80, day:1, coop:6}]],
+           ["equip","💺 의자·샴푸대 옮기기", [{t:"🧰 설비 옮길 날을 따로 하루 잡는다", day:2}, {t:"🚚 설비 이전 업체를 예약해 준다", cost:120, day:1}]]]},
+  f32:{ic:"🥡", title:"동네 — 당사자와 동네에 전달되는 이야기가 다르다",
+    hint:"(가게 앞에 손님들이 모여 있다) '30년 된 가게를 내쫓는다며?' …부부는 아무 말도 하지 않는다.",
+    tip:"사연을 끝까지 들어 보니 — 부부는 나가는 것보다 '쫓겨났다'는 말이 더 무섭다.",
+    items:[["story","🏘️ 동네에 전해질 설명", [{t:"📝 부부 동의를 얻어 '30년 감사했습니다' 안내문을 같이 쓴다", day:2, coop:10}, {t:"🤫 공개하지 않고 서면으로만 조용히 진행한다", day:1, coop:2}]],
+           ["kitchen","🍳 주방 설비 처분", [{t:"🔧 중고 주방업자와 날짜를 잡아 준다", day:3}, {t:"🚚 폐기·운반비를 내 준다", cost:70, day:1}]]]},
+  f33:{ic:"📦", title:"약속 — '이번 주예요'가 말뿐인지 모른다",
+    hint:"진짜로 이번 주예요. 이번엔 진짜라니까요. …지난주에도 그렇게 말했다.",
+    tip:"사연을 끝까지 들어 보니 — 이삿짐센터 계약금이 없어서 날짜를 못 박고 있었다.",
+    items:[["proof","📦 실제 이사 준비(계약서)", [{t:"📸 이삿짐센터·새집 계약서를 보여 달라고 하고 확인한다", day:1, coop:-2, say:"…새집은 계약했어요. 이삿짐센터는 아직이고요."}, {t:"🚚 내가 이삿짐센터 계약금을 내고 날짜를 박는다", cost:60, day:1, coop:4}]]]},
+  f34:{ic:"🗝️", title:"권한 — 목소리 큰 사람이 결정권자가 아니다", gate:true,
+    hint:"(남편이 소리친다) '내가 안 나간다면 안 나가는 거요!' …아내는 부엌에서 나오지 않는다.",
+    tip:"사연을 끝까지 들어 보니 — 집 명의도, 돈 관리도 아내 쪽이다. 아내가 걱정하는 건 아이 전학이다.",
+    items:[["who","🗝️ 실제로 결정할 권한", [{t:"📋 등기·계약 서류로 누가 결정권자인지 확인한다", day:1}]],
+           ["both","👫 두 사람 모두의 동의", [{t:"☕ 두 사람이 다 있는 자리를 따로 잡는다", day:2, coop:8}, {t:"💵 아내가 걱정하는 아이 전학 비용을 따로 챙긴다", cost:50, day:1, coop:10}]]]},
+  f42:{ic:"📦", title:"짐 — 집 전체를 한 번에 비울 수 없다",
+    hint:"이건 버리는 게 아니에요. 다 쓸 데가 있는 거예요. 누가 함부로 만지면 안 돼요.",
+    tip:"사연을 끝까지 들어 보니 — '버린다'는 말이 제일 아프다. '맡긴다·옮긴다'로 나누면 움직인다.",
+    items:[["zones","🏷️ 보관·이동·처분 구역 나누기", [{t:"🏷️ 당사자와 같이 방마다 '보관·이동·처분' 스티커를 붙인다", day:4, coop:10}, {t:"📦 창고 보관 한 달을 잡아 준다", cost:90, day:1, coop:6}]],
+           ["hands","🤝 정리 도와줄 손", [{t:"🏛️ 구청 정리 지원 서비스를 연결한다", day:3, coop:4}, {t:"🧹 정리 업체 반나절을 불러 준다", cost:60, day:1}]]]},
+  f43:{ic:"🎥", title:"기록 — 모든 대화가 방송·녹화된다",
+    hint:"(휴대폰 카메라가 나를 향한다) '지금 방송 중이에요. 하실 말씀 여기서 하세요.'",
+    tip:"사연을 끝까지 들어 보니 — 방송이 목적이 아니라, 배당금을 못 받을까 봐 증거를 남기는 중이다.",
+    items:[["record","🎥 기록과 공개 범위", [{t:"📝 제안은 전부 서면으로 보내고, 답도 서면으로 받는다", day:2, coop:4}, {t:"🧑‍💼 중개사를 대리인으로 세워 그쪽으로만 소통한다", cost:40, day:1, coop:2}]],
+           ["div","💰 배당금 걱정", [{t:"📅 배당기일을 확인하고 명도확인서 교환을 약속한다", day:1, coop:10}]]]},
+  f44:{ic:"🌳", title:"가족 — 친족 여럿의 감정과 실제 권한이 엇갈린다",
+    hint:"이 집은 우리 형제들이 다 같이 큰 집이야. 나 혼자 정할 수 있는 게 아니라고.",
+    tip:"사연을 끝까지 들어 보니 — 동생들 전화 한 통이면 할머니 마음이 바뀐다. 대표를 정하는 게 먼저다.",
+    items:[["rep","👵 합의할 대표자와 범위", [{t:"📋 친족 중 대표자와 합의 범위를 서면으로 정한다", day:3, coop:6}]],
+           ["memory","🌳 물건·기억을 남기는 방법", [{t:"📸 장독·마당 나무 옮길 날을 따로 잡아 준다", day:2, coop:12}, {t:"🚚 장독·가구 보관 이전비를 내 준다", cost:70, day:1, coop:8}]]]},
+  f62:{ic:"🔔", title:"세대 — 여섯 세대의 권리와 일정이 다 다르다",
+    hint:"(대표 세 명이 동시에 말한다) '우린 다음 달이요.' '우린 애들 방학 끝나고.' '우린 보증금 받아야 나가요.'",
+    tip:"사연을 끝까지 들어 보니 — 한 세대는 대항력이 있다. 그 집은 '나가 달라'가 아니라 '보증금 이야기'부터다.",
+    items:[["sched","📅 세대별 이삿날", [{t:"📋 세대마다 날짜표를 따로 받아 정리한다", day:4, coop:6}, {t:"🚚 세대별 이사를 한 업체로 묶어 예약한다", cost:200, day:1, coop:6}]],
+           ["rights","⚖️ 세대별 권리 확인", [{t:"📂 세대마다 전입·확정일자를 하나씩 대조한다", day:2}]]]},
+  f63:{ic:"🏨", title:"운영 — 건물 인도와 영업 정리는 다른 일이다",
+    hint:"손님 예약이 석 달 치 잡혀 있어요. 직원들 월급날도 있고. 건물만 넘기면 끝나는 줄 알아요?",
+    tip:"사연을 끝까지 들어 보니 — 예약 마감일만 정해지면 운영자는 스스로 문을 닫을 생각이 있다.",
+    items:[["book","📖 예약 장부 정리", [{t:"📅 예약 마감일을 정하고 그 뒤 예약을 막는다", day:5, coop:6}, {t:"💵 남은 예약 환불금을 보태 준다", cost:250, day:1, coop:8}]],
+           ["staff","🧹 직원·운영 정리", [{t:"🤝 직원 퇴직 일정을 운영자와 같이 정한다", day:3, coop:4}, {t:"💵 직원 마지막 달 급여 일부를 부담한다", cost:150, day:1, coop:8}]]]}};
+// 첫 세 사건 팁(사연을 끝까지 들으면)
+Object.assign(MB.k1, {tip:"사연을 끝까지 들어 보니 — 전에 '법'을 앞세운 사람한테 속은 적이 있다. 약속을 지켜 보이는 게 먼저다."});
+Object.assign(MB.f11, {tip:"사연을 끝까지 들어 보니 — 새집 계약금이 모자라서 조급하다. 날짜만 맞으면 순순히 나간다."});
+Object.assign(MB.f12, {tip:"사연을 끝까지 들어 보니 — 보증금 500이 최우선변제로 돌아온다는 걸 모른다. 그걸 알면 갈 곳 걱정이 풀린다."});
+Object.keys(MBG).forEach(k => {
+  const G = MBG[k];
+  MB[k] = {kind:"gen", ic:G.ic, title:G.title, hint:G.hint, tip:G.tip, gate:!!G.gate,
+    items:G.items.map(([id, t]) => [id, t]), alt:"⏳ 시간을 쓰거나 💵 돈을 쓰는 두 갈래가 있어요",
+    solved:B => G.items.every(([id]) => B[id])};
+  G.items.forEach(([iid, , opts]) => opts.forEach((op, i) => K_MOVES.push({id:`mbg_${k}_${iid}_${i}`, s:op.cost ? "money" : "empathy", t:op.t + (op.cost ? ` (${kMan(op.cost)})` : ""), day:op.day || 1,
+    need:o => mbKey() === k && mbB().known && !mbB()[iid]})));
+});
+// 첫 세 사건 행동도 '막힌 곳을 안 뒤'에만 보인다(1판 믿음은 부딪혀도 알게 된다)
+K_MOVES.filter(m => m.id.startsWith("mb_")).forEach(m => { const n0 = m.need; m.need = o => n0(o) && mbB() && mbB().known; });
+const _mbg_kMove = kMove;
+kMove = function(id){
+  const k = mbKey();
+  if(!k || !MBG[k]) return _mbg_kMove(id);
+  mbInit(); const B = mbB(), o = K.occ, D = MB[k], G = MBG[k];
+  if(id.startsWith("mbg_")){
+    const m = K_MOVES.find(x => x.id === id); if(!m || (m.need && !m.need(o))) return;
+    const [, , iid, idx] = id.match(/^mbg_(\w+?)_(\w+)_(\d+)$/) || [], item = G.items.find(x => x[0] === iid), op = item && item[2][+idx]; if(!op) return;
+    if(m.s) K.style[m.s]++; o.turns++;
+    B[iid] = true; if(op.cost) K.cost.move += op.cost; if(op.coop) o.coop += op.coop; if(op.cut) B.cut = (B.cut || 1) * op.cut;
+    if(op.say) kSay(op.say, op.coop < 0 ? "angry" : "normal"); else kNarr(op.t.replace(/^\S+\s/, "") + " — " + item[1].replace(/^\S+\s/, "") + " 문제가 풀렸다.");
+    kLog(`🧩 ${item[1]} 해결 — ${op.cost ? `${kMan(op.cost)} 썼다` : `${op.day || 1}일 썼다`}${op.cut ? " · 요구액이 줄어든다" : ""}`);
+    kClampOcc(); mbRelease(); kTick(m.day * (KP.units ? 2 : 1)); return;
+  }
+  if(id === "date" && D.gate && !mbSolved() && !o.orderOk){
+    const m = K_MOVES.find(x => x.id === "date"); o.turns++; B.known = true;
+    o.coop -= 3; kSay(k === "f13" ? "(문 너머 조용하다. 한참 뒤 문틈으로 쪽지) '날짜 얘기 할 사이 아니잖아요.'" : "(남편) 날짜는 내가 정해요! …(아내는 끝내 대답하지 않는다)", "angry");
+    kLog(`🧩 ${D.title} — 이게 풀리기 전엔 날짜 이야기가 안 된다.`); kClampOcc(); kTick(m.day); return;
+  }
+  const t0 = o.turns; _mbg_kMove(id);
+  if(id === "listen" && o.turns > t0 && !B.known){ B.known = true; kSay(D.hint, "worried"); kLog(`🧩 사정을 들어 보니 — ${D.title}`); }
+};
+// 요구액: 내역을 풀면 줄어든다(500의 출처 등)
+if(typeof kfOccNeed === "function"){ const _mbg_need = kfOccNeed; kfOccNeed = function(){ const n = _mbg_need(), B = mbKey() && MBG[mbKey()] ? mbB() : null; return B && B.cut ? Math.round(n * B.cut / 10) * 10 : n; }; }
+// 합의 순간: 막힌 곳이 남아 있으면 이삿날이 밀린다
+const _mbg_kOffer = kOffer;
+kOffer = function(amt){
+  const k = mbKey(); if(!k || !MBG[k]) return _mbg_kOffer(amt);
+  mbInit(); const o = K.occ, had = !!o.agreed; _mbg_kOffer(amt);
+  if(had || !o.agreed || mbSolved()) return;
+  mbB().known = true; const miss = MB[k].items.filter(([id]) => !mbB()[id]).map(([, t]) => t.replace(/^\S+\s/, ""));
+  o.agreed.day = Math.max(o.agreed.day, K.day + 21 + (KP.units ? 10 : 0));
+  kLog(`🧩 "나가고는 싶은데요…" ${miss.join(" · ")}이(가) 안 풀려서 이삿날이 ${o.agreed.day}일째로 밀렸다. 풀면 당겨진다.`);
+};
+// 사연을 끝까지 들으면 — 협조도 일괄 보너스 대신 '어디를 풀어야 하는지' 힌트
+if(typeof mtAfterListen === "function"){
+  const _mt_after = mtAfterListen;
+  mtAfterListen = function(had){
+    const c0 = K && K.occ ? K.occ.coop : 0, h0 = K && K.occ ? K.occ.heard || 0 : 0;
+    _mt_after(had);
+    if(!K || !K.occ) return;
+    const P = typeof personaById === "function" ? personaById(KP.occ.pid) : null, tale = (KP && KP.tale) || mtTaleOf(P || {id:KP.occ.pid});
+    if(K.occ.heard >= tale.length && h0 < tale.length){
+      K.occ.coop = c0;   // 일괄 +6 제거 — 끝까지 들은 보상은 정보다
+      if(typeof K.log !== "undefined" && K.log.length && /협조도가 더 올랐다/.test(K.log[K.log.length - 1] && (K.log[K.log.length - 1].t || K.log[K.log.length - 1]))) K.log.pop();
+      const k = mbKey();
+      if(k && MB[k].tip){ const B = mbB(); B.known = true; B.tip = true; kLog("💡 " + MB[k].tip); }
+      else kLog("🙇 사연을 끝까지 들었다 — 이 사람이 무엇을 걱정하는지 알게 됐다.");
+    }
+  };
+}
 
 window.GMW_STANDALONE = true;
 var _gmwArt0 = artUrl; artUrl = function(id){ var u = _gmwArt0(id); return u ? u.replace(/^\/_blob\/([0-9a-f]{32})$/, "assets/$1.webp") : null; };

@@ -26,7 +26,7 @@ for(const id of ids){ for(const mode of ['careful','careless']){
       if(K.pendingFlip){kFlipAnswer(false);continue;}
       if(K.offering){kOffer(K.askNeed);continue;}
       if(K.occ.agreed){ if(!K.occ.paper) kMove('paper'); else kTick(1); continue;}
-      { const mb=K_MOVES.find(x=>x.id.startsWith('mb_')&&x.id!=='mb_bridge'&&x.id!=='mb_truck'&&(!x.need||x.need(K.occ))); if(mode==='careful'&&mb){ kMove(mb.id); continue; } }
+      { const mb=K_MOVES.find(x=>/^mbg?_/.test(x.id)&&x.id!=='mb_bridge'&&x.id!=='mb_truck'&&(!x.need||x.need(K.occ))); if(mode==='careful'&&mb){ kMove(mb.id); continue; } }
       const seq = mode==='careful' ? ['listen','daughter','center','listen','date'] : ['threat','notice','order','date','exec'];
       const m=seq[g%seq.length], d=K_MOVES.find(x=>x.id===m); if(d.need&&!d.need(K.occ)){ kMove(g>40?'order':'date'); if(K.occ.orderOk && !K.occ.exec) kMove('exec'); continue;} kMove(m);
       if(g%7===0) snap();

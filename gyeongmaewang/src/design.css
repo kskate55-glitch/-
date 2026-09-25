@@ -281,3 +281,7 @@ img.st-img-fail{visibility:hidden}
 .hub-tile.hub-prac{overflow:hidden}
 .hub-tile .hub-thumb{display:block;align-self:stretch;justify-self:stretch;height:84px;margin:-14px -16px 6px;background-size:cover;background-position:center}
 .kfs-panel .hub-tile .hub-thumb{margin:-10px -12px 6px;height:64px}
+
+/* 조사에서 만난 사람 — 이름은 말상자 안에, 인물은 입찰표에 안 가리게 가운데 쪽으로 */
+.k-stage .nf-box .vn-name{position:static;display:inline-block;margin:0 0 6px}
+@media (min-width:901px){ #kfsRoot .k-stage .vn-sprite.nf-sprite{left:40%;height:60%;bottom:6%} }

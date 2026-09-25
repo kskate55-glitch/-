@@ -4,7 +4,7 @@
 const NF_WHO = {                         // 이름 → [그림 키 앞부분, 이 말에 어울리는 표정]
   "김사장":["npc_kim","normal"], "박 중개사":["npc_parkbk","angry"], "아래층 아주머니":["npc_downstairs","angry"],
   "은행 대출상담":["npc_banker","angry"], "최만식 할아버지":["npc_p_grandpa","worried"], "정은주 씨":["npc_p_coop","worried"],
-  "전기기사 박기사":["npc_elec","angry"]};
+  "전기기사 박기사":["npc_elec","angry"], "인테리어 박실장":["npc_interior","normal"]};
 function nfArt(who, ex){ const m = NF_WHO[who]; if(!m || typeof artUrl !== "function") return null; return artUrl(`${m[0]}_${ex || m[1]}`) || artUrl(`${m[0]}_normal`); }
 const _nf_kResearch = kResearch; kResearch = function(id){
   const n = K ? K.says.length : 0; _nf_kResearch(id);
@@ -18,6 +18,13 @@ const _nf_kStage = kStage; kStage = function(bg, who, ex, text, name){
     const u = nfArt("전기기사 박기사", K.found && K.found.elec ? "normal" : "worried");
     if(u){ const t = K.found && K.found.elec ? "말씀드린 대로 누전이네요. 배선 일부만 바꾸면 됩니다." : "누전이에요. 몰랐으면 입찰가에 못 넣으셨겠네… 배선 일부 교체해야 합니다.";
       return _nf_kStage(bg, "narr", null, `“${t}”`, name).replace('<div class="vn-box narr">', `<img class="vn-sprite nf-sprite" src="${u}" alt="전기기사 박기사"><div class="vn-box nf-box"><div class="vn-name">전기기사 박기사</div>`); }
+  }
+  // CASE 002 — 벽지를 뜯자 물길. 박실장이 손을 들어 멈춰 세운다
+  if(K && K.step === "defect" && who === "narr" && /물길/.test(text || "")){
+    const early = !!(K.k2 && K.k2.leakEarly) || !!(K.found && K.found.leak);
+    const u = nfArt("인테리어 박실장", early ? "normal" : "angry");
+    if(u){ const t = early ? "들으신 대로네요. 열어 봐야 알지만, 배관이면 400~600 잡으시면 됩니다." : "잠깐, 더 뜯지 마세요! 열어 봐야 알아요 — 배관이면 400~600, 방수까지 가면 더 나와요.";
+      return _nf_kStage(bg, "narr", null, `“${t}”`, name).replace('<div class="vn-box narr">', `<img class="vn-sprite nf-sprite" src="${u}" alt="인테리어 박실장"><div class="vn-box nf-box"><div class="vn-name">인테리어 박실장</div>`); }
   }
   const S = K && K._nfSay;
   if(!S || K.step !== "brief" || S.step !== "brief" || who === "occ") return _nf_kStage(bg, who, ex, text, name);

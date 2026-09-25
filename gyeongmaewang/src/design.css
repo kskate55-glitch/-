@@ -253,3 +253,18 @@ img.st-img-fail{visibility:hidden}
   /* 도감 알림은 입찰표를 가리지 않게 왼쪽 아래로 */
   html.kfs-on #hubToasts{right:auto!important;left:16px!important;top:auto!important;bottom:16px!important}
 }
+/* 📭 패찰 뒤 흐름 — lostflow.js */
+.lw-sum{margin:8px 0 4px;display:grid;gap:8px}
+.lw-grid{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14.5px}
+.lw-grid b{text-align:right;font-variant-numeric:tabular-nums}
+.lw-if{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lw-if>div{padding:8px 10px;border-radius:10px;background:rgba(127,127,127,.1);display:grid;gap:2px}
+.lw-if small{font-size:12px;opacity:.85}.lw-if b{font-variant-numeric:tabular-nums}
+.lw-later{margin:0;padding:8px 10px;border-radius:10px;border-left:3px solid var(--accent-warm,#d9861a);background:rgba(217,134,26,.1);font-size:13.5px}
+.lw-kept ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px;font-size:13.5px}
+.lw-cta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.lw-cta .lw-go{font-size:16px;padding:12px 20px}
+.lw-cta small{flex-basis:100%}
+.lw-tip{border-left:4px solid var(--accent-warm,#d9861a)}
+.lw-tip p{margin:6px 0 0;font-size:14px}
+@media (max-width:600px){.lw-if{grid-template-columns:1fr}.lw-cta .lw-go{flex:1 1 100%}}

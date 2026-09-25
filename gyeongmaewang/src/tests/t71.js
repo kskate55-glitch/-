@@ -4,7 +4,7 @@ for(const life of [true,false]){const p=await b.newPage({viewport:{width:1280,he
 await p.goto('http://localhost:8765/rights-study.html#arena');await p.waitForTimeout(800);
 await p.evaluate((life)=>{localStorage.clear(); cpUnlockAll(); if(life){lfNew('dohyun'); lfRec().intro=false;} else {const c=kcRec(); delete c.life;} arenaTab='king'; kcStart('career'); K.intro=false; K.rivals=[{t:'고수',lo:1.5,hi:1.6,p:1}]; renderArena(); kBid(Math.round(KP.minBid*1.01)); K.revealing=false; renderArena();},life);
 await p.waitForTimeout(600);
-ok(await p.evaluate(()=>K.step==='lost' && /경매 게시판/.test(document.querySelector('[data-kstart]').innerText)), (life?'거점':'기본')+' 패찰 버튼 = 게시판으로');
+ok(await p.evaluate(()=>K.step==='lost' && /다음 물건 보러 가기/.test(document.querySelector('[data-kstart]').innerText)), (life?'거점':'기본')+' 패찰 버튼 = 게시판으로');
 await p.click('[data-kstart]'); await p.waitForTimeout(600);
 ok(await p.evaluate(()=>K===null && !!document.querySelector('[data-bdnext]')), (life?'거점':'기본')+' 누르면 같은 물건이 아니라 게시판');
 await p.close();}

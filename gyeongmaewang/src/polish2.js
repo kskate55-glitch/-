@@ -3,7 +3,10 @@
 // 1. 경쟁 분위기에 변동을 — 가끔은 텅 비고(단독낙찰), 가끔은 몰린다
 const _kp_kStart = kStart; kStart = function(seed){
   _kp_kStart(seed);
-  const u = K.r(), pool = KP.rivals || K_RIVALS;
+  // 생애 첫 경매만: 텅 빈 법정(단독낙찰)·갑자기 몰림 같은 극단 운은 빼고 '보통' 분위기로 — 평균 승률을 올리는 보정은 아니다.
+  // (주간 경매는 모두가 같은 물건·같은 판이어야 하므로 제외)
+  const firstBid = typeof kcRec === "function" && (kcRec().bids || 0) === 0 && typeof KC_MODE !== "undefined" && KC_MODE !== "weekly";
+  const u0 = K.r(), u = firstBid ? 0.5 : u0, pool = KP.rivals || K_RIVALS;
   if(u < 0.10){ K.rivals = []; K.crowd = "quiet"; }
   else if(u < 0.18){ const n = 5 + Math.floor(K.r() * 7); for(let i = 0; i < n; i++){ const v = pool[Math.floor(K.r() * pool.length)]; K.rivals.push({t:v.t, lo:v.lo, hi:v.hi}); } K.crowd = "surge"; }
   else K.crowd = "normal";

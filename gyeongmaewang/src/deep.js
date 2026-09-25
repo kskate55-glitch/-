@@ -18,7 +18,7 @@ function dpAfterLost(){
   const repair = (KP.estRepair || 300) + surprise.reduce((s, h) => s + h.cost, 0) + big;
   const months = 2 + Math.floor(r() * 4), hold = Math.round((KP.dailyHold || 1.7) * months * 30);
   const profit = Math.round(sale - W * 1.017 - repair - hold - sale * 0.005);
-  dpRec().after.push({kind:"lost", title:KP.title, my:K.bid, win:W, gap:R.gap, sale, repair, big, surprise:surprise.map(h => h.t), months, profit, due:kcRec().cases + 1, at:Date.now()});
+  dpRec().after.push({kind:"lost", title:KP.title, my:K.bid, win:W, gap:R.gap, sale, repair, big, surprise:surprise.map(h => h.t), months, profit, due:kcRec().cases + 1, dueT:(typeof lfOn === "function" && lfOn()) ? lfRec().t + 3 * 1440 : null, at:Date.now()});
   if(typeof save === "function") save();
 }
 function dpAfterDrop(it){
@@ -45,11 +45,11 @@ function dpAfterText(e){
 }
 function dpAfterDeliver(){
   if(dpBusy()) return;
-  const D = dpRec(), c = kcRec(), e = D.after.find(x => !x.seen && c.cases >= x.due); if(!e) return;
+  const D = dpRec(), c = kcRec(), L = (typeof lfOn === "function" && lfOn()) ? lfRec() : null, e = D.after.find(x => !x.seen && (c.cases >= x.due || (x.dueT != null && L && L.t >= x.dueT))); if(!e) return;
   e.seen = Date.now(); D.news.unshift(Object.assign({}, dpAfterText(e), {at:e.seen})); D.news = D.news.slice(0, 20);
   if(typeof save === "function") save();
   const T = dpAfterText(e);
-  dpCard(`<div class="dp-news ${T.tone}"><small class="dp-kick">📰 소식 하나</small><b>${esc(T.head)}</b>${T.lines.map(l => `<p>${esc(l)}</p>`).join("")}<button type="button" class="btn" data-dpclose>닫기</button></div>`);
+  dpCard(`<div class="dp-news ${T.tone}"><small class="dp-kick">${e.kind === "lost" ? "📱 동네 중개사에게서 연락이 왔다" : "📰 소식 하나"}</small><b>${esc(T.head)}</b>${T.lines.map(l => `<p>${esc(l)}</p>`).join("")}<button type="button" class="btn" data-dpclose>닫기</button></div>`);
   if(typeof kcSfx === "function") kcSfx("message");
 }
 function dpCard(html){

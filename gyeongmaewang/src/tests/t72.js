@@ -40,7 +40,7 @@ await pg.screenshot({path:'mt_k.png'});
 // 엔딩 그림
 await pg.evaluate(()=>{ MT=null; mtPaint(); lfNew('jaehoon'); lfRec().intro=false; const L=lfRec(); cpFinish(null,null); CP_SHOW.sum.type='good'; cpPaint(); });
 ok(await pg.evaluate(()=>{const i=document.querySelector('.cp-art img'); return !!i && i.src.includes('512cbdda');}), '재훈 GOOD 엔딩 그림');
-for(const [ch,t,id] of [['seoyun','normal','3eb0ddf6'],['seoyun','bad','314c4b5a'],['seoyun','special','19ca4ac1'],['dohyun','normal','91fd1e21'],['dohyun','bad','cd5bd56e'],['dohyun','special',null],['jaehoon','special','3b790346'],['jaehoon','bad','4be0641f'],['eunkyung','normal','018a9256'],['eunkyung','bad','833a35fa'],['eunkyung','special','6758f020'],['taesik','good','c4439256'],['taesik','normal','37684c1f'],['taesik','bad',null]]){
+for(const [ch,t,id] of [['seoyun','normal','3eb0ddf6'],['seoyun','bad','314c4b5a'],['seoyun','special','19ca4ac1'],['dohyun','normal','91fd1e21'],['dohyun','bad','cd5bd56e'],['dohyun','special',null],['jaehoon','special','3b790346'],['jaehoon','bad','4be0641f'],['eunkyung','normal','018a9256'],['eunkyung','bad','833a35fa'],['eunkyung','special','6758f020'],['taesik','good','c4439256'],['taesik','normal','37684c1f'],['taesik','bad','5f3d3fbf'],['taesik','special','b2b7a30c'],['mijeong','normal',null]]){
   const r=await pg.evaluate(([ch,t])=>{ lfNew(ch); lfRec().intro=false; cpFinish(null,null); CP_SHOW.sum.type=t; cpPaint(); const i=document.querySelector('.cp-art img'); return i?i.src:null; },[ch,t]);
   await pg.waitForTimeout(150);
   const loaded=id? await pg.evaluate(()=>{const i=document.querySelector('.cp-art img'); return !!i && i.complete && i.naturalWidth>0;}) : true;

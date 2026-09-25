@@ -211,3 +211,7 @@ h1 small,h2 small,h3 small,h1 .note,h2 .note,h3 .note,h1 .sg-note,h2 .sg-note,h3
 .fr-review li{border-left:3px solid var(--accent-ink,#23476b);padding:4px 10px}
 .fr-review li span{display:block;font-weight:700;font-size:14.5px}
 .fr-review li p{margin:2px 0 0;font-size:14px}
+/* ===== 저장·그림 실패 안내 (sturdy.js) ===== */
+.st-bar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;max-width:min(560px,94vw);background:#fff8e6;color:#3b2a00;border:1.5px solid #996515;border-radius:12px;padding:10px 14px;font-size:14px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.st-bar .btn{margin-left:6px;padding:4px 10px;font-size:13px}
+img.st-img-fail{visibility:hidden}

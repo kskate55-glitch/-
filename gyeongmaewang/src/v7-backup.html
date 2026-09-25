@@ -2336,7 +2336,7 @@ let dbRef = null, saveTimer = null, saving = false, dirty = false;
 const syncEl = () => document.getElementById("sync");
 function save(){
   S.updated = Date.now();
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){}
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); if(window.gmwSaveOk) window.gmwSaveOk(); }catch(e){ if(window.gmwSaveFail) window.gmwSaveFail(e); }
   if(!dbRef) return;
   dirty = true; clearTimeout(saveTimer);
   saveTimer = setTimeout(flush, 1200);

@@ -9,7 +9,7 @@ gyeongmaewang/
 │   ├── index.html   게임 전체 (1.6MB, 외부 라이브러리 없음)
 │   ├── config.js    ☁ Supabase 연결 설정 (비워 두면 회원 기능 꺼짐)
 │   ├── cloud.js     ☁ 회원·클라우드 저장·이탈 통계
-│   ├── assets/      그림 95장 (webp, 약 16MB)
+│   ├── assets/      그림 266장 (webp, 약 36MB — 목록은 ../ASSETS.md)
 │   └── _headers     Cloudflare Pages용 캐시 설정
 └── src/             소스 (고칠 때만 필요)
 ```

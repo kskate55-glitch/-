@@ -14,6 +14,9 @@ while x<W:
         runs.append((s,x))
     else: x+=1
 cuts=[(s+e)//2 for s,e in runs if e-s>=60 and s>0 and e<W]
+if len(cuts)!=2:   # 팔·빗자루가 옆 칸까지 뻗어 넓은 틈이 하나뿐 — 가장 넓은 틈 두 개로 나눈다
+    inner=sorted([r for r in runs if r[0]>0 and r[1]<W and r[1]-r[0]>=6], key=lambda r:r[0]-r[1])[:2]
+    cuts=sorted((s+e)//2 for s,e in inner)
 bounds=[0]+cuts+[W]; assert len(bounds)==4, ('cuts',cuts)
 for i,n in enumerate(['normal','angry','worried']):
     part=im.crop((bounds[i],0,bounds[i+1],im.height)); w,h=part.size

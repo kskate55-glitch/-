@@ -82,7 +82,11 @@ const NEW_BUYERS = [
   {t:"꼼꼼한 외국인 연구원", flex:0.005, cancel:0.12, art:{normal:"db28ff828c2e6584db866ab6048b38bc", angry:"eae5bfb3739ba8db3c87e91e60626322", worried:"eb34623badd6b8dec34c407d9a09f3a5"}, ex:"normal",
    say:["\"등기부 을구, 한 번 더 보여 주실 수 있을까요?\"", "서류에 형광펜으로 줄을 그으며 하나씩 물었다."]},
   {t:"휠체어를 쓰는 실수요자", flex:0.01, cancel:0.1, seated:true, art:{normal:"0e203d74094ba7b98a8627d4c1160878", angry:"363606027895554c03b944d533453593", worried:"743433849b189077bfe4d85f5bad719c"}, ex:"angry",
-   say:["\"현관 턱이 몇 센티예요? 욕실 문 폭도 재 봐도 될까요?\"", "줄자로 현관과 욕실 문을 꼼꼼히 쟀다."]}];
+   say:["\"현관 턱이 몇 센티예요? 욕실 문 폭도 재 봐도 될까요?\"", "줄자로 현관과 욕실 문을 꼼꼼히 쟀다."]},
+  {t:"야간 근무 마친 간호사", flex:0.007, cancel:0.08, art:{normal:"ad643cba3a0853b81318d30c13efe0a5", angry:"dbe07d391e9a52efd5f92bea281bcefe", worried:"21e570c07b6d7317b1e4dad5d248803c"}, ex:"angry",
+   say:["\"병원까지 20분이면 돼요. 이 가격이면 오늘 바로 할게요.\"", "퇴근길 수술복 차림으로 계산기를 두드리며 들어왔다."]},
+  {t:"아이 학교 가까운 집 찾는 식당 사장님", flex:0.009, cancel:0.06, art:{normal:"d408112d8b1bbe18aaecdc7ca5b27527", angry:"d185001944989b88c63de1d1b8b37758", worried:"da1c1dc9ba9b27e4eef092f56aa9c4c7"}, ex:"angry",
+   say:["\"학교까지 걸어서 몇 분이에요? 아이 혼자 다녀야 해서요.\"", "휴대폰 지도로 학교 가는 길을 두 번이나 확인했다."]}];
 NEW_BUYERS.forEach(b => {
   if(!K_BUYERS.some(x => x.t === b.t)) K_BUYERS.push({t:b.t, flex:b.flex, cancel:b.cancel});
   BY_ART[b.t] = {art:b.art, ex:b.ex, seated:!!b.seated};

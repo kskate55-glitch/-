@@ -362,3 +362,32 @@ img.st-img-fail{visibility:hidden}
 /* 휠체어 매수자 — 앉은 그림이라 서 있는 인물과 키가 맞게 조금 작게 */
 #kfsRoot .k-stage .vn-sprite.by-seated{height:min(48%, calc(100% - 160px))}
 @media (min-width:901px){ #kfsRoot .k-stage .vn-sprite.by-seated{height:min(48%, calc(100% - 270px))} }
+
+/* 🔎 단서 번쩍 — 대화창 여백에 6초 떴다가 스르르 사라짐(다시 그려도 처음부터 다시 뜨지 않게 음수 지연) */
+.cf-flash{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-top:10px;padding:9px 12px;border-radius:10px;
+  background:linear-gradient(90deg,rgba(242,179,61,.22),rgba(242,179,61,.06));border:1px solid rgba(242,179,61,.55);color:#fff4d8;
+  font-size:.86em;line-height:1.45;overflow:hidden;max-height:260px;animation:cfLife 6.5s ease forwards}
+@media (min-width:901px){ #kfsRoot .cf-flash{max-width:min(100%, 800px)} }
+.cf-flash.dull{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.2);color:#dde2ea}
+.cf-tag{font-weight:800;font-size:.85em;padding:1px 8px;border-radius:999px;background:#f2b33d;color:#2a1c00;white-space:nowrap}
+.cf-flash.dull .cf-tag{background:#6b7380;color:#fff}
+.cf-head{font-weight:800}
+.cf-text{flex-basis:100%}
+.cf-say{flex-basis:100%;opacity:.95}
+.cf-say b{color:#ffd88a;margin-right:4px}
+.cf-note{flex-basis:100%;font-size:.8em;opacity:.65}
+@keyframes cfLife{
+  0%{opacity:0;transform:translateY(-6px)}
+  6%{opacity:1;transform:none}
+  82%{opacity:1;max-height:260px;margin-top:10px;padding-top:9px;padding-bottom:9px}
+  96%{opacity:0;max-height:260px}
+  100%{opacity:0;max-height:0;margin-top:0;padding-top:0;padding-bottom:0;border-width:0}
+}
+@media (prefers-reduced-motion:reduce){ .cf-flash{animation-name:cfLifeCalm} }
+@keyframes cfLifeCalm{0%,85%{opacity:1}100%{opacity:0;max-height:0;margin:0;padding:0;border-width:0}}
+/* 폰 — 입찰표 종이가 무대를 덮으므로 무대 안 카드는 숨기고, 문서 맨 위층 토스트(#cfToast)로 띄운다 */
+@media (max-width:900px){ #kfsRoot .cf-flash{display:none}
+  .cf-flash.cf-toast{position:fixed;top:64px;left:10px;right:10px;z-index:9999;margin:0;background:rgba(40,30,8,.95);box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:13.5px}
+  .cf-flash.cf-toast.dull{background:rgba(28,32,40,.96)} }
+.cf-got{flex-basis:100%;font-weight:700;color:#ffe3a3}
+.cf-got b{color:#fff}

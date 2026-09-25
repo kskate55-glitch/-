@@ -640,3 +640,13 @@ body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .h
 .ep-hero.still{animation:none}
 .ep-root.ep-world .btn:not(.pri){background:rgba(255,255,255,.1);color:#f3efe4;border:1px solid rgba(255,255,255,.28)}
 .ep-root.ep-world .btn:not(.pri):hover{background:rgba(255,255,255,.18)}
+/* 새 알림 카드: 기본은 오른쪽 위 구석(방 가운데를 가리지 않게), 끌어서 옮길 수 있다 */
+.lf-stage .ep-alert{left:auto;right:14px;transform:none;width:min(420px,calc(100% - 28px));cursor:grab;touch-action:none;user-select:none}
+.lf-stage .ep-alert.dragging{cursor:grabbing;box-shadow:0 20px 50px rgba(0,0,0,.6);animation:none;transition:none}
+.lf-stage .ep-alert::before{content:"⠿ 끌어서 옮기기 · 두 번 누르면 제자리";position:absolute;top:-22px;right:6px;font-size:11px;color:#f5cf7c;opacity:0;transition:opacity .2s;pointer-events:none;text-shadow:0 1px 3px #000}
+.lf-stage .ep-alert:hover::before{opacity:.9}
+.ep-alert .btn{touch-action:auto}
+.ke-court{font-size:12.5px;font-weight:800;color:#8a5a12;letter-spacing:.02em;margin-bottom:2px}
+@media (max-width:600px){ .lf-stage .ep-alert{right:14px;left:14px;width:auto} .lf-stage .ep-alert[data-moved]{right:auto;width:min(420px,calc(100% - 28px))} }
+.lf-stage .ep-alert{animation:epAlert2 .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes epAlert2{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:none}}

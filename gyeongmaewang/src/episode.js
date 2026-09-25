@@ -8,7 +8,7 @@ const EP_PLAN = {
     {k:"k1", when:"1년차 · 봄", lines:["노트북에 관심지역 알림이 떴다. 서울 오래된 빌라 3층, 대항력 없는 세입자.","'처음부터 끝까지 내 손으로. 조사하고, 입찰하고, 명도하고, 팔아 보자.'"]},
     {k:"f11", when:"1년차 · 여름", lines:["두 번째 물건은 보증금 대부분을 배당받는 세입자가 사는 빌라.","'배당받는 세입자면 명도확인서가 열쇠라던데. 순서만 안 틀리면 돼.'"]},
     {k:"f12", when:"1년차 · 가을", lines:["작은 원룸. 세입자는 스물한 살, 보증금 500이 전 재산이라고 한다.","'나도 스물한 살 땐 아무것도 몰랐어. 알려 줄 수 있는 건 알려 주자.'"]},
-    {k:"f13", when:"2년차 · 겨울", lines:["노원구 소형 아파트. 문을 두드려도 아무도 안 나온다.","'문이 안 열리면, 다른 문을 찾아야지.'"]}]},
+    {k:"f13", when:"2년차 · 겨울", lines:["고양 화정동 소형 아파트. 문을 두드려도 아무도 안 나온다.","'문이 안 열리면, 다른 문을 찾아야지.'"]}]},
   dohyun:{stars:2, base:2600, hold:4, eps:[
     {k:"k2", when:"1년차 · 봄", lines:["퇴근길 지하철에서 관심 물건 알림. 은평구 투룸, 겉 마진이 어마어마하다.","'싸 보이는 데는 이유가 있겠지. 멈출 줄 아는 것도 실력이다.'"]},
     {k:"f21", when:"1년차 · 여름", lines:["점심시간에 걸려 온 전화. '이사비 500은 주셔야죠.'","'회의 5분 전인데… 숫자부터 부르는 사람한테는 어떻게 하더라.'"]},
@@ -39,7 +39,7 @@ const EP_PLAN = {
 function epRec(){ const P = cpRec(); if(!P.ep || typeof P.ep !== "object") P.ep = {}; return P.ep; }
 function epOf(id){ const R = epRec(); if(!R[id] || !Array.isArray(R[id].res)) R[id] = {res:[]}; return R[id]; }
 function epInfo(ep){
-  if(ep.k){ const P = (typeof K_PROPS !== "undefined" && K_PROPS[ep.k]) || {}; return {title:P.title || ep.k, cat:"풀 경매 · 조사→입찰→명도→매도", lv:P.stars || 1, full:true}; }
+  if(ep.k){ const P = (typeof K_PROPS !== "undefined" && K_PROPS[ep.k]) || {}; return {title:P.title || ep.k, cat:(P.court ? `${P.court} ${P.caseNum || ""} · ` : "") + "풀 경매 · 입찰→대출→명도→수리→매도", lv:P.stars || 1, full:true}; }
   const c = epCase(ep.c); return c ? {title:c.title, cat:c.cat, lv:c.lv, full:false} : {title:"?", cat:"", lv:1};
 }
 function epCase(id){ return (typeof CASES !== "undefined" ? CASES : []).find(c => c.id === id) || null; }
@@ -447,7 +447,7 @@ if(typeof lfBaseHTML === "function"){
       if(R.pendingK && typeof bdRunning === "function" && bdRunning()) card = `<div class="ep-alert"><small>📖 STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${R.pendingK.i + 1} 진행 중</small><b>${esc(epInfo(Pl.eps[R.pendingK.i]).title)}</b><div class="ep-alert-btns"><button type="button" class="btn pri" data-atab="king">▶ 이어하기</button></div></div>`;
       else if(i >= n) card = `<div class="ep-alert end"><small>📖 STAGE ${CP_ORDER.indexOf(L.char) + 1} · 네 물건을 모두 끝냈다</small><b>이 시기를 돌아볼 시간</b><div class="ep-alert-btns"><button type="button" class="btn pri" data-epfin="${L.char}">🎬 엔딩 보기</button></div></div>`;
       else { const ep = Pl.eps[i], c = epInfo(ep);
-        card = `<div class="ep-alert"><small>📱 새 알림 · STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${i + 1}/${n} · ${esc(ep.when)}</small><b>${esc(c.title)}</b><p>${esc(ep.lines[0])}</p><em>${esc(c.cat)} · ${"★".repeat(c.lv)}</em>
+        card = `<div class="ep-alert" ${epAlertStyle()}><small>📱 새 알림 · STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${i + 1}/${n} · ${esc(ep.when)}</small><b>${esc(c.title)}</b><p>${esc(ep.lines[0])}</p><em>${esc(c.cat)} · ${"★".repeat(c.lv)}</em>
           <div class="ep-alert-btns"><button type="button" class="btn pri" data-epgo="${L.char}">📂 이 물건 보러 가기</button><button type="button" class="btn" data-eplist="${L.char}">📋 에피소드 목록</button></div></div>`; }
       h = h.replace(/(<div class="vn of-stage lf-stage[^"]*">)/, `$1${card}`);
     }catch(e){}
@@ -481,3 +481,26 @@ if(typeof cpActChip === "function"){
   const _ep_chip = cpActChip;
   cpActChip = function(){ const L = lfRec(); if(L && L.story && EP_PLAN[L.char]){ const R = epOf(L.char), n = EP_PLAN[L.char].eps.length; return `<span class="cp-act" title="스토리 진행">STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${Math.min(n, R.res.length + 1)}/${n}</span>`; } return _ep_chip(); };
 }
+
+/* ---------- 📱 새 알림 카드 — 끌어서 아무 데나 옮길 수 있다(자리는 이 브라우저에 기억) ---------- */
+function epAlertPos(){ try{ return JSON.parse(localStorage.getItem("ep_alert_pos") || "null"); }catch(e){ return null; } }
+function epAlertStyle(){ const P = epAlertPos(); return P && isFinite(P.x) && isFinite(P.y) ? `style="left:${(P.x * 100).toFixed(2)}%;top:${(P.y * 100).toFixed(2)}%;right:auto;transform:none" data-moved="1"` : ""; }
+(function(){
+  let D = null;
+  document.addEventListener("pointerdown", e => {
+    const el = e.target.closest && e.target.closest(".lf-stage .ep-alert"); if(!el || e.target.closest("button,a,input,select")) return;
+    const st = el.offsetParent || el.parentElement, r = el.getBoundingClientRect(), sr = st.getBoundingClientRect();
+    D = {el, st, dx:e.clientX - r.left, dy:e.clientY - r.top, sr, moved:false, id:e.pointerId};
+    try{ el.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  document.addEventListener("pointermove", e => {
+    if(!D) return; const {el, sr} = D, w = el.offsetWidth, h = el.offsetHeight;
+    const x = Math.max(0, Math.min(sr.width - w, e.clientX - sr.left - D.dx)), y = Math.max(0, Math.min(sr.height - h, e.clientY - sr.top - D.dy));
+    if(!D.moved && Math.abs(e.movementX) + Math.abs(e.movementY) < 1) return;
+    D.moved = true; el.classList.add("dragging");
+    Object.assign(el.style, {left:x + "px", top:y + "px", right:"auto", transform:"none"}); D.x = x / sr.width; D.y = y / sr.height; e.preventDefault();
+  });
+  const end = () => { if(!D) return; D.el.classList.remove("dragging"); if(D.moved){ D.el.dataset.moved = "1"; try{ localStorage.setItem("ep_alert_pos", JSON.stringify({x:D.x, y:D.y})); }catch(_){} } D = null; };
+  document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
+  document.addEventListener("dblclick", e => { const el = e.target.closest && e.target.closest(".lf-stage .ep-alert"); if(!el || e.target.closest("button")) return; try{ localStorage.removeItem("ep_alert_pos"); }catch(_){} el.removeAttribute("style"); delete el.dataset.moved; });
+})();

@@ -3,7 +3,7 @@
    날씨·시기는 배경이 아니라 수치에 들어간다 — 조사 시간, 누수 단서, 경쟁자 수, 명도 일정, 수리비·기간, 매수 문의. */
 
 /* ---------- 🔊 설정 확장: 마스터·환경음·음성·대사 읽기 ---------- */
-Object.assign(KA_DEF, {master:100, amb:60, voice:80, react:true, tts:false, ttsAuto:false});
+Object.assign(KA_DEF, {master:100, amb:100, voice:100, react:true, tts:false, ttsAuto:false});
 const _sn_ctx = kaCtx; kaCtx = function(){
   const A = _sn_ctx(); if(!A) return A;
   if(!A.amb){

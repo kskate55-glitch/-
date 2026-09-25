@@ -2011,6 +2011,16 @@ body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .h
 .ep-hero.still{animation:none}
 .ep-root.ep-world .btn:not(.pri){background:rgba(255,255,255,.1);color:#f3efe4;border:1px solid rgba(255,255,255,.28)}
 .ep-root.ep-world .btn:not(.pri):hover{background:rgba(255,255,255,.18)}
+/* 새 알림 카드: 기본은 오른쪽 위 구석(방 가운데를 가리지 않게), 끌어서 옮길 수 있다 */
+.lf-stage .ep-alert{left:auto;right:14px;transform:none;width:min(420px,calc(100% - 28px));cursor:grab;touch-action:none;user-select:none}
+.lf-stage .ep-alert.dragging{cursor:grabbing;box-shadow:0 20px 50px rgba(0,0,0,.6);animation:none;transition:none}
+.lf-stage .ep-alert::before{content:"⠿ 끌어서 옮기기 · 두 번 누르면 제자리";position:absolute;top:-22px;right:6px;font-size:11px;color:#f5cf7c;opacity:0;transition:opacity .2s;pointer-events:none;text-shadow:0 1px 3px #000}
+.lf-stage .ep-alert:hover::before{opacity:.9}
+.ep-alert .btn{touch-action:auto}
+.ke-court{font-size:12.5px;font-weight:800;color:#8a5a12;letter-spacing:.02em;margin-bottom:2px}
+@media (max-width:600px){ .lf-stage .ep-alert{right:14px;left:14px;width:auto} .lf-stage .ep-alert[data-moved]{right:auto;width:min(420px,calc(100% - 28px))} }
+.lf-stage .ep-alert{animation:epAlert2 .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes epAlert2{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:none}}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -38277,7 +38287,7 @@ document.addEventListener("click", e => {
    음악·효과음은 외부 파일 없이 WebAudio로 즉석 합성한다(저작권·용량 걱정 없음). 시스템(가격·확률)은 한 글자도 안 바꾼다. */
 
 /* ---------- 🔊 소리 설정 (BGM·효과음 따로) ---------- */
-const KA_DEF = {bgm:70, sfx:85, mute:false};
+const KA_DEF = {bgm:100, sfx:100, mute:false};
 function kaCfg(){ try{ const o = JSON.parse(localStorage.getItem("kc_audio")||"null"); if(o) return Object.assign({}, KA_DEF, o); if(localStorage.getItem("sfx_off")==="1") return Object.assign({}, KA_DEF, {mute:true}); }catch(e){} return Object.assign({}, KA_DEF); }
 function kaSave(c){ try{ localStorage.setItem("kc_audio", JSON.stringify(c)); }catch(e){} kaApplyVol(); }
 let KA = null;   // {ac, bgm, sfx}
@@ -39586,7 +39596,7 @@ document.addEventListener("click", e => {
    날씨·시기는 배경이 아니라 수치에 들어간다 — 조사 시간, 누수 단서, 경쟁자 수, 명도 일정, 수리비·기간, 매수 문의. */
 
 /* ---------- 🔊 설정 확장: 마스터·환경음·음성·대사 읽기 ---------- */
-Object.assign(KA_DEF, {master:100, amb:60, voice:80, react:true, tts:false, ttsAuto:false});
+Object.assign(KA_DEF, {master:100, amb:100, voice:100, react:true, tts:false, ttsAuto:false});
 const _sn_ctx = kaCtx; kaCtx = function(){
   const A = _sn_ctx(); if(!A) return A;
   if(!A.amb){
@@ -41805,7 +41815,7 @@ function pxCaseOpen(){
   const R = arenaRec(); R.pxOpens = (R.pxOpens || 0) + 1;
   const short = R.pxOpens > 3;   // 몇 번 본 뒤로는 짧게
   kcSfx("folder");
-  pxCard(`<div class="px-folder"><span class="px-tab">CASE</span><b class="px-disp">CASE ${pxCaseNo()}</b><small>${esc((KP && KP.title) || "")}</small><em>조사 시작</em></div>`, short ? 650 : 1150, "open");
+  pxCard(`<div class="px-folder"><span class="px-tab">CASE</span><b class="px-disp">CASE ${pxCaseNo()}</b><small>${esc((KP && KP.title) || "")}</small>${KP && KP.court ? `<small class="px-court">🏛️ ${esc(KP.court)} ${esc(KP.caseNum || "")}</small>` : ""}<em>조사 시작</em></div>`, short ? 650 : 1150, "open");
 }
 function pxEmptyHouse(){
   kcSfx("jingle"); setTimeout(() => kcSfx("door"), 380);
@@ -43471,8 +43481,8 @@ const KF_TONE = {
 
 const KF_SPECS = [
 /* ===== STAGE 1 · 서윤 ★ — 서류가 깔끔하고 점유자가 협조적인 입문 물건 ===== */
-{id:"f11", no:3, stage:"seoyun", stars:1, short:"관악구 빌라 · 배당받는 세입자", tagline:"명도확인서가 열쇠", title:"관악구 빌라 2층",
- addr:"서울 관악구 ○○동 · 2003년식 · 전용 46㎡(약 14평)", appraisal:16800, minBid:13440, trueMid:16200, estRepair:300, dailyHold:1.8, brokerSays:17000, recent:"1억 6,000 ~ 1억 7,000 (최근 1년 5건)",
+{id:"f11", no:3, stage:"seoyun", stars:1, short:"남양주 화도읍 빌라 · 배당받는 세입자", tagline:"명도확인서가 열쇠", title:"경기 남양주시 화도읍 ○○빌라 2층",
+ addr:"경기 남양주시 화도읍 마석우리 · 2003년식 · 전용 46㎡(약 14평)", court:"의정부지방법원 남양주지원", caseNum:"2026타경 3117", appraisal:14200, minBid:11360, trueMid:13600, estRepair:300, dailyHold:1.5, brokerSays:14500, recent:"1억 3,000 ~ 1억 4,500 (최근 1년 5건)",
  briefLine:"보증금 대부분을 배당받는 세입자가 사는 집. 서류만 보면 이렇게 쉬운 물건이 없다.",
  occ:{pid:"p_senior", name:"윤서연 씨", age:34, legal:"대항력 없는 전세 세입자 · 보증금 대부분 배당 · 인도명령 대상"}, tone:"polite", emoji:"👩", trait:"배당 수령 예정 · 대화가 잘 통함",
  occInit:{coop:60, resist:22, pride:0.3, place:false, flip:false},
@@ -43481,10 +43491,10 @@ const KF_SPECS = [
   {id:"div", k:"helper", t:"배당과 명도확인서", d:"세입자는 배당금을 받으려면 낙찰자의 명도확인서가 필요하다 — 이사와 서류를 맞바꾸면 된다.", act:{loc:"home", ic:"📄", t:"배당요구·확정일자 서류 확인", dur:25, p:0.9, text:"확정일자가 빠르고 배당요구도 했다 — 보증금 대부분을 배당받는다.", card:["📄","배당 서류","배당받는 세입자 · 명도확인서 필요"]}},
   {id:"boiler", k:"defect", t:"보일러 노후", cost:90, d:"관리실: '그 집 보일러 15년 넘었어요. 겨울마다 에러 났대요.'", act:{loc:"site", ic:"🔥", t:"보일러실·배관 보기", dur:20, p:0.8, text:"보일러 제조일이 2009년이다. 연통에 그을음이 있다.", card:["🔥","보일러 제조일","15년 넘음 — 교체 각"]}},
   {id:"fee", k:"fee", t:"체납관리비", cost:25, d:"공용부분 관리비 25만원 체납.", act:{loc:"any", ic:"☎️", t:"관리사무소 전화", dur:10, p:0.7, say:["관리실(전화)","공용 관리비 25만원 밀려 있어요."], card:["🧾","관리비 체납","공용 25만원"]}},
-  {id:"price", k:"price", t:"실거래 착시", d:"중개사: '1.7은 역 쪽 신축 얘기예요. 여긴 1.6 초반.'", act:{loc:"site", ic:"🚶", t:"동네 중개업소 3곳 방문", dur:100, p:0.9, say:[["중개사 A","1.7 충분해요."],["중개사 B","역 쪽만 그 정도죠. 여긴 1.6 초반."]], card:["📝","중개사 세 곳","1.7은 역 쪽 · 여긴 1.6 초반"]}}],
+  {id:"price", k:"price", t:"실거래 착시", d:"중개사: '1.45는 역 쪽 신축 얘기예요. 여긴 1.3 중반.'", act:{loc:"site", ic:"🚶", t:"동네 중개업소 3곳 방문", dur:100, p:0.9, say:[["중개사 A","1.45 충분해요."],["중개사 B","역 쪽만 그 정도죠. 여긴 1.3 중반."]], card:["📝","중개사 세 곳","1.45는 역 쪽 · 여긴 1.3 중반"]}}],
  lesson:"배당받는 세입자는 적이 아니라 파트너 — 명도확인서와 이삿날을 맞바꾸세요.", rivalMul:1.0},
-{id:"f12", no:4, stage:"seoyun", stars:1, short:"봉천동 원룸 · 보호종료 청년", tagline:"최우선변제를 알려 주면 풀린다", title:"봉천동 원룸형 빌라 3층",
- addr:"서울 관악구 ○○동 · 2011년식 · 전용 24㎡(약 7평)", appraisal:9800, minBid:7840, trueMid:9600, estRepair:180, dailyHold:1.1, brokerSays:10200, recent:"9,300 ~ 1억 (최근 1년 6건)",
+{id:"f12", no:4, stage:"seoyun", stars:1, short:"의정부 원룸 · 보호종료 청년", tagline:"최우선변제를 알려 주면 풀린다", title:"경기 의정부시 가능동 ○○하우스 3층",
+ addr:"경기 의정부시 가능동 · 2011년식 · 전용 24㎡(약 7평)", court:"의정부지방법원", caseNum:"2026타경 5528", appraisal:8200, minBid:6560, trueMid:7700, estRepair:180, dailyHold:0.9, brokerSays:8400, recent:"7,400 ~ 8,200 (최근 1년 6건)",
  briefLine:"작은 원룸. 세입자는 스물한 살. 보증금 500이 전 재산이라고 한다.",
  occ:{pid:"p_youth", name:"은하늘 씨", age:21, legal:"대항력 없는 월세 세입자 · 소액임차인 최우선변제 대상 · 인도명령 대상"}, tone:"polite", emoji:"🧑", trait:"물어볼 사람이 없음 · 갈 곳이 걱정",
  occInit:{coop:58, resist:20, pride:0.2, place:true, flip:false},
@@ -43493,10 +43503,10 @@ const KF_SPECS = [
   {id:"help", k:"helper", t:"최우선변제 대상", d:"보증금 500은 소액임차인 최우선변제로 돌려받을 수 있다 — 이걸 알려 주면 갈 곳 걱정이 풀린다.", act:{loc:"any", ic:"🏛️", t:"행정복지센터·법률상담 전화", dur:25, p:0.85, say:["상담원(전화)","보증금 규모를 보면 최우선변제 대상일 가능성이 커요. 배당요구는 하셨는지 확인해 보세요."], card:["🏛️","상담 기록","최우선변제 대상 · 청년 주거지원"]}},
   {id:"bath", k:"defect", t:"욕실 누수", cost:70, d:"아래층: '그 집 욕실 물 새서 우리 천장이 누레요.'", act:{loc:"site", ic:"💧", t:"아래층 탐문", dur:[20,50], p:0.75, say:["아래층 주민","위층 욕실에서 물이 새요. 천장이 누렇게 됐어요."], card:["💧","아래층 증언","욕실 누수 의심"]}},
   {id:"fee", k:"fee", t:"체납관리비", cost:12, d:"공용부분 관리비 12만원 체납.", act:{loc:"any", ic:"☎️", t:"관리사무소 전화", dur:10, p:0.75, say:["관리실(전화)","12만원 정도 밀려 있어요."], card:["🧾","관리비 체납","공용 12만원"]}},
-  {id:"price", k:"price", t:"원룸 과잉 공급", d:"근처에 신축 원룸이 쏟아져 구축은 1억 아래가 현실이다.", act:{loc:"any", ic:"☎️", t:"중개사 3곳 전화", dur:45, p:0.5, say:[["중개사 A","1억 넘게 받아요."],["중개사 B","신축이 많아서 구축은 9천 중후반이에요."]], card:["📝","중개사 통화","구축은 9천 중후반"]}}],
+  {id:"price", k:"price", t:"원룸 과잉 공급", d:"근처에 신축 원룸이 쏟아져 구축은 8천 아래가 현실이다.", act:{loc:"any", ic:"☎️", t:"중개사 3곳 전화", dur:45, p:0.5, say:[["중개사 A","8천 넘게 받아요."],["중개사 B","신축이 많아서 구축은 7천 후반이에요."]], card:["📝","중개사 통화","구축은 7천 후반"]}}],
  lesson:"상대가 모르는 권리를 알려 주는 것 — 그게 가장 빠른 명도였습니다.", rivalMul:1.0},
-{id:"f13", no:5, stage:"seoyun", stars:1, short:"노원구 소형 아파트 · 연락 끊긴 아들", tagline:"연락처 한 줄이 명도를 바꾼다", title:"노원구 소형 아파트 7층",
- addr:"서울 노원구 ○○동 · 1994년식 · 전용 39㎡(약 12평) · 승강기 있음", appraisal:21000, minBid:16800, trueMid:20300, estRepair:250, dailyHold:2.2, brokerSays:21500, recent:"2억 ~ 2억 1,500 (최근 1년 7건)",
+{id:"f13", no:5, stage:"seoyun", stars:1, short:"고양 화정동 소형 아파트 · 연락 끊긴 아들", tagline:"연락처 한 줄이 명도를 바꾼다", title:"경기 고양시 덕양구 화정동 ○○마을 7층",
+ addr:"경기 고양시 덕양구 화정동 · 1994년식 · 전용 39㎡(약 12평) · 승강기 있음", court:"의정부지방법원 고양지원", caseNum:"2026타경 7240", appraisal:25000, minBid:20000, trueMid:23800, estRepair:250, dailyHold:2.5, brokerSays:25500, recent:"2억 3,000 ~ 2억 5,000 (최근 1년 7건)",
  briefLine:"아파트라 시세는 투명하다. 문제는 사람 — 전 소유자의 아들이 혼자 살고, 문을 안 연다.",
  occ:{pid:"p_gamer", name:"민재혁 씨", age:24, legal:"전 소유자의 아들(무상 거주) · 인도명령 대상"}, tone:"polite", emoji:"🎧", trait:"연락이 잘 안 됨 · 낮밤이 바뀜",
  occInit:{coop:38, resist:45, pride:0.5, place:false, flip:true},
@@ -43505,12 +43515,12 @@ const KF_SPECS = [
   {id:"mom", k:"helper", t:"어머니 연락처", d:"관리실: '어머니가 가끔 와서 관리비 내고 가요. 번호 남겨 뒀어요.'", act:{loc:"site", ic:"🏢", t:"관리실 직접 방문", dur:[30,70], p:0.8, say:["관리실 직원","아드님은 낮엔 자요. 어머니가 가끔 오셔서 관리비 내고 가세요. 번호 드릴까요?"], card:["📇","관리실 메모","어머니 연락처"]}},
   {id:"door", k:"defect", t:"도어락·결로", cost:60, d:"현관 도어락 고장, 북쪽 방 결로 곰팡이.", act:{loc:"site", ic:"🚪", t:"현관·복도 보기", dur:15, p:0.7, text:"도어락 배터리 커버가 테이프로 붙어 있다. 복도 쪽 벽에 물방울 자국.", card:["🚪","현관 흔적","도어락 고장 · 결로"]}},
   {id:"fee", k:"fee", t:"체납관리비", cost:45, d:"아파트 공용관리비 45만원 체납.", act:{loc:"any", ic:"☎️", t:"관리사무소 전화", dur:10, p:0.7, say:["관리실(전화)","공용 부분 45만원이요. 어머니가 요즘 못 오셨나 봐요."], card:["🧾","관리비 체납","공용 45만원"]}},
-  {id:"price", k:"price", t:"동 차이", d:"같은 단지라도 역 반대편 동은 1천 가까이 싸다.", act:{loc:"any", ic:"📈", t:"동·층별 실거래 비교", dur:30, p:0.6, text:"2억 1천 넘는 거래는 전부 역 쪽 동이다. 이 동은 2억 초반.", card:["📈","동별 실거래","이 동은 2억 초반"]}}],
+  {id:"price", k:"price", t:"동 차이", d:"같은 단지라도 역 반대편 동은 1천 넘게 싸다.", act:{loc:"any", ic:"📈", t:"동·층별 실거래 비교", dur:30, p:0.6, text:"2억 4천 넘는 거래는 전부 역 쪽 동이다. 이 동은 2억 3천대.", card:["📈","동별 실거래","이 동은 2억 3천대"]}}],
  lesson:"문을 안 여는 사람에겐 문 대신 가족에게 — 연락처 한 줄이 한 달을 줄였습니다.", rivalMul:1.05},
 
 /* ===== STAGE 2 · 도현 ★★ — 돈을 부르는 점유자, 선불 낸 사람, 시간이 모자란 직장인 ===== */
-{id:"f21", no:6, stage:"dohyun", stars:2, short:"은평구 쓰리룸 · 이사비 500 요구", tagline:"앵커링에 끌려가지 않기", title:"은평구 쓰리룸 빌라 3층",
- addr:"서울 은평구 ○○동 · 1999년식 · 전용 64㎡(약 19평)", appraisal:24000, minBid:16800, trueMid:21800, estRepair:400, dailyHold:2.6, brokerSays:23500, recent:"2억 1,000 ~ 2억 4,000 (최근 1년 4건)",
+{id:"f21", no:6, stage:"dohyun", stars:2, short:"부천 심곡동 쓰리룸 · 이사비 500 요구", tagline:"앵커링에 끌려가지 않기", title:"경기 부천시 심곡동 ○○빌라 3층",
+ addr:"경기 부천시 원미구 심곡동 · 1999년식 · 전용 64㎡(약 19평)", court:"인천지방법원 부천지원", caseNum:"2026타경 11862", appraisal:21500, minBid:15050, trueMid:19400, estRepair:400, dailyHold:2.2, brokerSays:21000, recent:"1억 9,000 ~ 2억 1,500 (최근 1년 4건)",
  briefLine:"전 소유자는 벌써 부동산에서 들었다며 '이사비 500'을 입에 달고 산다.",
  occ:{pid:"p_greedy", name:"강성필 씨", age:57, legal:"전 소유자(채무자) · 배당 없음 · 인도명령 대상"}, tone:"rough", emoji:"🧔", trait:"돈 얘기부터 함 · 자존심 셈",
  occInit:{coop:32, resist:70, pride:0.7, place:false, flip:true}, needMul:1.4,
@@ -43519,10 +43529,10 @@ const KF_SPECS = [
   {id:"anchor", k:"occ", t:"500의 출처", resist:-15, d:"부동산 사장: '제가 농담으로 요즘 500은 준다고 했더니 그걸 그대로 믿더라고요.'", act:{loc:"site", ic:"🏢", t:"동네 부동산 탐문", dur:[30,60], p:0.75, say:["부동산 사장","아이고, 제가 농담 삼아 '요즘 500은 준다더라' 했더니 그걸 믿으셨나 봐요."], card:["💬","500의 출처","부동산 사장 농담"]}},
   {id:"wife", k:"helper", t:"아내의 속마음", d:"옆집: '부인은 벌써 짐 싸고 있던데. 남편만 버티는 거야.'", act:{loc:"site", ic:"👵", t:"옆집 탐문", dur:[20,50], p:0.7, say:["옆집 아주머니","그 집 부인은 벌써 박스 사다 놨어요. 남편만 저래요."], card:["👵","옆집 증언","아내는 이사 준비 중"]}},
   {id:"leak", k:"defect", t:"베란다 누수", cost:130, d:"베란다 우수관 누수 — 아래층 민원.", act:{loc:"site", ic:"🏚️", t:"외벽·베란다 보기", dur:20, p:0.65, text:"베란다 아래 외벽에 긴 물 자국이 있다.", card:["💧","외벽 물 자국","베란다 누수"]}},
-  {id:"price", k:"price", t:"시세 착시", d:"2.4억 거래는 리모델링 된 집 한 건뿐 — 보통은 2억 초중반.", act:{loc:"any", ic:"☎️", t:"중개사 3곳 전화", dur:45, p:0.5, say:[["중개사 A","2.3~2.4 가능하죠."],["중개사 B","2.4는 올수리 한 집 얘기고요, 보통 2억 초중반."]], card:["📝","중개사 통화","보통은 2억 초중반"]}}],
+  {id:"price", k:"price", t:"시세 착시", d:"2.15억 거래는 리모델링 된 집 한 건뿐 — 보통은 1억 9천대.", act:{loc:"any", ic:"☎️", t:"중개사 3곳 전화", dur:45, p:0.5, say:[["중개사 A","2.1 가능하죠."],["중개사 B","2.1은 올수리 한 집 얘기고요, 보통 1억 9천대."]], card:["📝","중개사 통화","보통은 1억 9천대"]}}],
  lesson:"상대가 먼저 부른 숫자는 협상의 시작점이 아닙니다 — 그 숫자가 어디서 왔는지부터.", rivalMul:1.05},
-{id:"f22", no:7, stage:"dohyun", stars:2, short:"강서구 투룸 · 선불 낸 깔세 점유자", tagline:"억울한 사람과 날짜 잡기", title:"강서구 투룸 빌라 2층",
- addr:"서울 강서구 ○○동 · 2001년식 · 전용 49㎡(약 15평)", appraisal:19500, minBid:13650, trueMid:18000, estRepair:350, dailyHold:2.1, brokerSays:19500, recent:"1억 8,000 ~ 1억 9,500 (최근 1년 4건)",
+{id:"f22", no:7, stage:"dohyun", stars:2, short:"인천 부평 투룸 · 선불 낸 깔세 점유자", tagline:"억울한 사람과 날짜 잡기", title:"인천 부평구 부평동 ○○빌라 2층",
+ addr:"인천 부평구 부평동 · 2001년식 · 전용 49㎡(약 15평)", court:"인천지방법원", caseNum:"2026타경 20415", appraisal:14500, minBid:10150, trueMid:13200, estRepair:350, dailyHold:1.6, brokerSays:14300, recent:"1억 2,800 ~ 1억 4,300 (최근 1년 4건)",
  briefLine:"HUG가 넘긴 물건. 안에는 6개월 치 월세를 선불로 냈다는 사람이 산다.",
  occ:{pid:"p_hug", name:"마동철 씨", age:54, legal:"무단 점유(깔세) · 배당 없음 · 인도명령 대상"}, tone:"rough", emoji:"🧔", trait:"사기당해 억울함 · 고양이 세 마리",
  occInit:{coop:30, resist:62, pride:0.8, place:true, flip:false}, needMul:1.1,
@@ -43533,8 +43543,8 @@ const KF_SPECS = [
   {id:"mold", k:"defect", t:"곰팡이", cost:90, d:"북쪽 방 벽지 뒤 곰팡이.", act:{loc:"site", ic:"🏚️", t:"외관·창문 보기", dur:20, p:0.55, text:"북쪽 창 아래 벽에 검은 얼룩이 비친다.", card:["🍄","창문 아래 얼룩","곰팡이 의심"]}},
   {id:"loan", k:"loan", t:"얇은 매수자층", d:"은행: '이 연식이면 매수자 대출이 적게 나와요.'", act:{loc:"any", ic:"🏦", t:"은행에 매수자 대출 문의", dur:30, p:0.9, say:["은행 대출상담","2001년식 빌라는 감정이 짜게 나와요. 매수자 대출이 적어요."], card:["🏦","은행 상담","매수자 대출 적음"]}}],
  lesson:"억울한 사람에게 '법대로'는 불붙이기 — 갈 곳 문제를 먼저 풀면 날짜가 나옵니다.", rivalMul:1.05},
-{id:"f23", no:8, stage:"dohyun", stars:2, short:"동작구 원룸 · 선불 낸 유학생", tagline:"말이 안 통하면 사람을 통한다", title:"동작구 원룸 4층",
- addr:"서울 동작구 ○○동 · 2008년식 · 전용 22㎡(약 7평)", appraisal:12500, minBid:8750, trueMid:11700, estRepair:200, dailyHold:1.4, brokerSays:12500, recent:"1억 1,500 ~ 1억 2,500 (최근 1년 5건)",
+{id:"f23", no:8, stage:"dohyun", stars:2, short:"수원 율전동 원룸 · 선불 낸 유학생", tagline:"말이 안 통하면 사람을 통한다", title:"경기 수원시 장안구 율전동 ○○원룸 4층",
+ addr:"경기 수원시 장안구 율전동(대학가) · 2008년식 · 전용 22㎡(약 7평)", court:"수원지방법원", caseNum:"2026타경 14093", appraisal:9200, minBid:6440, trueMid:8500, estRepair:200, dailyHold:1.0, brokerSays:9200, recent:"8,300 ~ 9,200 (최근 1년 5건)",
  briefLine:"대학가 원룸. 안에는 6개월 치 월세를 먼저 낸 유학생이 산다. 계약서는 중국어로 번역된 한 장.",
  occ:{pid:"p_cn", name:"왕신이 씨", age:24, legal:"무단 점유(깔세) · 배당 없음 · 인도명령 대상"}, tone:"foreign", emoji:"🎓", trait:"한국어 서툼 · 학기 중",
  occInit:{coop:50, resist:40, pride:0.4, place:true, flip:false},
@@ -43542,13 +43552,13 @@ const KF_SPECS = [
  hidden:[
   {id:"school", k:"helper", t:"학교 국제처", d:"국제처가 유학생 주거 문제를 상담해 준다.", act:{loc:"any", ic:"🎓", t:"근처 대학 국제처 전화", dur:20, p:0.85, say:["국제처 담당자","유학생 주거 문제면 저희가 통역이랑 기숙사 연결을 도와드릴 수 있어요."], card:["🎓","국제처 통화","통역·기숙사 연결 가능"]}},
   {id:"prepaid", k:"occ", coop:12, t:"선불 6개월", d:"중개인에게 6개월 치를 먼저 냈다 — 남은 기간만큼 억울하다.", act:{loc:"site", ic:"🚪", t:"점유자 접촉 시도", dur:[30,80], p:0.6, say:["왕신이 씨","6개월 돈 먼저 냈어요. 3개월 살았어요."], card:["💸","점유자 말","6개월 선불"]}},
-  {id:"dump", k:"dump", t:"같은 건물 급매", d:"같은 건물 2층이 1억 1,200에 급매로 나와 있다.", act:{loc:"any", ic:"📱", t:"같은 건물 매물 검색", dur:20, p:0.9, text:"같은 건물 2층이 1억 1,200 급매로 올라와 있다.", card:["🏷️","같은 건물 급매","2층 1억 1,200"]}},
+  {id:"dump", k:"dump", t:"같은 건물 급매", d:"같은 건물 2층이 8,100에 급매로 나와 있다.", act:{loc:"any", ic:"📱", t:"같은 건물 매물 검색", dur:20, p:0.9, text:"같은 건물 2층이 8,100 급매로 올라와 있다.", card:["🏷️","같은 건물 급매","2층 8,100"]}},
   {id:"fee", k:"fee", t:"체납관리비", cost:20, d:"공용관리비 20만원 체납.", act:{loc:"any", ic:"☎️", t:"관리사무소 전화", dur:10, p:0.7, say:["관리실(전화)","20만원 밀렸어요."], card:["🧾","관리비 체납","공용 20만원"]}}],
  lesson:"말이 안 통할 땐 목소리를 높이는 대신, 말이 통하는 사람을 한 명 더 부르세요.", rivalMul:1.05},
 
 /* ===== STAGE 3 · 미정 ★★★ — 가게·권리금·결정권자가 따로 있는 사람들 ===== */
-{id:"f31", no:9, stage:"mijeong", stars:3, short:"영등포 상가주택 1층 미용실", tagline:"권리금은 낙찰자가 주는 돈이 아니다", title:"영등포 상가주택 1층 상가",
- addr:"서울 영등포구 ○○동 · 1997년식 · 1층 상가 전용 52㎡", appraisal:42000, minBid:29400, trueMid:38500, estRepair:700, dailyHold:4.5, brokerSays:42000, recent:"상가 매매 3억 8,000 ~ 4억 2,000 (최근 2년 3건)",
+{id:"f31", no:9, stage:"mijeong", stars:3, short:"영등포 상가주택 1층 미용실", tagline:"권리금은 낙찰자가 주는 돈이 아니다", title:"서울 영등포구 영등포동 상가주택 1층",
+ addr:"서울 영등포구 영등포동 · 1997년식 · 1층 상가 전용 52㎡", court:"서울남부지방법원", caseNum:"2026타경 8821", appraisal:42000, minBid:29400, trueMid:38500, estRepair:700, dailyHold:4.5, brokerSays:42000, recent:"상가 매매 3억 8,000 ~ 4억 2,000 (최근 2년 3건)",
  briefLine:"1층에서 전 소유자가 직접 미용실을 한다. 손님이 앉아 있는 가게를 비워야 한다.",
  occ:{pid:"p_madam", name:"구혜란 씨", age:55, legal:"전 소유자(채무자)가 직접 영업 · 배당 없음 · 인도명령 대상"}, tone:"business", emoji:"💇", trait:"영업 중 · 권리금 요구",
  occInit:{coop:28, resist:78, pride:0.9, place:true, flip:false}, needMul:2.2, centerT:"🏪 근처 옮길 상가를 같이 알아본다", execCost:600,
@@ -43559,8 +43569,8 @@ const KF_SPECS = [
   {id:"fee", k:"fee", t:"공용관리비 체납", cost:180, d:"상가 공용부분 관리비 180만원 체납.", act:{loc:"site", ic:"🏢", t:"관리인 방문", dur:[30,60], p:0.75, say:["관리인","상가 공용관리비 180 밀렸어요. 낙찰자가 공용분은 떠안는 거 아시죠?"], card:["🧾","관리비 체납","공용 180만원"]}},
   {id:"elec", k:"defect", t:"전기 증설·간판", cost:220, d:"미용실 전기 증설 배선 정리 + 간판 철거.", act:{loc:"site", ic:"⚡", t:"분전반·간판 보기", dur:20, p:0.7, text:"분전반에 증설 배선이 뒤엉켜 있다. 간판 철거도 돈이다.", card:["⚡","분전반","증설 배선 · 간판 철거"]}}],
  lesson:"권리금은 낙찰자가 주는 돈이 아닙니다 — 대신 옮길 자리를 같이 찾아 주면 가게는 빨리 비워집니다.", rivalMul:1.08},
-{id:"f32", no:10, stage:"mijeong", stars:3, short:"구로 1층 중식당 · 30년 부부", tagline:"동네가 편드는 가게", title:"구로구 1층 중식당 상가",
- addr:"서울 구로구 ○○동 · 1991년식 · 1층 상가 전용 66㎡", appraisal:38000, minBid:26600, trueMid:35000, estRepair:900, dailyHold:4.2, brokerSays:38000, recent:"상가 매매 3억 5,000 ~ 3억 8,000 (최근 2년 2건)",
+{id:"f32", no:10, stage:"mijeong", stars:3, short:"구로 1층 중식당 · 30년 부부", tagline:"동네가 편드는 가게", title:"서울 구로구 가리봉동 1층 중식당 상가",
+ addr:"서울 구로구 가리봉동 · 1991년식 · 1층 상가 전용 66㎡", court:"서울남부지방법원", caseNum:"2026타경 9307", appraisal:38000, minBid:26600, trueMid:35000, estRepair:900, dailyHold:4.2, brokerSays:38000, recent:"상가 매매 3억 5,000 ~ 3억 8,000 (최근 2년 2건)",
  briefLine:"30년 된 중식당. 동네 사람들이 다 아는 집이라, 낙찰자가 오면 가게 앞에 사람들이 모인다.",
  occ:{pid:"p_hwagyo", name:"곽씨 부부", age:58, legal:"무단 점유(깔세) · 배당 없음 · 인도명령 대상"}, tone:"business", emoji:"🥟", trait:"30년 영업 · 동네 인맥",
  occInit:{coop:42, resist:66, pride:0.8, place:true, flip:false}, needMul:2.0, centerT:"🏪 새 가게 자리를 같이 알아본다", execCost:700,
@@ -43571,8 +43581,8 @@ const KF_SPECS = [
   {id:"fans", k:"occ", resist:-12, t:"단골의 여론", d:"단골들이 '옮기면 따라간다'고 한다 — 옮길 자리가 있으면 부부도 마음이 풀린다.", act:{loc:"site", ic:"🥟", t:"점심시간에 손님인 척 가 보기", dur:60, p:0.7, text:"단골 손님들이 '사장님 어디로 옮기든 따라갈게요' 하고 웃는다.", card:["🥟","단골들","옮기면 따라간다"]}},
   {id:"loan", k:"loan", t:"상가 대출 한도", d:"은행: '구축 상가는 매수자 대출이 박해요.'", act:{loc:"any", ic:"🏦", t:"은행에 상가 매수 대출 문의", dur:30, p:0.9, say:["은행 상담","1991년식 상가는 감정이 낮게 나와요. 매수자 대출이 적습니다."], card:["🏦","은행 상담","매수자 대출 적음"]}}],
  lesson:"동네가 편드는 사람과는 싸우지 말고 동네를 끼세요 — 중재자가 명도 기간을 반으로 줄입니다.", rivalMul:1.08},
-{id:"f33", no:11, stage:"mijeong", stars:3, short:"관악구 투룸 · 핑계 많은 전 소유자", tagline:"약속을 종이로 박는다", title:"관악구 투룸 빌라 4층",
- addr:"서울 관악구 ○○동 · 2000년식 · 전용 52㎡(약 16평)", appraisal:22500, minBid:15750, trueMid:20800, estRepair:350, dailyHold:2.4, brokerSays:22500, recent:"2억 ~ 2억 2,500 (최근 1년 4건)",
+{id:"f33", no:11, stage:"mijeong", stars:3, short:"관악구 투룸 · 핑계 많은 전 소유자", tagline:"약속을 종이로 박는다", title:"서울 관악구 신림동 ○○빌라 4층",
+ addr:"서울 관악구 신림동 · 2000년식 · 전용 52㎡(약 16평)", court:"서울중앙지방법원", caseNum:"2026타경 102218", appraisal:22500, minBid:15750, trueMid:20800, estRepair:350, dailyHold:2.4, brokerSays:22500, recent:"2억 ~ 2억 2,500 (최근 1년 4건)",
  briefLine:"전 소유자는 착한 사람이다. 다만 약속한 날이 오면 늘 새 핑계가 생긴다.",
  occ:{pid:"p_delay", name:"노경수 씨", age:48, legal:"전 소유자(채무자) · 배당 없음 · 인도명령 대상"}, tone:"polite", emoji:"🙂", trait:"약속을 자꾸 미룸 · 겁이 많음",
  occInit:{coop:55, resist:46, pride:0.4, place:false, flip:true}, needMul:1.1,
@@ -43583,8 +43593,8 @@ const KF_SPECS = [
   {id:"window", k:"defect", t:"창호 결로", cost:110, d:"샷시가 낡아 겨울마다 결로.", act:{loc:"site", ic:"🪟", t:"샷시·창문 보기", dur:15, p:0.7, text:"샷시 고무가 삭아 틈이 벌어졌다. 창틀에 검은 물때.", card:["🪟","샷시 상태","결로 · 교체 필요"]}},
   {id:"fee", k:"fee", t:"체납관리비", cost:28, d:"공용 관리비 28만원 체납.", act:{loc:"any", ic:"☎️", t:"관리사무소 전화", dur:10, p:0.7, say:["관리실(전화)","28만원이요."], card:["🧾","관리비 체납","공용 28만원"]}}],
  lesson:"핑계가 많은 사람에게는 날짜를 종이에 — 그리고 진짜 결정권자를 그 자리에 앉히세요.", rivalMul:1.05},
-{id:"f34", no:12, stage:"mijeong", stars:3, short:"마포 쓰리룸 · 결정권자가 따로 있는 부부", tagline:"목소리 큰 쪽이 결정권자는 아니다", title:"마포구 쓰리룸 빌라 2층",
- addr:"서울 마포구 ○○동 · 2004년식 · 전용 72㎡(약 22평)", appraisal:36000, minBid:25200, trueMid:33200, estRepair:450, dailyHold:3.8, brokerSays:36000, recent:"3억 3,000 ~ 3억 6,000 (최근 1년 3건)",
+{id:"f34", no:12, stage:"mijeong", stars:3, short:"마포 쓰리룸 · 결정권자가 따로 있는 부부", tagline:"목소리 큰 쪽이 결정권자는 아니다", title:"서울 마포구 망원동 ○○빌라 2층",
+ addr:"서울 마포구 망원동 · 2004년식 · 전용 72㎡(약 22평)", court:"서울서부지방법원", caseNum:"2026타경 4436", appraisal:36000, minBid:25200, trueMid:33200, estRepair:450, dailyHold:3.8, brokerSays:36000, recent:"3억 3,000 ~ 3억 6,000 (최근 1년 3건)",
  briefLine:"전 소유자 부부. 남편은 소리부터 지르고, 아내는 말이 없다. …누가 정하는 걸까.",
  occ:{pid:"p_phishing", name:"오태석·한미정 부부", age:44, legal:"전 소유자(채무자) 부부 · 배당 없음 · 인도명령 대상"}, tone:"rough", emoji:"👫", trait:"남편은 강경 · 아내는 조용함",
  occInit:{coop:24, resist:80, pride:0.9, place:false, flip:true}, needMul:1.3,
@@ -43597,8 +43607,8 @@ const KF_SPECS = [
  lesson:"가장 크게 말하는 사람이 결정하는 사람은 아닙니다 — 조용한 쪽의 사정이 날짜를 정합니다.", rivalMul:1.08},
 
 /* ===== STAGE 4 · 재훈 ★★★★ — 하자가 크고 사람이 어려운 집 ===== */
-{id:"f41", no:13, stage:"jaehoon", stars:4, short:"성북구 반지하 · 침수 흔적", tagline:"싼 데는 이유가 있다", title:"성북구 빌라 반지하",
- addr:"서울 성북구 ○○동 · 1990년식 · 전용 42㎡(약 13평) · 반지하", appraisal:11000, minBid:6160, trueMid:9500, estRepair:500, dailyHold:1.3, brokerSays:10500, recent:"9,000 ~ 1억 500 (최근 2년 3건)",
+{id:"f41", no:13, stage:"jaehoon", stars:4, short:"성북구 반지하 · 침수 흔적", tagline:"싼 데는 이유가 있다", title:"서울 성북구 정릉동 ○○빌라 반지하",
+ addr:"서울 성북구 정릉동 · 1990년식 · 전용 42㎡(약 13평) · 반지하", court:"서울북부지방법원", caseNum:"2026타경 6025", appraisal:11000, minBid:6160, trueMid:9500, estRepair:500, dailyHold:1.3, brokerSays:10500, recent:"9,000 ~ 1억 500 (최근 2년 3건)",
  briefLine:"두 번 유찰된 반지하. 최저가만 보면 반값이다. 벽에 곰팡이 냄새가 사진으로도 난다.",
  occ:{pid:"p_basic", name:"구판석 할아버지", age:79, legal:"대항력 없는 무보증 월세 세입자(기초생활수급) · 인도명령 대상"}, tone:"elder", emoji:"👴", trait:"기초생활수급 · 혼자 사심",
  occInit:{coop:45, resist:50, pride:0.6, place:true, flip:false},
@@ -43609,8 +43619,8 @@ const KF_SPECS = [
   {id:"welfare", k:"helper", t:"공공임대 순번", d:"행정복지센터: '할아버지 공공임대 대기 순번이 가까워요.'", act:{loc:"any", ic:"🏛️", t:"행정복지센터 전화", dur:25, p:0.8, say:["복지 담당","구 할아버지요? 공공임대 대기 순번이 거의 다 됐어요. 서류만 같이 챙겨 주시면 돼요."], card:["🏛️","복지 담당","공공임대 순번 임박"]}},
   {id:"price", k:"price", t:"반지하 시세", d:"반지하는 대출이 잘 안 나와 매수자가 적다 — 9천대 중반이 현실.", act:{loc:"any", ic:"☎️", t:"중개사 3곳 전화", dur:45, p:0.55, say:[["중개사 A","1억은 받죠."],["중개사 B","반지하는 대출이 안 나와서 9천 중반이면 잘 판 거예요."]], card:["📝","중개사 통화","반지하 9천 중반"]}}],
  lesson:"반값 최저가에는 반값의 이유가 있습니다 — 비 온 다음 날 한 번 더 가 본 사람만 그 이유를 봅니다.", rivalMul:1.1},
-{id:"f42", no:14, stage:"jaehoon", stars:4, short:"도봉구 투룸 · 물건이 가득 찬 집", tagline:"공사보다 사람이 먼저", title:"도봉구 투룸 빌라 3층",
- addr:"서울 도봉구 ○○동 · 1996년식 · 전용 55㎡(약 17평)", appraisal:20500, minBid:12300, trueMid:18600, estRepair:600, dailyHold:2.2, brokerSays:20000, recent:"1억 8,000 ~ 2억 (최근 1년 3건)",
+{id:"f42", no:14, stage:"jaehoon", stars:4, short:"도봉구 투룸 · 물건이 가득 찬 집", tagline:"공사보다 사람이 먼저", title:"서울 도봉구 창동 ○○빌라 3층",
+ addr:"서울 도봉구 창동 · 1996년식 · 전용 55㎡(약 17평)", court:"서울북부지방법원", caseNum:"2026타경 6690", appraisal:20500, minBid:12300, trueMid:18600, estRepair:600, dailyHold:2.2, brokerSays:20000, recent:"1억 8,000 ~ 2억 (최근 1년 3건)",
  briefLine:"현관 앞까지 상자가 쌓여 있다. 안에 고양이가 몇 마리인지 아무도 모른다.",
  occ:{pid:"p_mind", name:"장미자 씨", age:56, legal:"전 소유자(채무자) · 배당 없음 · 인도명령 대상"}, tone:"polite", emoji:"📦", trait:"물건을 못 버림 · 불안이 큼",
  occInit:{coop:34, resist:60, pride:0.6, place:false, flip:true}, needMul:1.2,
@@ -43621,8 +43631,8 @@ const KF_SPECS = [
   {id:"pipe", k:"defect", t:"배관 막힘", cost:90, d:"하수 배관이 막혀 역류.", act:{loc:"site", ic:"🚿", t:"아래층 탐문", dur:[20,50], p:0.6, say:["아래층 주민","위층 하수구가 막혀서 우리 집까지 냄새가 올라와요."], card:["🚿","아래층 증언","하수 배관 막힘"]}},
   {id:"fee", k:"fee", t:"체납관리비", cost:55, d:"공용관리비 55만원 체납.", act:{loc:"any", ic:"☎️", t:"관리사무소 전화", dur:10, p:0.7, say:["관리실(전화)","55만원 밀렸어요."], card:["🧾","관리비 체납","공용 55만원"]}}],
  lesson:"쌓인 짐은 사람의 불안입니다 — 강제로 치우기 전에, 같이 치울 사람을 먼저 찾으세요.", rivalMul:1.1},
-{id:"f43", no:15, stage:"jaehoon", stars:4, short:"송파 원룸 · 방송하는 세입자", tagline:"카메라 앞에서 흔들리지 않기", title:"송파구 원룸 5층",
- addr:"서울 송파구 ○○동 · 2012년식 · 전용 29㎡(약 9평) · 승강기 있음", appraisal:23000, minBid:16100, trueMid:21600, estRepair:300, dailyHold:2.5, brokerSays:23000, recent:"2억 1,000 ~ 2억 3,000 (최근 1년 6건)",
+{id:"f43", no:15, stage:"jaehoon", stars:4, short:"송파 원룸 · 방송하는 세입자", tagline:"카메라 앞에서 흔들리지 않기", title:"서울 송파구 가락동 ○○원룸 5층",
+ addr:"서울 송파구 가락동 · 2012년식 · 전용 29㎡(약 9평) · 승강기 있음", court:"서울동부지방법원", caseNum:"2026타경 3908", appraisal:23000, minBid:16100, trueMid:21600, estRepair:300, dailyHold:2.5, brokerSays:23000, recent:"2억 1,000 ~ 2억 3,000 (최근 1년 6건)",
  briefLine:"세입자는 생활 방송 진행자. '낙찰자 갑질' 방송을 하겠다고 벼르고 있다.",
  occ:{pid:"p_live", name:"유리아 씨", age:31, legal:"대항력 없는 월세 세입자 · 보증금 일부 배당 예정 · 인도명령 대상"}, tone:"polite", emoji:"📱", trait:"촬영하며 대화 · 배당 일부 받음",
  occInit:{coop:28, resist:70, pride:0.9, place:false, flip:false}, needMul:1.2,
@@ -43633,8 +43643,8 @@ const KF_SPECS = [
   {id:"floor", k:"defect", t:"바닥 들뜸", cost:140, d:"강마루가 물을 먹고 들떴다.", act:{loc:"site", ic:"🏚️", t:"같은 층 복도·현관 보기", dur:15, p:0.55, text:"현관 앞 복도 바닥까지 물 자국이 번져 있다.", card:["🪵","복도 바닥","마루 들뜸 의심"]}},
   {id:"dump", k:"dump", t:"같은 건물 급매", d:"같은 건물 3층이 2억 900에 급매.", act:{loc:"any", ic:"📱", t:"같은 건물 매물 검색", dur:20, p:0.9, text:"같은 건물 3층이 2억 900 급매로 올라와 있다.", card:["🏷️","같은 건물 급매","3층 2억 900"]}}],
  lesson:"카메라 앞에서 필요한 건 반박이 아니라 절차입니다 — 흥분하지 않으면 방송은 끝납니다.", rivalMul:1.08},
-{id:"f44", no:16, stage:"jaehoon", stars:4, short:"은평구 오래된 단독주택", tagline:"지붕과 담장, 그리고 40년", title:"은평구 단독주택",
- addr:"서울 은평구 ○○동 · 1983년식 · 대지 132㎡ · 연면적 96㎡", appraisal:48000, minBid:30720, trueMid:44000, estRepair:1800, dailyHold:5.0, brokerSays:48000, recent:"단독 4억 3,000 ~ 4억 8,000 (최근 2년 3건)",
+{id:"f44", no:16, stage:"jaehoon", stars:4, short:"은평구 오래된 단독주택", tagline:"지붕과 담장, 그리고 40년", title:"서울 은평구 불광동 단독주택",
+ addr:"서울 은평구 불광동 · 1983년식 · 대지 132㎡ · 연면적 96㎡", court:"서울서부지방법원", caseNum:"2026타경 5172", appraisal:48000, minBid:30720, trueMid:44000, estRepair:1800, dailyHold:5.0, brokerSays:48000, recent:"단독 4억 3,000 ~ 4억 8,000 (최근 2년 3건)",
  briefLine:"40년 된 단독주택. 마당이 넓다. 이 골목에서 40년을 산 할머니가 '큰언니'로 통한다.",
  occ:{pid:"p_tojuk", name:"염복순 할머니", age:74, legal:"전 소유자(채무자) · 배당 없음 · 인도명령 대상"}, tone:"elder", emoji:"👵", trait:"자존심 셈 · 동네가 편듦",
  occInit:{coop:24, resist:82, pride:1.0, place:true, flip:false}, needMul:1.3,
@@ -43647,8 +43657,8 @@ const KF_SPECS = [
  lesson:"단독주택은 벽이 아니라 땅과 지붕을 삽니다 — 그리고 40년 산 사람의 자존심도 같이.", rivalMul:1.1},
 
 /* ===== STAGE 5 · 은경 ★★★★ — 숫자와 권리: 인수·가장임차·당해세 ===== */
-{id:"f51", no:17, stage:"eunkyung", stars:4, short:"강동구 쓰리룸 · 자칭 선순위 임차인", tagline:"진짜 임차인인가", title:"강동구 쓰리룸 빌라 2층",
- addr:"서울 강동구 ○○동 · 2006년식 · 전용 70㎡(약 21평)", appraisal:34000, minBid:17408, trueMid:32000, estRepair:400, dailyHold:3.6, brokerSays:34000, recent:"3억 1,000 ~ 3억 4,000 (최근 1년 4건)",
+{id:"f51", no:17, stage:"eunkyung", stars:4, short:"강동구 쓰리룸 · 자칭 선순위 임차인", tagline:"진짜 임차인인가", title:"서울 강동구 천호동 ○○빌라 2층",
+ addr:"서울 강동구 천호동 · 2006년식 · 전용 70㎡(약 21평)", court:"서울동부지방법원", caseNum:"2026타경 4711", appraisal:34000, minBid:17408, trueMid:32000, estRepair:400, dailyHold:3.6, brokerSays:34000, recent:"3억 1,000 ~ 3억 4,000 (최근 1년 4건)",
  briefLine:"세 번 유찰. 선순위 임차인이 보증금 1억을 신고했다. …그런데 채무자와 성이 같다.",
  occ:{pid:"p_fake", name:"이상훈 씨", age:38, legal:"자칭 선순위 임차인(보증금 1억 신고) · 진정성 다툼"}, tone:"rough", emoji:"🕴️", trait:"서류를 흔들며 큰소리",
  occInit:{coop:18, resist:86, pride:0.8, place:false, flip:false}, needMul:1.5,
@@ -43659,8 +43669,8 @@ const KF_SPECS = [
   {id:"floor2", k:"defect", t:"주방 바닥 누수", cost:160, d:"주방 밑 배관 누수.", act:{loc:"site", ic:"💧", t:"아래층 탐문", dur:[20,50], p:0.6, say:["아래층","주방 쪽 천장에 물 자국이 있어요."], card:["💧","아래층 증언","주방 배관 누수"]}},
   {id:"price", k:"price", t:"시세 착시", d:"3.4억은 리모델링 한 집 — 보통은 3.2억.", act:{loc:"any", ic:"☎️", t:"중개사 3곳 전화", dur:45, p:0.5, say:[["중개사 A","3.4 되죠."],["중개사 B","올수리 집만 3.4예요. 보통은 3.2."]], card:["📝","중개사 통화","보통은 3.2"]}}],
  lesson:"서류가 있다고 권리가 있는 건 아닙니다 — 은행이 받아 둔 확인서 한 장이 1억을 지웠습니다.", rivalMul:1.15},
-{id:"f52", no:18, stage:"eunkyung", stars:4, short:"양천구 아파트 · 소송하겠다는 점유자", tagline:"법 조항을 들이미는 사람", title:"양천구 아파트 12층",
- addr:"서울 양천구 ○○동 · 1998년식 · 전용 84㎡(약 25평) · 승강기 있음", appraisal:78000, minBid:49920, trueMid:74000, estRepair:900, dailyHold:8.0, brokerSays:78000, recent:"7억 3,000 ~ 7억 8,000 (최근 1년 8건)",
+{id:"f52", no:18, stage:"eunkyung", stars:4, short:"양천구 아파트 · 소송하겠다는 점유자", tagline:"법 조항을 들이미는 사람", title:"서울 양천구 신정동 ○○아파트 12층",
+ addr:"서울 양천구 신정동 · 1998년식 · 전용 84㎡(약 25평) · 승강기 있음", court:"서울남부지방법원", caseNum:"2026타경 10390", appraisal:78000, minBid:49920, trueMid:74000, estRepair:900, dailyHold:8.0, brokerSays:78000, recent:"7억 3,000 ~ 7억 8,000 (최근 1년 8건)",
  briefLine:"두 번 유찰된 대단지 아파트. 점유자는 '임대차보호법 제3조'를 줄줄 외운다.",
  occ:{pid:"p_law", name:"마재석 씨", age:46, legal:"자칭 선순위 임차인(채무자의 사촌) · 진정성 다툼"}, tone:"business", emoji:"📚", trait:"법 조항을 외움 · 소송 위협",
  occInit:{coop:14, resist:90, pride:0.9, place:false, flip:false}, needMul:2.0,
@@ -43671,8 +43681,8 @@ const KF_SPECS = [
   {id:"fee", k:"fee", t:"체납관리비", cost:160, d:"아파트 공용관리비 160만원 체납.", act:{loc:"site", ic:"🏢", t:"관리사무소 방문", dur:[30,60], p:0.8, say:["관리소장","공용분만 160이에요. 낙찰자분이 내셔야 할 거예요."], card:["🧾","관리비 체납","공용 160만원"]}},
   {id:"price", k:"price", t:"동·향 차이", d:"7.8억은 남향 로열동 — 이 동은 7.4억 안팎.", act:{loc:"any", ic:"📈", t:"동·향별 실거래 비교", dur:30, p:0.6, text:"7.8억 거래는 전부 남향 로열동이다. 이 동·향은 7.4억 안팎.", card:["📈","동·향별 실거래","이 동은 7.4 안팎"]}}],
  lesson:"법 조항을 외우는 사람 앞에서는 조항 대신 날짜를 — 전입일 한 줄이 넉 달을 줄였습니다.", rivalMul:1.12},
-{id:"f53", no:19, stage:"eunkyung", stars:5, short:"안산 빌라 · 열람에 없던 선순위", tagline:"안 보이는 1억", title:"안산 투룸 빌라 3층",
- addr:"경기 안산시 ○○동 · 2003년식 · 전용 50㎡(약 15평)", appraisal:15500, minBid:7595, trueMid:14600, estRepair:250, dailyHold:1.7, brokerSays:15500, recent:"1억 4,000 ~ 1억 5,500 (최근 1년 5건)",
+{id:"f53", no:19, stage:"eunkyung", stars:5, short:"안산 빌라 · 열람에 없던 선순위", tagline:"안 보이는 1억", title:"경기 안산시 단원구 원곡동 ○○빌라 3층",
+ addr:"경기 안산시 단원구 원곡동 · 2003년식 · 전용 50㎡(약 15평)", court:"수원지방법원 안산지원", caseNum:"2026타경 21847", appraisal:15500, minBid:7595, trueMid:14600, estRepair:250, dailyHold:1.7, brokerSays:15500, recent:"1억 4,000 ~ 1억 5,500 (최근 1년 5건)",
  briefLine:"세 번 유찰, 최저가 반값. 전입세대 열람엔 아무도 없다. …그런데 왜 다들 안 들어올까.",
  occ:{pid:"p_mn", name:"바트 씨", age:33, legal:"외국인 임차인 · 체류지 신고로 대항력 · 보증금 인수 대상"}, tone:"foreign", emoji:"🏭", trait:"성실한 공장 근로자 · 한국어 서툼",
  occInit:{coop:55, resist:38, pride:0.4, place:true, flip:false},
@@ -43683,8 +43693,8 @@ const KF_SPECS = [
   {id:"price", k:"price", t:"시세", d:"1.55억은 역세권 신축 얘기 — 이 골목은 1.45억 안팎.", act:{loc:"any", ic:"☎️", t:"중개사 3곳 전화", dur:45, p:0.5, say:[["중개사 A","1.5 넘죠."],["중개사 B","역 쪽 얘기고요, 여긴 1.45 정도."]], card:["📝","중개사 통화","1.45 안팎"]}},
   {id:"damp", k:"defect", t:"결로 곰팡이", cost:80, d:"북쪽 방 결로.", act:{loc:"site", ic:"🏚️", t:"외관·창문 보기", dur:20, p:0.55, text:"북쪽 창틀에 검은 물때가 보인다.", card:["🍄","창틀","결로 곰팡이"]}}],
  lesson:"열람에 안 보인다고 없는 게 아닙니다 — 외국인 임차인은 체류지 신고로 대항력을 가집니다. 비고란이 6,000만원을 말하고 있었습니다.", rivalMul:1.0, rivals:[{t:"무조건 저가형", lo:1.00, hi:1.05, p:0.7}, {t:"서류 안 읽은 초보", lo:1.05, hi:1.25, p:0.35}, {t:"전문 투자자", lo:1.00, hi:1.04, p:0.5}]},
-{id:"f54", no:20, stage:"eunkyung", stars:5, short:"중랑구 투룸 · 당해세에 밀린 선순위", tagline:"배당 순서가 인수액을 정한다", title:"중랑구 투룸 빌라 2층",
- addr:"서울 중랑구 ○○동 · 2005년식 · 전용 55㎡(약 17평)", appraisal:26000, minBid:13312, trueMid:24500, estRepair:350, dailyHold:2.8, brokerSays:26000, recent:"2억 4,000 ~ 2억 6,000 (최근 1년 4건)",
+{id:"f54", no:20, stage:"eunkyung", stars:5, short:"중랑구 투룸 · 당해세에 밀린 선순위", tagline:"배당 순서가 인수액을 정한다", title:"서울 중랑구 면목동 ○○빌라 2층",
+ addr:"서울 중랑구 면목동 · 2005년식 · 전용 55㎡(약 17평)", court:"서울북부지방법원", caseNum:"2026타경 7718", appraisal:26000, minBid:13312, trueMid:24500, estRepair:350, dailyHold:2.8, brokerSays:26000, recent:"2억 4,000 ~ 2억 6,000 (최근 1년 4건)",
  briefLine:"대항력 있는 전세 세입자. 배당요구도 했다. 보증금은 다 배당될 것 같은데… 세금 체납이 걸려 있다.",
  occ:{pid:"p_5000", name:"한정우·서지은 부부", age:42, legal:"대항력 있는 전세 세입자(보증금 1억 6천 · 배당요구) · 미배당분 인수"}, tone:"polite", emoji:"👨‍👩‍👧", trait:"딸 학교 걱정 · 보증금이 전 재산",
  occInit:{coop:40, resist:55, pride:0.5, place:true, flip:false},
@@ -43697,8 +43707,8 @@ const KF_SPECS = [
  lesson:"대항력 있는 임차인은 '다 배당받나'가 아니라 '누가 먼저 받나'를 봐야 합니다 — 당해세가 3,800을 밀어냈습니다.", rivalMul:1.0, rivals:[{t:"무조건 저가형", lo:1.00, hi:1.06, p:0.7}, {t:"배당 계산 안 한 초보", lo:1.10, hi:1.35, p:0.35}, {t:"전문 투자자", lo:1.02, hi:1.10, p:0.5}]},
 
 /* ===== STAGE 6 · 태식 ★★★★★ — 유치권·통건물·영업 중인 숙박시설·공장 ===== */
-{id:"f61", no:21, stage:"taesik", stars:5, short:"수원 근린상가 빌딩 · 유치권 신고", tagline:"현수막 뒤의 진짜 점유", title:"수원 근린상가 빌딩(지상 5층)",
- addr:"경기 수원시 ○○동 · 2002년식 · 대지 330㎡ · 연면적 1,120㎡", appraisal:185000, minBid:90650, trueMid:168000, estRepair:4500, dailyHold:18, brokerSays:185000, recent:"근린상가 빌딩 16억 ~ 18억 5천 (최근 3년 2건)",
+{id:"f61", no:21, stage:"taesik", stars:5, short:"수원 근린상가 빌딩 · 유치권 신고", tagline:"현수막 뒤의 진짜 점유", title:"경기 수원시 팔달구 인계동 근린상가 빌딩",
+ addr:"경기 수원시 팔달구 인계동 · 2002년식 · 대지 330㎡ · 연면적 1,120㎡ · 지상 5층", court:"수원지방법원", caseNum:"2026타경 30554", appraisal:185000, minBid:90650, trueMid:168000, estRepair:4500, dailyHold:18, brokerSays:185000, recent:"근린상가 빌딩 16억 ~ 18억 5천 (최근 3년 2건)",
  briefLine:"두 번 유찰. 1층 현관에 '유치권 행사 중' 현수막. 인테리어 업체가 공사대금 4억을 신고했다.",
  occ:{pid:"p_lien", name:"㈜한빛인테리어 현장소장", age:49, legal:"유치권 주장자(공사대금 4억 신고) · 점유 다툼"}, tone:"business", emoji:"🏗️", trait:"현수막·자물쇠 · 공사대금 주장",
  occInit:{coop:15, resist:90, pride:0.7, place:false, flip:false}, needMul:5, execCost:1500, centerT:"💼 공사대금은 전 소유자에게 받을 돈임을 정리해 준다",
@@ -43709,8 +43719,8 @@ const KF_SPECS = [
   {id:"fee", k:"fee", t:"공용관리비·체납 공과금", cost:900, d:"건물 공용 전기·수도·관리비 체납 900만원.", act:{loc:"any", ic:"☎️", t:"관리업체·한전 문의", dur:30, p:0.7, say:["관리업체","공용분 체납이 900 가까이 돼요."], card:["🧾","공용 체납","900만원"]}},
   {id:"lift", k:"defect", t:"엘리베이터 교체", cost:2600, d:"20년 된 엘리베이터 — 정밀검사 불합격, 교체 필요.", act:{loc:"home", ic:"🛗", t:"승강기 안전관리 이력 조회", dur:25, p:0.85, text:"최근 정밀안전검사 '불합격'. 교체 권고가 두 번 나왔다.", card:["🛗","승강기 이력","정밀검사 불합격 · 교체"]}}],
  lesson:"현수막은 주장이고, 날짜는 증거입니다 — 점유를 언제 시작했는지가 5억을 가릅니다.", rivalMul:1.0, rivals:[{t:"유치권 겁먹은 저가형", lo:1.00, hi:1.04, p:0.7}, {t:"유치권 전문 투자자", lo:1.10, hi:1.32, p:0.6}, {t:"시행사", lo:1.15, hi:1.38, p:0.35}]},
-{id:"f62", no:22, stage:"taesik", stars:5, short:"인천 다가구 통건물 6세대", tagline:"한 집씩, 사정은 여섯 가지", title:"인천 다가구주택 통건물(6세대)",
- addr:"인천 ○○구 ○○동 · 1998년식 · 대지 198㎡ · 연면적 360㎡ · 6가구", appraisal:98000, minBid:56800, trueMid:92000, estRepair:3000, dailyHold:10, brokerSays:98000, recent:"다가구 통매매 8억 8천 ~ 9억 8천 (최근 2년 3건)",
+{id:"f62", no:22, stage:"taesik", stars:5, short:"인천 다가구 통건물 6세대", tagline:"한 집씩, 사정은 여섯 가지", title:"인천 남동구 간석동 다가구주택(6세대)",
+ addr:"인천 남동구 간석동 · 1998년식 · 대지 198㎡ · 연면적 360㎡ · 6가구", court:"인천지방법원", caseNum:"2026타경 41026", appraisal:98000, minBid:56800, trueMid:92000, estRepair:3000, dailyHold:10, brokerSays:98000, recent:"다가구 통매매 8억 8천 ~ 9억 8천 (최근 2년 3건)",
  briefLine:"여섯 가구가 사는 다가구 한 동. 세입자 대표는 공장에서 일하는 아메드 씨 일행이다. 한 집 한 집 사정이 다르다.",
  occ:{pid:"p_pk", name:"아메드 씨 외 세입자 대표들", age:30, legal:"세입자 6가구(대항력 있는 1가구 포함) · 나머지 인도명령 대상"}, tone:"foreign", emoji:"🏘️", trait:"6가구 · 사정이 제각각",
  occInit:{coop:38, resist:62, pride:0.5, place:true, flip:true}, needMul:4, execCost:1800, units:6,
@@ -43721,8 +43731,8 @@ const KF_SPECS = [
   {id:"roof2", k:"defect", t:"옥상 방수·외벽", cost:900, d:"옥상 방수 전면 + 외벽 크랙.", act:{loc:"site", ic:"🏚️", t:"옥상·외벽 보기", dur:30, p:0.7, text:"옥상 방수층이 들떠 있고, 외벽에 가로 크랙이 길게 났다.", card:["🏚️","옥상·외벽","방수 전면 · 크랙"]}},
   {id:"price", k:"price", t:"통매매 수익률", d:"9.8억은 만실 기준 — 공실·보증금 반환을 빼면 9.2억 안팎.", act:{loc:"any", ic:"🧮", t:"임대수익률로 매매가 역산", dur:40, p:0.7, text:"월세 합계를 수익률로 나눠 보니 9.8억은 만실 가정이다. 현실은 9.2억 안팎.", card:["🧮","수익률 역산","9.2억 안팎"]}}],
  lesson:"다가구는 명도가 여섯 번입니다 — 한 집씩, 그리고 대항력 있는 한 집은 입찰 전에 계산부터.", rivalMul:1.05},
-{id:"f63", no:23, stage:"taesik", stars:5, short:"평택 모텔 건물 · 영업 중인 전 소유자", tagline:"손님이 드나드는 명도", title:"평택 숙박시설(모텔) 건물",
- addr:"경기 평택시 ○○동 · 2005년식 · 대지 495㎡ · 연면적 1,480㎡ · 객실 28실", appraisal:260000, minBid:127400, trueMid:236000, estRepair:9000, dailyHold:26, brokerSays:260000, recent:"숙박시설 22억 ~ 26억 (최근 3년 2건)",
+{id:"f63", no:23, stage:"taesik", stars:5, short:"평택 모텔 건물 · 영업 중인 전 소유자", tagline:"손님이 드나드는 명도", title:"경기 평택시 평택동 숙박시설(모텔)",
+ addr:"경기 평택시 평택동 · 2005년식 · 대지 495㎡ · 연면적 1,480㎡ · 객실 28실", court:"수원지방법원 평택지원", caseNum:"2026타경 12780", appraisal:260000, minBid:127400, trueMid:236000, estRepair:9000, dailyHold:26, brokerSays:260000, recent:"숙박시설 22억 ~ 26억 (최근 3년 2건)",
  briefLine:"두 번 유찰된 모텔 건물. 전 소유자가 아직 영업 중이다. 알로하 셔츠에 금목걸이.",
  occ:{pid:"p_hawaii", name:"황금철 씨", age:63, legal:"전 소유자(채무자)가 직접 영업 · 배당 없음 · 인도명령 대상"}, tone:"rough", emoji:"🏨", trait:"영업 중 · 버티면 돈 나온다고 믿음",
  occInit:{coop:18, resist:86, pride:0.8, place:false, flip:true}, needMul:6, execCost:3000, centerT:"🏨 영업 정리 일정(예약·직원)을 같이 짠다",
@@ -43733,8 +43743,8 @@ const KF_SPECS = [
   {id:"boilerB", k:"defect", t:"보일러·배관 전면", cost:4200, d:"객실 배관 노후 — 보일러·배관 전면 교체.", act:{loc:"site", ic:"🔥", t:"기계실 보기", dur:40, p:0.7, text:"기계실 보일러 두 대 중 한 대가 멈춰 있다. 배관에 녹물 자국.", card:["🔥","기계실","보일러·배관 전면 교체"]}},
   {id:"price", k:"price", t:"숙박시설 시세", d:"26억은 리모델링 된 곳 — 객실 단가를 보면 23.6억 안팎.", act:{loc:"any", ic:"🧮", t:"객실 단가·매출로 역산", dur:40, p:0.7, text:"객실당 매매가로 역산하면 23.6억 안팎. 26억은 리모델링 된 곳 얘기다.", card:["🧮","객실 단가","23.6억 안팎"]}}],
  lesson:"영업 중인 건물은 '언제 비우나'가 아니라 '언제 예약이 끝나나'입니다 — 카운터를 보는 사람이 날짜를 압니다.", rivalMul:1.05, rivals:[{t:"숙박업 운영자", lo:1.12, hi:1.36, p:0.6}, {t:"저가형 투자자", lo:1.00, hi:1.05, p:0.7}, {t:"리모델링 업자", lo:1.08, hi:1.28, p:0.45}]},
-{id:"f64", no:24, stage:"taesik", stars:5, short:"화성 공장 · 기계는 남의 것, 유치권까지", tagline:"마지막 물건", title:"화성 공장(대지 1,650㎡)",
- addr:"경기 화성시 ○○면 · 2008년식 · 대지 1,650㎡ · 공장동 820㎡", appraisal:210000, minBid:102900, trueMid:192000, estRepair:3500, dailyHold:22, brokerSays:210000, recent:"공장 18억 ~ 21억 (최근 3년 3건)",
+{id:"f64", no:24, stage:"taesik", stars:5, short:"화성 공장 · 기계는 남의 것, 유치권까지", tagline:"마지막 물건", title:"경기 화성시 팔탄면 공장",
+ addr:"경기 화성시 팔탄면 · 2008년식 · 대지 1,650㎡ · 공장동 820㎡", court:"수원지방법원", caseNum:"2026타경 33419", appraisal:210000, minBid:102900, trueMid:192000, estRepair:3500, dailyHold:22, brokerSays:210000, recent:"공장 18억 ~ 21억 (최근 3년 3건)",
  briefLine:"마지막 물건. 공장 안엔 CNC 다섯 대, 현관엔 자물쇠. 설비 업자가 공사대금 유치권을 주장한다.",
  occ:{pid:"p_chain", name:"도강철 씨", age:52, legal:"유치권 주장자(설비 공사대금) · 기계는 제3자(리스사) 소유"}, tone:"rough", emoji:"🔗", trait:"자물쇠 · 공사대금 주장 · 기계 반출 거부",
  occInit:{coop:10, resist:95, pride:0.9, place:false, flip:true}, needMul:5, execCost:4000, centerT:"🏭 기계 주인(리스사)을 불러 반출 일정을 잡는다",
@@ -44038,6 +44048,38 @@ if(typeof frMoney === "function"){
   };
 }
 
+/* ---------- 🏛️ 물건마다 관할 법원·사건번호 — '서울○○지방법원' 대신 진짜 어디서 하는 경매인지 ---------- */
+Object.assign(KP1, {title:"서울 강북구 수유동 ○○빌라 3층", short:"강북구 수유동 오래된 빌라", addr:"서울 강북구 수유동 · 1992년식 · 전용 49㎡(약 15평)", court:"서울북부지방법원", caseNum:"2026타경 1052"});
+Object.assign(KP2, {title:"서울 은평구 신사동 ○○빌라 4층", short:"은평구 신사동 투룸 빌라", addr:"서울 은평구 신사동 · 1995년식 · 전용 59㎡(약 18평) · 승강기 없음", court:"서울서부지방법원", caseNum:"2026타경 2381"});
+const KF_STAGE_OF = Object.assign({k1:"seoyun", k2:"dohyun"}, Object.fromEntries(KF_SPECS.map(S => [S.id, S.stage])));
+function kfCourt(){ return KP && KP.court ? `${KP.court} ${KP.caseNum || ""}`.trim() : ""; }
+if(typeof kcIntroHTML === "function"){
+  const _kf_intro = kcIntroHTML;
+  kcIntroHTML = function(){ const h = _kf_intro(); return kfCourt() ? h.replace("서울○○지방법원", esc(kfCourt())) : h; };
+}
+if(typeof keCaseHTML === "function"){
+  const _kf_case = keCaseHTML;
+  keCaseHTML = function(){ const h = _kf_case(); return kfCourt() ? h.replace('<h3 class="ke-title">', `<div class="ke-court">🏛️ ${esc(kfCourt())}</div><h3 class="ke-title">`) : h; };
+}
+if(typeof keBidSheet === "function"){
+  const _kf_sheet = keBidSheet;
+  keBidSheet = function(){ const h = _kf_sheet(); return kfCourt() ? h.replace(/사건번호 CASE \d+/, `${esc(KP.court)} · ${esc(KP.caseNum || "")}`).replace(/CASE \d+ · 입찰보증금/, `${esc(kfCourt())} · 입찰보증금`) : h; };
+}
+/* 케이스 상자 — 스토리 단계가 풀린 캐릭터의 물건 네 개는 여기서도 바로 한 판씩 할 수 있다 */
+function kfStageOpen(stage){ return stage === "seoyun" || (typeof cpUnlocked === "function" && cpUnlocked(stage)); }
+KF_SPECS.forEach(S => { K_PROPS[S.id].unlock = () => kfStageOpen(S.stage) || kfUnlocked(S.id); });
+if(typeof kcCaseButtons === "function"){
+  kcCaseButtons = function(running){
+    const c = kcRec(), p = hubRec(), order = typeof CP_ORDER !== "undefined" ? CP_ORDER : [];
+    const open = Object.values(K_PROPS).filter(P => !P.unlock || P.unlock(p))
+      .sort((a, b) => (order.indexOf(KF_STAGE_OF[a.id]) - order.indexOf(KF_STAGE_OF[b.id])) || a.no - b.no);
+    if(!c.cases && open.length <= 1) return `<button type="button" class="btn ${running ? "" : "pri"}" data-kcnew="career" data-prop="k1">▶ 새 게임 <small>보유 현금 1억 5,000만원으로 시작</small></button>`;
+    const rec = open.find(P => !p.cleared["king:" + P.id]) || open[open.length - 1];
+    return open.map(P => { const st = order.indexOf(KF_STAGE_OF[P.id]) + 1;
+      return `<button type="button" class="btn ${!running && P === rec ? "pri" : ""}" data-kcnew="career" data-prop="${P.id}">📁 ${st ? `STAGE ${st} · ` : ""}${esc(P.title)}${!p.cleared["king:" + P.id] ? ' <em class="kc-new">NEW</em>' : ""} <small>${P.court ? `🏛️ ${esc(P.court)} · ` : ""}${"★".repeat(P.stars || 1)}${"☆".repeat(5 - (P.stars || 1))} · ${esc(P.tagline || "")}</small></button>`; }).join("");
+  };
+}
+
 /* ================= 📖 에피소드 스토리 — 단계마다 물건 네 개 → 엔딩 → 다음 사람 해금 =================
    서윤(1단계) → 도현 → 미정 → 재훈 → 은경 → 태식(6단계). 이미 있는 사건(CASES)을 난이도 순으로
    네 개씩(마지막 태식만 다섯 개) 골라 한 사람의 1~2년처럼 이어 붙였다. 사건·인물은 모두 가상이다.
@@ -44048,7 +44090,7 @@ const EP_PLAN = {
     {k:"k1", when:"1년차 · 봄", lines:["노트북에 관심지역 알림이 떴다. 서울 오래된 빌라 3층, 대항력 없는 세입자.","'처음부터 끝까지 내 손으로. 조사하고, 입찰하고, 명도하고, 팔아 보자.'"]},
     {k:"f11", when:"1년차 · 여름", lines:["두 번째 물건은 보증금 대부분을 배당받는 세입자가 사는 빌라.","'배당받는 세입자면 명도확인서가 열쇠라던데. 순서만 안 틀리면 돼.'"]},
     {k:"f12", when:"1년차 · 가을", lines:["작은 원룸. 세입자는 스물한 살, 보증금 500이 전 재산이라고 한다.","'나도 스물한 살 땐 아무것도 몰랐어. 알려 줄 수 있는 건 알려 주자.'"]},
-    {k:"f13", when:"2년차 · 겨울", lines:["노원구 소형 아파트. 문을 두드려도 아무도 안 나온다.","'문이 안 열리면, 다른 문을 찾아야지.'"]}]},
+    {k:"f13", when:"2년차 · 겨울", lines:["고양 화정동 소형 아파트. 문을 두드려도 아무도 안 나온다.","'문이 안 열리면, 다른 문을 찾아야지.'"]}]},
   dohyun:{stars:2, base:2600, hold:4, eps:[
     {k:"k2", when:"1년차 · 봄", lines:["퇴근길 지하철에서 관심 물건 알림. 은평구 투룸, 겉 마진이 어마어마하다.","'싸 보이는 데는 이유가 있겠지. 멈출 줄 아는 것도 실력이다.'"]},
     {k:"f21", when:"1년차 · 여름", lines:["점심시간에 걸려 온 전화. '이사비 500은 주셔야죠.'","'회의 5분 전인데… 숫자부터 부르는 사람한테는 어떻게 하더라.'"]},
@@ -44079,7 +44121,7 @@ const EP_PLAN = {
 function epRec(){ const P = cpRec(); if(!P.ep || typeof P.ep !== "object") P.ep = {}; return P.ep; }
 function epOf(id){ const R = epRec(); if(!R[id] || !Array.isArray(R[id].res)) R[id] = {res:[]}; return R[id]; }
 function epInfo(ep){
-  if(ep.k){ const P = (typeof K_PROPS !== "undefined" && K_PROPS[ep.k]) || {}; return {title:P.title || ep.k, cat:"풀 경매 · 조사→입찰→명도→매도", lv:P.stars || 1, full:true}; }
+  if(ep.k){ const P = (typeof K_PROPS !== "undefined" && K_PROPS[ep.k]) || {}; return {title:P.title || ep.k, cat:(P.court ? `${P.court} ${P.caseNum || ""} · ` : "") + "풀 경매 · 입찰→대출→명도→수리→매도", lv:P.stars || 1, full:true}; }
   const c = epCase(ep.c); return c ? {title:c.title, cat:c.cat, lv:c.lv, full:false} : {title:"?", cat:"", lv:1};
 }
 function epCase(id){ return (typeof CASES !== "undefined" ? CASES : []).find(c => c.id === id) || null; }
@@ -44487,7 +44529,7 @@ if(typeof lfBaseHTML === "function"){
       if(R.pendingK && typeof bdRunning === "function" && bdRunning()) card = `<div class="ep-alert"><small>📖 STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${R.pendingK.i + 1} 진행 중</small><b>${esc(epInfo(Pl.eps[R.pendingK.i]).title)}</b><div class="ep-alert-btns"><button type="button" class="btn pri" data-atab="king">▶ 이어하기</button></div></div>`;
       else if(i >= n) card = `<div class="ep-alert end"><small>📖 STAGE ${CP_ORDER.indexOf(L.char) + 1} · 네 물건을 모두 끝냈다</small><b>이 시기를 돌아볼 시간</b><div class="ep-alert-btns"><button type="button" class="btn pri" data-epfin="${L.char}">🎬 엔딩 보기</button></div></div>`;
       else { const ep = Pl.eps[i], c = epInfo(ep);
-        card = `<div class="ep-alert"><small>📱 새 알림 · STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${i + 1}/${n} · ${esc(ep.when)}</small><b>${esc(c.title)}</b><p>${esc(ep.lines[0])}</p><em>${esc(c.cat)} · ${"★".repeat(c.lv)}</em>
+        card = `<div class="ep-alert" ${epAlertStyle()}><small>📱 새 알림 · STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${i + 1}/${n} · ${esc(ep.when)}</small><b>${esc(c.title)}</b><p>${esc(ep.lines[0])}</p><em>${esc(c.cat)} · ${"★".repeat(c.lv)}</em>
           <div class="ep-alert-btns"><button type="button" class="btn pri" data-epgo="${L.char}">📂 이 물건 보러 가기</button><button type="button" class="btn" data-eplist="${L.char}">📋 에피소드 목록</button></div></div>`; }
       h = h.replace(/(<div class="vn of-stage lf-stage[^"]*">)/, `$1${card}`);
     }catch(e){}
@@ -44521,6 +44563,29 @@ if(typeof cpActChip === "function"){
   const _ep_chip = cpActChip;
   cpActChip = function(){ const L = lfRec(); if(L && L.story && EP_PLAN[L.char]){ const R = epOf(L.char), n = EP_PLAN[L.char].eps.length; return `<span class="cp-act" title="스토리 진행">STAGE ${CP_ORDER.indexOf(L.char) + 1} · EP ${Math.min(n, R.res.length + 1)}/${n}</span>`; } return _ep_chip(); };
 }
+
+/* ---------- 📱 새 알림 카드 — 끌어서 아무 데나 옮길 수 있다(자리는 이 브라우저에 기억) ---------- */
+function epAlertPos(){ try{ return JSON.parse(localStorage.getItem("ep_alert_pos") || "null"); }catch(e){ return null; } }
+function epAlertStyle(){ const P = epAlertPos(); return P && isFinite(P.x) && isFinite(P.y) ? `style="left:${(P.x * 100).toFixed(2)}%;top:${(P.y * 100).toFixed(2)}%;right:auto;transform:none" data-moved="1"` : ""; }
+(function(){
+  let D = null;
+  document.addEventListener("pointerdown", e => {
+    const el = e.target.closest && e.target.closest(".lf-stage .ep-alert"); if(!el || e.target.closest("button,a,input,select")) return;
+    const st = el.offsetParent || el.parentElement, r = el.getBoundingClientRect(), sr = st.getBoundingClientRect();
+    D = {el, st, dx:e.clientX - r.left, dy:e.clientY - r.top, sr, moved:false, id:e.pointerId};
+    try{ el.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  document.addEventListener("pointermove", e => {
+    if(!D) return; const {el, sr} = D, w = el.offsetWidth, h = el.offsetHeight;
+    const x = Math.max(0, Math.min(sr.width - w, e.clientX - sr.left - D.dx)), y = Math.max(0, Math.min(sr.height - h, e.clientY - sr.top - D.dy));
+    if(!D.moved && Math.abs(e.movementX) + Math.abs(e.movementY) < 1) return;
+    D.moved = true; el.classList.add("dragging");
+    Object.assign(el.style, {left:x + "px", top:y + "px", right:"auto", transform:"none"}); D.x = x / sr.width; D.y = y / sr.height; e.preventDefault();
+  });
+  const end = () => { if(!D) return; D.el.classList.remove("dragging"); if(D.moved){ D.el.dataset.moved = "1"; try{ localStorage.setItem("ep_alert_pos", JSON.stringify({x:D.x, y:D.y})); }catch(_){} } D = null; };
+  document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
+  document.addEventListener("dblclick", e => { const el = e.target.closest && e.target.closest(".lf-stage .ep-alert"); if(!el || e.target.closest("button")) return; try{ localStorage.removeItem("ep_alert_pos"); }catch(_){} el.removeAttribute("style"); delete el.dataset.moved; });
+})();
 
 /* ================= 🏦 잔금 대출 — 대출상담사 명함 3장 → 카톡처럼 조건 듣기 → 고르기 =================
    낙찰 뒤 잔금(낙찰가 − 보증금 + 취득세 등)이 현금보다 크면 대출은 필수, 현금이 넉넉하면 "받을지" 묻는다.

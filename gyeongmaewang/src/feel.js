@@ -2,7 +2,7 @@
    음악·효과음은 외부 파일 없이 WebAudio로 즉석 합성한다(저작권·용량 걱정 없음). 시스템(가격·확률)은 한 글자도 안 바꾼다. */
 
 /* ---------- 🔊 소리 설정 (BGM·효과음 따로) ---------- */
-const KA_DEF = {bgm:70, sfx:85, mute:false};
+const KA_DEF = {bgm:100, sfx:100, mute:false};
 function kaCfg(){ try{ const o = JSON.parse(localStorage.getItem("kc_audio")||"null"); if(o) return Object.assign({}, KA_DEF, o); if(localStorage.getItem("sfx_off")==="1") return Object.assign({}, KA_DEF, {mute:true}); }catch(e){} return Object.assign({}, KA_DEF); }
 function kaSave(c){ try{ localStorage.setItem("kc_audio", JSON.stringify(c)); }catch(e){} kaApplyVol(); }
 let KA = null;   // {ac, bgm, sfx}

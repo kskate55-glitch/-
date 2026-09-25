@@ -124,7 +124,7 @@ function pxCaseOpen(){
   const R = arenaRec(); R.pxOpens = (R.pxOpens || 0) + 1;
   const short = R.pxOpens > 3;   // 몇 번 본 뒤로는 짧게
   kcSfx("folder");
-  pxCard(`<div class="px-folder"><span class="px-tab">CASE</span><b class="px-disp">CASE ${pxCaseNo()}</b><small>${esc((KP && KP.title) || "")}</small><em>조사 시작</em></div>`, short ? 650 : 1150, "open");
+  pxCard(`<div class="px-folder"><span class="px-tab">CASE</span><b class="px-disp">CASE ${pxCaseNo()}</b><small>${esc((KP && KP.title) || "")}</small>${KP && KP.court ? `<small class="px-court">🏛️ ${esc(KP.court)} ${esc(KP.caseNum || "")}</small>` : ""}<em>조사 시작</em></div>`, short ? 650 : 1150, "open");
 }
 function pxEmptyHouse(){
   kcSfx("jingle"); setTimeout(() => kcSfx("door"), 380);

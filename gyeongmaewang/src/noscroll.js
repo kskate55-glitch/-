@@ -44,8 +44,9 @@ function nxApply(){
   else {
     // PC: 맨 위 머리줄 가운데 빈자리로 — 그림(점유자·주인공·말풍선)을 가리지 않게
     const head = root.querySelector(".kfs-head"), tools = head && head.querySelector(".kfs-tools");
-    if(head && tools){ dock.classList.add("inhead"); head.classList.add("has-dock"); head.insertBefore(dock, tools); }
-    else stage.appendChild(dock);
+    // → 머리줄은 작고 위에 붙어서 못 찾는다는 말을 듣고, 그림 '아래쪽 가운데'에 크게 띄운다(목록은 위로 펼쳐진다)
+    dock.classList.add("inbot"); const lab = document.createElement("span"); lab.className = "nx-lab"; lab.textContent = "🔍 조사하기"; bar.insertBefore(lab, bar.firstChild);
+    stage.appendChild(dock);
   }
   nxPlace();
 }
@@ -61,6 +62,11 @@ function nxPlace(){
     if(op){ cb = Math.round(op.getBoundingClientRect().top - (parseFloat(getComputedStyle(op).top) || 0)); }
     else { const pr = document.querySelector("#kfsRoot .kfs-body"); cb = pr && getComputedStyle(pr).transform !== "none" ? Math.round(pr.getBoundingClientRect().top) : 0; }
     mob.style.setProperty("--nx-top", (want - cb) + "px"); mob.style.setProperty("--nx-room", room + "px"); return; }
+  const bt = document.querySelector("#kfsRoot .nx-dock.inbot");
+  if(bt){ const st = bt.parentElement, sr = st.getBoundingClientRect(), col = st.querySelector(".stg-col");
+    let right = sr.right; if(col){ const r = col.getBoundingClientRect(); if(r.width && r.left > sr.left + 200) right = r.left - 10; }
+    bt.style.left = "12px"; bt.style.right = Math.max(12, Math.round(sr.right - right)) + "px";
+    bt.style.setProperty("--nx-room", Math.max(200, Math.round(bt.getBoundingClientRect().top - sr.top - 16)) + "px"); return; }
   const hd = document.querySelector("#kfsRoot .nx-dock.inhead");
   if(hd){ const st = document.querySelector("#kfsRoot .kfs-stage"), r = st ? st.getBoundingClientRect() : null; hd.style.setProperty("--nx-room", Math.max(200, Math.round((r ? r.bottom : innerHeight) - hd.getBoundingClientRect().bottom - 20)) + "px"); return; }
   const stage = document.querySelector("#kfsRoot .kfs-stage"), dock = stage && stage.querySelector(".nx-dock"); if(!dock) return;
@@ -92,7 +98,8 @@ const _nx_render = renderArena; renderArena = function(){ _nx_render(); queueMic
 
 // ---------- 📒 조사 노트 탭 (PC) — 사건 파일 옆 공책. 새 줄이 생기면 NEW ----------
 function nxNoteTab(stage, tabs, note){
-  const items = [...note.querySelectorAll("li")].map(li => li.textContent);
+  // 공책엔 '무엇을 알아냈나'만 — 조사에 든 시간([16분] · [1시간 8분 · 이동 39분 포함])은 시계·상황판 몫이라 뺀다
+  const items = [...note.querySelectorAll("li")].map(li => nxNoteText(li.textContent));
   const n = items.length, fresh = n > (NX.seen || 0) && !NX.note;
   if(NX.note) NX.seen = n;
   note.remove();
@@ -106,8 +113,8 @@ function nxNoteTab(stage, tabs, note){
   p.innerHTML = `<button type="button" class="stg-x" data-nxnote aria-label="조사 노트 닫기">✕</button>
     <div class="nx-book"><div class="nx-spiral" aria-hidden="true"></div><h3 class="nx-grip" title="끌어서 옮기기">${esc(who.name)}의 조사 노트 <small>${n}줄 · ${float ? "위쪽을 잡고 끌면 옮겨져요" : "조사할 때마다 한 줄씩"}</small></h3>
     <ol>${items.map((t, i) => `<li class="${i === n - 1 ? "last" : ""}">${esc(t)}</li>`).join("")}</ol></div>`;
-  if(float){ stage.appendChild(p); nxNotePlace(stage, p); }   // 넓은 화면: 주인공 바로 옆에 떠 있는 공책
-  else { dock.appendChild(p); dock.classList.toggle("nx-noteopen", !!NX.note); }
+  if(float){ stage.appendChild(p); nxNotePlace(stage, p); p.scrollTop = p.scrollHeight; }   // 넓은 화면: 주인공 바로 옆에 떠 있는 공책
+  else { dock.appendChild(p); dock.classList.toggle("nx-noteopen", !!NX.note); p.scrollTop = p.scrollHeight; }   // 새로 적은 줄이 먼저 보이게
 }
 document.addEventListener("click", e => {
   const t = e.target; if(!t.closest) return;
@@ -127,6 +134,7 @@ document.addEventListener("click", e => {
 const NX_HAND = {seoyun:"Gaegu", dohyun:"Nanum Pen Script", mijeong:"Hi Melody", jaehoon:"Nanum Brush Script", eunkyung:"Gowun Dodum", taesik:"Song Myung"};
 (function(){ try{ if(document.getElementById("nxHandFont")) return; const l = document.createElement("link"); l.id = "nxHandFont"; l.rel = "stylesheet";
   l.href = "https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nanum+Pen+Script&family=Hi+Melody&family=Nanum+Brush+Script&family=Gowun+Dodum&family=Song+Myung&display=swap"; document.head.appendChild(l); }catch(e){} })();
+function nxNoteText(t){ return String(t).replace(/\[[^\]]*\d+\s*(?:분|시간)[^\]]*\]\s*/g, "").replace(/\s{2,}/g, " ").trim(); }
 function nxNoteWho(){
   try{ const L = typeof lfRec === "function" ? lfRec() : null; if(L && L.char && typeof LF_CHARS !== "undefined"){ const C = LF_CHARS.find(x => x.id === L.char); if(C) return {id:C.id, name:C.name}; } }catch(e){}
   return {id:"me", name:"나"};

@@ -367,7 +367,8 @@ document.addEventListener("change", e => { const t = e.target; if(t && t.matches
 const _ke_kStage = kStage; kStage = function(bg, who, ex, text, name){
   if(who === "occ" && ex === "angry" && K && (K.pendingFlip || K.occ.coop < 35) && artUrl(`npc_${KP.occ.pid}_furious`)) ex = "furious";
   if(bg === "bg_court" && artUrl("bg_bid_room")) bg = "bg_bid_room";
-  if(bg === "bg_room_clean" && K && K.repair && K.repair.id !== "min" && artUrl("bg_room_after")) bg = "bg_room_after";
+  // 명도 끝난 집은 텅 비어 있다 — 최소·일부 수리는 가구 없는 빈 거실, 도배·장판까지 한 집만 단장된 거실
+  if(bg === "bg_room_clean" && K && K.repair){ const rid = K.repair.id; if((rid === "min" || rid === "part") && artUrl("bg_room_empty")) bg = "bg_room_empty"; else if(rid !== "min" && rid !== "part" && artUrl("bg_room_after")) bg = "bg_room_after"; }
   let h = _ke_kStage(bg, who, ex, text, name);
   // 주인공 앞모습 — 결과가 갈리는 순간엔 내 표정이 보인다(대화 장면은 뒷모습 그대로)
   const pe = keMyFace(); const fu = pe && artUrl("npc_playerf_" + pe);

@@ -704,3 +704,26 @@ body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .h
 /* 떠 있는 공책 자리는 변수로 — 옛 배치 규칙(!important)이 left/top을 덮어써서 */
 #kfsRoot .nx-notepaper.nx-float,#kfsRoot.sf-slim .nx-notepaper.nx-float{left:var(--nx-l,30%)!important;top:var(--nx-t,90px)!important;right:auto!important;bottom:auto!important;width:min(380px,40%)!important;max-height:calc(100% - 24px)!important}
 #kfsRoot .nx-hand-me .nx-book{font-family:"Gaegu",cursive} #kfsRoot .nx-hand-me li{color:#27406a}
+/* v124 — 조사 버튼: 그림 아래쪽 가운데에 크게(머리줄에선 작아서 못 찾았다) · 목록은 위로 */
+#kfsRoot .nx-dock.inbot{position:absolute;top:auto;bottom:14px;z-index:14;display:flex;justify-content:center;pointer-events:none}
+#kfsRoot .nx-dock.inbot .nx-bar{flex-wrap:nowrap;gap:10px;align-items:center;padding:8px 10px 8px 14px;border-radius:18px;background:rgba(10,13,20,.78);border:1.5px solid rgba(242,179,61,.45);box-shadow:0 10px 28px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
+#kfsRoot .nx-dock.inbot .nx-lab{color:#ffd98a;font-weight:900;font-size:15px;white-space:nowrap;margin-right:2px}
+#kfsRoot .nx-dock.inbot .nx-grp>summary{min-height:52px;padding:8px 18px;font-size:17px;border-radius:14px;background:linear-gradient(#f7c55a,#e9a52c);color:#1b1406;border:0;box-shadow:0 3px 0 #a8731a,0 8px 18px rgba(0,0,0,.35)}
+#kfsRoot .nx-dock.inbot .nx-grp>summary:hover{filter:brightness(1.07)}
+#kfsRoot .nx-dock.inbot .nx-grp[open]>summary{background:#fff;color:#1b1406;box-shadow:0 0 0 3px #f7c55a,0 8px 18px rgba(0,0,0,.35)}
+#kfsRoot .nx-dock.inbot .nx-n{background:#1b1406;color:#ffd98a;font-size:13px}
+#kfsRoot .nx-dock.inbot .nx-t{display:inline} #kfsRoot .nx-dock.inbot .nx-ts{display:none}
+#kfsRoot .nx-dock.inbot .nx-pop{top:auto;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);max-height:var(--nx-room,60vh)}
+@media (max-width:1100px){ #kfsRoot .nx-dock.inbot .nx-lab{display:none} #kfsRoot .nx-dock.inbot .nx-grp>summary{padding:8px 12px;font-size:15.5px} }
+/* v124 — 조사 노트: 검은 글씨로 또렷하게 · 3~4줄 높이에서 스크롤(새 줄이 먼저 보인다) */
+#kfsRoot .nx-notepaper li,#kfsRoot .nx-notepaper li.last,
+#kfsRoot .nx-hand-seoyun li,#kfsRoot .nx-hand-dohyun li,#kfsRoot .nx-hand-mijeong li,#kfsRoot .nx-hand-jaehoon li,#kfsRoot .nx-hand-eunkyung li,#kfsRoot .nx-hand-taesik li,#kfsRoot .nx-hand-me li{color:#161616!important;font-weight:700}
+#kfsRoot .nx-notepaper li.last{background:linear-gradient(transparent 55%,#ffe27a 55%)}
+#kfsRoot .nx-notepaper .nx-grip{position:sticky;top:0;z-index:2;background:#fffdf3;color:#111}
+#kfsRoot .nx-notepaper .nx-grip small{color:#5b5132}
+#kfsRoot .nx-notepaper.nx-float,#kfsRoot.sf-slim .nx-notepaper.nx-float{max-height:min(360px,calc(100% - 24px))!important}
+#kfsRoot .nx-notepaper:not(.nx-float){max-height:360px}
+#kfsRoot .nx-dock.inbot .nx-bar{margin:0 auto!important}
+#kfsRoot .nx-notepaper .stg-x{z-index:3}
+body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!important}
+#kfsRoot .nx-dock.inbot .nx-pop{left:auto;right:0;transform:none}

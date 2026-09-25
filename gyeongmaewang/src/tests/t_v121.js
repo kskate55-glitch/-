@@ -8,13 +8,14 @@ ok(/「서류 한 장과 이삿날」/.test(box) && /배당받는 세입자/.tes
 if(w===1280) await p.screenshot({path:'v121_box.png'});
 await p.evaluate(()=>{ arenaTab='king'; KC_MODE='career'; K_PROP_NEXT='f11'; KC_INTRO=false; kStart(11); K.intro=false; K.timeLeft=9999; renderArena(); }); await p.waitForTimeout(1200);
 if(w===1280){
-  ok(await p.evaluate(()=>!!document.querySelector('.kfs-head .nx-dock.inhead .nx-grp')), w+' 조사 버튼 줄이 머리줄 안');
-  ok(await p.evaluate(()=>!document.querySelector('.kfs-stage .nx-dock')), w+' 그림 위엔 버튼 줄 없음');
-  await p.click('.kfs-head .nx-grp > summary'); await p.waitForTimeout(400);
-  const pop=await p.evaluate(()=>{ const e=document.querySelector('.kfs-head .nx-grp[open] .nx-pop'); if(!e) return null; const r=e.getBoundingClientRect(); return [r.top,r.bottom,r.height, e.querySelectorAll('button').length]; });
-  ok(pop && pop[3]>0 && pop[2]>80 && pop[1]<=h, w+' 머리줄 버튼 누르면 목록이 아래로 펼쳐짐 '+JSON.stringify(pop));
+  // v124: 머리줄에선 작아서 못 찾는다는 말에 그림 맨 아래로 옮겼다(계약 변경)
+  ok(await p.evaluate(()=>!!document.querySelector('.kfs-stage .nx-dock.inbot .nx-grp')), w+' 조사 버튼 줄이 그림 맨 아래');
+  ok(await p.evaluate(()=>!document.querySelector('.kfs-head .nx-dock')), w+' 머리줄엔 버튼 줄 없음');
+  await p.click('.nx-dock.inbot .nx-grp > summary'); await p.waitForTimeout(400);
+  const pop=await p.evaluate(()=>{ const e=document.querySelector('.nx-dock.inbot .nx-grp[open] .nx-pop'); if(!e) return null; const r=e.getBoundingClientRect(); return [r.top,r.bottom,r.height, e.querySelectorAll('button').length]; });
+  ok(pop && pop[3]>0 && pop[2]>80 && pop[0]>=0 && pop[1]<=h, w+' 버튼 누르면 목록이 위로 펼쳐짐 '+JSON.stringify(pop));
   await p.screenshot({path:'v121_pop.png'});
-  await p.click('.kfs-head .nx-grp[open] .nx-x').catch(()=>{}); await p.waitForTimeout(300);
+  await p.click('.nx-dock.inbot .nx-grp[open] .nx-x').catch(()=>{}); await p.waitForTimeout(300);
   const hd=await p.evaluate(()=>{ const r=document.querySelector('.kfs-head').getBoundingClientRect(); return r.height; }); ok(hd<70, w+' 머리줄 한 줄 유지 h='+hd);
 }
 const seal=await p.evaluate(()=>{ const a=document.querySelector('[data-kcseal]'), s=document.querySelector('.fr-skipbtn'); if(!a||!s) return null; const ra=a.getBoundingClientRect(), rs=s.getBoundingClientRect(); return {same:Math.abs(ra.top-rs.top)<4, ca:getComputedStyle(a).backgroundColor, cs:getComputedStyle(s).backgroundColor}; });

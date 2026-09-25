@@ -2075,6 +2075,29 @@ body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .h
 /* 떠 있는 공책 자리는 변수로 — 옛 배치 규칙(!important)이 left/top을 덮어써서 */
 #kfsRoot .nx-notepaper.nx-float,#kfsRoot.sf-slim .nx-notepaper.nx-float{left:var(--nx-l,30%)!important;top:var(--nx-t,90px)!important;right:auto!important;bottom:auto!important;width:min(380px,40%)!important;max-height:calc(100% - 24px)!important}
 #kfsRoot .nx-hand-me .nx-book{font-family:"Gaegu",cursive} #kfsRoot .nx-hand-me li{color:#27406a}
+/* v124 — 조사 버튼: 그림 아래쪽 가운데에 크게(머리줄에선 작아서 못 찾았다) · 목록은 위로 */
+#kfsRoot .nx-dock.inbot{position:absolute;top:auto;bottom:14px;z-index:14;display:flex;justify-content:center;pointer-events:none}
+#kfsRoot .nx-dock.inbot .nx-bar{flex-wrap:nowrap;gap:10px;align-items:center;padding:8px 10px 8px 14px;border-radius:18px;background:rgba(10,13,20,.78);border:1.5px solid rgba(242,179,61,.45);box-shadow:0 10px 28px rgba(0,0,0,.45);backdrop-filter:blur(4px)}
+#kfsRoot .nx-dock.inbot .nx-lab{color:#ffd98a;font-weight:900;font-size:15px;white-space:nowrap;margin-right:2px}
+#kfsRoot .nx-dock.inbot .nx-grp>summary{min-height:52px;padding:8px 18px;font-size:17px;border-radius:14px;background:linear-gradient(#f7c55a,#e9a52c);color:#1b1406;border:0;box-shadow:0 3px 0 #a8731a,0 8px 18px rgba(0,0,0,.35)}
+#kfsRoot .nx-dock.inbot .nx-grp>summary:hover{filter:brightness(1.07)}
+#kfsRoot .nx-dock.inbot .nx-grp[open]>summary{background:#fff;color:#1b1406;box-shadow:0 0 0 3px #f7c55a,0 8px 18px rgba(0,0,0,.35)}
+#kfsRoot .nx-dock.inbot .nx-n{background:#1b1406;color:#ffd98a;font-size:13px}
+#kfsRoot .nx-dock.inbot .nx-t{display:inline} #kfsRoot .nx-dock.inbot .nx-ts{display:none}
+#kfsRoot .nx-dock.inbot .nx-pop{top:auto;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);max-height:var(--nx-room,60vh)}
+@media (max-width:1100px){ #kfsRoot .nx-dock.inbot .nx-lab{display:none} #kfsRoot .nx-dock.inbot .nx-grp>summary{padding:8px 12px;font-size:15.5px} }
+/* v124 — 조사 노트: 검은 글씨로 또렷하게 · 3~4줄 높이에서 스크롤(새 줄이 먼저 보인다) */
+#kfsRoot .nx-notepaper li,#kfsRoot .nx-notepaper li.last,
+#kfsRoot .nx-hand-seoyun li,#kfsRoot .nx-hand-dohyun li,#kfsRoot .nx-hand-mijeong li,#kfsRoot .nx-hand-jaehoon li,#kfsRoot .nx-hand-eunkyung li,#kfsRoot .nx-hand-taesik li,#kfsRoot .nx-hand-me li{color:#161616!important;font-weight:700}
+#kfsRoot .nx-notepaper li.last{background:linear-gradient(transparent 55%,#ffe27a 55%)}
+#kfsRoot .nx-notepaper .nx-grip{position:sticky;top:0;z-index:2;background:#fffdf3;color:#111}
+#kfsRoot .nx-notepaper .nx-grip small{color:#5b5132}
+#kfsRoot .nx-notepaper.nx-float,#kfsRoot.sf-slim .nx-notepaper.nx-float{max-height:min(360px,calc(100% - 24px))!important}
+#kfsRoot .nx-notepaper:not(.nx-float){max-height:360px}
+#kfsRoot .nx-dock.inbot .nx-bar{margin:0 auto!important}
+#kfsRoot .nx-notepaper .stg-x{z-index:3}
+body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!important}
+#kfsRoot .nx-dock.inbot .nx-pop{left:auto;right:0;transform:none}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -38718,7 +38741,8 @@ document.addEventListener("change", e => { const t = e.target; if(t && t.matches
 const _ke_kStage = kStage; kStage = function(bg, who, ex, text, name){
   if(who === "occ" && ex === "angry" && K && (K.pendingFlip || K.occ.coop < 35) && artUrl(`npc_${KP.occ.pid}_furious`)) ex = "furious";
   if(bg === "bg_court" && artUrl("bg_bid_room")) bg = "bg_bid_room";
-  if(bg === "bg_room_clean" && K && K.repair && K.repair.id !== "min" && artUrl("bg_room_after")) bg = "bg_room_after";
+  // 명도 끝난 집은 텅 비어 있다 — 최소·일부 수리는 가구 없는 빈 거실, 도배·장판까지 한 집만 단장된 거실
+  if(bg === "bg_room_clean" && K && K.repair){ const rid = K.repair.id; if((rid === "min" || rid === "part") && artUrl("bg_room_empty")) bg = "bg_room_empty"; else if(rid !== "min" && rid !== "part" && artUrl("bg_room_after")) bg = "bg_room_after"; }
   let h = _ke_kStage(bg, who, ex, text, name);
   // 주인공 앞모습 — 결과가 갈리는 순간엔 내 표정이 보인다(대화 장면은 뒷모습 그대로)
   const pe = keMyFace(); const fu = pe && artUrl("npc_playerf_" + pe);
@@ -38975,7 +38999,7 @@ function k2HTML(){
      <h3 class="vn-q">어떻게 할까?</h3><div class="ag-acts vn-acts">${K2_FIX.map(f=>`<button type="button" class="ag-act${f.bad?" ag-bad":""}" data-k2="fix:${f.id}"><span class="ag-ai">${f.ic}</span><span><b>${f.t} — ${kMan(f.cost())}</b><span class="note" style="display:block">${f.d}</span></span></button>`).join("")}${k2ExitBtn()}</div>` + k2SaysHTML() + quit;
   }
   if(K.step === "list"){
-    return kStage(K.k2.cond === "fix" ? "bg_room_clean" : "bg_room_messy", "narr", null, "이제 얼마에 내놓을까. 김사장과 박 중개사의 말이 다르다.") + kHud() + `
+    return kStage(K.k2.cond === "fix" ? (artUrl("bg_room_empty") ? "bg_room_empty" : "bg_room_clean") : "bg_room_messy", "narr", null, "이제 얼마에 내놓을까. 김사장과 박 중개사의 말이 다르다.") + kHud() + `
      <div class="panel k-card">${K.k2.cond==="hide" && typeof gmwSceneArt==="function" ? gmwSceneArt("k2cover") : ""}<div class="k-grid"><span>김사장</span><b>"1억 7천 무조건 되쥬"</b><span>박 중개사</span><b>${K.found.price?`"1억 5천 후반이 현실적"`:"(만나 보지 못함)"}</b><span>같은 건물 급매</span><b>${K.found.dump?"3층 1억 6,200만원 — 아직 안 팔림":"??"}</b>${K.k2.cond==="min"?`<span>고지</span><b>누수 수리 이력 고지 → 가격 할인</b>`:""}</div></div>
      <h3 class="vn-q">호가를 정하세요</h3><div class="ag-acts vn-acts">${K2_LIST.map(([v,t])=>`<button type="button" class="ag-act" data-k2="list:${v}"><span><b>${kMan(v)}</b><span class="note" style="display:block">${t}</span></span></button>`).join("")}</div>` + k2SaysHTML() + quit;
   }
@@ -41168,7 +41192,7 @@ Object.assign(ART_DEFAULT, {
 Object.assign(ART_DEFAULT, { prop_keys:"1dec16bd8a6acfaba2533fddde5dbb44", prop_doorlock:"c4f92d364746346833a4b55d6aaead6c", prop_letter:"b2281c57aad6ac86a87859dc861c6ed0", prop_order:"b6750cac30b5bfe735eef0128ae16daf", prop_confirm:"9d65195ebfe4fcec0669fbe5ce53a56f", prop_boxes:"beb210bc4a5617530e69617a41923a78", prop_cash:"dba6864c843485b6c3622aed56e13bb2", prop_notice:"4dd36113a80ac4e08ade22dcc148b1ec", prop_truck:"8258758d43538665526fc4a54876fa6b"});
 
 // 소품 시트 2·3 + 사건 뒤 빈 거실 컷
-Object.assign(ART_DEFAULT, { prop_phone:"4595d8d28c8011c600942eb4892cdcb1", prop_calendar:"b7aa83a85dc9576f3088fd15f6b6aa34", prop_bill:"fe178400373bf5686f15bff967f8f9ac", prop_drink:"835c29e0504b6c7f81b545be298b21d9", prop_toolbox:"c11b5c7120c4bd5016e4ce06f597a28c", prop_delivery_boxes:"ffe3cef883f1ebbfc575ce9658810c94", prop_trash_bags:"e59c39078561481755ee176c15854381", prop_mail_bundle:"cccc3406e57affdd54f883247431f172", prop_shoes_slippers:"96c5127b5a2c59f3afb6a1615b6232bb", prop_safe_box:"e5e50fe05c450464022deb80bafad79c", cut_empty_after:"ebb5e6cf420574784e9e1aad5dbc7bfa"});
+Object.assign(ART_DEFAULT, { prop_phone:"4595d8d28c8011c600942eb4892cdcb1", prop_calendar:"b7aa83a85dc9576f3088fd15f6b6aa34", prop_bill:"fe178400373bf5686f15bff967f8f9ac", prop_drink:"835c29e0504b6c7f81b545be298b21d9", prop_toolbox:"c11b5c7120c4bd5016e4ce06f597a28c", prop_delivery_boxes:"ffe3cef883f1ebbfc575ce9658810c94", prop_trash_bags:"e59c39078561481755ee176c15854381", prop_mail_bundle:"cccc3406e57affdd54f883247431f172", prop_shoes_slippers:"96c5127b5a2c59f3afb6a1615b6232bb", prop_safe_box:"e5e50fe05c450464022deb80bafad79c", cut_empty_after:"ebb5e6cf420574784e9e1aad5dbc7bfa", bg_room_empty:"5961986acf90e000dd87644d50e24d72"});
 
 /* ================= 🗂️ 조사 화면 정리 — 서류는 그림 위에, 행동은 접어서 =================
    오른쪽 패널이 한없이 길어지던 걸 줄인다: 사건 파일·입찰표는 왼쪽 그림 위 종이로 겹쳐 띄우고,
@@ -42636,8 +42660,9 @@ function nxApply(){
   else {
     // PC: 맨 위 머리줄 가운데 빈자리로 — 그림(점유자·주인공·말풍선)을 가리지 않게
     const head = root.querySelector(".kfs-head"), tools = head && head.querySelector(".kfs-tools");
-    if(head && tools){ dock.classList.add("inhead"); head.classList.add("has-dock"); head.insertBefore(dock, tools); }
-    else stage.appendChild(dock);
+    // → 머리줄은 작고 위에 붙어서 못 찾는다는 말을 듣고, 그림 '아래쪽 가운데'에 크게 띄운다(목록은 위로 펼쳐진다)
+    dock.classList.add("inbot"); const lab = document.createElement("span"); lab.className = "nx-lab"; lab.textContent = "🔍 조사하기"; bar.insertBefore(lab, bar.firstChild);
+    stage.appendChild(dock);
   }
   nxPlace();
 }
@@ -42653,6 +42678,11 @@ function nxPlace(){
     if(op){ cb = Math.round(op.getBoundingClientRect().top - (parseFloat(getComputedStyle(op).top) || 0)); }
     else { const pr = document.querySelector("#kfsRoot .kfs-body"); cb = pr && getComputedStyle(pr).transform !== "none" ? Math.round(pr.getBoundingClientRect().top) : 0; }
     mob.style.setProperty("--nx-top", (want - cb) + "px"); mob.style.setProperty("--nx-room", room + "px"); return; }
+  const bt = document.querySelector("#kfsRoot .nx-dock.inbot");
+  if(bt){ const st = bt.parentElement, sr = st.getBoundingClientRect(), col = st.querySelector(".stg-col");
+    let right = sr.right; if(col){ const r = col.getBoundingClientRect(); if(r.width && r.left > sr.left + 200) right = r.left - 10; }
+    bt.style.left = "12px"; bt.style.right = Math.max(12, Math.round(sr.right - right)) + "px";
+    bt.style.setProperty("--nx-room", Math.max(200, Math.round(bt.getBoundingClientRect().top - sr.top - 16)) + "px"); return; }
   const hd = document.querySelector("#kfsRoot .nx-dock.inhead");
   if(hd){ const st = document.querySelector("#kfsRoot .kfs-stage"), r = st ? st.getBoundingClientRect() : null; hd.style.setProperty("--nx-room", Math.max(200, Math.round((r ? r.bottom : innerHeight) - hd.getBoundingClientRect().bottom - 20)) + "px"); return; }
   const stage = document.querySelector("#kfsRoot .kfs-stage"), dock = stage && stage.querySelector(".nx-dock"); if(!dock) return;
@@ -42684,7 +42714,8 @@ const _nx_render = renderArena; renderArena = function(){ _nx_render(); queueMic
 
 // ---------- 📒 조사 노트 탭 (PC) — 사건 파일 옆 공책. 새 줄이 생기면 NEW ----------
 function nxNoteTab(stage, tabs, note){
-  const items = [...note.querySelectorAll("li")].map(li => li.textContent);
+  // 공책엔 '무엇을 알아냈나'만 — 조사에 든 시간([16분] · [1시간 8분 · 이동 39분 포함])은 시계·상황판 몫이라 뺀다
+  const items = [...note.querySelectorAll("li")].map(li => nxNoteText(li.textContent));
   const n = items.length, fresh = n > (NX.seen || 0) && !NX.note;
   if(NX.note) NX.seen = n;
   note.remove();
@@ -42698,8 +42729,8 @@ function nxNoteTab(stage, tabs, note){
   p.innerHTML = `<button type="button" class="stg-x" data-nxnote aria-label="조사 노트 닫기">✕</button>
     <div class="nx-book"><div class="nx-spiral" aria-hidden="true"></div><h3 class="nx-grip" title="끌어서 옮기기">${esc(who.name)}의 조사 노트 <small>${n}줄 · ${float ? "위쪽을 잡고 끌면 옮겨져요" : "조사할 때마다 한 줄씩"}</small></h3>
     <ol>${items.map((t, i) => `<li class="${i === n - 1 ? "last" : ""}">${esc(t)}</li>`).join("")}</ol></div>`;
-  if(float){ stage.appendChild(p); nxNotePlace(stage, p); }   // 넓은 화면: 주인공 바로 옆에 떠 있는 공책
-  else { dock.appendChild(p); dock.classList.toggle("nx-noteopen", !!NX.note); }
+  if(float){ stage.appendChild(p); nxNotePlace(stage, p); p.scrollTop = p.scrollHeight; }   // 넓은 화면: 주인공 바로 옆에 떠 있는 공책
+  else { dock.appendChild(p); dock.classList.toggle("nx-noteopen", !!NX.note); p.scrollTop = p.scrollHeight; }   // 새로 적은 줄이 먼저 보이게
 }
 document.addEventListener("click", e => {
   const t = e.target; if(!t.closest) return;
@@ -42719,6 +42750,7 @@ document.addEventListener("click", e => {
 const NX_HAND = {seoyun:"Gaegu", dohyun:"Nanum Pen Script", mijeong:"Hi Melody", jaehoon:"Nanum Brush Script", eunkyung:"Gowun Dodum", taesik:"Song Myung"};
 (function(){ try{ if(document.getElementById("nxHandFont")) return; const l = document.createElement("link"); l.id = "nxHandFont"; l.rel = "stylesheet";
   l.href = "https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nanum+Pen+Script&family=Hi+Melody&family=Nanum+Brush+Script&family=Gowun+Dodum&family=Song+Myung&display=swap"; document.head.appendChild(l); }catch(e){} })();
+function nxNoteText(t){ return String(t).replace(/\[[^\]]*\d+\s*(?:분|시간)[^\]]*\]\s*/g, "").replace(/\s{2,}/g, " ").trim(); }
 function nxNoteWho(){
   try{ const L = typeof lfRec === "function" ? lfRec() : null; if(L && L.char && typeof LF_CHARS !== "undefined"){ const C = LF_CHARS.find(x => x.id === L.char); if(C) return {id:C.id, name:C.name}; } }catch(e){}
   return {id:"me", name:"나"};

@@ -1,0 +1,34 @@
+const { chromium } = require('playwright');
+(async()=>{const b=await chromium.launch(); const errs=[]; const ok=(c,m)=>{ console.log((c?'✅ ':'❌ ')+m); if(!c) errs.push(m); };
+const p=await b.newPage({viewport:{width:1280,height:800}}); p.on('pageerror',e=>errs.push('pageerror '+e.message));
+await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(800);
+await p.evaluate(()=>{ localStorage.clear(); window.MT_SKIP_TALE=true; kcRec().fr={full:true}; page='arena'; arenaTab='king'; KC_MODE='career'; K_PROP_NEXT='f11'; KC_INTRO=false; kStart(5077); K.intro=false; K.timeLeft=9999; renderArena(); });
+await p.waitForTimeout(500);
+let r=await p.evaluate(()=>{ const d=document.querySelector('#kfsRoot .nx-dock.inbot'), st=document.querySelector('#kfsRoot .kfs-stage'); if(!d) return null; const a=d.querySelector('.nx-bar').getBoundingClientRect(), s=st.getBoundingClientRect(); const sm=d.querySelector('.nx-grp>summary').getBoundingClientRect(); return {bot:s.bottom-a.bottom, inHead:!!document.querySelector('.kfs-head .nx-dock'), h:sm.height, fs:parseFloat(getComputedStyle(d.querySelector('.nx-grp>summary')).fontSize)}; });
+ok(r && !r.inHead && r.bot>=0 && r.bot<40, '조사 버튼: 머리줄이 아니라 그림 맨 아래 '+JSON.stringify(r));
+ok(r && r.h>=48 && r.fs>=16, '조사 버튼이 크다(높이 48+, 글자 16px+)');
+await p.evaluate(()=>document.querySelector('.nx-grp>summary').click()); await p.waitForTimeout(250);
+r=await p.evaluate(()=>{ const pop=document.querySelector('.nx-grp[open] .nx-pop'), bar=document.querySelector('.nx-dock.inbot .nx-bar'); const a=pop.getBoundingClientRect(); return {up:a.bottom<=bar.getBoundingClientRect().top+2, top:a.top, n:pop.querySelectorAll('[data-kres]').length}; });
+ok(r.up && r.top>=0 && r.n>0, '목록이 위로 펼쳐지고 화면 안에 들어온다 '+JSON.stringify(r));
+const acts=await p.evaluate(()=>(KP.actions||KP.research||[]).map(a=>a.id));
+for(const a of acts) await p.evaluate(s=>{const e=document.querySelector(s); e&&e.click();},`[data-kres="${a}"]`);
+await p.waitForTimeout(300); await p.evaluate(()=>{ const n=document.querySelector('[data-nxnote]'); n&&n.click(); }); await p.waitForTimeout(400);
+r=await p.evaluate(()=>{ const n=document.querySelector('.nx-notepaper'); const lis=[...n.querySelectorAll('li')]; const c=getComputedStyle(lis[0]).color; return {h:n.getBoundingClientRect().height, sh:n.scrollHeight, st:n.scrollTop, cnt:lis.length, color:c, last:getComputedStyle(n.querySelector('li.last')).color, txt:lis.map(l=>l.textContent).join('|'), gripTop:n.querySelector('.nx-grip').getBoundingClientRect().top-n.getBoundingClientRect().top}; });
+ok(r.h<=370 && r.sh>r.h+50, '노트가 무한히 길어지지 않고 스크롤된다 '+Math.round(r.h)+'/'+r.sh);
+ok(r.st>0, '새로 적은 줄이 먼저 보이게 맨 아래로 스크롤');
+ok(Math.abs(r.gripTop)<3, '스크롤해도 노트 제목(잡는 곳)은 위에 붙어 있다');
+const dark=c=>{ const m=c.match(/\d+/g).map(Number); return m[0]<50&&m[1]<50&&m[2]<50; };
+ok(dark(r.color)&&dark(r.last), '글씨가 검은색 '+r.color+' / '+r.last);
+ok(!/\[[^\]]*\d+\s*(분|시간)[^\]]*\]/.test(r.txt), '조사에 든 시간 [N분] 표시가 노트에서 빠졌다');
+ok(/공식기록 확인됨|데이터/.test(r.txt), '분류 표시([공식기록 확인됨] 등)는 남아 있다');
+for(const who of ['seoyun','dohyun','mijeong','jaehoon','eunkyung','taesik']){ const c=await p.evaluate(w=>{ const n=document.querySelector('.nx-notepaper'); n.className=n.className.replace(/nx-hand-\S+/,'nx-hand-'+w); return getComputedStyle(n.querySelector('li')).color; },who); ok(dark(c), who+' 공책 글씨도 검은색 '+c); }
+// 빈집 배경
+const bg=await p.evaluate(()=>{ const out={}; for(const id of ['min','part','good','full']){ K.repair={id}; out[id]=kStage('bg_room_clean','narr',null,'x'); } K.repair=null; return out; });
+const u=await p.evaluate(()=>({e:artUrl('bg_room_empty'), a:artUrl('bg_room_after'), c:artUrl('bg_room_clean')}));
+ok(u.e && bg.min.includes(u.e) && bg.part.includes(u.e), '최소·일부 수리 → 가구 없는 빈 거실');
+ok(bg.good.includes(u.a) && bg.full.includes(u.a), '도배·풀리모델링 → 단장된 거실');
+ok(!bg.min.includes(u.c), '최소 수리에 화려한 거실이 안 나온다');
+const img=await p.evaluate(async u=>{ const r=await fetch(u); return r.ok && (await r.blob()).size>50000; }, u.e);
+ok(img, '빈집 그림 파일이 실제로 뜬다');
+ok(!errs.some(e=>e.startsWith('pageerror')), 'JS 오류 없음 '+errs.filter(e=>e.startsWith('pageerror')).join(';'));
+console.log(errs.length?'FAIL':'ALL OK'); await b.close(); })();

@@ -40453,6 +40453,11 @@ const _ca_sel = lfSelectHTML; lfSelectHTML = function(){
   return h;
 };
 
+// 표정 추가분(유형별 공용 인물) — 사용자가 받아온 그림을 잘라 넣은 것
+Object.assign(ART_DEFAULT, {
+  npc_oldman_angry:"fcc7cfffff7eacd0b17ef2826695465a", npc_oldman_troubled:"b0be3eb3877369e0f331140f4aa2a778",
+  npc_ajumma_angry:"794f4071761ea649ca0e624f07fb8cc0", npc_roughman_troubled:"19eea9a9f3405b0de67a53fac0188d68"});
+
 /* ================= 🗂️ 조사 화면 정리 — 서류는 그림 위에, 행동은 접어서 =================
    오른쪽 패널이 한없이 길어지던 걸 줄인다: 사건 파일·입찰표는 왼쪽 그림 위 종이로 겹쳐 띄우고,
    조사 행동은 묶음별로 접는다. 렌더 뒤 DOM만 옮기므로 계산·클릭 처리(문서 위임)는 그대로다. */

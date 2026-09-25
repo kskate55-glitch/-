@@ -76,3 +76,8 @@ const _ca_sel = lfSelectHTML; lfSelectHTML = function(){
   }
   return h;
 };
+
+// 표정 추가분(유형별 공용 인물) — 사용자가 받아온 그림을 잘라 넣은 것
+Object.assign(ART_DEFAULT, {
+  npc_oldman_angry:"fcc7cfffff7eacd0b17ef2826695465a", npc_oldman_troubled:"b0be3eb3877369e0f331140f4aa2a778",
+  npc_ajumma_angry:"794f4071761ea649ca0e624f07fb8cc0", npc_roughman_troubled:"19eea9a9f3405b0de67a53fac0188d68"});

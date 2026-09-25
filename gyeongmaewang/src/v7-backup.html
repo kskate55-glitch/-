@@ -2335,8 +2335,10 @@ try{ const raw = localStorage.getItem(LS_KEY); if(raw) S = Object.assign(blank()
 let dbRef = null, saveTimer = null, saving = false, dirty = false;
 const syncEl = () => document.getElementById("sync");
 function save(){
-  S.updated = Date.now();
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); if(window.gmwSaveOk) window.gmwSaveOk(); }catch(e){ if(window.gmwSaveFail) window.gmwSaveFail(e); }
+  // 두 탭 방어: 다른 탭(창)이 이 탭보다 나중에 저장했으면 덮어쓰지 않는다 — 조용히 합치지 않고 알리기만 한다
+  try{ const ts = +localStorage.getItem(LS_KEY + ":ts") || 0; if(ts > (S.updated || 0)){ if(window.gmwSaveConflict) window.gmwSaveConflict(); return; } }catch(e){}
+  S.updated = Math.max(Date.now(), (S.updated || 0) + 1);
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); localStorage.setItem(LS_KEY + ":ts", String(S.updated)); if(window.gmwSaveOk) window.gmwSaveOk(); }catch(e){ if(window.gmwSaveFail) window.gmwSaveFail(e); }
   if(!dbRef) return;
   dirty = true; clearTimeout(saveTimer);
   saveTimer = setTimeout(flush, 1200);
@@ -2360,7 +2362,7 @@ async function flush(){
     const snap = await ref.get();
     if(snap.exists){
       const remote = snap.data() || {};
-      if((remote.updated||0) >= (S.updated||0)){ S = Object.assign(blank(), JSON.parse(JSON.stringify(remote))); try{localStorage.setItem(LS_KEY, JSON.stringify(S));}catch(e){} render(); }
+      if((remote.updated||0) >= (S.updated||0)){ S = Object.assign(blank(), JSON.parse(JSON.stringify(remote))); try{localStorage.setItem(LS_KEY, JSON.stringify(S)); localStorage.setItem(LS_KEY + ":ts", String(S.updated || 0));}catch(e){} render(); }
     }
     dbRef = ref;
     initNotesRemote(db, uid);
@@ -2404,7 +2406,7 @@ function go(p){ page = p; try{ history.replaceState(null,"","#"+p); }catch(e){} 
 function render(){
   nav();
   const m = $("#main");
-  if(page==="home") m.innerHTML = homeHTML();
+  if(page==="home") m.innerHTML = studyHomeHTML();
   if(page==="notes") renderNotes();
   if(page==="quiz") renderQuiz();
   if(page==="drill") renderDrill();
@@ -2421,7 +2423,7 @@ function quizStats(){
   ids.forEach(id => { const r = S.q[id]; right += r.c||0; wrong += r.w||0; if(r.last===0) wrongNow++; });
   return {seen:ids.length, right, wrong, wrongNow, rate: right+wrong ? Math.round(right/(right+wrong)*100) : 0};
 }
-function homeHTML(){
+function studyHomeHTML(){   // ⚠ 게임 허브(hub.js)의 homeHTML과 이름이 겹쳐 연습장 홈이 게임 허브로 덮이던 문제 — 이름을 따로 둔다
   const qs = quizStats();
   const known = CONCEPTS.filter(c=>S.known[c.id]).length;
   const d = S.drill;

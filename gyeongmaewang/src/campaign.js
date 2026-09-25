@@ -221,7 +221,8 @@ document.addEventListener("click", e => {
 document.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-cpsettle]"); if(!b) return;
   const L = lfRec(); if(!L || L.mode === "career" || L.ended || !L.path || (K && K.step !== "result")) return;
-  if(!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent = "한 번 더 누르면 지금 결산해요"; return; }
+  if(!b.classList.contains("armed")){ b.classList.add("armed"); b.dataset.armAt = Date.now(); b.textContent = "한 번 더 누르면 지금 결산해요"; return; }
+  if(Date.now() - (+b.dataset.armAt || 0) < 350) return;   // 더블클릭 한 번으로 엔딩까지 넘어가지 않게
   cpFinish(cpPathOpt(), null);
 });
 

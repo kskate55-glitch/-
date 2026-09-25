@@ -4143,8 +4143,10 @@ try{ const raw = localStorage.getItem(LS_KEY); if(raw) S = Object.assign(blank()
 let dbRef = null, saveTimer = null, saving = false, dirty = false;
 const syncEl = () => document.getElementById("sync");
 function save(){
-  S.updated = Date.now();
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); if(window.gmwSaveOk) window.gmwSaveOk(); }catch(e){ if(window.gmwSaveFail) window.gmwSaveFail(e); }
+  // 두 탭 방어: 다른 탭(창)이 이 탭보다 나중에 저장했으면 덮어쓰지 않는다 — 조용히 합치지 않고 알리기만 한다
+  try{ const ts = +localStorage.getItem(LS_KEY + ":ts") || 0; if(ts > (S.updated || 0)){ if(window.gmwSaveConflict) window.gmwSaveConflict(); return; } }catch(e){}
+  S.updated = Math.max(Date.now(), (S.updated || 0) + 1);
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); localStorage.setItem(LS_KEY + ":ts", String(S.updated)); if(window.gmwSaveOk) window.gmwSaveOk(); }catch(e){ if(window.gmwSaveFail) window.gmwSaveFail(e); }
   if(!dbRef) return;
   dirty = true; clearTimeout(saveTimer);
   saveTimer = setTimeout(flush, 1200);
@@ -4168,7 +4170,7 @@ async function flush(){
     const snap = await ref.get();
     if(snap.exists){
       const remote = snap.data() || {};
-      if((remote.updated||0) >= (S.updated||0)){ S = Object.assign(blank(), JSON.parse(JSON.stringify(remote))); try{localStorage.setItem(LS_KEY, JSON.stringify(S));}catch(e){} render(); }
+      if((remote.updated||0) >= (S.updated||0)){ S = Object.assign(blank(), JSON.parse(JSON.stringify(remote))); try{localStorage.setItem(LS_KEY, JSON.stringify(S)); localStorage.setItem(LS_KEY + ":ts", String(S.updated || 0));}catch(e){} render(); }
     }
     dbRef = ref;
     initNotesRemote(db, uid);
@@ -4213,7 +4215,7 @@ function go(p){ page = p; try{ history.replaceState(null,"","#"+p); }catch(e){} 
 function render(){
   nav();
   const m = $("#main");
-  if(page==="home") m.innerHTML = homeHTML();
+  if(page==="home") m.innerHTML = studyHomeHTML();
   if(page==="notes") renderNotes();
   if(page==="quiz") renderQuiz();
   if(page==="drill") renderDrill();
@@ -4231,7 +4233,7 @@ function quizStats(){
   ids.forEach(id => { const r = S.q[id]; right += r.c||0; wrong += r.w||0; if(r.last===0) wrongNow++; });
   return {seen:ids.length, right, wrong, wrongNow, rate: right+wrong ? Math.round(right/(right+wrong)*100) : 0};
 }
-function homeHTML(){
+function studyHomeHTML(){   // ⚠ 게임 허브(hub.js)의 homeHTML과 이름이 겹쳐 연습장 홈이 게임 허브로 덮이던 문제 — 이름을 따로 둔다
   const qs = quizStats();
   const known = CONCEPTS.filter(c=>S.known[c.id]).length;
   const d = S.drill;
@@ -38866,7 +38868,9 @@ function bdRec(){
   if(!c.board) c.board = {n:1, items:[], log:[], dodged:0, key:1, lastDone:{}};
   const b = c.board;
   // 새로고침 등으로 진행 중이던 판이 사라졌으면 다시 '관심'으로 돌려놓는다
-  b.items.forEach(it => { if(it.status === "playing" && !(typeof K !== "undefined" && K && K.board && K.board.key === it.key)) it.status = "watch"; });
+  b.items.forEach(it => { if(it.status === "playing" && !(typeof K !== "undefined" && K && K.board && K.board.key === it.key)){ it.status = "watch";
+    // 새로고침·창 닫기로 진행 중 CASE가 내려놓아졌다 — 조용히 사라진 것처럼 보이지 않게 한 번 알린다(돈·기록은 그대로)
+    if(typeof HUB_TOAST !== "undefined") HUB_TOAST.push({t:`⏸️ 진행 중이던 ${bdName(it)} — 새로고침으로 멈췄어요. 게시판 ⭐관심에 그대로 있어요(돈·기록은 그대로).`}); } });
   return b;
 }
 const BD_ACTIVE = s => s === "open" || s === "watch" || s === "wait" || s === "playing";
@@ -40161,6 +40165,7 @@ function safeAlert(msg){
 }
 function safeConfirm(msg){
   try{ const t = performance.now(), r = window.confirm(msg); if(r) return true; if(performance.now() - t > 60) return false; }catch(e){}
+  if(SC_ARM && SC_ARM.msg === msg && Date.now() - SC_ARM.at < 350) return false;   // 더블클릭의 두 번째 누름은 확인으로 치지 않는다
   if(SC_ARM && SC_ARM.msg === msg && Date.now() - SC_ARM.at < 6000){ scClear(); return true; }
   const ev = window.event, btn = ev && ev.target && ev.target.closest ? ev.target.closest("button,a,[role=button]") : null;
   scClear(); SC_ARM = {msg, at:Date.now(), sel:btn ? scSel(btn) : null};
@@ -41174,7 +41179,8 @@ document.addEventListener("click", e => {
 document.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-cpsettle]"); if(!b) return;
   const L = lfRec(); if(!L || L.mode === "career" || L.ended || !L.path || (K && K.step !== "result")) return;
-  if(!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent = "한 번 더 누르면 지금 결산해요"; return; }
+  if(!b.classList.contains("armed")){ b.classList.add("armed"); b.dataset.armAt = Date.now(); b.textContent = "한 번 더 누르면 지금 결산해요"; return; }
+  if(Date.now() - (+b.dataset.armAt || 0) < 350) return;   // 더블클릭 한 번으로 엔딩까지 넘어가지 않게
   cpFinish(cpPathOpt(), null);
 });
 
@@ -42258,7 +42264,8 @@ document.addEventListener("click", e => {
   if((b = e.target.closest && e.target.closest("[data-frgo]"))){ e.stopImmediatePropagation(); arenaTab = "life"; LF_PICK = "seoyun"; renderArena(); window.scrollTo(0, 0); return; }
   if((b = e.target.closest && e.target.closest("[data-frskip]"))){
     e.stopImmediatePropagation();
-    if(!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent = "한 번 더 누르면 이 물건은 넘겨요"; return; }
+    if(!b.classList.contains("armed")){ b.classList.add("armed"); b.dataset.armAt = Date.now(); b.textContent = "한 번 더 누르면 이 물건은 넘겨요"; return; }
+    if(Date.now() - (+b.dataset.armAt || 0) < 350) return;   // 더블클릭 한 번으로 확인까지 넘어가지 않게
     const life = K && K.lf && lfOn(); K = null;
     if(life){ arenaTab = "life"; LF_SPOT = "board"; } else if(typeof OF_SPOT !== "undefined"){ arenaTab = "office"; OF_SPOT = "board"; }
     if(typeof HUB_TOAST !== "undefined") HUB_TOAST.push({t:"🚪 이번 물건은 넘겼어요 — 모르는 채로 들어가지 않은 것도 판단이에요."});
@@ -42344,6 +42351,67 @@ document.addEventListener("error", e => {
   t.dataset.stFail = "1"; t.classList.add("st-img-fail");
   if(!ST_IMG_TOLD && typeof HUB_TOAST !== "undefined"){ ST_IMG_TOLD = true; HUB_TOAST.push({t:"🖼️ 그림 일부를 불러오지 못했어요 — 내용과 진행은 그대로 볼 수 있어요."}); }
 }, true);
+
+/* ============================== 두 탭 · 옛 저장본 방어 ==============================
+   ① 같은 게임을 두 탭에서 열면, 오래된 탭이 저장할 때 최신 기록을 덮어썼다.
+      → save()가 저장 시각(:ts)을 비교해, 다른 탭이 더 나중에 저장했으면 덮어쓰지 않고 이 막대를 띄운다.
+   ② 예전 버전 저장본이나 손상된 값(NaN·문자열·빠진 칸)이 계산으로 번지지 않게, 불러온 직후 한 번 고친다. */
+window.gmwSaveConflict = function(){
+  stBar("stSave", `<b>⚠ 다른 탭(창)에서 이 게임을 더 최근에 진행했어요.</b> 최신 기록을 지키려고 이 탭의 진행은 저장하지 않았어요. <button type="button" class="btn" data-streload>최신 기록 불러오기</button>`);
+};
+window.addEventListener("storage", e => { if(e.key === LS_KEY + ":ts" && (+e.newValue || 0) > ((typeof S !== "undefined" && S.updated) || 0)) window.gmwSaveConflict(); });
+document.addEventListener("click", e => { if(e.target.closest && e.target.closest("[data-streload]")) location.reload(); });
+
+function stNum(o, k, d, lo, hi){
+  if(!o || typeof o !== "object") return false;
+  let v = o[k]; const bad = typeof v !== "number" || !isFinite(v);
+  if(bad){ const n = typeof v === "string" && v.trim() !== "" ? Number(v) : NaN; v = isFinite(n) ? n : d; }
+  if(lo != null && v < lo) v = lo; if(hi != null && v > hi) v = hi;
+  if(v !== o[k]){ o[k] = v; return true; } return false;
+}
+function stObj(o, k, arr){ if(!o) return false; const ok = arr ? Array.isArray(o[k]) : (o[k] && typeof o[k] === "object" && !Array.isArray(o[k])); if(ok) return false; o[k] = arr ? [] : {}; return true; }
+function stSanitize(){
+  if(typeof S === "undefined" || !S || typeof S !== "object") return false;
+  let ch = false; const A = S.arena; if(!A || typeof A !== "object") return false;
+  const c = A.career;
+  if(c && typeof c === "object"){
+    const base = typeof KC_START_CASH !== "undefined" ? KC_START_CASH : 15000;
+    ch = stNum(c, "start", base) || ch;
+    ch = stNum(c, "cash", c.start) || ch;
+    ["total"].forEach(k => { ch = stNum(c, k, 0) || ch; });
+    ["cases","wins","fails","bids","lostBids","streak"].forEach(k => { ch = stNum(c, k, 0, 0) || ch; });
+    ch = stObj(c, "history", true) || ch; ch = stObj(c, "weekly") || ch;
+    if(c.board != null){
+      const b = c.board;
+      if(typeof b !== "object" || Array.isArray(b)){ delete c.board; ch = true; }
+      else {
+        ch = stNum(b, "n", 1, 1) || ch; ch = stNum(b, "key", 1, 1) || ch; ch = stNum(b, "dodged", 0, 0) || ch;
+        ch = stObj(b, "items", true) || ch; ch = stObj(b, "log", true) || ch; ch = stObj(b, "lastDone") || ch;
+        const n0 = b.items.length; b.items = b.items.filter(it => it && typeof it === "object" && (it.kind === "case" ? (typeof K_PROPS === "undefined" || K_PROPS[it.prop]) : true));
+        if(b.items.length !== n0) ch = true;
+        b.items.forEach(it => { ch = stNum(it, "extra", 0, 0, 5) || ch; ch = stNum(it, "seed", 7, 1) || ch; if(typeof it.status !== "string"){ it.status = "watch"; ch = true; } });
+      }
+    }
+    const L = c.life;
+    if(L != null){
+      if(typeof L !== "object" || Array.isArray(L) || (typeof LF_CHARS !== "undefined" && !LF_CHARS.some(x => x.id === L.char))){ delete c.life; ch = true; }
+      else {
+        const C = typeof LF_CHARS !== "undefined" ? LF_CHARS.find(x => x.id === L.char) : null;
+        ch = stObj(L, "st") || ch; if(C) Object.keys(C.st).forEach(k => { ch = stNum(L.st, k, C.st[k], 0) || ch; });
+        ch = stNum(L, "t", 0, 0) || ch; ch = stNum(L, "sta", (L.st && L.st.stamina) || 50, 0) || ch; ch = stNum(L, "stress", 10, 0, 100) || ch; ch = stNum(L, "leave", 0, 0) || ch; ch = stNum(L, "nextEvt", 0) || ch;
+        if(L.st && isFinite(L.st.stamina) && L.sta > L.st.stamina){ L.sta = L.st.stamina; ch = true; }
+        ["equip","rel","xp","titles","stats"].forEach(k => { ch = stObj(L, k) || ch; }); ch = stObj(L, "log", true) || ch;
+      }
+    }
+  }
+  const P = A.player;
+  if(P && typeof P === "object"){ ch = stNum(P, "xp", 0, 0) || ch; ch = stNum(P, "rep", 0, 0) || ch; ["cleared","ends","met","events","ach","modes"].forEach(k => { ch = stObj(P, k) || ch; }); }
+  const D = A.deep;
+  if(D && typeof D === "object"){ ["after","news"].forEach(k => { ch = stObj(D, k, true) || ch; }); ch = stObj(D, "mem") || ch; }
+  return ch;
+}
+// 첫 화면을 그리기 전에(이 파일은 저장본을 읽은 뒤·첫 render() 전에 실행된다) 바로 고친다
+try{ if(stSanitize() && typeof save === "function") save(); }catch(e){ console.error("stSanitize", e); }
 
 /* ================= 📋 조사 화면 오른쪽 칸 접기 (PC) =================
    조사(brief) 단계에서 오른쪽 칸은 상태 정보(도전·날짜·날씨·남은 시간·체력·연차·시세 감)뿐인데

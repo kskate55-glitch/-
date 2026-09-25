@@ -191,7 +191,7 @@
     if(anon && !safeConfirm("체험 기록이 사라져요. 계속할까요?")) return;
     var done = function(){
       sb.auth.signOut().finally(function(){
-        try{ localStorage.removeItem(LS_KEY); }catch(e){}
+        try{ localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_KEY + ":ts"); }catch(e){}
         location.reload();
       });
     };
@@ -204,6 +204,7 @@
     try{
       S = Object.assign(blank(), state || {});
       localStorage.setItem(LS_KEY, JSON.stringify(S));
+      localStorage.setItem(LS_KEY + ":ts", String(S.updated || 0));   // 두 탭 방어 기준도 이 기록으로 맞춘다
       lastState = snapshot();
       if(typeof render === "function") render();
     }catch(e){ console.error(e); }

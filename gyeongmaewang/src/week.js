@@ -29,7 +29,9 @@ function bdRec(){
   if(!c.board) c.board = {n:1, items:[], log:[], dodged:0, key:1, lastDone:{}};
   const b = c.board;
   // 새로고침 등으로 진행 중이던 판이 사라졌으면 다시 '관심'으로 돌려놓는다
-  b.items.forEach(it => { if(it.status === "playing" && !(typeof K !== "undefined" && K && K.board && K.board.key === it.key)) it.status = "watch"; });
+  b.items.forEach(it => { if(it.status === "playing" && !(typeof K !== "undefined" && K && K.board && K.board.key === it.key)){ it.status = "watch";
+    // 새로고침·창 닫기로 진행 중 CASE가 내려놓아졌다 — 조용히 사라진 것처럼 보이지 않게 한 번 알린다(돈·기록은 그대로)
+    if(typeof HUB_TOAST !== "undefined") HUB_TOAST.push({t:`⏸️ 진행 중이던 ${bdName(it)} — 새로고침으로 멈췄어요. 게시판 ⭐관심에 그대로 있어요(돈·기록은 그대로).`}); } });
   return b;
 }
 const BD_ACTIVE = s => s === "open" || s === "watch" || s === "wait" || s === "playing";

@@ -25,6 +25,7 @@ function safeAlert(msg){
 }
 function safeConfirm(msg){
   try{ const t = performance.now(), r = window.confirm(msg); if(r) return true; if(performance.now() - t > 60) return false; }catch(e){}
+  if(SC_ARM && SC_ARM.msg === msg && Date.now() - SC_ARM.at < 350) return false;   // 더블클릭의 두 번째 누름은 확인으로 치지 않는다
   if(SC_ARM && SC_ARM.msg === msg && Date.now() - SC_ARM.at < 6000){ scClear(); return true; }
   const ev = window.event, btn = ev && ev.target && ev.target.closest ? ev.target.closest("button,a,[role=button]") : null;
   scClear(); SC_ARM = {msg, at:Date.now(), sel:btn ? scSel(btn) : null};

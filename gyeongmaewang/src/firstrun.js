@@ -98,7 +98,8 @@ document.addEventListener("click", e => {
   if((b = e.target.closest && e.target.closest("[data-frgo]"))){ e.stopImmediatePropagation(); arenaTab = "life"; LF_PICK = "seoyun"; renderArena(); window.scrollTo(0, 0); return; }
   if((b = e.target.closest && e.target.closest("[data-frskip]"))){
     e.stopImmediatePropagation();
-    if(!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent = "한 번 더 누르면 이 물건은 넘겨요"; return; }
+    if(!b.classList.contains("armed")){ b.classList.add("armed"); b.dataset.armAt = Date.now(); b.textContent = "한 번 더 누르면 이 물건은 넘겨요"; return; }
+    if(Date.now() - (+b.dataset.armAt || 0) < 350) return;   // 더블클릭 한 번으로 확인까지 넘어가지 않게
     const life = K && K.lf && lfOn(); K = null;
     if(life){ arenaTab = "life"; LF_SPOT = "board"; } else if(typeof OF_SPOT !== "undefined"){ arenaTab = "office"; OF_SPOT = "board"; }
     if(typeof HUB_TOAST !== "undefined") HUB_TOAST.push({t:"🚪 이번 물건은 넘겼어요 — 모르는 채로 들어가지 않은 것도 판단이에요."});

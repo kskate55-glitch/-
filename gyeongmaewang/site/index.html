@@ -1042,6 +1042,8 @@ html.kfs-on #hubToasts{top:62px;left:14px;right:auto;bottom:auto}
 .gx-title{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,.72);padding:24px}
 .gx-title p{opacity:.75;margin-top:10px}
 .gx-ui-slot{position:absolute;left:0;right:0;margin:0 auto;top:18%;z-index:3;width:min(360px,86vw)}
+.gx-ui-slot.right{left:auto;right:5%;margin:0;width:min(320px,60vw)}
+@media (max-width:640px){.gx-ui-slot.right{right:4%;top:8%;width:min(240px,62vw)}}
 .gx-ui{background:rgba(250,250,245,.96);color:#1c2230;border-radius:14px;padding:14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.5);animation:gxLine .7s ease both;font-size:14px}
 .gx-ui small{display:block;color:#6e757b;font-size:12px}
 .gx-ui b{display:block;font-size:22px;margin:4px 0}
@@ -1363,6 +1365,98 @@ html.px-still .lf-me,html.px-still .vn-player{animation:none}
 @media (max-width:640px){
   #main summary{padding-top:10px;padding-bottom:10px;min-height:44px;box-sizing:border-box}
   #main .hub-tabs ~ * button,#main .rlist button,#main .chip{min-height:40px}
+}
+
+/* ================= 🎨 디자인 정리 — 게임 창 안은 한 가지 톤 =================
+   짙은 남색 바탕 · 크림색 서류 · 호박색 강조 · 초록=좋음 · 적색=위험.
+   게임 창(#kfsRoot) 안에서만 색 토큰을 덮어쓴다 — 공부 화면(연습장 본문)은 그대로. */
+#kfsRoot{
+  color-scheme:dark;
+  --paper:#0e121a; --sheet:#161b25; --sheet2:#1c2230;
+  --ink:#e8ecf2; --ink2:#bfc7d3; --muted:#949fae;
+  --line:#2a3242; --rule:#465268;
+  --seal:#ff7d70; --seal-soft:#3a2220;
+  --blue:#93bde6; --blue-soft:#1a2839;
+  --mark:#f2b33d;
+  --ok:#6fd49c; --ok-soft:#14302a;
+  --warn:#f2be5c; --warn-soft:#33280f;
+  --shadow:none;
+  --gx-card:#161b25; --gx-card2:#1c2230; --gx-line:#2a3242; --gx-amber:#f2b33d; --gx-amber-soft:rgba(242,179,61,.14);
+  color:var(--ink);
+}
+#kfsRoot .kfs-panel{background:var(--paper)}
+/* 카드 — 모서리 10px, 얇은 테두리, 그림자 없음 */
+#kfsRoot .panel{background:var(--gx-card);border:1px solid var(--gx-line);border-radius:10px;box-shadow:none;color:var(--ink)}
+#kfsRoot .note,#kfsRoot small.note{color:var(--muted)}
+/* 버튼 — 기본(짙은 회색) / 주요(호박색) / 위험(적색 테두리) */
+#kfsRoot .btn{background:var(--gx-card2);color:var(--ink);border:1px solid var(--rule);border-radius:10px;font-weight:700}
+#kfsRoot .btn:hover:not(:disabled){border-color:#6b7890}
+#kfsRoot .btn.pri,#kfsRoot button.pri{background:var(--gx-amber);color:#1b1407;border-color:var(--gx-amber)}
+#kfsRoot .btn.danger,#kfsRoot [data-bddrop].btn,#kfsRoot [data-lfreset].btn,#kfsRoot [data-kcreset].btn{background:transparent;color:var(--seal);border-color:rgba(255,125,112,.55)}
+#kfsRoot .btn:disabled{opacity:.45}
+/* 행동 카드 — 전부 같은 모양, 지금 추천/선택된 것만 호박색 테두리 */
+#kfsRoot .ag-act{background:var(--gx-card2);color:var(--ink);border:1px solid var(--gx-line);border-left:3px solid var(--rule);border-radius:10px;box-shadow:none}
+#kfsRoot .ag-act:hover:not(:disabled){border-color:#3b4659;border-left-color:var(--gx-amber)}
+#kfsRoot .ag-act.done{opacity:.6}
+#kfsRoot .ag-act .note,#kfsRoot .ag-act small{color:var(--muted)}
+/* 입력칸 · 선택칸 */
+#kfsRoot input[type=number],#kfsRoot input[type=text],#kfsRoot select,#kfsRoot textarea{background:#0b0f16;color:var(--ink);border:1px solid var(--rule);border-radius:8px}
+/* 접는 제목 */
+#kfsRoot summary{color:var(--ink)}
+/* 표 */
+#kfsRoot table{color:var(--ink)}#kfsRoot th,#kfsRoot td{border-color:var(--gx-line)}
+#kfsRoot .ag-act b,#kfsRoot .ag-act:first-child b{color:var(--ink)}
+#kfsRoot .ag-act:first-child .note{color:var(--muted)}
+#kfsRoot .ag-act.ag-bad{border-color:rgba(255,125,112,.55);border-left-color:var(--seal)}
+/* 흰 배경이 박혀 있던 곳들 */
+#kfsRoot .stg-grp{background:var(--gx-card);border-color:var(--gx-line)}
+#kfsRoot .qa-fails li.off{background:var(--gx-card2);color:var(--muted)}
+#kfsRoot .kp-sig em{background:var(--blue-soft);color:var(--ink);border-color:var(--gx-line)}
+#kfsRoot .kc-audio-in{background:#161b25;color:var(--ink);border-color:var(--rule);box-shadow:0 10px 26px rgba(0,0,0,.45)}
+#kfsRoot .down,#kfsRoot b.down,#kfsRoot small.down,#kfsRoot .ke-cash.danger{color:#ff8a7e}
+#kfsRoot .up{color:var(--ok)}
+/* 📄 서류는 서류답게 — 입찰표·사건 파일·계산 칸은 크림색 종이 + 짙은 글씨 */
+#kfsRoot .ke-sheet,#kfsRoot .stg-paper,#kfsRoot .ke-case,#kfsRoot .qa-bid{
+  --paper:#f7f1e3; --sheet:#fbf7ee; --sheet2:#f3ecdc; --ink:#2a2317; --ink2:#4a4030; --muted:#6c6150; --line:#d9ccb0; --rule:#bfae8a;
+  --blue:#2d5677; --blue-soft:#e6ecf2; --ok:#1f7a45; --seal:#b3261e; --warn:#8a5a00;
+  color:var(--ink); color-scheme:light}
+#kfsRoot .ke-sheet{background:#fbf7ee;border-color:#d9ccb0}
+#kfsRoot .ke-sheet .down,#kfsRoot .ke-case .down,#kfsRoot .qa-bid .down{color:#b3261e}
+#kfsRoot .ke-sheet input[type=number]{background:#fff;color:#2a2317;border-color:#bfae8a}
+#kfsRoot .ke-sheet .btn,#kfsRoot .ke-case .btn{background:#2a2317;color:#fbf7ee;border-color:#2a2317}
+#kfsRoot .ke-hangul{color:#2d5677}
+#kfsRoot [data-sntest]{background:var(--gx-card2);color:var(--ink);border:1px solid var(--rule);border-radius:8px}
+#kfsRoot .qa-fails small{color:var(--muted)}
+#kfsRoot .kp-sig em b{color:var(--ink)}
+#kfsRoot .kp-sig em[class*="낮음"] b{color:#6fd49c}#kfsRoot .kp-sig em[class*="보통"] b{color:#f2be5c}#kfsRoot .kp-sig em[class*="높음"] b{color:#ff8a7e}
+/* 남아 있던 밝은 상자들 */
+#kfsRoot .kc-mode{background:var(--blue-soft);color:var(--ink);border:1px solid var(--gx-line)}
+#kfsRoot .sn-chip{background:var(--gx-card2);color:var(--ink2);border:1px solid var(--gx-line)}
+/* 상단 정보 줄 — 옆으로 숨기지 말고 줄바꿈 */
+#kfsRoot .kfs-panel .k-hud{flex-wrap:wrap;overflow:visible;background:var(--paper)}
+/* 대사창 — 분홍 점선 대신 게임 전체 톤(호박색 테두리 · 해설은 옅은 실선) */
+#kfsRoot .vn-box{border:2px solid rgba(242,179,61,.5);box-shadow:0 0 0 1px rgba(0,0,0,.45) inset}
+#kfsRoot .vn-box.narr{border:1px solid rgba(255,255,255,.16);border-style:solid}
+/* 모바일: '사건 파일' 탭이 해설 마지막 줄을 가리던 문제 — 탭을 입찰표 왼쪽 아래로 */
+@media (max-width:640px){
+  #kfsRoot .stg-col{overflow:visible}
+  #kfsRoot .stg-tabs{position:absolute;right:calc(100% + 6px);bottom:0}
+  #kfsRoot .stg-tab{padding:8px 10px;font-size:13px;min-height:44px}
+  #kfsRoot .stg-tab small{display:none}
+}
+/* 조사 묶음 머리글 — 접혀 있어도 눈에 띄게, 누르기 좋게 */
+#kfsRoot .stg-grp>summary{min-height:48px;padding:12px 14px}
+#kfsRoot .stg-grp[open]>summary{border-bottom:1px solid var(--gx-line);color:var(--gx-amber)}
+#kfsRoot .stg-grp:not([open]):hover{border-color:#3b4659}
+/* 🖼️ 내 표정 초상 칸 — 대사창 왼쪽, 게임 톤 테두리. 표정 그림(가슴 위)은 여기서만 보인다 */
+#kfsRoot .vn-box.has-me{padding-left:128px;min-height:124px}
+#kfsRoot .vn-face.me{position:absolute;left:10px;top:50%;transform:translateY(-50%);bottom:auto;width:104px;height:104px;border-radius:10px;overflow:hidden;background:#1c2230;border:2px solid rgba(242,179,61,.7);box-shadow:0 2px 0 rgba(0,0,0,.4)}
+#kfsRoot .vn-face.me img{width:100%;height:100%;max-width:none;margin:0;object-fit:cover;object-position:50% 12%;image-rendering:auto;transition:opacity 80ms ease-out}
+#kfsRoot .vn-face.me img.px-swap{opacity:.35}
+#kfsRoot .vn-face.me img.px-hop{animation:pxHop .26s var(--px-ease)!important}
+@media (max-width:640px){
+  #kfsRoot .vn-box.has-me{padding-left:92px;min-height:92px}
+  #kfsRoot .vn-face.me{width:74px;height:74px;left:8px}
 }
 
 .rlist{display:grid}
@@ -35523,7 +35617,7 @@ function kStart(seed){
   if(KP.init) KP.init();
 }
 function kDay(n){ K.day += n; K.cost.hold += Math.round(KP.dailyHold * n * 10) / 10; }
-function kMan(v){ v = Math.round(v); const e = Math.floor(v/10000), m = v % 10000; return e ? `${e}억${m?` ${m.toLocaleString()}만`:""}원` : `${m.toLocaleString()}만원`; }
+function kMan(v){ v = Math.round(v); if(v < 0) return "−" + kMan(-v); const e = Math.floor(v/10000), m = v % 10000; return e ? `${e}억${m?` ${m.toLocaleString()}만`:""}원` : `${m.toLocaleString()}만원`; }
 
 /* ---------- 1. 조사 ---------- */
 function kResearch(id){
@@ -40087,7 +40181,7 @@ function gxScene(i){
   const img = document.createElement("div"); img.className = "gx-bgimg"; img.style.backgroundImage = u ? `url("${u}")` : "none";
   bg.appendChild(img); requestAnimationFrame(() => img.classList.add("on"));
   [...bg.children].slice(0, -1).forEach(x => { x.classList.remove("on"); setTimeout(() => x.remove(), 900); });
-  const slot = O.el.querySelector(".gx-ui-slot"); slot.innerHTML = gxUiHTML(sc.ui); slot.classList.toggle("low", sc.uiPos === "low"); img.style.backgroundPosition = sc.pos || "center";
+  const slot = O.el.querySelector(".gx-ui-slot"); slot.innerHTML = gxUiHTML(sc.ui); slot.classList.toggle("low", sc.uiPos === "low"); slot.classList.toggle("right", sc.uiPos === "right"); img.style.backgroundPosition = sc.pos || "center";
   if(sc.amb && typeof snAmbWant === "function"){ GX_AMB = sc.amb; snAmbWant(kaCfg().mute ? null : sc.amb); }
   if(sc.sfx) setTimeout(() => { if(sc.sfx === "chime" && typeof snChime === "function") snChime(); else if(typeof kcSfx === "function") kcSfx(sc.sfx); }, 350);
   O.el.querySelector(".gx-box").hidden = true;
@@ -40294,24 +40388,41 @@ const LF_CHAR_ART = {
   mijeong:{face:{normal:"32c523858c5681e224be52caca502f9a", happy:"07b53544fd6eb5e854a37666ebd60b07", shocked:"ae54bf011d86fe7d8828789b6a8e39e6",
                 worried:"9f745640e94952c8a3167e2c152be3ea", angry:"6bc9e8d46f35a9f734bd19eda16d4ff3", tired:"8a469b739b8d34d2e81b8f257146eaa9"},
           front:"7908e88b677af08faafdfb68a56fe6dc", back:"3f5ff0ba1b1ee0e30979aa50d1fd5dae", select:"07908fc86a73109107d59cf8e4479263",
-          shop:"80fa4024531bc6844278f4a1bec404ec", room:"3d69a0468b0060ad25ce8910b4093d4b"}};
+          shop:"80fa4024531bc6844278f4a1bec404ec", room:"3d69a0468b0060ad25ce8910b4093d4b"},
+  // 박재훈 — 표정: 기본 · 멋쩍게 웃음(happy) · 놀람 · 턱 만지며 의심(worried) · 팔짱 결심(angry) · 수건으로 땀(tired)
+  jaehoon:{face:{normal:"57f8a7399c2b314071d8ed618a05652b", happy:"32edd6959f579b5be13566eb3e81cf5a", shocked:"e115ea1cd8e1acb71d25020554f8457f",
+                worried:"9459b9ba54cfb16d50f81edb2504a7cf", angry:"b9f99fcdf9dbe847a42f7fb44c21474b", tired:"a26f8b8bab7891c00cd99d37ca8dde6f"},
+          front:"b4dc5f10fae374867317d9a0cfa424d6", back:"47ae8b1c6e9b40cbe5c2a5712e966769", select:"0fb410d2a57eed863e40f7ea7f1ac3dc",
+          site:"38752f63e0013680ff416faa69ffc6da", room:"28a1cf1a44efbf9ef7e0e889e481f058"},
+  // 최은경 — 표정: 기본 · 옅은 미소(happy) · 놀람 · 계산기 보며 걱정(worried) · 안경 올리며 결심(angry) · 관자놀이 누름(tired)
+  eunkyung:{face:{normal:"8336de9700e8867cef7780f9eb5100b8", happy:"4af47be1b355fa6d1bb4cf6b33138034", shocked:"6ac2ed5732b7577e826f0faa7fde89a0",
+                worried:"9bc30ab83c619c296a59bb886e2cdccc", angry:"051cf9287aa3edef659dd6bcfd3ba3a9", tired:"37800e7039244c49f1057cb020a82930"},
+          front:"161bb82508161fb9813ce4a1c2ef6b2e", back:"da966f6f11cff93debb276f20106cc14", select:"21337f6463a3fe6b47f7499ff4954b39",
+          morning:"e484c60840c93b1948e7870ab73d4d19", room:"75d039a099fc0a99a7efba48f6d09783"}};
 const LF_FACE_ALIAS = {soft:"happy", neutral:"normal", troubled:"worried", furious:"angry"};
 // 배경·컷 칸으로도 등록해 둔다(그림 관리 화면·오프닝이 같은 이름으로 찾게)
 Object.assign(ART_DEFAULT, {bg_base_sillim:LF_CHAR_ART.seoyun.room, cut_seoyun_found:LF_CHAR_ART.seoyun.found,
   bg_base_hwagok:LF_CHAR_ART.dohyun.room, cut_dohyun_commute:LF_CHAR_ART.dohyun.commute,
-  bg_base_yeongdeungpo:LF_CHAR_ART.mijeong.room, cut_mijeong_shop:LF_CHAR_ART.mijeong.shop});
+  bg_base_yeongdeungpo:LF_CHAR_ART.mijeong.room, cut_mijeong_shop:LF_CHAR_ART.mijeong.shop,
+  bg_base_bulgwang:LF_CHAR_ART.jaehoon.room, cut_jaehoon_site:LF_CHAR_ART.jaehoon.site,
+  bg_base_mapo:LF_CHAR_ART.eunkyung.room, cut_eunkyung_morning:LF_CHAR_ART.eunkyung.morning});
 if(LF_BASES.sillim) LF_BASES.sillim.bg = "bg_base_sillim";
 if(LF_BASES.hwagok) LF_BASES.hwagok.bg = "bg_base_hwagok";
 if(LF_BASES.yeongdeungpo) LF_BASES.yeongdeungpo.bg = "bg_base_yeongdeungpo";
+if(LF_BASES.bulgwang) LF_BASES.bulgwang.bg = "bg_base_bulgwang";
+if(LF_BASES.mapo) LF_BASES.mapo.bg = "bg_base_mapo";
 function lfArt(id){ id = id || (lfOn() ? lfRec().char : null); return id ? LF_CHAR_ART[id] || null : null; }
 function lfBlob(a){ return window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a; }
 function lfArtUrl(id, k){ const A = lfArt(id); return A && A[k] ? lfBlob(A[k]) : null; }
 const _ca_artUrl = artUrl; artUrl = function(id){
-  const A = lfOn() ? lfArt() : null;
-  if(A && id && !(artRec()[id])){      // 사용자가 직접 올린 그림이 있으면 그걸 먼저
+  // 주인공 그림은 여섯 인생 것만 쓴다 — 옛 주인공(노란 머리)은 더 이상 세우지 않는다.
+  // 인생을 안 고르고 바로 시작한 판은 1번 인생(한서윤) 그림, 그림이 아직 없는 인생은 주인공을 아예 세우지 않는다.
+  if(id && /^npc_player(f)?_/.test(id) && !(artRec()[id])){      // 사용자가 직접 올린 그림이 있으면 그걸 먼저
+    const A = lfArt(lfOn() ? lfRec().char : "seoyun");
+    if(!A) return null;
     let m = /^npc_playerf_(\w+)$/.exec(id);
-    if(m && A.face){ const k = A.face[m[1]] ? m[1] : LF_FACE_ALIAS[m[1]]; if(k && A.face[k]) return lfBlob(A.face[k]); }
-    if(/^npc_player_\w+$/.test(id) && A.back) return lfBlob(A.back);
+    if(m){ if(!A.face) return null; const k = A.face[m[1]] ? m[1] : LF_FACE_ALIAS[m[1]]; return k && A.face[k] ? lfBlob(A.face[k]) : lfBlob(A.face.normal); }
+    return A.back ? lfBlob(A.back) : null;
   }
   return _ca_artUrl(id);
 };
@@ -40323,6 +40434,9 @@ if(LF_OPENINGS.seoyun){ LF_OPENINGS.seoyun[0].bg = "bg_base_sillim"; LF_OPENINGS
 if(LF_OPENINGS.dohyun){ LF_OPENINGS.dohyun[0].bg = "cut_dohyun_commute"; [2,3,4].forEach(i => { if(LF_OPENINGS.dohyun[i]) LF_OPENINGS.dohyun[i].bg = "bg_base_hwagok"; }); }
 // 미정: 가게 마감(그림 속 본인) → 집 거실 → 중개사무소(그대로)
 if(LF_OPENINGS.mijeong){ LF_OPENINGS.mijeong[0].bg = "cut_mijeong_shop"; LF_OPENINGS.mijeong[0].uiPos = "low"; LF_OPENINGS.mijeong[0].pos = "58% 50%"; LF_OPENINGS.mijeong[1].pos = "58% 50%"; LF_OPENINGS.mijeong[1].bg = "cut_mijeong_shop"; LF_OPENINGS.mijeong[2].bg = "bg_base_yeongdeungpo"; }
+// 재훈: 수리 현장에서 벽 두드리기(그림 속 본인, 오른쪽) → 국밥집 골목(그대로) → 불광동 작업방
+if(LF_OPENINGS.eunkyung){ [0,1].forEach(i => { LF_OPENINGS.eunkyung[i].bg = "cut_eunkyung_morning"; LF_OPENINGS.eunkyung[i].pos = "40% 45%"; }); LF_OPENINGS.eunkyung[0].uiPos = "right"; if(LF_OPENINGS.eunkyung[2]) LF_OPENINGS.eunkyung[2].bg = "bg_base_mapo"; }
+if(LF_OPENINGS.jaehoon){ [0,1].forEach(i => { LF_OPENINGS.jaehoon[i].bg = "cut_jaehoon_site"; LF_OPENINGS.jaehoon[i].pos = "72% 50%"; }); if(LF_OPENINGS.jaehoon[3]) LF_OPENINGS.jaehoon[3].bg = "bg_base_bulgwang"; }
 // 거점: 방 안에 내가 서 있다
 const _ca_base = lfBaseHTML; lfBaseHTML = function(){
   const h = _ca_base(), u = lfArtUrl(null, "front"); if(!u) return h;
@@ -40371,7 +40485,7 @@ function stgApply(){
   const heads = [...panel.querySelectorAll(":scope > h4.kr-grp")];
   heads.forEach((h, i) => {
     const key = stgGrpKey(h.textContent), site = /현장/.test(h.textContent);
-    const want = STG.grp[key] != null ? STG.grp[key] : (K.loc === "site" ? site : !site);
+    const want = STG.grp[key] != null ? STG.grp[key] : false;   // 처음엔 전부 접어 둔다 — 머리글만 보고 골라서 연다
     const d = document.createElement("details"); d.className = "stg-grp"; d.open = !!want; d.dataset.grp = key;
     const s = document.createElement("summary"); s.innerHTML = h.innerHTML;
     let cnt = 0, nx = h.nextElementSibling; const move = [];
@@ -40398,6 +40512,15 @@ document.addEventListener("click", e => {
 document.addEventListener("toggle", e => { const d = e.target; if(!d || !d.classList) return; if(d.classList.contains("stg-grp")) STG.grp[d.dataset.grp] = d.open; if(d.classList.contains("stg-goals")) STG.grp.__goals = d.open; }, true);
 document.addEventListener("keydown", e => { if(e.key === "Escape" && STG.file && stgActive()){ const b = document.querySelector(".stg-x"); if(b) b.click(); } });
 const _stg_render = renderArena; renderArena = function(){ _stg_render(); queueMicrotask(stgApply); };
+
+// 🪗 아코디언 — 사람이 머리글을 눌러 하나를 열면 나머지는 접힌다(스크롤 길게 내리지 않게).
+// 프로그램이 d.open을 바꾸는 경우엔 건드리지 않는다(클릭에서만 동작).
+document.addEventListener("click", e => {
+  const sm = e.target.closest && e.target.closest(".stg-grp > summary"); if(!sm) return;
+  const d = sm.parentElement; if(d.open) return;
+  document.querySelectorAll(".stg-grp[open]").forEach(o => { if(o !== d){ o.open = false; STG.grp[o.dataset.grp] = false; } });
+  setTimeout(() => { if(d.open) sm.scrollIntoView({block:"nearest", behavior:"smooth"}); }, 30);
+}, true);
 
 /* ================= 🖼️ 시트 그림 — 게시판 건물 사진 · 조사 파일 증거 사진 · 오늘 날씨 · 다음 물건용 보관함 =================
    GPT 시트 5장에서 잘라 올린 그림. 지금 게임에 있는 자리에 바로 쓰고, 아직 없는 물건(상가·오피스텔·공장 등)
@@ -40934,9 +41057,22 @@ function pxBuzz(){
 /* ---------- 😰 반응 API — 표정 교체 · 땀 · 놀람 · 핏대 ----------
    pxReact({face:"shocked", fx:"sweat", n:2, sound:"…", delay:900})
    얼굴은 주인공 초상(.vn-player) → 없으면 거점 전신(.lf-me). 그림이 없으면 조용히 넘어간다. */
-function pxTarget(){ return document.querySelector(".vn-player") || document.querySelector(".lf-me"); }
+function pxTarget(){ return document.querySelector(".vn-face.me img") || document.querySelector(".vn-player") || document.querySelector(".lf-me"); }
+// 🖼️ 표정은 대사창 초상 칸에서 — 가슴 위로 자른 표정 그림을 무대에 크게 세우면 '잘라 붙인' 티가 난다.
+// 무대의 '나'는 늘 뒷모습(프레임 가장자리에 걸친 구도)으로 두고, 표정 그림은 대사창 왼쪽 초상 칸에 넣는다.
+function pxPortrait(){
+  const img = document.querySelector(".kfs-stage .vn-player.front, .vn .vn-player.front"); if(!img) return;
+  const face = img.getAttribute("src"), back = typeof artUrl === "function" && artUrl("npc_player_normal");
+  const vn = img.closest(".vn"), box = vn && vn.querySelector(".vn-box");
+  if(back){ img.setAttribute("src", back); img.classList.remove("front"); [...img.classList].filter(c => /^pf-/.test(c)).forEach(c => img.classList.remove(c)); }
+  else img.remove();
+  if(!box || !face) return;
+  let slot = box.querySelector(".vn-face.me");
+  if(!slot){ const old = box.querySelector(".vn-face"); if(old) old.remove(); slot = document.createElement("span"); slot.className = "vn-face me"; slot.innerHTML = `<img src="${face}" alt="">`; box.prepend(slot); box.classList.add("has-face", "has-me"); }
+  else slot.querySelector("img").setAttribute("src", face);
+}
 function pxFace(img, face){
-  if(!img || img.tagName !== "IMG" || !img.classList.contains("vn-player")) return;
+  if(!img || img.tagName !== "IMG" || !(img.classList.contains("vn-player") || img.closest(".vn-face.me"))) return;
   const u = typeof artUrl === "function" && artUrl("npc_playerf_" + face); if(!u || img.src.endsWith(u)) return;
   if(pxMin()){ img.src = u; return; }
   img.classList.add("px-swap"); setTimeout(() => { img.src = u; img.classList.remove("px-swap"); }, 80);   // 딱 끊지 않고 80ms 살짝 겹쳐 바꾼다
@@ -40957,12 +41093,12 @@ function pxFx(el, fx, n){
   if(!el) return; const r = el.getBoundingClientRect(); if(!r.width) return;
   const front = el.classList.contains("vn-player") && el.classList.contains("front");
   // 관자놀이 쯤 — 앞모습 초상은 얼굴이 크고, 전신은 머리가 위쪽 15% 안에 있다
-  const fx0 = r.left + r.width * (front ? 0.68 : 0.62), fy0 = r.top + r.height * (front ? 0.15 : 0.08);
+  const port = !!el.closest(".vn-face"); const fx0 = r.left + r.width * (port ? 0.74 : front ? 0.68 : 0.62), fy0 = r.top + r.height * (port ? 0.2 : front ? 0.15 : 0.08);
   for(let i = 0; i < (n || 1); i++){
     const d = document.createElement("div"); d.className = `px-fx px-${fx}${pxMin() ? " still" : ""}`;
     d.innerHTML = fx === "sweat" ? PX_DROP : fx === "shock" ? PX_BANG : PX_VEIN;
     d.style.left = (fx0 + scrollX + (fx === "shock" ? -r.width * 0.15 : i * 9)) + "px";
-    d.style.top = (fy0 + scrollY + (fx === "shock" ? -r.height * 0.21 : i * 6)) + "px";
+    d.style.top = (fy0 + scrollY + (fx === "shock" ? -r.height * (port ? 0.34 : 0.21) : i * 6)) + "px";
     d.style.animationDelay = (i * 0.16) + "s";
     document.body.appendChild(d); setTimeout(() => d.remove(), 1300 + i * 160);
   }
@@ -41072,7 +41208,7 @@ function pxRoot(){ document.documentElement.classList.toggle("px-still", pxMin()
 const _px_render = renderArena;
 renderArena = function(){
   _px_render();
-  queueMicrotask(() => { try{ pxRoot(); pxAfterKing(); pxAfterCash(); pxAfterLife(); }catch(e){} });
+  queueMicrotask(() => { try{ pxRoot(); pxPortrait(); pxAfterKing(); pxAfterCash(); pxAfterLife(); }catch(e){} });
 };
 
 /* ---------- 👆 버튼 손맛 — 눌림 모양은 CSS, 소리는 주요 버튼만 ---------- */

@@ -10,10 +10,10 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  // 과입찰 — 웃음 → 굳음 + 땀
  await p.evaluate(()=>{ kBid(Math.round(KP.appraisal*1.6)); K.revealing=true; renderArena(); });
  const rv = await p.evaluate(()=>K.revealMs); await p.waitForTimeout(rv+500);
- const st = await p.evaluate(()=>({step:K.step, gap:K.result.gap, solo:K.result.solo, img:(document.querySelector('.vn-player')||{}).src||''}));
+ const st = await p.evaluate(()=>({step:K.step, gap:K.result.gap, solo:K.result.solo, img:(document.querySelector('.vn-face.me img')||document.querySelector('.vn-player')||{}).src||''}));
  console.log(w, st.step, st.gap, st.solo);
  await p.waitForTimeout(700); await p.screenshot({path:`px_over_${w}.png`});
- const fx = await p.evaluate(()=>({sweat:document.querySelectorAll('.px-sweat').length, bang:document.querySelectorAll('.px-shock').length, img:(document.querySelector('.vn-player')||{}).src||''}));
+ const fx = await p.evaluate(()=>({sweat:document.querySelectorAll('.px-sweat').length, bang:document.querySelectorAll('.px-shock').length, img:(document.querySelector('.vn-face.me img')||document.querySelector('.vn-player')||{}).src||''}));
  ok(st.step==='won' && fx.sweat>=1, w+' 낙찰 뒤 땀 방울 ('+fx.sweat+')');
  if(!st.solo) ok(fx.bang>=1 && await p.evaluate(u=>u===artUrl('npc_playerf_shocked')||u.endsWith(artUrl('npc_playerf_shocked')), fx.img), w+' 과입찰: 표정 바뀜 + "!"');
  // 빈집 — 명도 끝

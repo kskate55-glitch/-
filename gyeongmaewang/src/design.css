@@ -1,0 +1,91 @@
+/* ================= 🎨 디자인 정리 — 게임 창 안은 한 가지 톤 =================
+   짙은 남색 바탕 · 크림색 서류 · 호박색 강조 · 초록=좋음 · 적색=위험.
+   게임 창(#kfsRoot) 안에서만 색 토큰을 덮어쓴다 — 공부 화면(연습장 본문)은 그대로. */
+#kfsRoot{
+  color-scheme:dark;
+  --paper:#0e121a; --sheet:#161b25; --sheet2:#1c2230;
+  --ink:#e8ecf2; --ink2:#bfc7d3; --muted:#949fae;
+  --line:#2a3242; --rule:#465268;
+  --seal:#ff7d70; --seal-soft:#3a2220;
+  --blue:#93bde6; --blue-soft:#1a2839;
+  --mark:#f2b33d;
+  --ok:#6fd49c; --ok-soft:#14302a;
+  --warn:#f2be5c; --warn-soft:#33280f;
+  --shadow:none;
+  --gx-card:#161b25; --gx-card2:#1c2230; --gx-line:#2a3242; --gx-amber:#f2b33d; --gx-amber-soft:rgba(242,179,61,.14);
+  color:var(--ink);
+}
+#kfsRoot .kfs-panel{background:var(--paper)}
+/* 카드 — 모서리 10px, 얇은 테두리, 그림자 없음 */
+#kfsRoot .panel{background:var(--gx-card);border:1px solid var(--gx-line);border-radius:10px;box-shadow:none;color:var(--ink)}
+#kfsRoot .note,#kfsRoot small.note{color:var(--muted)}
+/* 버튼 — 기본(짙은 회색) / 주요(호박색) / 위험(적색 테두리) */
+#kfsRoot .btn{background:var(--gx-card2);color:var(--ink);border:1px solid var(--rule);border-radius:10px;font-weight:700}
+#kfsRoot .btn:hover:not(:disabled){border-color:#6b7890}
+#kfsRoot .btn.pri,#kfsRoot button.pri{background:var(--gx-amber);color:#1b1407;border-color:var(--gx-amber)}
+#kfsRoot .btn.danger,#kfsRoot [data-bddrop].btn,#kfsRoot [data-lfreset].btn,#kfsRoot [data-kcreset].btn{background:transparent;color:var(--seal);border-color:rgba(255,125,112,.55)}
+#kfsRoot .btn:disabled{opacity:.45}
+/* 행동 카드 — 전부 같은 모양, 지금 추천/선택된 것만 호박색 테두리 */
+#kfsRoot .ag-act{background:var(--gx-card2);color:var(--ink);border:1px solid var(--gx-line);border-left:3px solid var(--rule);border-radius:10px;box-shadow:none}
+#kfsRoot .ag-act:hover:not(:disabled){border-color:#3b4659;border-left-color:var(--gx-amber)}
+#kfsRoot .ag-act.done{opacity:.6}
+#kfsRoot .ag-act .note,#kfsRoot .ag-act small{color:var(--muted)}
+/* 입력칸 · 선택칸 */
+#kfsRoot input[type=number],#kfsRoot input[type=text],#kfsRoot select,#kfsRoot textarea{background:#0b0f16;color:var(--ink);border:1px solid var(--rule);border-radius:8px}
+/* 접는 제목 */
+#kfsRoot summary{color:var(--ink)}
+/* 표 */
+#kfsRoot table{color:var(--ink)}#kfsRoot th,#kfsRoot td{border-color:var(--gx-line)}
+#kfsRoot .ag-act b,#kfsRoot .ag-act:first-child b{color:var(--ink)}
+#kfsRoot .ag-act:first-child .note{color:var(--muted)}
+#kfsRoot .ag-act.ag-bad{border-color:rgba(255,125,112,.55);border-left-color:var(--seal)}
+/* 흰 배경이 박혀 있던 곳들 */
+#kfsRoot .stg-grp{background:var(--gx-card);border-color:var(--gx-line)}
+#kfsRoot .qa-fails li.off{background:var(--gx-card2);color:var(--muted)}
+#kfsRoot .kp-sig em{background:var(--blue-soft);color:var(--ink);border-color:var(--gx-line)}
+#kfsRoot .kc-audio-in{background:#161b25;color:var(--ink);border-color:var(--rule);box-shadow:0 10px 26px rgba(0,0,0,.45)}
+#kfsRoot .down,#kfsRoot b.down,#kfsRoot small.down,#kfsRoot .ke-cash.danger{color:#ff8a7e}
+#kfsRoot .up{color:var(--ok)}
+/* 📄 서류는 서류답게 — 입찰표·사건 파일·계산 칸은 크림색 종이 + 짙은 글씨 */
+#kfsRoot .ke-sheet,#kfsRoot .stg-paper,#kfsRoot .ke-case,#kfsRoot .qa-bid{
+  --paper:#f7f1e3; --sheet:#fbf7ee; --sheet2:#f3ecdc; --ink:#2a2317; --ink2:#4a4030; --muted:#6c6150; --line:#d9ccb0; --rule:#bfae8a;
+  --blue:#2d5677; --blue-soft:#e6ecf2; --ok:#1f7a45; --seal:#b3261e; --warn:#8a5a00;
+  color:var(--ink); color-scheme:light}
+#kfsRoot .ke-sheet{background:#fbf7ee;border-color:#d9ccb0}
+#kfsRoot .ke-sheet .down,#kfsRoot .ke-case .down,#kfsRoot .qa-bid .down{color:#b3261e}
+#kfsRoot .ke-sheet input[type=number]{background:#fff;color:#2a2317;border-color:#bfae8a}
+#kfsRoot .ke-sheet .btn,#kfsRoot .ke-case .btn{background:#2a2317;color:#fbf7ee;border-color:#2a2317}
+#kfsRoot .ke-hangul{color:#2d5677}
+#kfsRoot [data-sntest]{background:var(--gx-card2);color:var(--ink);border:1px solid var(--rule);border-radius:8px}
+#kfsRoot .qa-fails small{color:var(--muted)}
+#kfsRoot .kp-sig em b{color:var(--ink)}
+#kfsRoot .kp-sig em[class*="낮음"] b{color:#6fd49c}#kfsRoot .kp-sig em[class*="보통"] b{color:#f2be5c}#kfsRoot .kp-sig em[class*="높음"] b{color:#ff8a7e}
+/* 남아 있던 밝은 상자들 */
+#kfsRoot .kc-mode{background:var(--blue-soft);color:var(--ink);border:1px solid var(--gx-line)}
+#kfsRoot .sn-chip{background:var(--gx-card2);color:var(--ink2);border:1px solid var(--gx-line)}
+/* 상단 정보 줄 — 옆으로 숨기지 말고 줄바꿈 */
+#kfsRoot .kfs-panel .k-hud{flex-wrap:wrap;overflow:visible;background:var(--paper)}
+/* 대사창 — 분홍 점선 대신 게임 전체 톤(호박색 테두리 · 해설은 옅은 실선) */
+#kfsRoot .vn-box{border:2px solid rgba(242,179,61,.5);box-shadow:0 0 0 1px rgba(0,0,0,.45) inset}
+#kfsRoot .vn-box.narr{border:1px solid rgba(255,255,255,.16);border-style:solid}
+/* 모바일: '사건 파일' 탭이 해설 마지막 줄을 가리던 문제 — 탭을 입찰표 왼쪽 아래로 */
+@media (max-width:640px){
+  #kfsRoot .stg-col{overflow:visible}
+  #kfsRoot .stg-tabs{position:absolute;right:calc(100% + 6px);bottom:0}
+  #kfsRoot .stg-tab{padding:8px 10px;font-size:13px;min-height:44px}
+  #kfsRoot .stg-tab small{display:none}
+}
+/* 조사 묶음 머리글 — 접혀 있어도 눈에 띄게, 누르기 좋게 */
+#kfsRoot .stg-grp>summary{min-height:48px;padding:12px 14px}
+#kfsRoot .stg-grp[open]>summary{border-bottom:1px solid var(--gx-line);color:var(--gx-amber)}
+#kfsRoot .stg-grp:not([open]):hover{border-color:#3b4659}
+/* 🖼️ 내 표정 초상 칸 — 대사창 왼쪽, 게임 톤 테두리. 표정 그림(가슴 위)은 여기서만 보인다 */
+#kfsRoot .vn-box.has-me{padding-left:128px;min-height:124px}
+#kfsRoot .vn-face.me{position:absolute;left:10px;top:50%;transform:translateY(-50%);bottom:auto;width:104px;height:104px;border-radius:10px;overflow:hidden;background:#1c2230;border:2px solid rgba(242,179,61,.7);box-shadow:0 2px 0 rgba(0,0,0,.4)}
+#kfsRoot .vn-face.me img{width:100%;height:100%;max-width:none;margin:0;object-fit:cover;object-position:50% 12%;image-rendering:auto;transition:opacity 80ms ease-out}
+#kfsRoot .vn-face.me img.px-swap{opacity:.35}
+#kfsRoot .vn-face.me img.px-hop{animation:pxHop .26s var(--px-ease)!important}
+@media (max-width:640px){
+  #kfsRoot .vn-box.has-me{padding-left:92px;min-height:92px}
+  #kfsRoot .vn-face.me{width:74px;height:74px;left:8px}
+}

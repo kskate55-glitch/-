@@ -57,9 +57,22 @@ function pxBuzz(){
 /* ---------- 😰 반응 API — 표정 교체 · 땀 · 놀람 · 핏대 ----------
    pxReact({face:"shocked", fx:"sweat", n:2, sound:"…", delay:900})
    얼굴은 주인공 초상(.vn-player) → 없으면 거점 전신(.lf-me). 그림이 없으면 조용히 넘어간다. */
-function pxTarget(){ return document.querySelector(".vn-player") || document.querySelector(".lf-me"); }
+function pxTarget(){ return document.querySelector(".vn-face.me img") || document.querySelector(".vn-player") || document.querySelector(".lf-me"); }
+// 🖼️ 표정은 대사창 초상 칸에서 — 가슴 위로 자른 표정 그림을 무대에 크게 세우면 '잘라 붙인' 티가 난다.
+// 무대의 '나'는 늘 뒷모습(프레임 가장자리에 걸친 구도)으로 두고, 표정 그림은 대사창 왼쪽 초상 칸에 넣는다.
+function pxPortrait(){
+  const img = document.querySelector(".kfs-stage .vn-player.front, .vn .vn-player.front"); if(!img) return;
+  const face = img.getAttribute("src"), back = typeof artUrl === "function" && artUrl("npc_player_normal");
+  const vn = img.closest(".vn"), box = vn && vn.querySelector(".vn-box");
+  if(back){ img.setAttribute("src", back); img.classList.remove("front"); [...img.classList].filter(c => /^pf-/.test(c)).forEach(c => img.classList.remove(c)); }
+  else img.remove();
+  if(!box || !face) return;
+  let slot = box.querySelector(".vn-face.me");
+  if(!slot){ const old = box.querySelector(".vn-face"); if(old) old.remove(); slot = document.createElement("span"); slot.className = "vn-face me"; slot.innerHTML = `<img src="${face}" alt="">`; box.prepend(slot); box.classList.add("has-face", "has-me"); }
+  else slot.querySelector("img").setAttribute("src", face);
+}
 function pxFace(img, face){
-  if(!img || img.tagName !== "IMG" || !img.classList.contains("vn-player")) return;
+  if(!img || img.tagName !== "IMG" || !(img.classList.contains("vn-player") || img.closest(".vn-face.me"))) return;
   const u = typeof artUrl === "function" && artUrl("npc_playerf_" + face); if(!u || img.src.endsWith(u)) return;
   if(pxMin()){ img.src = u; return; }
   img.classList.add("px-swap"); setTimeout(() => { img.src = u; img.classList.remove("px-swap"); }, 80);   // 딱 끊지 않고 80ms 살짝 겹쳐 바꾼다
@@ -80,12 +93,12 @@ function pxFx(el, fx, n){
   if(!el) return; const r = el.getBoundingClientRect(); if(!r.width) return;
   const front = el.classList.contains("vn-player") && el.classList.contains("front");
   // 관자놀이 쯤 — 앞모습 초상은 얼굴이 크고, 전신은 머리가 위쪽 15% 안에 있다
-  const fx0 = r.left + r.width * (front ? 0.68 : 0.62), fy0 = r.top + r.height * (front ? 0.15 : 0.08);
+  const port = !!el.closest(".vn-face"); const fx0 = r.left + r.width * (port ? 0.74 : front ? 0.68 : 0.62), fy0 = r.top + r.height * (port ? 0.2 : front ? 0.15 : 0.08);
   for(let i = 0; i < (n || 1); i++){
     const d = document.createElement("div"); d.className = `px-fx px-${fx}${pxMin() ? " still" : ""}`;
     d.innerHTML = fx === "sweat" ? PX_DROP : fx === "shock" ? PX_BANG : PX_VEIN;
     d.style.left = (fx0 + scrollX + (fx === "shock" ? -r.width * 0.15 : i * 9)) + "px";
-    d.style.top = (fy0 + scrollY + (fx === "shock" ? -r.height * 0.21 : i * 6)) + "px";
+    d.style.top = (fy0 + scrollY + (fx === "shock" ? -r.height * (port ? 0.34 : 0.21) : i * 6)) + "px";
     d.style.animationDelay = (i * 0.16) + "s";
     document.body.appendChild(d); setTimeout(() => d.remove(), 1300 + i * 160);
   }
@@ -195,7 +208,7 @@ function pxRoot(){ document.documentElement.classList.toggle("px-still", pxMin()
 const _px_render = renderArena;
 renderArena = function(){
   _px_render();
-  queueMicrotask(() => { try{ pxRoot(); pxAfterKing(); pxAfterCash(); pxAfterLife(); }catch(e){} });
+  queueMicrotask(() => { try{ pxRoot(); pxPortrait(); pxAfterKing(); pxAfterCash(); pxAfterLife(); }catch(e){} });
 };
 
 /* ---------- 👆 버튼 손맛 — 눌림 모양은 CSS, 소리는 주요 버튼만 ---------- */

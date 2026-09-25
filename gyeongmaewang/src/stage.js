@@ -30,7 +30,7 @@ function stgApply(){
   const heads = [...panel.querySelectorAll(":scope > h4.kr-grp")];
   heads.forEach((h, i) => {
     const key = stgGrpKey(h.textContent), site = /현장/.test(h.textContent);
-    const want = STG.grp[key] != null ? STG.grp[key] : (K.loc === "site" ? site : !site);
+    const want = STG.grp[key] != null ? STG.grp[key] : false;   // 처음엔 전부 접어 둔다 — 머리글만 보고 골라서 연다
     const d = document.createElement("details"); d.className = "stg-grp"; d.open = !!want; d.dataset.grp = key;
     const s = document.createElement("summary"); s.innerHTML = h.innerHTML;
     let cnt = 0, nx = h.nextElementSibling; const move = [];
@@ -57,3 +57,12 @@ document.addEventListener("click", e => {
 document.addEventListener("toggle", e => { const d = e.target; if(!d || !d.classList) return; if(d.classList.contains("stg-grp")) STG.grp[d.dataset.grp] = d.open; if(d.classList.contains("stg-goals")) STG.grp.__goals = d.open; }, true);
 document.addEventListener("keydown", e => { if(e.key === "Escape" && STG.file && stgActive()){ const b = document.querySelector(".stg-x"); if(b) b.click(); } });
 const _stg_render = renderArena; renderArena = function(){ _stg_render(); queueMicrotask(stgApply); };
+
+// 🪗 아코디언 — 사람이 머리글을 눌러 하나를 열면 나머지는 접힌다(스크롤 길게 내리지 않게).
+// 프로그램이 d.open을 바꾸는 경우엔 건드리지 않는다(클릭에서만 동작).
+document.addEventListener("click", e => {
+  const sm = e.target.closest && e.target.closest(".stg-grp > summary"); if(!sm) return;
+  const d = sm.parentElement; if(d.open) return;
+  document.querySelectorAll(".stg-grp[open]").forEach(o => { if(o !== d){ o.open = false; STG.grp[o.dataset.grp] = false; } });
+  setTimeout(() => { if(d.open) sm.scrollIntoView({block:"nearest", behavior:"smooth"}); }, 30);
+}, true);

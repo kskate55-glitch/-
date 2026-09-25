@@ -65,7 +65,7 @@ function kStart(seed){
   if(KP.init) KP.init();
 }
 function kDay(n){ K.day += n; K.cost.hold += Math.round(KP.dailyHold * n * 10) / 10; }
-function kMan(v){ v = Math.round(v); const e = Math.floor(v/10000), m = v % 10000; return e ? `${e}억${m?` ${m.toLocaleString()}만`:""}원` : `${m.toLocaleString()}만원`; }
+function kMan(v){ v = Math.round(v); if(v < 0) return "−" + kMan(-v); const e = Math.floor(v/10000), m = v % 10000; return e ? `${e}억${m?` ${m.toLocaleString()}만`:""}원` : `${m.toLocaleString()}만원`; }
 
 /* ---------- 1. 조사 ---------- */
 function kResearch(id){

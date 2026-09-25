@@ -15,7 +15,7 @@ s = s[:a] + '\n' + cases + '\n' + open('scenes.js').read() + '\n' + open('caseui
 # ---- css (case deep + arena)
 css = open('patch_cases.py').read().split("css='''")[1].split("'''")[0]
 css_new = '\n'.join(l for l in css.splitlines() if l.split('{')[0] not in s[:s.index('</style>')] or l.startswith('@media'))
-css_new += '\n' + open('arena.css').read()
+css_new += '\n' + open('arena.css').read() + '\n' + open('design.css').read()
 rep('.rlist{display:grid}', css_new + '\n.rlist{display:grid}')
 # ---- nav
 rep('["real","실전"],', '["real","실전"],["arena","협상"],')

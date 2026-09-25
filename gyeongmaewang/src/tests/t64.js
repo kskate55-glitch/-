@@ -5,7 +5,7 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(600);
  await p.evaluate(()=>{ localStorage.clear(); const c=kcRec(); delete c.life; arenaTab='king'; kcStart('career'); K.intro=false; renderArena(); }); await p.waitForTimeout(1300);
  // 패찰 → 후일담 예약
- const lost = await p.evaluate(()=>{ kBid(KP.minBid); K.revealing=false; renderArena(); return {step:K.step, n:dpRec().after.length, due:(dpRec().after[0]||{}).due, cases:kcRec().cases}; });
+ const lost = await p.evaluate(()=>{ K.rivals=[{t:'고수',lo:1.3,hi:1.4,p:1}]; kBid(KP.minBid); K.revealing=false; renderArena(); return {step:K.step, n:dpRec().after.length, due:(dpRec().after[0]||{}).due, cases:kcRec().cases}; });
  console.log(w, lost);
  ok(lost.step==='lost' && lost.n===1 && lost.due===lost.cases+1, w+' 패찰한 물건 후일담 예약(다음 CASE 뒤)');
  await p.evaluate(()=>{ kcRec().cases+=1; K=null; arenaTab='home'; renderArena(); }); await p.waitForTimeout(1100);

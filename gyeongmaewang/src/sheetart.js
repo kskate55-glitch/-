@@ -1,7 +1,7 @@
 /* ================= 🖼️ 시트 그림 — 게시판 건물 사진 · 조사 파일 증거 사진 · 오늘 날씨 · 다음 물건용 보관함 =================
    GPT 시트 5장에서 잘라 올린 그림. 지금 게임에 있는 자리에 바로 쓰고, 아직 없는 물건(상가·오피스텔·공장 등)
    그림은 그림 보관함에 칸으로만 등록해 둔다. */
-const SH_ART = {pd_moving:"cc92ef5f241229820fc464ca81695d97", 
+const SH_ART = {pd_monsoon:"b04d5f85497699b5d4ba0f56e838604c", pd_vacation:"42aeb140299923c65ed75328033b3b30", pd_chuseok:"3699817c4e76f9022be9d5c2cf007c68", pd_seollal:"9e39dcef05aea2d46bfd20b0cb6fb8f7", pd_yearend:"fb8593f26276668b6b5e85676ff3ae74", pd_offseason:"2ccfaf786aecd757161abb5961f4f5e6", pd_moving:"cc92ef5f241229820fc464ca81695d97", 
   ext_k1:"8da97d931981eacf7bc89f159d5ecc0d", ext_k2:"ed8ccd4a6e4ca92591c52d4103a7e58b", ext_tenant:"f8827b45287483e93de2935e8df096cb", ext_share:"b93fcb75df93465f28328ceda110434c",
   ext_lien:"f9c4caa71bf52b93182680a78ecd0f06", ext_land:"9d4666e0e392d8aaa647731fc97bef7f", ext_shop:"c0eec95cbb8b0f0a0637dd5bc4ac4872", ext_officetel:"e0c4425bf81ca76c4c1e56e744e60194",
   ext_factory:"0706878fb4c16a27c93627cd6adef425", ext_shopbldg:"8e6510a6bcb46a5af83db26b655d2010",

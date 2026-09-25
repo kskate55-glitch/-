@@ -276,3 +276,8 @@ img.st-img-fail{visibility:hidden}
 .sn-pd-art img{width:100%;height:100%;object-fit:cover;display:block}
 .sn-pd-art span{position:absolute;left:8px;bottom:6px;padding:2px 8px;border-radius:999px;background:rgba(10,14,22,.72);color:#fff;font-size:12px;font-weight:800}
 @media (max-width:899px){ .sn-fx .sn-pd-art{display:none} }
+
+/* 연습실 타일 그림 */
+.hub-tile.hub-prac{overflow:hidden}
+.hub-tile .hub-thumb{display:block;align-self:stretch;justify-self:stretch;height:84px;margin:-14px -16px 6px;background-size:cover;background-position:center}
+.kfs-panel .hub-tile .hub-thumb{margin:-10px -12px 6px;height:64px}

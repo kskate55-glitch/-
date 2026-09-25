@@ -6,12 +6,14 @@ const RV_ART = {
   "지역 실수요자":{normal:"28f7bf47ecfa43a14bd0693dccda310c", angry:"fee3c6665d618126951c1af54d8bdfac", worried:"e8f193670a4c3fe84b4d12fe9351eb99"},
   "전문 투자자":{normal:"105bfde0b4123a3f47fcf3330ea6c078", angry:"669560ce4a942783786cc2849590fe29", worried:"0ac926fb407841f2b7b312e8c59867b8"},
   "무조건 저가형":{normal:"0bf5acafb678833ee2cd6d5bdb9fc76d", angry:"9d29b5c4c4aa8183ddfb7657bbb8e770", worried:"df7dea18a945dc879b0b46abb16a32dc"},
-  "인테리어 업자":{normal:"ac5e8c9f581c8c0e733c4a108559fb71", angry:"7e22f7758b4da31a4242f3b7441f94eb", worried:"c723786892a84375c22e26694fd45188"}};
+  "인테리어 업자":{normal:"ac5e8c9f581c8c0e733c4a108559fb71", angry:"7e22f7758b4da31a4242f3b7441f94eb", worried:"c723786892a84375c22e26694fd45188"},
+  "겉 마진 보고 온 투자자":{normal:"d035cca17396112ec49b97509cae7485", angry:"45cf9e41f011d4f48023d3e77516988a", worried:"f1feaab570f5bebdaea6870eb0de684d"},
+  "이사철 실수요자":{normal:"3a901d2df46e71b8ed36f2b8de593ee9", angry:"f03b509b52ed82c0bd79f5365aed2fe4", worried:"380de5cd83b1229b7fa4143cb27cd69b", pair:true}};   // pair = 두 사람 그림(얼굴 동그라미를 덜 확대)
 function rvUrl(who, ex){ const A = RV_ART[who]; if(!A) return null; const id = A[ex] || A.normal; return window.GMW_STANDALONE ? "assets/" + id + ".webp" : "/_blob/" + id; }
 const _rv_table = kBidTable; kBidTable = function(){
   let h = _rv_table();
   (K.result.bids || []).forEach(b => { if(b.me) return; const u = rvUrl(b.who, "normal"); if(!u) return;
-    h = h.replace(`<span>${esc(b.who)}</span>`, `<span><i class="rv-face"><img src="${u}" alt=""></i>${esc(b.who)}</span>`); });
+    h = h.replace(`<span>${esc(b.who)}</span>`, `<span><i class="rv-face${RV_ART[b.who].pair ? " pair" : ""}"><img src="${u}" alt=""></i>${esc(b.who)}</span>`); });
   return h;
 };
 const _rv_kStage = kStage; kStage = function(bg, who, ex, text, name){

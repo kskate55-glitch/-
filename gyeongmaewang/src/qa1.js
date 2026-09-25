@@ -19,7 +19,10 @@ function qaTagCards(){
 /* ---------- 13·14·15. 입찰표 — 예상 수익 범위(정보가 적으면 넓게) + 보수·균형·공격 구간(정답 가격은 안 알려 준다) ---------- */
 function qaBidModel(){
   const band = typeof lfBand === "function" ? lfBand() : {lo:KP.trueMid * 0.9, hi:KP.trueMid * 1.1};
-  const known = KP.hidden ? KP.hidden.filter(h => K.found[h.id]).length : 0, unk = KP.hidden ? KP.hidden.length - known : 0;
+  // ⚠️ 숨은 위험이 '몇 개 남았는지'는 플레이어가 모르는 정보 — 그걸 쓰면 이 칸이 만능 탐지기가 된다.
+  //    대신 '아직 안 해 본 조사'(플레이어가 볼 수 있는 목록) 수로 불확실성을 잡는다.
+  const acts = KP.actions || KP.research || [], done = K.done || {};
+  const unk = Math.min(4, acts.filter(a => !done[a.id]).length);
   const repair = (KP.estRepair || 250) + unk * 90;                   // 모르는 위험이 남을수록 비용 쪽 불확실성이 커진다
   const cost = m => m * 0.06 + 350 + repair;                         // 명도·이자·중개·세금 대략(매도가에 비례하는 몫 + 고정)
   const net = (sale, bid) => sale - cost(sale) - bid * (1 + kAcqRate(bid));
@@ -35,7 +38,7 @@ function qaBidLine(amt){
   const pos = x => Math.max(0, Math.min(100, (x - KP.minBid) / Math.max(1, (M.z.agg * 1.08) - KP.minBid) * 100));
   return `<div class="qa-bid"><div class="qa-bid-row"><span>예상 세전 수익</span><b class="${hi < 0 ? "down" : lo < 0 ? "" : "up"}">${s(lo)} ~ ${s(hi)} ?</b></div>
     <div class="qa-zones" aria-hidden="true"><i class="z-safe" style="width:${pos(M.z.safe)}%"></i><i class="z-bal" style="width:${pos(M.z.bal) - pos(M.z.safe)}%"></i><i class="z-agg" style="width:${pos(M.z.agg) - pos(M.z.bal)}%"></i><b style="left:${pos(amt)}%"></b></div>
-    <div class="qa-bid-row"><small>지금 가격: <b class="z-t-${where[0]}">${where[1]}</b></small><small class="note">${M.unk ? `모르는 위험 ${M.unk}개 — 범위가 넓어요` : "위험을 다 봐서 범위가 좁아요"}</small></div></div>`;
+    <div class="qa-bid-row"><small>지금 가격: <b class="z-t-${where[0]}">${where[1]}</b></small><small class="note">${M.unk ? `아직 안 해 본 조사 ${M.unk}개 — 범위를 넓게 잡았어요` : "해 볼 조사를 다 해서 범위를 좁혔어요"}</small></div></div>`;
 }
 function qaBidRefresh(){ const el = document.getElementById("kBid"), box = document.getElementById("qaBid"); if(el && box) box.innerHTML = qaBidLine(Math.round(+el.value || 0)); }
 function qaBidMount(){

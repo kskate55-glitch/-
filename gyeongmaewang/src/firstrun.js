@@ -104,9 +104,11 @@ document.addEventListener("click", e => {
     e.stopImmediatePropagation();
     if(!b.classList.contains("armed")){ b.classList.add("armed"); b.dataset.armAt = Date.now(); b.textContent = "한 번 더 누르면 이 물건은 넘겨요"; return; }
     if(Date.now() - (+b.dataset.armAt || 0) < 350) return;   // 더블클릭 한 번으로 확인까지 넘어가지 않게
+    let pv = null; try{ pv = frPassVerdict(); }catch(err){}
     const life = K && K.lf && lfOn(); K = null;
+    if(pv){ FR_PASS = pv; try{ const R = kcRec(); (R.passes = R.passes || []).push({id:pv.id, g:pv.g, at:Date.now()}); if(R.passes.length > 40) R.passes.shift(); }catch(err){} }
     if(life){ arenaTab = "life"; LF_SPOT = "board"; } else if(typeof OF_SPOT !== "undefined"){ arenaTab = "office"; OF_SPOT = "board"; }
-    if(typeof HUB_TOAST !== "undefined") HUB_TOAST.push({t:"🚪 이번 물건은 넘겼어요 — 모르는 채로 들어가지 않은 것도 판단이에요."});
+
     if(typeof save === "function") save(); renderArena(); return;
   }
   if((b = e.target.closest && e.target.closest("[data-frall]"))){ frRec().full = true; if(typeof save === "function") save(); renderArena(); }
@@ -163,3 +165,39 @@ kingHTML = function(){
   }catch(e){}
   return h;
 };
+
+
+/* ============================== 입찰 포기도 판단으로 평가한다 ==============================
+   근거 있는 철수는 좋은 판단, 확인 없이 넘긴 건 '운'이나 '아쉬움' — 무조건 포기만 해도 최고 점수가 되진 않게.
+   평가는 넘기는 순간 판정하고, 이 물건의 실제 사정(숨은 비용·남는 선)은 이때 처음 공개한다. */
+let FR_PASS = null;
+function frPassVerdict(){
+  if(!K || !KP) return null;
+  const hid = KP.hidden || [], cost = h => +h.cost || 0;
+  const big = hid.filter(h => cost(h) >= Math.max(300, KP.trueMid * 0.03));
+  const riskAll = hid.reduce((s, h) => s + cost(h), 0);
+  const ceil = frCeil(), room = ceil - riskAll - KP.minBid;          // 최저가에 써도 남는가
+  const acts = KP.actions || KP.research || [], done = acts.filter(a => K.done && K.done[a.id]).length, half = done >= Math.ceil(acts.length / 2);
+  const foundBig = big.filter(h => K.found && K.found[h.id]), missBig = big.filter(h => !(K.found && K.found[h.id]));
+  const how = h => ((KP.actions || []).find(a => a.id === "h_" + h.id) || {}).t || (h.act && h.act.t) || ((KP.research || (typeof K_RESEARCH !== "undefined" ? K_RESEARCH : [])).find(a => a.reveal === h.id) || {}).t || "추가 조사";
+  const name = h => h.t || "숨은 비용";
+  let g, head, why;
+  if(room < 0 && foundBig.length){ g = "good"; head = "👍 근거 있는 철수"; why = `${foundBig.map(name).join(" · ")}(${kMan(foundBig.reduce((s, h) => s + cost(h), 0))})를 확인하고 물러났어요. 이 돈을 떠안으면 최저가에 써도 남지 않는 물건이었어요.`; }
+  else if(room < 0){ g = "luck"; head = "🍀 잘 피했지만, 근거는 없었어요"; why = `이 물건엔 ${missBig.length ? missBig.map(h => `${name(h)}(${kMan(cost(h))})`).join(" · ") : "큰 비용"}이 숨어 있었어요.${missBig.length ? ` '${how(missBig[0])}' 조사를 했다면 알 수 있었어요.` : ""} 결과는 좋았지만, 다음엔 확인하고 판단해 보세요.`; }
+  else if(half){ g = "meh"; head = "🤔 조금 지나치게 조심했어요"; why = `조사는 충분히 했는데, 이 물건은 숨은 비용까지 빼도 최저가 근처에서 약 ${kMan(room)} 남길 여지가 있었어요. 상한을 정하고 한 번 써 봐도 됐어요.`; }
+  else { g = "bad"; head = "⚠️ 확인 없이 넘겼어요"; why = `조사를 ${done}개밖에 안 하고 넘겼어요. 이 물건은 숨은 비용까지 빼도 남는 물건이었어요(여지 약 ${kMan(room)}). 모르는 채로 들어가지 않은 건 좋지만, 모르는 채로 버린 것도 기회비용이에요.`; }
+  return {id:KP.id, g, head, why, title:KP.title || "", done, tot:acts.length, ceil, risk:riskAll};
+}
+function frPassCardHTML(){
+  const P = FR_PASS; if(!P) return "";
+  const col = {good:"#1f9d62", luck:"#c98a14", meh:"#7a6a3a", bad:"#c0392b"}[P.g];
+  return `<div id="frPass" class="fr-pass" role="dialog" aria-label="입찰 포기 평가"><div class="fr-pass-in" style="border-top:5px solid ${col}">
+    <small>🚪 입찰하지 않고 넘긴 물건${P.title ? ` · ${esc(P.title)}` : ""}</small><h3 style="color:${col}">${P.head}</h3><p>${P.why}</p>
+    <ul><li>내가 한 조사 <b>${P.done}/${P.tot}</b></li><li>이 물건에 숨어 있던 비용 <b>${kMan(P.risk)}</b></li><li>시세로 본 '남는 선' <b>약 ${kMan(P.ceil)}</b></li></ul>
+    <button type="button" class="btn pri" data-frpassok>확인</button></div></div>`;
+}
+document.addEventListener("click", e => { if(e.target.closest && e.target.closest("[data-frpassok]")){ FR_PASS = null; const el = document.getElementById("frPass"); if(el) el.remove(); } });
+if(typeof renderArena === "function"){
+  const _fp_render = renderArena;
+  renderArena = function(){ const r = _fp_render.apply(this, arguments); if(FR_PASS && !document.getElementById("frPass")) document.body.insertAdjacentHTML("beforeend", frPassCardHTML()); return r; };
+}

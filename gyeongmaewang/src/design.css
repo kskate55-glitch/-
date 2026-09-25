@@ -727,3 +727,16 @@ body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .h
 #kfsRoot .nx-notepaper .stg-x{z-index:3}
 body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!important}
 #kfsRoot .nx-dock.inbot .nx-pop{left:auto;right:0;transform:none}
+/* v125 — 입찰 포기 평가 카드 · 낙찰 뒤 절차 */
+.fr-pass{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;background:rgba(8,10,16,.55);padding:16px}
+.fr-pass-in{background:#fffdf6;color:#1b1b1b;border-radius:14px;max-width:460px;width:100%;padding:18px 20px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+.fr-pass-in small{color:#6b6250}.fr-pass-in h3{margin:6px 0 8px;font-size:20px}.fr-pass-in p{line-height:1.6;margin:0 0 10px}
+.fr-pass-in ul{margin:0 0 14px;padding-left:18px;line-height:1.7}.fr-pass-in .btn{width:100%}
+.k-proc{margin:10px 0 4px;padding-left:20px;line-height:1.65;font-size:14px}.k-proc b{color:inherit}
+/* v125 — 매도 제안 조건 묶음 */
+.st-card{border-left:4px solid #2e7d5b}.st-card.st-warn{border-left-color:#c98a14}
+.st-h{font-weight:800;margin-bottom:6px}
+.st-grid{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:baseline}.st-grid span{color:var(--muted,#6b7280);font-size:13.5px}
+.st-grid small{font-weight:500;opacity:.8}.st-net{color:#1f7a4f}
+.st-hint{margin-top:8px;padding:7px 10px;border-radius:8px;background:rgba(242,179,61,.14);font-size:14px}
+.st-acts{margin-top:8px}

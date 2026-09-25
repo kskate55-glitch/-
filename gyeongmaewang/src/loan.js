@@ -5,10 +5,10 @@
       한도는 '감정가의 일정 비율'과 '낙찰가의 일정 비율' 중 낮은 쪽, 중도상환수수료는 보통 3년 안 상환 시)를
       참고해 게임 밸런스로 다듬었다. 캐피탈은 가끔 나오고, 한도는 거의 다 나오지만 금리가 두 자릿수다. */
 const LN_PRODUCTS = [
-  {id:"nh1", kind:"농협",     org:"한울지역농협",     who:"박상훈 과장", rate:4.7, ltvA:60, ltvB:80, fee:1.2, term:"거치 1년 · 만기 3년", cond:"매매사업자 등록 1년 이상이면 0.2%p 우대", tone:"calm"},
-  {id:"nh2", kind:"농협",     org:"들녘지역농협",     who:"이미경 대리", rate:4.9, ltvA:65, ltvB:80, fee:0.9, term:"거치 1년 · 만기 5년", cond:"조합원 가입(출자금 소액) 조건", tone:"kind"},
-  {id:"sh1", kind:"수협",     org:"바다마을수협",     who:"정대호 팀장", rate:5.1, ltvA:70, ltvB:80, fee:1.0, term:"만기 3년 · 원금 일부 분할", cond:"빌라는 준공 30년 넘으면 한도 5%p 차감", tone:"blunt"},
-  {id:"sh2", kind:"수협",     org:"남항수협",         who:"김소라 대리", rate:5.4, ltvA:70, ltvB:85, fee:0.8, term:"거치 6개월 · 만기 3년", cond:"잔금일 7영업일 전까지 서류 완비", tone:"kind"},
+  {id:"nh1", kind:"지역농협",     org:"한울지역농협",     who:"박상훈 과장", rate:4.7, ltvA:60, ltvB:80, fee:1.2, term:"거치 1년 · 만기 3년", cond:"매매사업자 등록 1년 이상이면 0.2%p 우대", tone:"calm"},
+  {id:"nh2", kind:"지역농협",     org:"들녘지역농협",     who:"이미경 대리", rate:4.9, ltvA:65, ltvB:80, fee:0.9, term:"거치 1년 · 만기 5년", cond:"조합원 가입(출자금 소액) 조건", tone:"kind"},
+  {id:"sh1", kind:"회원수협",     org:"바다마을수협",     who:"정대호 팀장", rate:5.1, ltvA:70, ltvB:80, fee:1.0, term:"만기 3년 · 원금 일부 분할", cond:"빌라는 준공 30년 넘으면 한도 5%p 차감", tone:"blunt"},
+  {id:"sh2", kind:"회원수협",     org:"남항수협",         who:"김소라 대리", rate:5.4, ltvA:70, ltvB:85, fee:0.8, term:"거치 6개월 · 만기 3년", cond:"잔금일 7영업일 전까지 서류 완비", tone:"kind"},
   {id:"cu1", kind:"신협",     org:"푸른신협",         who:"최영민 차장", rate:4.8, ltvA:60, ltvB:80, fee:1.0, term:"만기 3년", cond:"신협 조합원 가입 필요", tone:"calm"},
   {id:"cu2", kind:"신협",     org:"새벽신협",         who:"한지우 과장", rate:5.3, ltvA:70, ltvB:85, fee:0.7, term:"거치 1년 · 만기 3년", cond:"사업자 통장 거래 6개월 이상 우대", tone:"fast"},
   {id:"cu3", kind:"신협",     org:"언덕신협",         who:"오세진 대리", rate:5.9, ltvA:75, ltvB:85, fee:0.5, term:"만기 2년", cond:"한도 높은 대신 금리가 조금 높아요", tone:"fast"},
@@ -26,7 +26,7 @@ let LN = null;   // {need, must, cards:[id], heard:{id:offer}, chat:id|null, msg
 function lnSeedRng(){ return kRng(((K && K.seed) || 7) * 7919 + 13); }
 function lnPickCards(){
   // 명함은 주로 농협·수협·신협·새마을금고(상호금융)에서, 저축은행은 가끔, 캐피탈은 더 가끔. 같은 종류는 겹치지 않게.
-  const r = lnSeedRng(), W = {"농협":3, "수협":3, "신협":3, "새마을금고":3, "저축은행":1};
+  const r = lnSeedRng(), W = {"지역농협":3, "회원수협":3, "신협":3, "새마을금고":3, "저축은행":1};
   const out = [], used = {};
   const withCap = r() < 0.3;
   while(out.length < (withCap ? 2 : 3)){
@@ -155,7 +155,7 @@ function lnHTML(){
   }
   return `<div class="ln-box"><h3>🏦 잔금 대출 — 대출상담사 명함 ${LN.cards.length}장</h3>
     <p>${LN.must ? `잔금 <b>${kMan(N.bal)}</b> 중 현금 ${kMan(N.cash)}을 빼면 <b class="down">${kMan(N.short)}</b>이 모자라요. 잔금일 전에 대출을 정해야 해요.` : `잔금은 현금으로도 되지만, 대출을 받으면 현금을 남겨 둘 수 있어요.`}</p>
-    <p class="note">경매 잔금은 보통 농협·수협·신협·새마을금고 같은 2금융권에서 많이 받아요. 한 곳만 듣지 말고 두세 곳 조건을 비교하세요.</p>
+    <p class="note">경매 잔금은 보통 지역농협·회원수협·신협·새마을금고 같은 상호금융에서 많이 받아요(농협은행·수협은행 같은 은행과는 다른 곳이에요). 게임 속 금리·한도는 예시예요. 한 곳만 듣지 말고 두세 곳 조건을 비교하세요.</p>
     <div class="ln-cards">${cards}</div>${lnCompare()}
     <p class="note ln-disc">※ 게임용 예시 조건이에요. 실제 금리·한도는 시기·지역·신용·소득·규제에 따라 달라지니 실제 대출은 금융기관 상담으로 확인하세요.</p>
     ${LN.must ? "" : `<div class="ln-btns"><button type="button" class="btn" data-lnask="no">그냥 현금으로 낸다</button></div>`}</div>`;

@@ -108,7 +108,7 @@ const K_MOVES = [
   {id:"paper",   s:"money",    t:"📝 합의서를 쓴다 (날짜·금액·지급 조건)", day:1, need:o=>o.agreed && !o.paper},
   {id:"notice",  s:"law",      t:"📮 내용증명을 보낸다", day:3},
   {id:"order",   s:"law",      t:"⚖️ 인도명령을 신청한다 (10만원)", day:1, need:o=>!o.order && !o.orderOk},
-  {id:"threat",  s:"pressure", t:"😤 \"계속 버티시면 강제집행 들어갑니다\"", day:1},
+  {id:"threat",  s:"pressure", t:"😤 \"당장 안 나가시면 쫓아냅니다\" — 겁주기(법적 절차 아님)", day:1},
   {id:"exec",    s:"law",      t:"🚚 강제집행을 신청한다 (집행비 약 350만원)", day:1, need:o=>o.orderOk && !o.exec}];
 const K_OFFERS = [0, 50, 100, 150, 200, 300];
 function kOccNeed(){ const o = K.occ; let n = 100 * (0.6 + o.resist/100) * (o.place ? 1.25 : 0.8); if(o.daughter && o.dInvolved) n *= 0.6; if(o.orderOk) n *= 0.55; return Math.round(n/10)*10; }
@@ -281,7 +281,7 @@ function kStage(bg, who, ex, text, name){
 }
 function kHud(){
   const c = K.cost, spent = c.bid + c.acq + c.move + c.repair + c.hold + c.fee + c.legal;
-  return `<div class="k-hud"><span>📅 ${K.day}일째</span><span>💸 들어간 돈 ${kMan(spent)}</span><span>🔍 숨은 위험 ${KP.hidden.filter(h=>K.found[h.id]).length}/${KP.hidden.length} 발견</span></div>`;
+  return `<div class="k-hud"><span>📅 ${K.day}일째</span><span>💸 들어간 돈 ${kMan(spent)}</span><span>🔍 찾아낸 위험 ${KP.hidden.filter(h=>K.found[h.id]).length}개</span></div>`;
 }
 function kLogHTML(){ return K.log.length ? `<details class="panel vn-more"${K.step==="brief"?" open":""}><summary>🗂️ 조사 노트 (${K.log.length})</summary><ul class="ag-tips">${K.log.map(l=>`<li>${esc(l)}</li>`).join("")}</ul></details>` : ""; }
 function kingHTML(){
@@ -314,7 +314,7 @@ function kingHTML(){
   }
   if(K.step==="won"){
     return kStage("bg_court","narr",null,`낙찰! 2등과 ${kMan(K.result.gap)} 차이. …이제부터가 본게임이다.`) + `
-    <div class="panel k-bidres win"><h3>🎉 낙찰</h3>${kBidTable()}<div class="note">잔금·등기: 취득세·법무비 등 약 ${kMan(K.cost.acq)}${K.found.fee?` · 체납관리비 ${kMan(38)} 미리 계산됨`:""}</div></div>${kAchNew()}
+    <div class="panel k-bidres win"><h3>🎉 낙찰 — 최고가매수신고인이 됐어요</h3>${kBidTable()}<ol class="k-proc"><li><b>매각허가결정</b> 약 1주 · 이의가 없으면 확정</li><li><b>대금 납부</b> 기한 안에 잔금을 내는 날 <b>소유권을 취득</b></li><li><b>인도명령</b> 대금을 낸 뒤 6개월 안에 신청할 수 있어요</li></ol><small class="note">게임에선 이 과정을 며칠로 줄여서 보여 줘요.</small><div class="note">잔금·등기: 취득세·법무비 등 약 ${kMan(K.cost.acq)}${K.found.fee?` · 체납관리비 ${kMan(38)} 미리 계산됨`:""}</div></div>${kAchNew()}
     <button type="button" class="btn pri" data-kgo="move" style="margin-top:12px">🔑 잔금 내고 점유자 만나러 가기 →</button>`;
   }
   if(K.step==="move"){

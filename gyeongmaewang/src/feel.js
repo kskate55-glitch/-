@@ -236,7 +236,7 @@ function keCount(el){
 kHud = (function(orig){ return function(){
   let h = orig();
   if(K && K.mode === "career"){
-    const cash = K.cashStart - keSpent(), lo = Math.round(KP.trueMid*0.985 - keSpent() - KP.estRepair*0.3 - 80), hi = Math.round(KP.trueMid*1.03 - keSpent());
+    const cash = K.cashStart - keSpent(), B = typeof lfBand === "function" ? lfBand() : {lo:KP.trueMid*0.9, hi:KP.trueMid*1.1}, lo = Math.round(B.lo - keSpent() - KP.estRepair*0.3 - 80), hi = Math.round(B.hi - keSpent());   // 숨은 실제 시세가 아니라 내가 가진 시세 감으로
     h = h.replace('<div class="k-hud">', `<div class="k-hud"><span class="ke-cash ${cash < 1000 ? "danger" : ""}">💼 보유현금 ${kMan(Math.max(0, cash))}${cash < 0 ? ` · 🏦 대출 ${kMan(-cash)}` : ""}</span>`).replace(/<\/div>$/, `<span class="ke-est">📈 예상 손익 ${kcSigned(lo)} ~ ${kcSigned(hi)} <small>?</small></span></div>`);
   }
   return h;

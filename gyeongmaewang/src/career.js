@@ -210,7 +210,7 @@ function kcResultTop(){
   if(K.mode === "career" && F.cashAfter != null){
     const pct = (F.cashAfter - F.cashBefore) / F.cashBefore * 100, rb = K.repStart != null ? K.repStart : p.rep;
     const nb = kcRepName(rb), na = kcRepName(p.rep);
-    html = `<div class="panel kc-cash"><small>💼 ${K.caseNo}호 물건 종료 — 보유자금 (세후, 매매사업자 기준)</small>
+    html = `<div class="panel kc-cash"><small>💼 ${K.caseNo}호 물건 종료 — 보유자금 (세후 — 매매사업자 가정 아래의 세금 예시, 실제 신고세액 아님)</small>
       <div class="kc-cashrow"><b>${kMan(F.cashBefore)}</b><span>→</span><b class="${pct>=0?"up":"down"}">${kMan(F.cashAfter)}</b></div>
       <div class="kc-cashmeta"><span>총자산 <b class="${pct>=0?"up":"down"}">${pct>=0?"+":""}${pct.toFixed(1)}%</b></span><span>명성 ${esc(nb)}${na!==nb?` → <b>${esc(na)}</b>`:""}</span><span>🎯 10억까지 ${Math.min(100, c.cash/KC_GOAL*100).toFixed(1)}%</span></div>
       ${F.newBest?`<div class="kc-best">🏅 개인 최고기록 갱신!</div>`:""}</div>` + html;

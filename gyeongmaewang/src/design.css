@@ -225,3 +225,31 @@ img.st-img-fail{visibility:hidden}
 .kc-tiers li .kc-tier-art{width:72px;height:40px;object-fit:cover;border-radius:6px;flex:none;filter:grayscale(1) brightness(1.05);opacity:.55}
 .kc-tiers li.on .kc-tier-art{filter:none;opacity:1}
 .kc-tiers li > span{flex:1}
+/* 📋 조사 화면 오른쪽 칸 접기 (PC) — sidefold.js */
+.sf-pill{display:none}
+@media (min-width:901px){
+  #kfsRoot.sf-slim .kfs-body{grid-template-columns:1fr!important;position:relative}
+  #kfsRoot.sf-slim .kfs-panel{display:none;position:absolute;top:8px;right:10px;width:min(400px,calc(100% - 20px));max-height:calc(100% - 16px);z-index:60;border-radius:14px;box-shadow:0 22px 60px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12)}
+  #kfsRoot.sf-slim.sf-open .kfs-panel{display:block;animation:gxLine .18s ease both}
+  #kfsRoot.sf-slim .sf-pill{display:inline-flex;align-items:center;gap:10px;height:38px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font-size:13.5px;cursor:pointer;white-space:nowrap;position:relative}
+  #kfsRoot.sf-slim .sf-pill:hover,#kfsRoot.sf-open .sf-pill{background:rgba(255,255,255,.16)}
+  #kfsRoot.sf-slim .sf-pill b{font-weight:800}
+  #kfsRoot.sf-slim .sf-pill .sf-time{font-variant-numeric:tabular-nums;color:#ffd166;font-weight:800}
+  #kfsRoot.sf-slim .sf-pill .sf-time.low,#kfsRoot.sf-slim .sf-pill .sf-low{color:#ff7a7a}
+  #kfsRoot.sf-slim .sf-pill.alert{animation:stgPulse 1.4s ease-in-out infinite}
+  #kfsRoot.sf-slim .sf-pill .sf-car{font-size:11px;opacity:.75}
+  #kfsRoot.sf-slim .sf-pill .sf-dot{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#f5a524;box-shadow:0 0 0 2px #0d111b}
+  #kfsRoot.sf-slim .kfs-tools{gap:8px}
+  /* 입찰표·사건 파일 = 오른쪽 한 줄. 사건 파일을 열면 그 자리에서 입찰표와 번갈아 보인다(겹치지 않게) */
+  #kfsRoot.sf-slim .stg-col{top:14px;bottom:14px;width:min(400px,40%);justify-content:flex-start}
+  #kfsRoot.sf-slim .stg-col .stg-sheet{flex:1 1 auto;max-height:none}
+  #kfsRoot.sf-slim .stg-paper{top:72px;right:14px;bottom:14px;width:min(400px,40%);z-index:5}
+  #kfsRoot.sf-slim .stg-dock.sf-file .stg-sheet{visibility:hidden}
+  #kfsRoot.sf-slim .stg-paper .ke-case{min-height:100%}
+}
+/* 사건 파일도 입찰표처럼 크림색 종이 — 어두운 패널 배경이 덮어써서 짙은 글씨가 안 보이던 문제 */
+#kfsRoot .ke-case,#kfsRoot .stg-paper{background:#fbf7ee;border-color:#d9ccb0}
+@media (min-width:901px){
+  /* 도감 알림은 입찰표를 가리지 않게 왼쪽 아래로 */
+  html.kfs-on #hubToasts{right:auto!important;left:16px!important;top:auto!important;bottom:16px!important}
+}

@@ -38,7 +38,7 @@ for(const [w,h] of [[1280,800],[390,844]]){
  await p.click('[data-bdplay]:not([disabled])'); await p.waitForTimeout(600);
  await p.evaluate(()=>{ if(K.intro){K.intro=false;renderArena();} }); await p.waitForTimeout(1600);
  const dd = await p.evaluate(()=>[K.lf.days.map(d=>d.dow), lfCanLeave(), !!document.querySelector('[data-lfleave]')]); console.log(w,'days',dd);
- if(dd[1]){ await p.click('[data-lfleave]'); await p.waitForTimeout(300); ok(await p.evaluate(()=>lfRec().leave===14 && K.timeLeft>150), w+' 연차 쓰면 시간이 늘어난다'); }
+ if(dd[1]){ await p.evaluate(()=>{ if(document.querySelector('.sf-slim') && !document.querySelector('.sf-open')) document.querySelector('[data-sfside]').click(); }); await p.waitForTimeout(150); await p.click('[data-lfleave]'); await p.waitForTimeout(300); ok(await p.evaluate(()=>lfRec().leave===14 && K.timeLeft>150), w+' 연차 쓰면 시간이 늘어난다'); }
  await bad('research');
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; lfNew('seoyun'); lfRec().intro=false; K=null; kcRec().cash+=500; arenaTab='life'; LF_SPOT='board'; renderArena(); }); await p.waitForTimeout(200);
  await p.click('[data-bdplay]:not([disabled])'); await p.waitForTimeout(500);

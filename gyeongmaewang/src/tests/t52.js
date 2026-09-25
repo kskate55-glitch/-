@@ -38,7 +38,7 @@ for(const [w,h] of [[1280,800],[390,844]]){
  const sta0 = await p.evaluate(()=>lfRec().sta);
  for(const r of ['trade','docs','call1']){ await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest('details'); document.querySelectorAll('.nx-bar details[open]').forEach(o=>{ if(o!==d) o.open=false; }); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){ await el.click(); await p.waitForTimeout(120);} }
  ok(await p.evaluate(s=>lfRec().sta < s, sta0), w+' 조사하면 체력이 준다');
- await p.click('[data-lfnext]'); await p.waitForTimeout(250);
+ await p.evaluate(()=>{ if(document.querySelector('.sf-slim') && !document.querySelector('.sf-open')) document.querySelector('[data-sfside]').click(); }); await p.waitForTimeout(150); await p.click('[data-lfnext]'); await p.waitForTimeout(250);
  ok(await p.evaluate(()=>K.lf.rday===1 && !document.querySelector('[data-lfnext]')), w+' 2일차로 넘어감(마지막 날엔 버튼 없음)');
  for(const r of ['ext','meter','neigh']){ await p.evaluate(r=>{ const b=document.querySelector(`[data-kres="${r}"]`); const d=b&&b.closest('details'); document.querySelectorAll('.nx-bar details[open]').forEach(o=>{ if(o!==d) o.open=false; }); if(d) d.open=true; }, r); const el=await p.$(`[data-kres="${r}"]:not([disabled])`); if(el){ await el.click(); await p.waitForTimeout(120);} }
  await p.fill('#kBid', String(await p.evaluate(()=>KP.minBid+2600))); await p.evaluate(()=>document.querySelectorAll('.nx-bar details[open]').forEach(o=>o.open=false)); await p.click('[data-kcseal]'); await p.waitForTimeout(300); await p.click('[data-kbid]'); await p.waitForTimeout(8500);

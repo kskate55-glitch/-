@@ -1596,6 +1596,34 @@ img.st-img-fail{visibility:hidden}
 .kc-tiers li .kc-tier-art{width:72px;height:40px;object-fit:cover;border-radius:6px;flex:none;filter:grayscale(1) brightness(1.05);opacity:.55}
 .kc-tiers li.on .kc-tier-art{filter:none;opacity:1}
 .kc-tiers li > span{flex:1}
+/* 📋 조사 화면 오른쪽 칸 접기 (PC) — sidefold.js */
+.sf-pill{display:none}
+@media (min-width:901px){
+  #kfsRoot.sf-slim .kfs-body{grid-template-columns:1fr!important;position:relative}
+  #kfsRoot.sf-slim .kfs-panel{display:none;position:absolute;top:8px;right:10px;width:min(400px,calc(100% - 20px));max-height:calc(100% - 16px);z-index:60;border-radius:14px;box-shadow:0 22px 60px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12)}
+  #kfsRoot.sf-slim.sf-open .kfs-panel{display:block;animation:gxLine .18s ease both}
+  #kfsRoot.sf-slim .sf-pill{display:inline-flex;align-items:center;gap:10px;height:38px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font-size:13.5px;cursor:pointer;white-space:nowrap;position:relative}
+  #kfsRoot.sf-slim .sf-pill:hover,#kfsRoot.sf-open .sf-pill{background:rgba(255,255,255,.16)}
+  #kfsRoot.sf-slim .sf-pill b{font-weight:800}
+  #kfsRoot.sf-slim .sf-pill .sf-time{font-variant-numeric:tabular-nums;color:#ffd166;font-weight:800}
+  #kfsRoot.sf-slim .sf-pill .sf-time.low,#kfsRoot.sf-slim .sf-pill .sf-low{color:#ff7a7a}
+  #kfsRoot.sf-slim .sf-pill.alert{animation:stgPulse 1.4s ease-in-out infinite}
+  #kfsRoot.sf-slim .sf-pill .sf-car{font-size:11px;opacity:.75}
+  #kfsRoot.sf-slim .sf-pill .sf-dot{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#f5a524;box-shadow:0 0 0 2px #0d111b}
+  #kfsRoot.sf-slim .kfs-tools{gap:8px}
+  /* 입찰표·사건 파일 = 오른쪽 한 줄. 사건 파일을 열면 그 자리에서 입찰표와 번갈아 보인다(겹치지 않게) */
+  #kfsRoot.sf-slim .stg-col{top:14px;bottom:14px;width:min(400px,40%);justify-content:flex-start}
+  #kfsRoot.sf-slim .stg-col .stg-sheet{flex:1 1 auto;max-height:none}
+  #kfsRoot.sf-slim .stg-paper{top:72px;right:14px;bottom:14px;width:min(400px,40%);z-index:5}
+  #kfsRoot.sf-slim .stg-dock.sf-file .stg-sheet{visibility:hidden}
+  #kfsRoot.sf-slim .stg-paper .ke-case{min-height:100%}
+}
+/* 사건 파일도 입찰표처럼 크림색 종이 — 어두운 패널 배경이 덮어써서 짙은 글씨가 안 보이던 문제 */
+#kfsRoot .ke-case,#kfsRoot .stg-paper{background:#fbf7ee;border-color:#d9ccb0}
+@media (min-width:901px){
+  /* 도감 알림은 입찰표를 가리지 않게 왼쪽 아래로 */
+  html.kfs-on #hubToasts{right:auto!important;left:16px!important;top:auto!important;bottom:16px!important}
+}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -42298,6 +42326,53 @@ document.addEventListener("error", e => {
   t.dataset.stFail = "1"; t.classList.add("st-img-fail");
   if(!ST_IMG_TOLD && typeof HUB_TOAST !== "undefined"){ ST_IMG_TOLD = true; HUB_TOAST.push({t:"🖼️ 그림 일부를 불러오지 못했어요 — 내용과 진행은 그대로 볼 수 있어요."}); }
 }, true);
+
+/* ================= 📋 조사 화면 오른쪽 칸 접기 (PC) =================
+   조사(brief) 단계에서 오른쪽 칸은 상태 정보(도전·날짜·날씨·남은 시간·체력·연차·시세 감)뿐인데
+   화면 1/3을 차지해서, 입찰표·사건 파일·행동 메뉴가 그림 위에서 서로 겹쳤다.
+   → 머리줄 오른쪽에 작은 '상황판' 알약 하나로 접고, 누르면 그 칸이 드롭다운으로 열린다.
+   → 그림 칸이 화면 전체를 쓰고, 입찰표·사건 파일은 오른쪽 한 줄(탭)로 겹치지 않게 번갈아 보인다.
+   모바일(900px 이하)은 원래 배치 그대로. DOM은 옮기지 않고 클래스만 바꾼다(클릭 처리는 문서 위임 그대로). */
+let SF = {open:false};
+function sfOn(){ return typeof stgActive === "function" && stgActive() && window.matchMedia && matchMedia("(min-width: 901px)").matches; }
+function sfSummary(panel){
+  const left = panel.querySelector(".kr-left"), low = left && left.classList.contains("low");
+  const goals = panel.querySelector(".stg-goals summary small");
+  const wx = panel.querySelector(".sn-chip");
+  const wxIc = wx ? ((wx.textContent.match(/[☀🌤⛅☁🌧🌦⛈🌨❄🥶🥵☔🌫]️?/u) || [""])[0]) : "";
+  const act = !!panel.querySelector("[data-lfnext], [data-lfleave]");
+  const bits = [];
+  if(left) bits.push(`<span class="sf-time ${low ? "low" : ""}">⏱ ${left.textContent.trim()}</span>`);
+  if(K && K.lf && typeof lfRec === "function"){ const L = lfRec(); if(L && L.st) bits.push(`<span class="${L.sta / L.st.stamina < 0.3 ? "sf-low" : ""}">⚡ ${Math.round(L.sta)}</span>`); }
+  if(wxIc) bits.push(`<span>${wxIc}</span>`);
+  if(goals) bits.push(`<span>🎯 ${goals.textContent.replace(/[()]/g, "").trim()}</span>`);
+  return {html: bits.join(""), alert: low || (act && low), act};
+}
+function sfApply(){
+  const root = document.getElementById("kfsRoot");
+  if(!root) return;
+  const on = sfOn();
+  root.classList.toggle("sf-slim", on);
+  root.querySelectorAll(".sf-pill").forEach(x => x.remove());
+  if(!on){ root.classList.remove("sf-open"); return; }
+  const panel = root.querySelector(".kfs-panel"), tools = root.querySelector(".kfs-tools"); if(!panel || !tools) return;
+  const S = sfSummary(panel);
+  const b = document.createElement("button"); b.type = "button"; b.className = "sf-pill" + (S.alert ? " alert" : ""); b.dataset.sfside = "";
+  b.setAttribute("aria-expanded", SF.open); b.title = "상황판 — 도전·날씨·남은 시간" + (S.act ? "·다음 날/연차" : "") + " 보기";
+  b.innerHTML = `<b>📋 상황판</b>${S.html}${S.act ? `<i class="sf-dot" title="누를 수 있는 버튼이 있어요"></i>` : ""}<span class="sf-car">${SF.open ? "▲" : "▼"}</span>`;
+  tools.prepend(b);
+  root.classList.toggle("sf-open", SF.open);
+  const dock = root.querySelector(".stg-dock"); if(dock) dock.classList.toggle("sf-file", !!(typeof STG !== "undefined" && STG.file));
+}
+document.addEventListener("click", e => {
+  const root = document.getElementById("kfsRoot"); if(!root || !root.classList.contains("sf-slim")) return;
+  if(e.target.closest("[data-sfside]")){ SF.open = !SF.open; sfApply(); return; }
+  if(e.target.closest("[data-stg]")) setTimeout(sfApply, 0);   // 사건 파일 탭을 누르면 입찰표와 자리를 바꾼다
+  if(SF.open && !e.target.closest(".kfs-panel") && !e.target.closest("[data-sfside]")){ SF.open = false; sfApply(); }
+});
+document.addEventListener("keydown", e => { if(e.key === "Escape" && SF.open){ SF.open = false; sfApply(); } });
+window.addEventListener("resize", () => { const r = document.getElementById("kfsRoot"); if(r && r.classList.contains("sf-slim") !== sfOn()) sfApply(); });
+const _sf_render = renderArena; renderArena = function(){ _sf_render(); queueMicrotask(sfApply); };
 
 window.GMW_STANDALONE = true;
 var _gmwArt0 = artUrl; artUrl = function(id){ var u = _gmwArt0(id); return u ? u.replace(/^\/_blob\/([0-9a-f]{32})$/, "assets/$1.webp") : null; };

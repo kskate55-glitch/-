@@ -690,7 +690,7 @@ STORY_EPS.push(
  labels:{
   start:[
    {bg:"bg_villa_night"},{bg:"bg_stairs"},
-   {say:"p_grandpa", ex:"angry", t:"보증금 300 넣었는데 하나도 못 받는다며! 내가 뭘 잘못했는데!"},
+   {say:"p_grandpa", ex:"angry", t:"보증금 300 넣었는데 하나도 몬 받는다 카대! 내가 뭘 잘못했는데!"},
    {tip:"경매개시결정 뒤에 들어온 임차인은 소액이어도 최우선변제를 못 받는다. 억울함은 진짜다 — 매수인 탓은 아니지만."},
    {menu:[
      {t:"\"잘못하신 거 없어요. 억울하실 만해요.\" (존댓말로)", go:"respect", set:{trust:2}},
@@ -701,11 +701,11 @@ STORY_EPS.push(
    {menu:[{t:"사과하고 다시 이야기한다", go:"respect", set:{trust:1}},{t:"⚖️ 인도명령·강제집행으로 간다", go:"lawend"}]}],
   lawend:[{bg:"bg_court"},{tip:"'법적으로'만 반복하면 사람은 법이 아니라 무시를 듣는다."},{end:"e_law"}],
   cash:[
-   {say:"p_grandpa", ex:"worried", t:"…150이면 방 보증금은 되겠네. 한 달이면… 해 보지."},
+   {say:"p_grandpa", ex:"worried", t:"…150이믄 방 보증금은 되겠네. 한 달이믄… 해 보께."},
    {menu:[{t:"그대로 간다", go:"cashend"},{t:"센터 이야기도 같이 한다", go:"respect", set:{trust:1}}]}],
   cashend:[{end:"e_cash"}],
   respect:[
-   {say:"p_grandpa", ex:"worried", t:"……그럼 나는 어디로 가나. 현장 일 끊기면 방세도 못 내."},
+   {say:"p_grandpa", ex:"worried", t:"……그라믄 나는 어데로 가노. 현장 일 끊기믄 방세도 몬 낸다."},
    {bg:"bg_realtor"},
    {if:f=>stSaw(f,"ep_basic"), go:"chain"},
    {say:"clerk", t:"소득이 들쭉날쭉하시면 주거급여 대상인지 먼저 볼게요. 공공임대도 같이 알아보고요."},

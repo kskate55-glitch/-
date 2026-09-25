@@ -108,7 +108,7 @@ function kTick(n){
   if(o.order && K.day >= o.order){ o.order = null; o.orderOk = true; o.resist -= 25; K.events.push("인도명령 결정"); kLog("⚖️ 인도명령이 결정됐다. 이제 집행권원이 있다."); }
   if(o.exec && K.day >= o.exec.day){ K.cost.legal += 350; K.style.law += 2; kNarr("집행 날. 집행관과 노무 인력이 짐을 옮겼다. 할아버지는 계단에 한참 앉아 있었다."); kAch("byLaw"); K.lessonKey = "exec"; return kMoved(); }
   if(o.agreed && K.day >= o.agreed.day){
-    if(o.flip && !o.paper && !o.dInvolved && !o.flipped){ o.flipped = true; o.agreed.amt += 50; K.events.push("이삿날 50만원 더"); kSay("…저기, 이삿짐 트럭이 생각보다 비싸더라고. 50만 더 줘야겠어.", "angry"); K.pendingFlip = true; K.lessonKey = K.lessonKey || "flip"; return; }
+    if(o.flip && !o.paper && !o.dInvolved && !o.flipped){ o.flipped = true; o.agreed.amt += 50; K.events.push("이삿날 50만원 더"); kSay("…저기, 이삿짐 트럭이 생각보다 비싸더라꼬. 50만 더 줘야 되겠다.", "angry"); K.pendingFlip = true; K.lessonKey = K.lessonKey || "flip"; return; }
     K.cost.move += o.agreed.amt; kNarr(`이삿날. 짐이 빠졌다.${o.agreed.amt ? ` 이사비 ${kMan(o.agreed.amt)}은 짐이 다 빠진 걸 확인하고 건넸다.` : ""}`); return kMoved();
   }
   kClampOcc();
@@ -116,32 +116,32 @@ function kTick(n){
 function kMove(id){
   const m = K_MOVES.find(x=>x.id===id), o = K.occ; if(!m || (m.need && !m.need(o))) return;
   if(m.s) K.style[m.s]++; o.turns++;
-  if(id==="listen"){ o.coop += 14 + o.pride*6; o.resist -= 6; kSay(o.turns<=2 ? "…내가 이 나이에 어디로 가겠소. 현장 일 끊기면 방세도 못 내." : "들어 줘서 고맙소. 사람 대접은 해 주네.", "worried"); }
-  if(id==="center"){ o.place = false; o.coop += 10; o.resist -= 12; kSay("주거급여? 공공임대? …그런 게 나 같은 사람도 되나.", "worried"); kLog("🏛️ 갈 곳 문제가 풀리기 시작했다 — 원하는 이사비가 줄어든다."); }
+  if(id==="listen"){ o.coop += 14 + o.pride*6; o.resist -= 6; kSay(o.turns<=2 ? "…내가 이 나이에 어데로 가겠노. 현장 일 끊기믄 방세도 몬 낸다." : "들어 줘서 고맙데이. 사람 대접은 해 주네.", "worried"); }
+  if(id==="center"){ o.place = false; o.coop += 10; o.resist -= 12; kSay("주거급여? 공공임대? …그런 기 내 같은 사람도 되나?", "worried"); kLog("🏛️ 갈 곳 문제가 풀리기 시작했다 — 원하는 이사비가 줄어든다."); }
   if(id==="daughter"){ o.dInvolved = true; o.coop += 20; o.resist -= 20; kNarr("따님이 전화를 받았다. '아버지 고집 세셔도 제 말은 들으세요. 이번 주말에 제가 갈게요.'"); kLog("📞 가족이 들어오니 말바꾸기 위험이 사라졌다."); }
   if(id==="date"){
-    if(o.coop < 45){ o.coop -= 4; kSay("날짜? 아직 갈 데도 없는데 무슨 날짜를 정해.", "angry"); }
-    else { const need = kOccNeed(); K.askNeed = need; kSay(need ? `…한 3주면 되겠지. 대신 이사비 ${kMan(need)}은 줘야겠어.` : "3주 뒤에 나가리다. 돈은 됐소.", "normal"); K.offering = true; }
+    if(o.coop < 45){ o.coop -= 4; kSay("날짜? 아직 갈 데도 없는데 무슨 날짜를 정하노.", "angry"); }
+    else { const need = kOccNeed(); K.askNeed = need; kSay(need ? `…한 3주믄 되겠제. 대신 이사비 ${kMan(need)}은 줘야 된다.` : "3주 뒤에 나가께. 돈은 됐다.", "normal"); K.offering = true; }
   }
   if(id==="paper"){ o.paper = true; o.coop += 3; kNarr("합의서. 이삿날, 금액, '짐이 다 빠진 것을 확인한 뒤 지급', 남은 짐은 포기한 것으로 본다."); kLog("📝 합의서를 썼다 — 번복 위험이 크게 줄었다."); }
-  if(id==="notice"){ o.resist -= 10; o.coop -= 10 + o.pride*8; kSay("종이 쪼가리로 사람을 겁줘? 나도 알아볼 데 있어.", "angry"); }
+  if(id==="notice"){ o.resist -= 10; o.coop -= 10 + o.pride*8; kSay("종이 쪼가리로 사람을 겁주나? 내도 알아볼 데 있다.", "angry"); }
   if(id==="order"){ K.cost.legal += 10; o.order = K.day + 16 + Math.floor(K.r()*6); o.resist -= 6; o.coop -= 4; kLog(`⚖️ 인도명령 신청. 결정까지 2~3주(약 ${o.order - K.day}일).`); kNarr("법원에 인도명령을 신청했다. 서류 한 장이지만 방 안 공기가 달라진다."); }
-  if(id==="threat"){ if(o.orderOk){ o.resist -= 15; o.coop -= 8; kSay("…결정문까지 나왔으면 할 수 없지. 얼마 줄 거요.", "worried"); } else { o.coop -= 22; o.resist += 10; kSay("강제집행? 해 봐! 내가 뭘 잘못했는데!", "angry"); kAch("hothead"); } }
+  if(id==="threat"){ if(o.orderOk){ o.resist -= 15; o.coop -= 8; kSay("…결정문까지 나왔으믄 우짜겠노. 얼마 줄 끼고.", "worried"); } else { o.coop -= 22; o.resist += 10; kSay("강제집행? 해 봐라! 내가 뭘 잘못했는데!", "angry"); kAch("hothead"); } }
   if(id==="exec"){ o.exec = {day: K.day + 28}; K.cost.legal += 20; kLog("🚚 강제집행 접수 — 계고 뒤 약 4주 뒤 집행."); kNarr("집행관 사무실에 강제집행을 접수했다. 비용 일부를 예납했다."); }
   kClampOcc(); kTick(m.day);
 }
 function kOffer(amt){
   const o = K.occ; K.style.money += 0.5; const need = kOccNeed();
-  if(amt >= need || (amt >= need*0.8 && o.coop >= 70)){ o.agreed = {amt, day: K.day + (o.dInvolved ? 7 : 14)}; K.offering = false; kSay(amt ? `${kMan(amt)}이면… 알았소. ${o.agreed.day - K.day}일 뒤에 나가리다.` : "돈은 됐소. 날짜만 맞춰 주면 나가리다.", "normal"); kLog(`🤝 합의 — ${o.agreed.day - K.day}일 뒤 이사, 이사비 ${kMan(amt)}. 합의서를 쓰면 번복을 막을 수 있다.`); if(amt===0) kAch("word"); }
-  else if(amt < need*0.5){ o.coop -= 10 + o.pride*6; kSay("그걸로 어디 가서 방을 구해! 사람 우습게 보지 마시오.", "angry"); }
-  else { o.resist -= 4; kSay(`…${kMan(Math.ceil(need*1.05/10)*10)}은 있어야 움직이지.`, "worried"); }
+  if(amt >= need || (amt >= need*0.8 && o.coop >= 70)){ o.agreed = {amt, day: K.day + (o.dInvolved ? 7 : 14)}; K.offering = false; kSay(amt ? `${kMan(amt)}이믄… 알았다. ${o.agreed.day - K.day}일 뒤에 나가께.` : "돈은 됐다. 날짜만 맞춰 주믄 나가께.", "normal"); kLog(`🤝 합의 — ${o.agreed.day - K.day}일 뒤 이사, 이사비 ${kMan(amt)}. 합의서를 쓰면 번복을 막을 수 있다.`); if(amt===0) kAch("word"); }
+  else if(amt < need*0.5){ o.coop -= 10 + o.pride*6; kSay("그걸로 어데 가서 방을 구하노! 사람 우습게 보지 마소.", "angry"); }
+  else { o.resist -= 4; kSay(`…${kMan(Math.ceil(need*1.05/10)*10)}은 있어야 움직이제.`, "worried"); }
   kClampOcc(); kTick(1);
 }
 function kFlipAnswer(pay){
   const o = K.occ; K.pendingFlip = false;
   if(pay){ K.cost.move += o.agreed.amt; kNarr(`50만원을 더 얹었다. 짐이 빠졌다. 총 이사비 ${kMan(o.agreed.amt)}.`); return kMoved(); }
   o.agreed.amt -= 50; o.coop -= 15; o.agreed.day = K.day + 5; o.paper = true;
-  kSay("…알았소, 알았어. 약속한 대로 하리다.", "worried"); kLog("📝 이번엔 합의서를 썼다. 5일 뒤 이사."); kTick(1);
+  kSay("…알았다, 알았다 카이. 약속한 대로 하께.", "worried"); kLog("📝 이번엔 합의서를 썼다. 5일 뒤 이사."); kTick(1);
 }
 function kMoved(){ K.moveDays = K.day; K.step = "defect"; kDefect(); }
 /* ---------- 4. 하자 ---------- */
@@ -285,7 +285,7 @@ function kingHTML(){
     <button type="button" class="btn pri" data-kgo="move" style="margin-top:12px">🔑 잔금 내고 점유자 만나러 가기 →</button>`;
   }
   if(K.step==="move"){
-    const o = K.occ, sc = K.scene || {who:"occ", t:"(문이 반쯤 열린다) …낙찰자요? 나 보증금도 못 받는다며. 내가 뭘 잘못했는데!", ex:"angry"};
+    const o = K.occ, sc = K.scene || {who:"occ", t:"(문이 반쯤 열린다) …낙찰자요? 내 보증금도 몬 받는다 카대. 내가 뭘 잘못했는데!", ex:"angry"};
     const acts = K.pendingFlip ? `<div class="ag-acts vn-acts"><button type="button" class="ag-act" data-kflip="1"><span class="ag-ai">💸</span><span><b>50만원 더 준다</b><span class="note" style="display:block">오늘 끝내기</span></span></button><button type="button" class="ag-act" data-kflip="0"><span class="ag-ai">📝</span><span><b>"약속은 약속입니다" — 이번엔 합의서</b><span class="note" style="display:block">며칠 더 걸릴 수 있음</span></span></button></div>`
       : K.offering ? `<div class="ag-acts vn-acts"><div class="ag-act ag-offer"><span class="ag-ai">💰</span><div><b>이사비 제안</b><div class="note">점유자가 원하는 건 ${kMan(K.askNeed)} 안팎</div><div class="ag-amts">${K_OFFERS.map(v=>`<button type="button" class="chip" data-koffer="${v}">${v?kMan(v):"0원(날짜만)"}</button>`).join("")}</div></div></div></div>`
       : `<div class="ag-acts vn-acts">${K_MOVES.filter(m=>!m.need || m.need(o)).map(m=>`<button type="button" class="ag-act${m.id==="threat"?" ag-bad":""}" data-kmove="${m.id}"><span><b>${m.t}</b><span class="note" style="display:block">${m.day}일 소요</span></span></button>`).join("")}</div>`;

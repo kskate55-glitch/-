@@ -226,7 +226,7 @@ function kcShareHTML(){
 function kcBrokerLine(){
   const c = kcRec(), rep = hubRec().rep;
   if(K.mode !== "career") return "";
-  const t = rep >= 150 ? "아, 요즘 빌라 몇 개 하신다는 분이시죠? 솔직히 말씀드리면 이 골목은 1억 5천 중반이 현실적이에요." : c.cases >= 1 ? "어? 전에 한 번 하셨던 사장님 아니에요? 이번에도 빌라네요. 잘 해 봐요." : "경매로 받으셨어요? 처음이세요? 호가는 너무 욕심내지 마세요.";
+  const t = rep >= 150 ? "아, 요즘 빌라 몇 개 하신다는 분이쥬? 솔직히 말씀드리면 이 골목은 1억 5천 중반이 현실적이여유." : c.cases >= 1 ? "어? 전에 한 번 하셨던 사장님 아니유? 이번에도 빌라네유. 잘 해 봐유." : "경매로 받으셨슈? 처음이유? 호가는 너무 욕심내지 마셔유.";
   return `<div class="panel kc-npc"><b>📞 동네 중개사 김사장</b><p>“${esc(t)}”</p>${rep>=150?'<small class="note">명성 덕분에 중개사가 솔직한 가격을 먼저 말해 줘요.</small>':""}</div>`;
 }
 const _kc_kingHTML = kingHTML; kingHTML = function(){

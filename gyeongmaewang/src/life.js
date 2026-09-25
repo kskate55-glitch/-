@@ -55,7 +55,7 @@ const LF_ECON = {
   seoyun:  {inc:[130, 280], incT:"과외·단기 알바(들쭉날쭉)", fixed:85, housing:"보증금 500 · 월세 42 · 관리비 7 · 생활비", liab:["low_capital"], liabT:"자본이 가장 적다 — 대출 이자와 보증금이 늘 발목", life:"돈은 없다. 대신 하루 종일 움직일 수 있다.", quote:"시간은 많아. 돈이 없어서 그렇지."},
   dohyun:  {inc:[390, 390], incT:"월급(세후)", fixed:210, housing:"월세 75 · 관리비 7", liab:["workday_block"], liabT:"평일 09~18시는 회사 — 연차·반차를 아껴 써야 한다", life:"월급은 들어온다. 대신 평일 오후 2시에 임장은 못 간다.", quote:"회사 다니면서도 할 수 있겠지."},
   mijeong: {inc:[250, 650], incT:"가게 수입(달마다 다름)", fixed:360, housing:"전세대출 이자·관리비 · 가게 임대료·보험", liab:["business_interruptions"], liabT:"가게에 일이 터지면 오늘 임장은 취소", life:"사람 상대는 자신 있다. 가게만 조용하면.", quote:"사람 상대하는 건 내가 해봤지."},
-  jaehoon: {inc:[150, 400], incT:"현장·설비 프로젝트(변동)", fixed:260, housing:"대출 이자 · 관리비", liab:["slow_online_research"], liabT:"컴퓨터 앞에선 느리다 — 서류·온라인이 약하다", life:"눈으로 보면 다 안다. 컴퓨터가 문제지.", quote:"사진 말고 직접 봐야 알아."},
+  jaehoon: {inc:[150, 400], incT:"현장·설비 프로젝트(변동)", fixed:260, housing:"대출 이자 · 관리비", liab:["slow_online_research"], liabT:"컴퓨터 앞에선 느리다 — 서류·온라인이 약하다", life:"눈으로 보믄 다 안다. 컴퓨터가 문제제.", quote:"사진 말고 직접 봐야 안다 아이가."},
   eunkyung:{inc:[170, 190], incT:"퇴직연금·금융소득", fixed:190, housing:"오피스텔 관리비 · 보험", liab:["field_fatigue"], liabT:"하루에 현장 여러 곳은 무리 — 체력이 먼저 바닥난다", life:"계산은 누구보다 정확하다. 발이 못 따라올 뿐.", quote:"일단 숫자부터 맞춰보죠."},
   taesik:  {inc:[200, 230], incT:"연금 + 임대수입", fixed:200, housing:"자가 — 관리비·병원비·경조사", liab:["low_stamina"], liabT:"몸으로 때울 수 없다 — 전화와 핵심 임장 하나로 승부", life:"돈도 있고 인맥도 있다. 하지만 몸으로 때울 수는 없다.", quote:"싸다고 좋은 물건이면 다 부자 됐지."}};
 const LF_LEAVE_PER_YEAR = 15;
@@ -135,7 +135,7 @@ function lfStress(n){ const L = lfRec(); if(!L) return; L.stress = Math.max(0, M
 // 생활 이벤트 — 작지만 시간·돈·정보에 실제로 닿는다
 const LF_EVENTS = [
   {id:"update", w:3, t:"💻 노트북 업데이트가 시작됐다 — \"끄지 마십시오\". 다음 조사 시간이 30분 줄어든다.", f:L => { L.fx.updatePenalty = 30; }},
-  {id:"broker", w:3, t:"📞 김사장: \"사장님, 전에 보던 거 있잖아요 — 그 동네에 싼 거 하나 나왔어요.\" 게시판 물건 하나의 관심도가 보인다.", f:L => { L.fx.tip = true; lfRel("김사장", 1); }},
+  {id:"broker", w:3, t:"📞 김사장: \"사장님, 전에 보던 거 있잖아유 — 그 동네에 싼 거 하나 나왔슈.\" 게시판 물건 하나의 관심도가 보인다.", f:L => { L.fx.tip = true; lfRel("김사장", 1); }},
   {id:"sleep", w:3, t:"😵 계약 생각에 잠을 설쳤다. 체력 −10.", f:L => { lfTire(10); }},
   {id:"book", w:2, t:"📦 주문한 경매책이 도착했다. 다음 공부 효율 +50%.", f:L => { L.fx.book = true; }},
   {id:"thanks", w:2, need:L => kcRec().cases >= 1, t:"💌 예전 점유자에게서 문자: \"그때 잘 해결해 주셔서 감사했어요.\" 스트레스 −5 · 명성 +3.", f:L => { lfStress(-5); if(typeof hubAward === "function") hubAward(5, 3, "💌 예전 점유자의 감사 문자"); }},

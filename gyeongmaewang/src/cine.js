@@ -74,7 +74,7 @@ const LF_CHAR_EVENTS = {
     {w:3, t:"🧘 건강관리 — 오전 요가·병원 정기검진. 반나절을 쓰고 체력 +15.", f:L => { L.t += 240; L.sta = Math.min(L.st.stamina, L.sta + 15); }},
     {w:2, t:"📈 예금 만기 — 이자 +18만원. \"이걸로는 물가도 못 따라가.\"", f:L => { kcRec().cash += 18; }}],
   taesik: [
-    {w:3, t:"📞 오래 알던 중개사: \"형님, 이번에 괜찮은 게 하나 떴어요.\" 다음 사건 경쟁 분위기를 미리 안다.", f:L => { L.fx.tip = true; lfRel("김사장", 0.5); }},
+    {w:3, t:"📞 오래 알던 중개사: \"형님, 이번에 괜찮은 게 하나 떴슈.\" 다음 사건 경쟁 분위기를 미리 안다.", f:L => { L.fx.tip = true; lfRel("김사장", 0.5); }},
     {w:2, t:"🏥 병원 정기검진 — 반나절을 쓴다. 체력 +10.", f:L => { L.t += 300; L.sta = Math.min(L.st.stamina, L.sta + 10); }},
     {w:1, t:"🎉 친구 손주 돌잔치 — 축의금 −20만원. 오래 못 본 얼굴들에 스트레스 −6.", f:L => { kcRec().cash -= 20; lfStress(-6); }}]};
 const _gx_lfEvent = lfEvent; lfEvent = function(){
@@ -184,10 +184,10 @@ const LF_OPENINGS = {
     {bg:"bg_living_rough", amb:"room|clear|in", lines:[[null,"집에 와서 검색창을 연다."],["미정","사람 장사나 집 장사나 — 결국 가격 맞추는 건 똑같은 거 아닌가?"]]},
     {bg:"bg_realtor", amb:"broker|clear|in", sfx:"chime", lines:[["중개사","경매는 그렇게 단순하지 않아요, 사장님."],["미정","그러니까 한번 해 보려고요."]]}],
   jaehoon:[
-    {bg:"bg_stairs", amb:"empty|clear|in", sfx:"knock", lines:[[null,"낡은 빌라 수리 현장."],["전기기사","형님, 여기 선이 이상한데요."],["재훈","잠깐."],[null,"벽을 두드린다. 톡, 톡."],["재훈","여기도 비었네."]]},
-    {bg:"bg_stairs", amb:"empty|clear|in", lines:[["집주인","그걸 어떻게 아셨어요?"],["재훈","이런 집을 몇 개를 봤는데요."]]},
-    {bg:"bg_alley", amb:"site_night|clear|out", lines:[[null,"일 끝나고 국밥집."],["동료","형, 그거 알아? 경매로 집 받아서 고쳐 파는 사람 많대."],["재훈","얼마에 받아서?"]]},
-    {bg:"bg_living_clean_old", amb:"room|clear|in", sfx:"reveal", ui:{type:"listing", t:"검색: 부동산 경매", a:"감정가 1억 4,500만원", b:"최저가 1억 200만원"}, lines:[[null,"마우스를 어색하게 움직인다. 독수리 타법."],["재훈","집은 괜찮은데."],["재훈","가격이 문제네."]]}],
+    {bg:"bg_stairs", amb:"empty|clear|in", sfx:"knock", lines:[[null,"낡은 빌라 수리 현장."],["전기기사","형님, 여기 선이 이상한데요."],["재훈","잠깐."],[null,"벽을 두드린다. 톡, 톡."],["재훈","여기도 비었네, 마."]]},
+    {bg:"bg_stairs", amb:"empty|clear|in", lines:[["집주인","그걸 어떻게 아셨어요?"],["재훈","이런 집을 몇 개를 봤는데예."]]},
+    {bg:"bg_alley", amb:"site_night|clear|out", lines:[[null,"일 끝나고 국밥집."],["동료","형, 그거 알아? 경매로 집 받아서 고쳐 파는 사람 많대."],["재훈","얼마에 받아가?"]]},
+    {bg:"bg_living_clean_old", amb:"room|clear|in", sfx:"reveal", ui:{type:"listing", t:"검색: 부동산 경매", a:"감정가 1억 4,500만원", b:"최저가 1억 200만원"}, lines:[[null,"마우스를 어색하게 움직인다. 독수리 타법."],["재훈","집은 괜찮은데."],["재훈","가격이 문제네, 이거."]]}],
   eunkyung:[
     {bg:"bg_room_clean", amb:"room|clear|in", ui:{type:"bank", t:"정기예금 연 2.9%", s:"은행 앱 · 금리 안내"}, lines:[[null,"마포 오피스텔. 아침 커피, 태블릿, 은행 앱."],["은경","이걸로는…"],[null,"계산기를 두드린다."],["은경","물가도 못 따라가겠네."]]},
     {bg:"bg_room_clean", amb:"room|clear|in", sfx:"message", lines:[["친구(전화)","너 퇴직했으니까 이제 좀 쉬어."],["은경","돈이 쉬면 안 되지."]]},

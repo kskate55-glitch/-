@@ -18,7 +18,7 @@ const KP2 = {
     {id:"loan",  t:"얇은 매수자층", d:"은행: '준공 30년 차라 감정이 낮게 나와요. 매수자 대출이 생각보다 적게 나옵니다.'"}],
   research:[
     {id:"docs",   ic:"📄", t:"매각물건명세서·등기부 보기", day:0, reveal:null, text:"전 소유자 정은주 씨 거주 — 채무자라 배당 없음, 인도명령 대상. 서류상은 깔끔하다."},
-    {id:"kim",    ic:"📞", t:"단골 중개사 김사장에게 전화", day:1, reveal:"kim", who:"김사장", say:"1억 7천은 무조건 됩니다. 요즘 투룸 없어서 난리예요."},
+    {id:"kim",    ic:"📞", t:"단골 중개사 김사장에게 전화", day:1, reveal:"kim", who:"김사장", say:"1억 7천은 무조건 되쥬. 요즘 투룸 없어서 난리여유."},
     {id:"park",   ic:"🏢", t:"처음 가 보는 박 중개사 사무실 방문", day:1, reveal:"price", who:"박 중개사", say:"1억 5천 후반이 현실적이에요. 1.7은 큰길 얘기고요."},
     {id:"down",   ic:"👩", t:"아래층 주민에게 말 걸기", day:1, reveal:"leak", who:"아래층 아주머니", say:"작년에도 물 샜어요. 고쳤다고는 했는데…"},
     {id:"listing",ic:"📱", t:"같은 건물 매물 검색", day:1, reveal:"dump"},
@@ -28,7 +28,7 @@ const KP2 = {
   rivals:[{t:"초보 과입찰러", lo:1.12, hi:1.24}, {t:"겉 마진 보고 온 투자자", lo:1.10, hi:1.22}, {t:"지역 실수요자", lo:1.05, hi:1.14}, {t:"전문 투자자", lo:1.02, hi:1.10}, {t:"무조건 저가형", lo:1.00, hi:1.04}],
   cards:[
     {id:"docs",  src:"docs",   ic:"📄", t:"매각물건명세서", d:"채무자 거주 · 배당 없음", w:15},
-    {id:"kim",   src:"kim",    byDone:true, ic:"🗣️", t:"김사장 통화", d:"\"1억 7천은 무조건 됩니다\"", w:4},
+    {id:"kim",   src:"kim",    byDone:true, ic:"🗣️", t:"김사장 통화", d:"\"1억 7천은 무조건 되쥬\"", w:4},
     {id:"price", src:"park",   ic:"📝", t:"박 중개사 의견", d:"1.7은 큰길 기준 · 여긴 1.5 후반", w:12},
     {id:"leak",  src:"down",   ic:"💧", t:"아래층 증언", d:"작년에도 천장으로 물이 샜다", w:14},
     {id:"dump",  src:"listing",ic:"🏷️", t:"같은 건물 급매", d:"3층 1억 6,200만원", w:12},
@@ -96,7 +96,7 @@ function k2Fix(id){
   K.k2.trueP = f.trueP; K.step = "list";
 }
 /* ---------- 매도: 얇은 매수자층 + 같은 건물 급매 ---------- */
-const K2_LIST = [[17000,"김사장 가격 — \"무조건 됩니다\""],[16500,"살짝 높게"],[15900,"박 중개사 가격"],[15400,"급매 경쟁 이기기"]];
+const K2_LIST = [[17000,"김사장 가격 — \"무조건 되쥬\""],[16500,"살짝 높게"],[15900,"박 중개사 가격"],[15400,"급매 경쟁 이기기"]];
 function k2List(price){ K.sale = {list:price, trueP:K.k2.trueP, weeks:0, offer:null, done:false}; K.step = "sell"; k2Week(); }
 function k2Week(){
   const S = K.sale; if(S.done) return;
@@ -209,7 +209,7 @@ function k2HTML(){
   }
   if(K.step === "list"){
     return kStage(K.k2.cond === "fix" ? "bg_room_clean" : "bg_room_messy", "narr", null, "이제 얼마에 내놓을까. 김사장과 박 중개사의 말이 다르다.") + kHud() + `
-     <div class="panel k-card">${K.k2.cond==="hide" && typeof gmwSceneArt==="function" ? gmwSceneArt("k2cover") : ""}<div class="k-grid"><span>김사장</span><b>"1억 7천 무조건 됩니다"</b><span>박 중개사</span><b>${K.found.price?`"1억 5천 후반이 현실적"`:"(만나 보지 못함)"}</b><span>같은 건물 급매</span><b>${K.found.dump?"3층 1억 6,200만원 — 아직 안 팔림":"??"}</b>${K.k2.cond==="min"?`<span>고지</span><b>누수 수리 이력 고지 → 가격 할인</b>`:""}</div></div>
+     <div class="panel k-card">${K.k2.cond==="hide" && typeof gmwSceneArt==="function" ? gmwSceneArt("k2cover") : ""}<div class="k-grid"><span>김사장</span><b>"1억 7천 무조건 되쥬"</b><span>박 중개사</span><b>${K.found.price?`"1억 5천 후반이 현실적"`:"(만나 보지 못함)"}</b><span>같은 건물 급매</span><b>${K.found.dump?"3층 1억 6,200만원 — 아직 안 팔림":"??"}</b>${K.k2.cond==="min"?`<span>고지</span><b>누수 수리 이력 고지 → 가격 할인</b>`:""}</div></div>
      <h3 class="vn-q">호가를 정하세요</h3><div class="ag-acts vn-acts">${K2_LIST.map(([v,t])=>`<button type="button" class="ag-act" data-k2="list:${v}"><span><b>${kMan(v)}</b><span class="note" style="display:block">${t}</span></span></button>`).join("")}</div>` + k2SaysHTML() + quit;
   }
   if(K.step === "sell"){
@@ -278,7 +278,7 @@ const _k2_bw = keBestWorst; keBestWorst = function(){
 function F2(){ return K.final ? K.final.profit : 0; }
 const _k2_cred = keCredits; keCredits = function(){
   if(KP.id !== "k2") return _k2_cred();
-  const truth = [["김사장", "“1억 7천은 무조건 됩니다”", false], ["박 중개사", "“1억 5천 후반이 현실적”", true], ["아래층 아주머니", "“작년에도 물 샜어요”", true], ["정은주 씨", "“누수요? 처음 듣는데요”", false]];
+  const truth = [["김사장", "“1억 7천은 무조건 되쥬”", false], ["박 중개사", "“1억 5천 후반이 현실적”", true], ["아래층 아주머니", "“작년에도 물 샜어요”", true], ["정은주 씨", "“누수요? 처음 듣는데요”", false]];
   const heard = s => K.says.some(x => x.who === s);
   const rows = truth.filter(t => heard(t[0]));
   return `<div class="panel ke-credits"><b>🗣️ 이번 사건에서 들은 말 — 진짜였을까?</b>${rows.length ? `<ul>${rows.map(([w,t,ok])=>`<li><span>${esc(w)} ${esc(t)}</span><small></small><b>${ok?"✅":"❌"}</b></li>`).join("")}</ul><p class="note" style="color:#c9d2e6">사실이었던 진술 ${rows.filter(r=>r[2]).length} / ${rows.length}</p>` : `<p class="note" style="color:#c9d2e6">이번엔 거의 아무 말도 듣지 않고 판을 끝냈다.</p>`}

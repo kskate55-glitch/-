@@ -18,6 +18,11 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  ok(await p.evaluate(()=>/ACT 4\/4/.test(document.querySelector('.kfs-head, #kfsRoot')?.innerText||document.body.innerText)), w+' 머리줄 ACT 칩');
  const hasPath = await p.$('[data-lfpath]'); ok(!!hasPath, w+' 갈림길(마지막 선택) 표시');
  await p.click('[data-lfpath="job"]'); await p.waitForTimeout(700);
+ ok(await p.evaluate(()=>!document.getElementById('cpEnd') && lfRec().path==='job' && lfRec().mode!=='career'), w+' 갈림길을 골라도 바로 엔딩이 나지 않는다');
+ ok(await p.evaluate(()=>/결산 D-\d+/.test(document.body.innerText)), w+' 머리줄에 1년 결산 D-day');
+ await p.evaluate(()=>{ LF_SPOT='wall'; renderArena(); }); await p.waitForTimeout(300);
+ ok(!!(await p.$('[data-cpsettle]')), w+' 벽: 지금 결산하기 버튼');
+ await p.evaluate(()=>{ lfRec().t=CP_YEAR_MIN; K=null; LF_SPOT='laptop'; renderArena(); }); await p.waitForTimeout(700);
  const end = await p.evaluate(()=>({card:!!document.querySelector('#cpEnd .cp-card'), txt:(document.querySelector('#cpEnd')||{}).innerText||'', unl:cpUnlocked('dohyun'), clr:cpCleared('seoyun'), mode:lfRec().mode}));
  ok(end.card && /END/.test(end.txt) && /마지막 선택/.test(end.txt), w+' 엔딩 요약 화면');
  ok(end.unl && end.clr && end.mode==='career', w+' 서윤 클리어 → 도현 해금 · 커리어 전환');

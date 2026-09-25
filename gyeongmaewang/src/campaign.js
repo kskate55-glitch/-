@@ -53,7 +53,8 @@ function cpActChip(){
   const L = lfRec(); if(!L) return "";
   if(L.mode === "career") return `<span class="cp-act career" title="엔딩을 본 뒤 자유롭게 이어 가는 중">CAREER</span>`;
   const a = cpAct(), i = CP_ORDER.indexOf(L.char) + 1;
-  return `<span class="cp-act" title="${esc(CP_THEME[L.char] || "")} — 스토리 진행">CH.${i} · ACT ${a}/4</span>`;
+  const dl = L.path ? ` · 결산 D-${cpDaysLeft()}` : "";
+  return `<span class="cp-act" title="${esc(CP_THEME[L.char] || "")} — 스토리 진행">CH.${i} · ACT ${a}/4${dl}</span>`;
 }
 function cpDots(){
   const P = cpRec();
@@ -198,10 +199,29 @@ function cpBrokeCheck(){
   const L = lfRec(); if(!L || L.mode === "career" || L.ended || L.intro) return;
   if(kcRec().cash <= CP_BROKE && arenaTab === "life" && (!K || K.step === "result")) cpFinish(null, "broke");
 }
-// 갈림길 선택 = 마지막 인생 선택 → 엔딩(cine.js 핸들러가 경로를 적용한 뒤에 본다)
+// 갈림길 ≠ 엔딩. 갈림길은 남은 시간을 어떻게 살지 정하는 선택이고, 엔딩은 인생 1년 결산 날 정해진다.
+// (예전엔 갈림길을 고르는 순간 엔딩이 났다 — 누적 1억에서 갈림길이 오는데 GOOD은 1.5억이라, 잘하던 사람도 GOOD까지 갈 기회가 없었다.)
+function cpPathOpt(){ const L = lfRec(), P = L && LF_PATHS[L.char]; return P && L.path ? P.opts.find(x => x.id === L.path) : null; }
+function cpDaysLeft(){ const L = lfRec(); return L ? Math.max(0, Math.ceil((CP_YEAR_MIN - L.t) / 1440)) : 0; }
+function cpSettleCheck(){
+  const L = lfRec(); if(!L || L.mode === "career" || L.ended || L.intro || !L.path || CP_SHOW) return;
+  if(L.t < CP_YEAR_MIN || arenaTab !== "life" || (K && K.step !== "result")) return;   // CASE 도중에는 끊지 않는다
+  cpFinish(cpPathOpt(), null);
+}
 document.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-lfpath]"); if(!b) return;
-  setTimeout(() => { const L = lfRec(); if(!L || L.mode === "career" || L.ended || !L.path) return; const P = LF_PATHS[L.char], o = P && P.opts.find(x => x.id === L.path); cpFinish(o, null); }, 60);
+  setTimeout(() => {
+    const L = lfRec(); if(!L || L.mode === "career" || L.ended || !L.path) return;
+    if(L.t >= CP_YEAR_MIN){ cpFinish(cpPathOpt(), null); return; }   // 1년이 다 돼서 온 갈림길이면 바로 결산
+    if(typeof gxBanner === "function") setTimeout(() => gxBanner("place", {big:"📅 1년 결산까지 " + cpDaysLeft() + "일", sub:"이 길로 남은 시간을 살아 보세요 — 엔딩은 결산 날 정해져요"}), 1400);
+  }, 60);
+});
+// 결산을 기다리지 않고 지금 받고 싶을 때(벽)
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("[data-cpsettle]"); if(!b) return;
+  const L = lfRec(); if(!L || L.mode === "career" || L.ended || !L.path || (K && K.step !== "result")) return;
+  if(!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent = "한 번 더 누르면 지금 결산해요"; return; }
+  cpFinish(cpPathOpt(), null);
 });
 
 /* ---------- 엔딩 화면 버튼 ---------- */
@@ -261,7 +281,7 @@ document.addEventListener("click", e => { if(e.target.closest && e.target.closes
 const _cp_kfsHeader = kfsHeader;
 kfsHeader = function(){ const h = _cp_kfsHeader(); return lfOn() ? h.replace(/(<span class="kfs-sub">[^<]*<\/span>)/, `$1${cpActChip()}`) : h; };
 const _cp_render = renderArena;
-renderArena = function(){ cpRec(); _cp_render(); queueMicrotask(() => { if(typeof page !== "undefined" && page === "arena") cpBrokeCheck(); if(CP_SHOW && !document.getElementById("cpEnd")) cpPaint(); }); };
+renderArena = function(){ cpRec(); _cp_render(); queueMicrotask(() => { if(typeof page !== "undefined" && page === "arena"){ cpBrokeCheck(); cpSettleCheck(); } if(CP_SHOW && !document.getElementById("cpEnd")) cpPaint(); }); };
 // 거점 벽에 엔딩 모음
 const _cp_panel = lfPanel;
 lfPanel = function(id){
@@ -270,7 +290,11 @@ lfPanel = function(id){
     const P = cpRec();
     const rows = CP_ORDER.map(cid => { const got = P.endings[cid] || {}; return `<li class="${cpUnlocked(cid) ? "" : "off"}"><b>${esc(cpName(cid))}</b> ${["normal", "good", "bad", "special"].map(t => `<span class="cp-slot ${got[t] ? "got" : ""}">${got[t] ? CP_ENDING_T[t] : "?"}</span>`).join("")}${got.special ? "" : cpUnlocked(cid) ? ` <small class="note">SPECIAL 힌트 — ${esc(CP_SPECIAL[cid].need)}</small>` : ""}</li>`; }).join("");
     h = `<div class="panel"><b>🎬 엔딩 모음</b>${cpDots()}<ul class="cp-list">${rows}</ul></div>` + h;
+    const L = lfRec(), o = cpPathOpt();
+    if(L && L.mode !== "career" && !L.ended && o){
+      h = `<div class="panel cp-settle"><b>📅 1년 결산 D-${cpDaysLeft()}</b><p>고른 길: <b>${esc(o.t)}</b>. 결산 날 그동안의 수익·마음 상태·손해 본 CASE·인맥을 함께 보고 엔딩이 정해져요.</p><button type="button" class="btn" data-cpsettle>지금 결산하고 엔딩 보기</button> <small class="note">기다릴수록 결과를 바꿀 기회가 남아요.</small></div>` + h;
+    }
   }
-  if(lfOn() && lfRec().mode !== "career" && lfPathDue() && id !== "board") h = h.replace('<small class="note">한 번 고르면 되돌릴 수 없어요 — 인생이니까요.</small>', '<small class="note">한 번 고르면 되돌릴 수 없어요 — 이 선택으로 이 인생의 엔딩이 정해져요.</small>');
+  if(lfOn() && lfRec().mode !== "career" && lfPathDue() && id !== "board") h = h.replace('<small class="note">한 번 고르면 되돌릴 수 없어요 — 인생이니까요.</small>', '<small class="note">한 번 고르면 되돌릴 수 없어요. 엔딩은 이 선택만으로 정해지지 않아요 — 고른 길로 남은 시간을 산 뒤, 1년 결산 날 정해져요.</small>');
   return h;
 };

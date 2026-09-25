@@ -58,6 +58,10 @@ function nxPlace(){
   let top = 12;
   if(box){ const br = box.getBoundingClientRect(); if(br.bottom < sr.top + sr.height * 0.6) top = Math.round(br.bottom - sr.top + 10); }
   dock.style.top = top + "px";
+  // 입찰표처럼 무대 오른쪽에 떠 있는 서류가 있으면, 버튼 줄이 그 위를 덮지 않게 왼쪽 공간까지만 쓴다
+  dock.style.maxWidth = "";
+  const sh = stage.querySelector(".stg-sheet");
+  if(sh){ const r = sh.getBoundingClientRect(), dr = dock.getBoundingClientRect(); if(r.width && r.left > dr.left + 160 && r.left < dr.right) dock.style.maxWidth = Math.round(r.left - dr.left - 10) + "px"; }
   dock.style.setProperty("--nx-room", Math.max(160, Math.round(sr.height - top - 70)) + "px");
 }
 let NX_MOB = null;

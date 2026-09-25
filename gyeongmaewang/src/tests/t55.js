@@ -48,7 +48,7 @@ for(const [w,h] of [[1280,800],[390,844]]){
  ok(!!(await p.$('[data-lfpath]')), w+' 인생 갈림길 뜸'); await bad('path');
  await p.click('[data-lfpath="job"]'); await p.waitForTimeout(1600);
  ok(await p.evaluate(()=>lfRec().path==='job' && lfMonthly().income===300 && lfWindow(2)[0]===1170), w+' 서윤 취업 → 월급 300·평일 저녁만');
- ok(!!(await p.$('#cpEnd')), w+' 갈림길 → 엔딩 화면'); await p.click('[data-cp="go"]'); await p.waitForTimeout(400); await p.click('[data-cp="career"]'); await p.waitForTimeout(500);
+ ok(!(await p.$('#cpEnd')), w+' 갈림길만으로는 엔딩 없음'); await p.evaluate(()=>{ LF_SPOT='wall'; renderArena(); }); await p.waitForTimeout(200); await p.click('[data-cpsettle]'); await p.click('[data-cpsettle]'); await p.waitForTimeout(500); ok(!!(await p.$('#cpEnd')), w+' 지금 결산하기 → 엔딩 화면'); await p.click('[data-cp="go"]'); await p.waitForTimeout(400); await p.click('[data-cp="career"]'); await p.waitForTimeout(500);
  ok(!!(await p.$('[data-gxreplay="seoyun"]')), w+' 벽: 오프닝 다시 보기');
  await p.screenshot({path:`gx_wall_${w}.png`});
  // 전환 배너: 자고 일어나기

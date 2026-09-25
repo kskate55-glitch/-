@@ -6,9 +6,9 @@ for(const [w,h] of [[1280,800],[390,844]]){
  await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(300); await p.evaluate(()=>{try{cpUnlockAll()}catch(e){}}); await p.waitForTimeout(700);
  const bad = async tag => { const t = await p.evaluate(()=>(document.getElementById('kfsRoot')||document.getElementById('main')).innerText); const m=t.match(/undefined|NaN|\[object|Infinity/); if(m) errs.push(w+' '+tag+' '+m[0]+' :: '+t.slice(Math.max(0,t.indexOf(m[0])-40), t.indexOf(m[0])+20)); };
  await p.evaluate(()=>{ arenaTab='home'; renderArena(); }); await p.waitForTimeout(300);
- ok(!!(await p.$('[data-lfgo]')), w+' 홈: 투자자 고르기 버튼');
- await p.click('[data-lfgo]'); await p.waitForTimeout(300); await bad('select');
- ok((await p.$$('[data-lfpick]')).length===6, w+' 캐릭터 6명');
+ ok(!!(await p.$('[data-lfgo],[data-frgo]')), w+' 홈: 투자자 고르기 버튼');
+ await p.click('[data-lfgo],[data-frgo]'); await p.waitForTimeout(300); await bad('select');
+ ok((await p.$$('.lf-card')).length===6, w+' 캐릭터 6명');
  await p.click('[data-lfpick="taesik"]'); await p.waitForTimeout(200); await p.screenshot({path:`lf_select_${w}.png`});
  ok(/목동 오래된 자가 아파트/.test(await p.textContent('.lf-focus')), w+' 김태식 상세 — 시작 거점 표시');
  await p.click('[data-lfpick="dohyun"]'); await p.waitForTimeout(150); await p.click('[data-lfstart="dohyun"]'); await p.waitForTimeout(400);

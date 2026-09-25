@@ -271,9 +271,9 @@ homeHTML = function(){
      <div class="kc-stat">경매인 LV.${L.lv} · 누적수익 ${kcSigned(c.total)} · 처리 물건 ${c.cases}건</div>${kcSfxBtn()}</div></div>
    ${hubBar()}
    <div class="hub-grid">
-     <button type="button" class="panel hub-tile" data-atab="story"><span class="hub-ic">🎬</span><b>스토리</b><small>엔딩 ${Object.keys(p.ends).length} / ${ends}</small></button>
-     <button type="button" class="panel hub-tile" data-atab="dexall"><span class="hub-ic">📖</span><b>도감</b><small>점유자 ${Object.keys(p.met).length}/${occ.length} · 사건 ${Object.keys(p.events).length}/${HUB_EVENTS.length}</small></button>
-     <button type="button" class="panel hub-tile" data-atab="rec"><span class="hub-ic">📊</span><b>기록</b><small>보유 ${kMan(c.cash)} · 10억까지 ${Math.min(100,c.cash/KC_GOAL*100).toFixed(1)}%</small></button></div>
+     <button type="button" class="panel hub-tile hub-prac" data-atab="story"><span class="hub-thumb" style="background-image:url('${window.GMW_STANDALONE ? "assets/ff04787de9e2972b06a05a4d05787744.webp" : "/_blob/ff04787de9e2972b06a05a4d05787744"}')" aria-hidden="true"></span><span class="hub-ic">🎬</span><b>스토리</b><small>엔딩 ${Object.keys(p.ends).length} / ${ends}</small></button>
+     <button type="button" class="panel hub-tile hub-prac" data-atab="dexall"><span class="hub-thumb" style="background-image:url('${window.GMW_STANDALONE ? "assets/6f533d03b3ea27be67f3af022825ba4f.webp" : "/_blob/6f533d03b3ea27be67f3af022825ba4f"}')" aria-hidden="true"></span><span class="hub-ic">📖</span><b>도감</b><small>점유자 ${Object.keys(p.met).length}/${occ.length} · 사건 ${Object.keys(p.events).length}/${HUB_EVENTS.length}</small></button>
+     <button type="button" class="panel hub-tile hub-prac" data-atab="rec"><span class="hub-thumb" style="background-image:url('${window.GMW_STANDALONE ? "assets/ceb3c86e16a46e901380ecc0c9cf1e83.webp" : "/_blob/ceb3c86e16a46e901380ecc0c9cf1e83"}')" aria-hidden="true"></span><span class="hub-ic">📊</span><b>기록</b><small>보유 ${kMan(c.cash)} · 10억까지 ${Math.min(100,c.cash/KC_GOAL*100).toFixed(1)}%</small></button></div>
    <h3 class="ag-role" id="kcPractice">🧪 연습실 <small class="note">본게임 전에 감 잡기 — 여기서도 경험치가 쌓여요</small></h3>
    <div class="hub-grid sm">
      <button type="button" class="panel hub-tile hub-prac" data-atab="game"><span class="hub-thumb" style="background-image:url('${window.GMW_STANDALONE ? "assets/2feecac151f1425c86b04310ad6881bf.webp" : "/_blob/2feecac151f1425c86b04310ad6881bf"}')" aria-hidden="true"></span><span class="hub-ic">🎮</span><b>명도왕</b><small>점유자 한 명과 주 단위 명도</small></button>

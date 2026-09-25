@@ -37799,9 +37799,9 @@ homeHTML = function(){
      <div class="kc-stat">경매인 LV.${L.lv} · 누적수익 ${kcSigned(c.total)} · 처리 물건 ${c.cases}건</div>${kcSfxBtn()}</div></div>
    ${hubBar()}
    <div class="hub-grid">
-     <button type="button" class="panel hub-tile" data-atab="story"><span class="hub-ic">🎬</span><b>스토리</b><small>엔딩 ${Object.keys(p.ends).length} / ${ends}</small></button>
-     <button type="button" class="panel hub-tile" data-atab="dexall"><span class="hub-ic">📖</span><b>도감</b><small>점유자 ${Object.keys(p.met).length}/${occ.length} · 사건 ${Object.keys(p.events).length}/${HUB_EVENTS.length}</small></button>
-     <button type="button" class="panel hub-tile" data-atab="rec"><span class="hub-ic">📊</span><b>기록</b><small>보유 ${kMan(c.cash)} · 10억까지 ${Math.min(100,c.cash/KC_GOAL*100).toFixed(1)}%</small></button></div>
+     <button type="button" class="panel hub-tile hub-prac" data-atab="story"><span class="hub-thumb" style="background-image:url('${window.GMW_STANDALONE ? "assets/ff04787de9e2972b06a05a4d05787744.webp" : "/_blob/ff04787de9e2972b06a05a4d05787744"}')" aria-hidden="true"></span><span class="hub-ic">🎬</span><b>스토리</b><small>엔딩 ${Object.keys(p.ends).length} / ${ends}</small></button>
+     <button type="button" class="panel hub-tile hub-prac" data-atab="dexall"><span class="hub-thumb" style="background-image:url('${window.GMW_STANDALONE ? "assets/6f533d03b3ea27be67f3af022825ba4f.webp" : "/_blob/6f533d03b3ea27be67f3af022825ba4f"}')" aria-hidden="true"></span><span class="hub-ic">📖</span><b>도감</b><small>점유자 ${Object.keys(p.met).length}/${occ.length} · 사건 ${Object.keys(p.events).length}/${HUB_EVENTS.length}</small></button>
+     <button type="button" class="panel hub-tile hub-prac" data-atab="rec"><span class="hub-thumb" style="background-image:url('${window.GMW_STANDALONE ? "assets/ceb3c86e16a46e901380ecc0c9cf1e83.webp" : "/_blob/ceb3c86e16a46e901380ecc0c9cf1e83"}')" aria-hidden="true"></span><span class="hub-ic">📊</span><b>기록</b><small>보유 ${kMan(c.cash)} · 10억까지 ${Math.min(100,c.cash/KC_GOAL*100).toFixed(1)}%</small></button></div>
    <h3 class="ag-role" id="kcPractice">🧪 연습실 <small class="note">본게임 전에 감 잡기 — 여기서도 경험치가 쌓여요</small></h3>
    <div class="hub-grid sm">
      <button type="button" class="panel hub-tile hub-prac" data-atab="game"><span class="hub-thumb" style="background-image:url('${window.GMW_STANDALONE ? "assets/2feecac151f1425c86b04310ad6881bf.webp" : "/_blob/2feecac151f1425c86b04310ad6881bf"}')" aria-hidden="true"></span><span class="hub-ic">🎮</span><b>명도왕</b><small>점유자 한 명과 주 단위 명도</small></button>
@@ -40510,7 +40510,7 @@ function lfEpiArt(id){ const a = LF_EPI_ART[id]; return a ? `<div class="lf-epi-
 // 🧭 갈림길 그림(선택하기 직전의 한 장면 — 받은 것만)
 const LF_PATH_ART = {seoyun:"ad0b9616be23554d9c7f33379aba8142", dohyun:"fed63df3aa0f18717cdf98f7e4e24b15", mijeong:"9668d079b4fd9e38179ee79dbe03eaf0", jaehoon:"0d749dade70a04fcbc90269967fc214a", eunkyung:"82b76888cd5518170a2c3f4d66ddc296", taesik:"5c27e9ea782b7ddc10065d26675bee87"};
 /* 장면 그림 — 첫 경매·패찰·1년 결산·돌아보기·CASE 002 수리 완료 */
-const GMW_SCENE_ART = {k2loan:"b287d592d1b8de8fdd07ab80179aab83", k2cover:"d8585bdaaac505eaa9c034c8b5059d69", k2leak:"2bf2c7447b56ac406d70f866359cbdec", first:"32c2c87c3cd96d0c0e3485a69b9bae27", lost:"98e3c5a454615340ac6e02ea9f29ecf9", settle:"1e98eb088d86682b20d380b2c34c1573", review:"121e337265bfcb0de0d59f9a55b9c7d4", k2fixed:"0f50655c0e2f89baef264e2d226f9f21", k2cross:"4cc71a3f08658b459ec7e3fa2b7a87dd", k2recur:"92aab5e56f1016ca0291b6374b1f2faa", k2claim:"3286aea865d6e6f20f558a3f244bff8b", k2rival:"bda28edd1da122b04afe20372f65ee5e", k2deal:"278afc367148f5d7cc2edf6b253eacc2", k2exit:"bb29f8efc426535974e173b2d473dc22", k2forfeit:"476ab476bcacee6022fc6fa8292e0ee3", k2honest:"6d65591fbfacabbafb0a0ea14f98daf7"};
+const GMW_SCENE_ART = {regret:"1f2c7882dd10030e2e8e00b28e7ff077", k2loan:"b287d592d1b8de8fdd07ab80179aab83", k2cover:"d8585bdaaac505eaa9c034c8b5059d69", k2leak:"2bf2c7447b56ac406d70f866359cbdec", first:"32c2c87c3cd96d0c0e3485a69b9bae27", lost:"98e3c5a454615340ac6e02ea9f29ecf9", settle:"1e98eb088d86682b20d380b2c34c1573", review:"121e337265bfcb0de0d59f9a55b9c7d4", k2fixed:"0f50655c0e2f89baef264e2d226f9f21", k2cross:"4cc71a3f08658b459ec7e3fa2b7a87dd", k2recur:"92aab5e56f1016ca0291b6374b1f2faa", k2claim:"3286aea865d6e6f20f558a3f244bff8b", k2rival:"bda28edd1da122b04afe20372f65ee5e", k2deal:"278afc367148f5d7cc2edf6b253eacc2", k2exit:"bb29f8efc426535974e173b2d473dc22", k2forfeit:"476ab476bcacee6022fc6fa8292e0ee3", k2honest:"6d65591fbfacabbafb0a0ea14f98daf7"};
 /* 자산 등급 물건 그림 — KC_TIERS 순서  */
 const KC_TIER_ART = ["febc232854a4dbad7083cf37390c73b5", "b6b3a4a90bc6c97b4d8bc086732b1c7c", "c627509e92c4ddcc893ebdcc0f7dd376", "df92584c05f9bc6d507b356657dfada6", "2a8dfdb772506c5c95f3cb52db0ace67"];
 function gmwSceneArt(k){ const a = GMW_SCENE_ART[k]; return a ? `<div class="lf-epi-art gmw-scene" data-scene="${k}"><img src="${window.GMW_STANDALONE ? "assets/" + a + ".webp" : "/_blob/" + a}" alt="" loading="lazy"></div>` : ""; }
@@ -41556,7 +41556,7 @@ function dpAfterDeliver(){
   e.seen = Date.now(); D.news.unshift(Object.assign({}, dpAfterText(e), {at:e.seen})); D.news = D.news.slice(0, 20);
   if(typeof save === "function") save();
   const T = dpAfterText(e);
-  dpCard(`<div class="dp-news ${T.tone}"><small class="dp-kick">${e.kind === "lost" ? "📱 동네 중개사에게서 연락이 왔다" : "📰 소식 하나"}</small><b>${esc(T.head)}</b>${T.lines.map(l => `<p>${esc(l)}</p>`).join("")}<button type="button" class="btn" data-dpclose>닫기</button></div>`);
+  dpCard(`<div class="dp-news ${T.tone}"><small class="dp-kick">${e.kind === "lost" ? "📱 동네 중개사에게서 연락이 왔다" : "📰 소식 하나"}</small>${typeof gmwSceneArt === "function" && typeof GMW_SCENE_ART !== "undefined" && GMW_SCENE_ART[T.tone] ? gmwSceneArt(T.tone) : ""}<b>${esc(T.head)}</b>${T.lines.map(l => `<p>${esc(l)}</p>`).join("")}<button type="button" class="btn" data-dpclose>닫기</button></div>`);
   if(typeof kcSfx === "function") kcSfx("message");
 }
 function dpCard(html){

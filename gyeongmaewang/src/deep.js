@@ -49,7 +49,7 @@ function dpAfterDeliver(){
   e.seen = Date.now(); D.news.unshift(Object.assign({}, dpAfterText(e), {at:e.seen})); D.news = D.news.slice(0, 20);
   if(typeof save === "function") save();
   const T = dpAfterText(e);
-  dpCard(`<div class="dp-news ${T.tone}"><small class="dp-kick">${e.kind === "lost" ? "📱 동네 중개사에게서 연락이 왔다" : "📰 소식 하나"}</small><b>${esc(T.head)}</b>${T.lines.map(l => `<p>${esc(l)}</p>`).join("")}<button type="button" class="btn" data-dpclose>닫기</button></div>`);
+  dpCard(`<div class="dp-news ${T.tone}"><small class="dp-kick">${e.kind === "lost" ? "📱 동네 중개사에게서 연락이 왔다" : "📰 소식 하나"}</small>${typeof gmwSceneArt === "function" && typeof GMW_SCENE_ART !== "undefined" && GMW_SCENE_ART[T.tone] ? gmwSceneArt(T.tone) : ""}<b>${esc(T.head)}</b>${T.lines.map(l => `<p>${esc(l)}</p>`).join("")}<button type="button" class="btn" data-dpclose>닫기</button></div>`);
   if(typeof kcSfx === "function") kcSfx("message");
 }
 function dpCard(html){

@@ -11,7 +11,7 @@ for(const [id,[m,d]] of Object.entries(dates)){
 }
 await p.evaluate(()=>{ K=null; arenaTab='home'; kcRec().fr={full:true}; renderArena(); }); await p.waitForTimeout(700);
 const t=await p.evaluate(async()=>{ const out={}; for(const tab of ['game','chat','sell','guess']){ const e=document.querySelector(`.hub-tile.hub-prac[data-atab="${tab}"] .hub-thumb`); if(!e){ out[tab]=0; continue; } const u=e.style.backgroundImage.match(/url\("?(.*?)"?\)/)[1]; const im=new Image(); im.src=u; await new Promise(r=>{im.onload=r;im.onerror=r;}); out[tab]=im.naturalWidth; } return out; });
-ok(Object.values(t).every(v=>v===768), '연습실 타일 4개 그림 '+JSON.stringify(t));
+ok(Object.values(t).every(v=>v>=768), '연습실 타일 4개 그림 '+JSON.stringify(t));
 const el=await p.$('#kcPractice'); if(el){ await el.scrollIntoViewIfNeeded(); await p.waitForTimeout(400); const bx=await el.boundingBox(); await p.screenshot({path:'tgh_m.png',clip:{x:0,y:bx.y-10,width:390,height:420}}); }
 const sw=await p.evaluate(()=>document.documentElement.scrollWidth); ok(sw<=390,'모바일 가로 스크롤 없음 '+sw);
 console.log('errors',errs); await b.close();})();

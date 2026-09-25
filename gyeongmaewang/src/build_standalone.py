@@ -4,7 +4,8 @@ import os, re, shutil, sys
 SRC = 'rights-study.html'; BLOB = '_blob'
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'gmw_out'
 s = open(SRC, encoding='utf-8').read()
-ids = sorted(set(re.findall(r'"([0-9a-f]{32})"', s)))
+# 따옴표 안 id뿐 아니라 경로에 바로 박힌 id("/_blob/<id>", "assets/<id>.webp")도 — 실제 그림 파일이 있는 것만 복사한다
+ids = sorted(i for i in set(re.findall(r'(?<![0-9a-f])([0-9a-f]{32})(?![0-9a-f])', s)) if os.path.exists(os.path.join(BLOB, i)))
 os.makedirs(os.path.join(OUT, 'assets'), exist_ok=True)
 copied = 0
 for i in ids:

@@ -92,12 +92,12 @@ const _lfv_kStage = kStage; kStage = function(bg, who, ex, text, name){
 };
 // 낙찰·패찰 포즈 그림 (P 발주 — 받은 사람부터)
 const LFV_POSE = {
-  seoyun:{won:"fd7621303deddef2407af8c6816bfc6b", lost:"1e15acf99ad9a0140ebf19a753980995"},
-  dohyun:{won:"fd6fb8caad85ae763decc8233251573d", lost:"955649be6263b2d8847016c23a881e6a"},
-  mijeong:{won:"7f96fe2cbb81901934b84742468b9ac3", lost:"4354fe023f539f86bf6cb86a3d466e51"},
-  jaehoon:{won:"9cdf4145912fd973573da6946753d10e", lost:"a6195809a9b5389746ce2ebb7d9b81e0"},
-  taesik:{won:"8ee5fea1e13e88f114fdbf2a1b510d5a", lost:"90e7328687e4fdaa42e7e5e5d0da4c3d"},
-  eunkyung:{won:"55e304e6ed08f37d9adf0997e554f2e1", lost:"d273f906dd5c9e5c8551e6124d4d61d7"}};
+  seoyun:{won:"0733e69c746133cb7276f548a8421865", lost:"face136833a2a021dd0834094c5263a8"},
+  dohyun:{won:"ea8be2fe9f3bb3e70e32db4e7590e97c", lost:"7978a248203e17d169bf0588754d51ac"},
+  mijeong:{won:"6e341c20709cd3f5d3c8acba06f5dbd9", lost:"3cb6444be7fe70b23679900741845e3a"},
+  jaehoon:{won:"8d9afdae806377e99c823f9b4efeaacf", lost:"43e866f2b9345ffcf93484b68426a02e"},
+  taesik:{won:"6d8ea7ee6928ea783c1658ad78d9c537", lost:"e163cb61a8a9df43189049e937295259"},
+  eunkyung:{won:"e25efc5d4fea6ac44af8e7b546c13781", lost:"ab9c881cdd065be3cac046cf7300f4a3"}};
 // ③ 그 사람만 하는 행동 (능력치 성장·관계에 조금씩)
 Object.assign(LF_ACTS, {
   sig_seoyun:{spot:"sig_seoyun", ic:"📱", t:"경매 카페·커뮤니티 눈팅", min:60, sta:2, stress:-3, grow:["info", 2], note:"정보 경험치 · 서윤 전용"},

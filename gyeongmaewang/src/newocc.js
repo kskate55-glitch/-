@@ -1,13 +1,13 @@
 /* ================= 🆕 새 점유자 5명 (O 발주) — 자유 플레이·문자 협상에 들어가는 인물 =================
    불쾌한 인상은 태도·꾸밈새로만 냈다(인종·체형은 이유가 아니다). 법적 위치는 일반적인 설명이다. */
 const NEWOCC_ART = {
-  p_hawaii:{normal:"4ea3f55fea10cdc9640186080c765a95", angry:"c80eaf4ed0359760e72d6f2560ac1ef7", worried:"8547cbf420245be5d31e1989e574e336"},
-  p_live:{normal:"fa002e9bb134aae648df505235d1f54c", angry:"ffddc146ccecb42616c632df4c979658", worried:"48b4c64fb03c037ddc59cf1d50d79c40"},
-  p_tojuk:{normal:"53dca1692719afcdfda646e18dfc7d7f", angry:"8f17d657f0c4cdb20ea031dace9ed9bf", worried:"47d9e289cc0dfb6b5270097856223369"},
-  p_chain:{normal:"bfd3cf495bcd6caada5e058b400e79ec", angry:"2a5a086e1d3261939f7367fa07b3d234", worried:"ed4ebb6f2871053313dc1640ba5409d6"},
-  p_gamer:{normal:"b477a384ffca76cbe3ede1b8fe21124e", angry:"ee5432b0aa1be76dfe3480d05f5b61c8", worried:"3b5d440154b8359f10a3761b85fcf88a"},
-  p_law:{normal:"0efa9fabfe464b0f3c18335d494a091c", angry:"7b49188d39741eadbf8692049ef36bd2", worried:"1da47388f3d39f6f159cc82e4e5ceb20"},
-  p_madam:{normal:"fedcaef10e4e39bc3feebad1727f4951", angry:"5a51c1db7226b05ba8ee41e2f8098dc8", worried:"50ea34a25518a2baa396079bac447671"}};
+  p_hawaii:{normal:"5beca7cb921dfcb0df268bcdf43aa2a6", angry:"33c31dbadc4ee75463ac20ce42b53c3c", worried:"a5f0fa4f5b7ec4dfce08d4561663019c"},
+  p_live:{normal:"f1be5803f5e9b4abad9df547f6c34b83", angry:"8a64d1a5f692116841a34f9c45ab97c3", worried:"b219e8e9103b2f28fcf665edd8327104"},
+  p_tojuk:{normal:"c32fe330761442377213207da102d39f", angry:"4d7007bc8b2d62bb6fe9ebd54979357e", worried:"aa07c26bd2f2796e96620689dac3ceb8"},
+  p_chain:{normal:"06bf194c42b8a73ce110fea306d65420", angry:"2b33f1e29451d8593fc7cdced3617d96", worried:"353b9b673a1b434e8174a246b9254e6c"},
+  p_gamer:{normal:"0d5bf008f63fd022cde9869003a4eef6", angry:"1683f9a474eebeb62cd5dd82ae58f198", worried:"e500b8cfc7bba3ad9a5a23898e315859"},
+  p_law:{normal:"c2ced8b9dbfee66825bdd8e1451c8075", angry:"c136e7e406e2f082f02e023e975a62ec", worried:"6904b6e20e2014c8b3deaeaa0dcb2d83"},
+  p_madam:{normal:"63d01dd80c3daf951b21d4ceb4869065", angry:"096b76cebc1522637fa64d087ef4a0ab", worried:"5a610d3b59cc2236db943bb667ffccd9"}};
 Object.keys(NEWOCC_ART).forEach(pid => Object.keys(NEWOCC_ART[pid]).forEach(ex => { ART_DEFAULT[`npc_${pid}_${ex}`] = NEWOCC_ART[pid][ex]; }));
 const NEW_PERSONAS = [
  {id:"p_hawaii", type:"bully", emoji:"🌴", name:"황금철 씨 (63)", who:"전 소유자(채무자)",
@@ -77,18 +77,57 @@ NEW_PERSONAS.forEach(P => { if(!PERSONAS.some(x => x.id === P.id)) PERSONAS.push
 
 /* 새 매수자 3명 (B 발주) — 매도 단계에 제안하는 사람으로 등장. 목록 끝에 붙이므로 기존 유형은 그대로다. */
 const NEW_BUYERS = [
-  {t:"은퇴한 선생님", flex:0.008, cancel:0.05, art:{normal:"6301eded5a19a84201be15062c0195c3", angry:"b912a35570ee57c839e2a4be57ef98c0", worried:"85615f463e1cdb01373b7e5651f11b20"}, ex:"normal",
+  {t:"은퇴한 선생님", flex:0.008, cancel:0.05, art:{normal:"52d5859a580e4290969e6666e7a95c08", angry:"0fcb5349c61df64e821eb267ba6f6a9c", worried:"af135039dd996d6216e3026ce0ae7d0a"}, ex:"normal",
    say:["\"천천히 봐유. 집은 오래 사는 거니께.\"", "뒷짐을 지고 베란다에 한참 서 있었다."]},
-  {t:"꼼꼼한 외국인 연구원", flex:0.005, cancel:0.12, art:{normal:"db28ff828c2e6584db866ab6048b38bc", angry:"eae5bfb3739ba8db3c87e91e60626322", worried:"eb34623badd6b8dec34c407d9a09f3a5"}, ex:"normal",
+  {t:"꼼꼼한 외국인 연구원", flex:0.005, cancel:0.12, art:{normal:"20668f4d1df78ce919d32100ec2d6617", angry:"8a2f156e03a1892fdb97972f9a1bae85", worried:"544a9ac18e074b240692d14c21d12c96"}, ex:"normal",
    say:["\"등기부 을구, 한 번 더 보여 주실 수 있을까요?\"", "서류에 형광펜으로 줄을 그으며 하나씩 물었다."]},
-  {t:"휠체어를 쓰는 실수요자", flex:0.01, cancel:0.1, seated:true, art:{normal:"0e203d74094ba7b98a8627d4c1160878", angry:"363606027895554c03b944d533453593", worried:"743433849b189077bfe4d85f5bad719c"}, ex:"angry",
+  {t:"휠체어를 쓰는 실수요자", flex:0.01, cancel:0.1, seated:true, art:{normal:"61ac665facbbe8343f47d0f642838bf3", angry:"ec79ac58b68663f4ed4b4f62a9547b74", worried:"98f3a6dd97032d23c43b40dca799a4c7"}, ex:"angry",
    say:["\"현관 턱이 몇 센티예요? 욕실 문 폭도 재 봐도 될까요?\"", "줄자로 현관과 욕실 문을 꼼꼼히 쟀다."]},
-  {t:"야간 근무 마친 간호사", flex:0.007, cancel:0.08, art:{normal:"ad643cba3a0853b81318d30c13efe0a5", angry:"dbe07d391e9a52efd5f92bea281bcefe", worried:"21e570c07b6d7317b1e4dad5d248803c"}, ex:"angry",
+  {t:"야간 근무 마친 간호사", flex:0.007, cancel:0.08, art:{normal:"e76c73378d13591cf1643b2b28c84ebf", angry:"14266d0588e647e6e7236cb74c411bd6", worried:"44bb066002bcb203aed9f71e6f252c8d"}, ex:"angry",
    say:["\"병원까지 20분이면 돼요. 이 가격이면 오늘 바로 할게요.\"", "퇴근길 수술복 차림으로 계산기를 두드리며 들어왔다."]},
-  {t:"아이 학교 가까운 집 찾는 식당 사장님", flex:0.009, cancel:0.06, art:{normal:"d408112d8b1bbe18aaecdc7ca5b27527", angry:"d185001944989b88c63de1d1b8b37758", worried:"da1c1dc9ba9b27e4eef092f56aa9c4c7"}, ex:"angry",
+  {t:"아이 학교 가까운 집 찾는 식당 사장님", flex:0.009, cancel:0.06, art:{normal:"d2264c7a29e5b7fff8dc3ecdb2cf5ad3", angry:"63f33b20b6e90a96050fe984c1b7df52", worried:"a566d2a5b384dc0e4ae2498aa3d49b07"}, ex:"angry",
    say:["\"학교까지 걸어서 몇 분이에요? 아이 혼자 다녀야 해서요.\"", "휴대폰 지도로 학교 가는 길을 두 번이나 확인했다."]}];
 NEW_BUYERS.forEach(b => {
   if(!K_BUYERS.some(x => x.t === b.t)) K_BUYERS.push({t:b.t, flex:b.flex, cancel:b.cancel});
   BY_ART[b.t] = {art:b.art, ex:b.ex, seated:!!b.seated};
   if(typeof DP_BUYER_SAY !== "undefined") DP_BUYER_SAY[b.t] = b.say;
+});
+
+/* ---------- 🙇 사정 듣기: 몇몇은 유난히 길게 주절댄다(전부 그러지는 않는다). 모두 가상의 인물이다.
+   황금철 씨는 장난 반 짜증 반으로 욕이 튀어나오는 사람 — 화면에는 순화 표기(Tlqkf, 🐶)로만 나간다. ---------- */
+if(typeof MT_TALES !== "undefined") Object.assign(MT_TALES, {
+ p_hawaii:[
+  [[null,"황금철 씨가 이쑤시개를 굴리며 문틀에 짝다리로 기댄다. 알로하 셔츠 단추가 하나 어긋나 있다.","normal"],
+   ["","아이고 사장님, 들어 봐요. 내가 이 동네에서 노래방을 17년 했어. '금철이네 노래방'. 모르면 간첩이지, 이 골목에서.","normal"],
+   ["","IMF도 버텼고, 메르스도 버텼어. 근데 그놈의 코로나가 딱 오더니 문을 닫으래. 두 달이면 된다며? 두 달이 2년이 됐어. Tlqkf, 누가 두 달이래.","angry"],
+   ["","아 미안미안, 욕한 거 아니야. 이건 그냥… 추임새야, 추임새. 우리 나이 되면 입에 붙어.","normal"],
+   ["","그래서 대출을 받았지. 은행 대리가 싹싹하더라고. '사장님 금리 걱정 마세요~' 걱정 말래서 안 했지. 금리가 두 배가 되더라? 🐶놈의 시키, 지금은 전화도 안 받아.","angry"],
+   ["","그다음엔 보험 깨고, 차 팔고, 마누라 금반지까지 팔았어. 그 반지가 결혼 30주년 때 내가 사 준 거야. 그거 팔 때 마누라가 아무 말도 안 하더라. 그게 더 무섭지.","worried"],
+   ["","…아무튼! 그래서 나는 천은 받아야겠다 이거야. 20년 산 집에서 빈손으로 나가는 게 말이 돼요?","angry"]],
+  [["","근데 사장님 되게 오래 듣네? 다른 놈들은 3분 만에 '법대로 합시다' 하고 가던데.","normal"],
+   ["","솔직히 말할까. 천 얘기는 형님들이 해 준 거야. '금철아, 버티면 천은 나온다.' 그 형님들도 다 망했어. 망한 사람들 조언을 내가 듣고 있네, 🐶뿔.","normal"],
+   ["마누라","(안에서) 당신 또 사장님한테 소리 지르지? 목소리 다 들려!","angry"],
+   ["","안 질렀어! 대화하는 거야, 대화! …저 양반이 우리 집 진짜 사장이야. 노래방 망할 때도 저 사람이 카운터 봤어.","normal"],
+   ["","마누라가 요 앞 식당에서 설거지 일을 해. 아침 여섯 시에 나가. 나는 뭐 하냐고? 대리운전. 밤에. 둘이 얼굴 볼 시간이 없어요, 요즘.","worried"],
+   ["","그래도 이 집에서는 마주쳤거든. 새벽에 내가 들어오고 마누라가 나갈 때, 현관에서 딱 30초. '밥 먹어.' '어, 잘 다녀와.' 그게 다야. 근데 그게 좋았어.","worried"]],
+  [["","…알았어요, 알았어. 강제집행 비용이 그렇게 나오면 나도 계산은 할 줄 알아. 노래방 17년 한 사람이야, 산수는 해.","normal"],
+   ["","날짜 박읍시다. 마누라 식당 쉬는 날이 둘째 주 월요일이야. 그날 짐 빼. 이사비는… 250. 거기서 Tlqkf 더는 못 깎아요, 사장님도 양심이 있으면.","normal"],
+   ["","문자로 남기자고? 좋아. 나도 이제 말로 하는 약속은 안 믿어. 은행 대리한테 배웠지.","normal"],
+   [null,"황금철 씨가 이쑤시개를 뱉어 휴지에 싼다. 처음 봤을 때보다 어깨가 조금 내려가 있다.","normal"],
+   ["","그리고 사장님. 나중에 이 동네에 노래방 다시 차리면 와요. 서비스 30분 줄게. …진짜로.","normal"]]],
+ p_tojuk:[
+  [[null,"염복순 할머니가 대문 앞 평상에 앉는다. 옆집에서 누가 고개를 내밀다 들어간다.","normal"],
+   ["","워매, 또 왔소? 내가 여그서 40년을 살았어. 사십 년! 저 전봇대 세울 때도 내가 여그 있었당께.","angry"],
+   ["","저 앞에 슈퍼 있지라? 거그 주인이 삼대째여. 할아부지 때부터 내가 외상 달았응께. 요새는 안 달아, 요새는 카드로 긁어.","normal"],
+   ["","아 긍께 내가 무슨 말을 하려 했드라… 아, 그랴. 우리 아들놈 얘기.","normal"],
+   ["","아들이 인테리어 가게를 한다고 혀서 보증을 섰어. 엄마 도장 한 번만 찍어 달라고. 한 번이 세 번 되드만. 그게 다 이 집이 된 거여.","worried"],
+   ["","아들 욕은 하지 마쇼. 그놈도 지 딴에는 열심히 혔어. 그냥 운이 없었던 거여. …밥은 먹고 다니나 몰라.","worried"]],
+  [["","우리 영감 살아 있을 때는 이 마당에 고추를 널었어. 가을마다 온 골목이 빨갰당께. 사진 보여 줄까? 어디 있드라…","normal"],
+   ["옆집 아주머니","(담 너머로) 언니, 그 사진 우리 집에 있어! 작년에 빌려 갔잖아!","normal"],
+   ["","아이고 그랬냐. …봐, 동네 사람들이 다 내 편이여. 그렁께 함부로 하지 마쇼.","angry"],
+   ["","…근디 그 사람들도 다 알아. 내가 여그서 못 버틴다는 거. 다들 말은 안 하고 반찬만 갖다 줘. 그게 더 서러워.","worried"],
+   ["","딸이 자기 동네로 오라고 혀. 전셋집 하나 알아본다고. 근디 거그는 아는 사람이 하나도 없어. 이 나이에 새로 사귀어야 혀?","worried"]],
+  [["","…두 달만 주쇼. 딸이랑 집 보러 다닐 시간. 그리고 이사비 150. 고추 말리던 평상은 가져갈 거여, 그건 말리지 마쇼.","normal"],
+   ["","그래도 사장님은 인사부터 허드만. 굴러온 돌이라고 한 거, 반은 취소할랑께.","normal"],
+   [null,"할머니가 평상을 손바닥으로 두 번 두드리고 일어난다.","normal"]]]
 });

@@ -186,7 +186,10 @@ function keBidSheet(){
 function keSealedHTML(){
   const S = K.sealed, rate = keRate(), P = S.pred || {};
   const hid = (id, v) => `<input type="hidden" id="${id}" value="${v==null?"":v}">`;
-  return keCaseMini() + `<div class="ke-env"><div class="ke-env-in"><div class="ke-flap"></div><div class="ke-letter"><small>입찰금액</small><b>₩ ${keWon(S.amt)}</b><span>${kcHangul(S.amt)}</span></div></div></div>
+  return keCaseMini() + `<div class="ke-env"><div class="ke-env-in"><div class="ke-flap"></div><div class="ke-letter ke-slip"><div class="ke-slip-h">기 일 입 찰 표<small>사건번호 CASE ${keNo()}</small></div>
+      <dl class="ke-slip-rows"><dt>최저매각가격</dt><dd>₩ ${keWon(KP.minBid)}</dd><dt>입찰보증금 <small>(최저가의 10%)</small></dt><dd>₩ ${keWon(Math.round(KP.minBid*0.1))}</dd></dl>
+      <div class="ke-slip-amt"><small>입찰금액</small><b>₩ ${keWon(S.amt)}</b><span>${kcHangul(S.amt)}</span></div>
+      <i class="ke-slip-stamp" aria-hidden="true"><b>입찰</b></i></div></div></div>
     <div class="panel ke-confirm">${rate < 70 ? `<p class="ke-warn">⚠️ 현재 정보 파악률 <b>${rate}%</b> — 그래도 입찰하시겠습니까?</p>` : `<p>정보 파악률 ${rate}%</p>`}<p class="note">제출 후에는 변경할 수 없습니다.</p>
     ${hid("kBid", S.amt)}${hid("kPredSale", P.sale)}${hid("kPredRepair", P.repair)}${hid("kPredMove", P.move)}
     <div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" data-kbid>📮 제출</button><button type="button" class="btn" data-kcunseal>✏️ 다시 쓰기</button></div></div>`;
@@ -408,3 +411,5 @@ const KE_TIPS = ["싸게 샀다는 사실은 아직 수익이 아닙니다.", "�
   "경쟁자 수도 시세만큼 중요합니다.", "점유자의 첫 요구액은 최종 요구액이 아닐 수 있습니다.", "말로 한 약속은 합의서가 되기 전까지 약속이 아닙니다."];
 function keTip(){ return KE_TIPS[Math.floor(Math.random() * KE_TIPS.length)]; }
 const _ke_intro = kcIntroHTML; kcIntroHTML = function(){ return _ke_intro().replace('<button type="button" class="kc-skip" data-kintro>', `<p class="ke-tip dark">💡 ${esc(keTip())}</p><button type="button" class="kc-skip" data-kintro>`); };
+// 봉투에 넣으면 도장이 '쾅' — 애니메이션(1.05초 뒤)에 맞춰 효과음
+document.addEventListener("click", e => { if(e.target.closest && e.target.closest("[data-kcseal]") && typeof kcSfx === "function") setTimeout(() => kcSfx("stamp"), 1200); });

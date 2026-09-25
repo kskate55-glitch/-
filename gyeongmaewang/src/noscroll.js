@@ -20,7 +20,10 @@ function nxApply(){
   stage.querySelectorAll(".nx-dock").forEach(x => x.remove());
   const dock = document.createElement("div"); dock.className = "nx-dock";
   const bar = document.createElement("div"); bar.className = "nx-bar"; bar.setAttribute("role", "toolbar"); bar.setAttribute("aria-label", "조사 행동");
-  const items = note ? grps.concat([note]) : grps;
+  // PC: 조사 노트는 버튼 줄에서 빼서 '사건 파일' 옆 탭(공책)으로 — 행동 버튼과 섞여 헷갈렸다
+  const tabs = stage.querySelector(".stg-tabs"), noteTab = !!(note && tabs && !nxMobile());
+  if(noteTab) nxNoteTab(stage, tabs, note);
+  const items = note && !noteTab ? grps.concat([note]) : grps;
   items.forEach(d => {
     const sum = d.querySelector(":scope > summary"); if(!sum) return;
     const s = nxShort(sum), isNote = d === note;
@@ -58,10 +61,10 @@ function nxPlace(){
   let top = 12;
   if(box){ const br = box.getBoundingClientRect(); if(br.bottom < sr.top + sr.height * 0.6) top = Math.round(br.bottom - sr.top + 10); }
   dock.style.top = top + "px";
-  // 입찰표처럼 무대 오른쪽에 떠 있는 서류가 있으면, 버튼 줄이 그 위를 덮지 않게 왼쪽 공간까지만 쓴다
-  dock.style.maxWidth = "";
-  const sh = stage.querySelector(".stg-sheet");
-  if(sh){ const r = sh.getBoundingClientRect(), dr = dock.getBoundingClientRect(); if(r.width && r.left > dr.left + 160 && r.left < dr.right) dock.style.maxWidth = Math.round(r.left - dr.left - 10) + "px"; }
+  // 오른쪽에 붙인다 — 왼쪽엔 주인공이 서서 혼잣말(말풍선)을 한다. 입찰표 칸이 있으면 그 바로 왼쪽까지
+  dock.style.maxWidth = ""; dock.style.right = "12px";
+  const col = stage.querySelector(".stg-col");
+  if(col){ const r = col.getBoundingClientRect(); if(r.width && r.left > sr.left + 200) dock.style.right = Math.round(sr.right - r.left + 10) + "px"; }
   dock.style.setProperty("--nx-room", Math.max(160, Math.round(sr.height - top - 70)) + "px");
 }
 let NX_MOB = null;
@@ -79,3 +82,27 @@ document.addEventListener("click", e => {
 }, true);
 document.addEventListener("keydown", e => { if(e.key === "Escape" && document.querySelector(".nx-bar > details[open]")) nxCloseAll(null); });
 const _nx_render = renderArena; renderArena = function(){ _nx_render(); queueMicrotask(() => queueMicrotask(nxApply)); };
+
+// ---------- 📒 조사 노트 탭 (PC) — 사건 파일 옆 공책. 새 줄이 생기면 NEW ----------
+function nxNoteTab(stage, tabs, note){
+  const items = [...note.querySelectorAll("li")].map(li => li.textContent);
+  const n = items.length, fresh = n > (NX.seen || 0) && !NX.note;
+  if(NX.note) NX.seen = n;
+  note.remove();
+  const tb = document.createElement("button"); tb.type = "button"; tb.className = "stg-tab nx-notetab" + (NX.note ? " on" : "") + (fresh ? " new" : "");
+  tb.dataset.nxnote = ""; tb.setAttribute("aria-expanded", NX.note);
+  tb.innerHTML = `📒 조사 노트 <small>${n}</small>${fresh ? "<i>NEW</i>" : ""}`;
+  tabs.insertBefore(tb, tabs.firstChild);
+  const dock = stage.querySelector(".stg-dock"); if(!dock) return;
+  const p = document.createElement("div"); p.className = "stg-paper nx-notepaper"; p.hidden = !NX.note;
+  p.innerHTML = `<button type="button" class="stg-x" data-nxnote aria-label="조사 노트 닫기">✕</button>
+    <div class="nx-book"><h3>📒 조사 노트 <small>${n}줄 · 조사할 때마다 한 줄씩 적혀요</small></h3>
+    <ol>${items.map((t, i) => `<li class="${i === n - 1 ? "last" : ""}">${esc(t)}</li>`).join("")}</ol></div>`;
+  dock.appendChild(p);
+  dock.classList.toggle("nx-noteopen", !!NX.note);
+}
+document.addEventListener("click", e => {
+  const t = e.target; if(!t.closest) return;
+  if(t.closest("[data-nxnote]")){ e.preventDefault(); NX.note = !NX.note; if(NX.note && typeof STG !== "undefined") STG.file = false; if(typeof renderArena === "function") renderArena(); return; }
+  if(t.closest("[data-stg]") && NX.note){ NX.note = false; }
+}, true);

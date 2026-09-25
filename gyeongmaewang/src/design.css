@@ -391,3 +391,45 @@ img.st-img-fail{visibility:hidden}
   .cf-flash.cf-toast.dull{background:rgba(28,32,40,.96)} }
 .cf-got{flex-basis:100%;font-weight:700;color:#ffe3a3}
 .cf-got b{color:#fff}
+
+/* ▶ 조사 메뉴는 무대 오른쪽(입찰표 왼쪽)으로 — 왼쪽엔 주인공이 서서 혼잣말을 한다 (PC) */
+@media (min-width:641px){
+  #kfsRoot .nx-dock:not(.mob){left:auto;right:12px;display:flex;justify-content:flex-end}
+  #kfsRoot .nx-dock:not(.mob) .nx-bar{justify-content:flex-end;margin-left:auto}
+  #kfsRoot .nx-dock:not(.mob) .nx-pop{left:auto;right:0}
+}
+/* 📒 조사 노트 — 사건 파일 옆 탭 + 줄 쳐진 공책 */
+#kfsRoot .nx-notetab{background:#fff7c9;border-color:#d8c06a}
+#kfsRoot .nx-notetab.on{background:#3a2a10;color:#fff7c9}
+#kfsRoot .stg-dock.nx-noteopen .stg-sheet{visibility:hidden}
+#kfsRoot .nx-notepaper{z-index:5;background:#fffbe6 !important;border-color:#e2d49a !important}
+@media (min-width:901px){ #kfsRoot.sf-slim .nx-notepaper{top:72px;right:14px;bottom:14px;width:min(400px,40%)} }
+#kfsRoot .nx-book{padding:18px 20px 22px 44px;color:#2f2616;position:relative;min-height:100%;
+  background:repeating-linear-gradient(#fffbe6 0 29px,#e7dcae 29px 30px);background-position:0 44px}
+#kfsRoot .nx-book::before{content:"";position:absolute;left:32px;top:0;bottom:0;width:2px;background:#e8a0a0}
+#kfsRoot .nx-book h3{margin:0 0 10px;font-size:17px;color:#3a2a10}
+#kfsRoot .nx-book h3 small{display:block;font-size:12px;font-weight:600;color:#7a6a45;margin-top:2px}
+#kfsRoot .nx-book ol{margin:0;padding-left:18px;font-size:14px;line-height:30px}
+#kfsRoot .nx-book li{padding-left:2px}
+#kfsRoot .nx-book li.last{background:linear-gradient(transparent 55%,rgba(255,214,90,.55) 55%);font-weight:700}
+
+/* ✉️ 봉투 속 입찰표 — 잉크색 글씨, 최저가·보증금 자동 기재, 도장 쾅 */
+#kfsRoot .ke-slip,.ke-slip{color:#1f2a3a !important;background:#fffdf6 !important;padding:14px 16px 16px !important;gap:8px !important;justify-items:stretch !important;position:relative;overflow:visible}
+.ke-slip-h{display:flex;justify-content:space-between;align-items:baseline;font-weight:900;letter-spacing:.12em;font-size:15px;color:#1f2a3a;border-bottom:2px solid #1f2a3a;padding-bottom:5px}
+.ke-slip-h small{letter-spacing:0;font-weight:700;font-size:11.5px;color:#556}
+.ke-slip-rows{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-size:12.5px;color:#2e3a4c}
+.ke-slip-rows dt{font-weight:700}.ke-slip-rows dt small{font-weight:500;color:#667}
+.ke-slip-rows dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.ke-slip-amt{display:grid;justify-items:center;gap:2px;border:1.5px solid #1f2a3a;border-radius:4px;padding:8px 6px;background:#fff}
+.ke-slip-amt small{font-size:11.5px;font-weight:800;color:#556;letter-spacing:.1em}
+#kfsRoot .ke-slip-amt b,.ke-slip-amt b{font-size:26px;color:#10233f !important;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+#kfsRoot .ke-slip-amt span,.ke-slip-amt span{font-size:13px;color:#23476b !important;font-weight:700}
+.ke-slip-stamp{position:absolute;right:-16px;bottom:-18px;width:62px;height:62px;border:3.5px solid #c8262b;border-radius:50%;display:grid;place-items:center;
+  color:#c8262b;font-style:normal;transform:rotate(-14deg);opacity:0;animation:keStamp .45s 1.05s cubic-bezier(.2,1.6,.4,1) forwards;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.4);mix-blend-mode:multiply}
+.ke-slip-stamp b{font-size:17px;font-weight:900;letter-spacing:.05em;border-top:2px solid #c8262b;border-bottom:2px solid #c8262b;padding:1px 3px}
+@keyframes keStamp{0%{opacity:0;transform:rotate(-24deg) scale(2.6)}60%{opacity:1;transform:rotate(-12deg) scale(.92)}100%{opacity:.92;transform:rotate(-14deg) scale(1)}}
+.ke-env:has(.ke-slip){animation:keThud .3s 1.3s ease}
+@keyframes keThud{0%,100%{transform:none}30%{transform:translateY(3px)}60%{transform:translateY(-1px)}}
+@media (prefers-reduced-motion:reduce){.ke-slip-stamp{animation:none;opacity:.92}.ke-env:has(.ke-slip){animation:none}}
+@media (max-width:640px){ .ke-slip-stamp{right:-2px;bottom:-14px;width:54px;height:54px} .ke-slip-stamp b{font-size:15px} }

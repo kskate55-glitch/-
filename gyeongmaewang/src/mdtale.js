@@ -99,7 +99,13 @@ const MT_TALES = {
    ["","아 그리고 이삿짐센터가요, 손 없는 날은 다 찼대요. 그다음 날은 애 방학식이고요. 그 다음 주는…","normal"]],
   [["아내","(작게) 여보, 대출 서류 아직 안 냈잖아…","worried"],
    ["","아니 그게, 내려고 했지! …사장님, 솔직히 말씀드릴게요. 나가기가 무서워요. 새 동네도, 대출도, 다 처음이라.","worried"],
-   ["","날짜 박아 주시면 지킬게요. 제가 핑계가 많은 거 저도 알아요. 이번엔 종이에 써 주세요. 그래야 저도 움직여요.","normal"]]],
+   ["","날짜 박아 주시면 지킬게요. 제가 핑계가 많은 거 저도 알아요. 이번엔 종이에 써 주세요. 그래야 저도 움직여요.","normal"]],
+  [["","아 근데 사장님, 혹시 이사 많이 해 보셨어요? 저는 이번이 세 번째인데요, 첫 번째 이사 때 냉장고가 문에 안 들어가서 창문으로 뺐거든요.","normal"],
+   ["","사다리차 부르니까 15만원 더 달래요. 그래서 제가 흥정을 했죠. 10만원에 해 주면 음료수도 드린다고. 결국 15만원에 음료수까지 드렸어요.","normal"],
+   ["","두 번째 이사 때는 이삿날 비가 왔어요. 손 없는 날이라고 비싸게 잡았는데. 손은 없는데 비가 있더라고요. 하하…","normal"],
+   ["아내","(작게) 여보, 사장님 바쁘셔.","worried"],
+   ["","아 맞다. 그러니까 제 말은, 이번엔 이사를 잘하고 싶다는 거예요. 핑계 대는 게 아니라… 아니, 핑계는 맞는데, 이번엔 진짜 잘하고 싶어요.","worried"],
+   ["","다음 달 12일로 해요. 제가 달력에 빨간 펜으로 동그라미 칠게요. 사장님도 치세요. 둘이 치면 못 바꾸잖아요.","normal"]]],
  p_youth:[
   [["","아… 안녕하세요. 문자 받고 무서워서 계속 검색해 봤어요. 경매요. 제가 뭘 잘못한 거예요?","worried"],
    ["","저 보육원에서 나올 때 받은 돈으로 여기 들어왔어요. 500이요. 그게 제 전부예요. 이거 없어지면 저…","worried"],
@@ -198,7 +204,7 @@ function mtPlay(lines, o){
   if(!lines || !lines.length) return;
   // 자동 흐름 테스트용: 이야기 창을 띄우지 않고 바로 끝낸다(게임 쪽 효과는 그대로).
   if(window.MT_SKIP_TALE){ if(o && o.done) o.done(); return; }
-  MT = {lines, i:0, name:o.name || "", pid:o.pid || null, done:o.done || null};
+  MT = {lines, i:0, name:o.name || "", pid:o.pid || null, done:o.done || null, title:o.title || ""};
   mtPaint();
   if(typeof kcSfx === "function") kcSfx("paper");
 }
@@ -214,7 +220,7 @@ function mtPaint(){
   const face = who === "" ? mtFace(ex) : "";
   const nm = who === null ? "" : who === "" ? MT.name : who;
   el.innerHTML = `<div class="mt-veil" data-mtnext></div><div class="mt-card ${who === null ? "narr" : ""} ${who && who !== "" ? "other" : ""}" data-mtnext>
-    <div class="mt-top"><small>🙇 사정 끝까지 듣는 중 · ${MT.i + 1}/${MT.lines.length}</small><button type="button" class="mt-skip" data-mtskip>건너뛰기 ›</button></div>
+    <div class="mt-top"><small>${MT.title ? esc(MT.title) : "🙇 사정 끝까지 듣는 중"} · ${MT.i + 1}/${MT.lines.length}</small><button type="button" class="mt-skip" data-mtskip>건너뛰기 ›</button></div>
     <div class="mt-body">${face ? `<div class="mt-face">${face}</div>` : ""}<div class="mt-say">${nm ? `<b class="mt-nm">${esc(nm)}</b>` : ""}<p>${esc(t)}</p></div></div>
     <div class="mt-next">${last ? "끝까지 들었다 ✓" : "▼ 계속 듣기"}</div></div>`;
 }

@@ -1763,6 +1763,48 @@ img.st-img-fail{visibility:hidden}
 .cf-got{flex-basis:100%;font-weight:700;color:#ffe3a3}
 .cf-got b{color:#fff}
 
+/* ▶ 조사 메뉴는 무대 오른쪽(입찰표 왼쪽)으로 — 왼쪽엔 주인공이 서서 혼잣말을 한다 (PC) */
+@media (min-width:641px){
+  #kfsRoot .nx-dock:not(.mob){left:auto;right:12px;display:flex;justify-content:flex-end}
+  #kfsRoot .nx-dock:not(.mob) .nx-bar{justify-content:flex-end;margin-left:auto}
+  #kfsRoot .nx-dock:not(.mob) .nx-pop{left:auto;right:0}
+}
+/* 📒 조사 노트 — 사건 파일 옆 탭 + 줄 쳐진 공책 */
+#kfsRoot .nx-notetab{background:#fff7c9;border-color:#d8c06a}
+#kfsRoot .nx-notetab.on{background:#3a2a10;color:#fff7c9}
+#kfsRoot .stg-dock.nx-noteopen .stg-sheet{visibility:hidden}
+#kfsRoot .nx-notepaper{z-index:5;background:#fffbe6 !important;border-color:#e2d49a !important}
+@media (min-width:901px){ #kfsRoot.sf-slim .nx-notepaper{top:72px;right:14px;bottom:14px;width:min(400px,40%)} }
+#kfsRoot .nx-book{padding:18px 20px 22px 44px;color:#2f2616;position:relative;min-height:100%;
+  background:repeating-linear-gradient(#fffbe6 0 29px,#e7dcae 29px 30px);background-position:0 44px}
+#kfsRoot .nx-book::before{content:"";position:absolute;left:32px;top:0;bottom:0;width:2px;background:#e8a0a0}
+#kfsRoot .nx-book h3{margin:0 0 10px;font-size:17px;color:#3a2a10}
+#kfsRoot .nx-book h3 small{display:block;font-size:12px;font-weight:600;color:#7a6a45;margin-top:2px}
+#kfsRoot .nx-book ol{margin:0;padding-left:18px;font-size:14px;line-height:30px}
+#kfsRoot .nx-book li{padding-left:2px}
+#kfsRoot .nx-book li.last{background:linear-gradient(transparent 55%,rgba(255,214,90,.55) 55%);font-weight:700}
+
+/* ✉️ 봉투 속 입찰표 — 잉크색 글씨, 최저가·보증금 자동 기재, 도장 쾅 */
+#kfsRoot .ke-slip,.ke-slip{color:#1f2a3a !important;background:#fffdf6 !important;padding:14px 16px 16px !important;gap:8px !important;justify-items:stretch !important;position:relative;overflow:visible}
+.ke-slip-h{display:flex;justify-content:space-between;align-items:baseline;font-weight:900;letter-spacing:.12em;font-size:15px;color:#1f2a3a;border-bottom:2px solid #1f2a3a;padding-bottom:5px}
+.ke-slip-h small{letter-spacing:0;font-weight:700;font-size:11.5px;color:#556}
+.ke-slip-rows{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-size:12.5px;color:#2e3a4c}
+.ke-slip-rows dt{font-weight:700}.ke-slip-rows dt small{font-weight:500;color:#667}
+.ke-slip-rows dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.ke-slip-amt{display:grid;justify-items:center;gap:2px;border:1.5px solid #1f2a3a;border-radius:4px;padding:8px 6px;background:#fff}
+.ke-slip-amt small{font-size:11.5px;font-weight:800;color:#556;letter-spacing:.1em}
+#kfsRoot .ke-slip-amt b,.ke-slip-amt b{font-size:26px;color:#10233f !important;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+#kfsRoot .ke-slip-amt span,.ke-slip-amt span{font-size:13px;color:#23476b !important;font-weight:700}
+.ke-slip-stamp{position:absolute;right:-16px;bottom:-18px;width:62px;height:62px;border:3.5px solid #c8262b;border-radius:50%;display:grid;place-items:center;
+  color:#c8262b;font-style:normal;transform:rotate(-14deg);opacity:0;animation:keStamp .45s 1.05s cubic-bezier(.2,1.6,.4,1) forwards;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.4);mix-blend-mode:multiply}
+.ke-slip-stamp b{font-size:17px;font-weight:900;letter-spacing:.05em;border-top:2px solid #c8262b;border-bottom:2px solid #c8262b;padding:1px 3px}
+@keyframes keStamp{0%{opacity:0;transform:rotate(-24deg) scale(2.6)}60%{opacity:1;transform:rotate(-12deg) scale(.92)}100%{opacity:.92;transform:rotate(-14deg) scale(1)}}
+.ke-env:has(.ke-slip){animation:keThud .3s 1.3s ease}
+@keyframes keThud{0%,100%{transform:none}30%{transform:translateY(3px)}60%{transform:translateY(-1px)}}
+@media (prefers-reduced-motion:reduce){.ke-slip-stamp{animation:none;opacity:.92}.ke-env:has(.ke-slip){animation:none}}
+@media (max-width:640px){ .ke-slip-stamp{right:-2px;bottom:-14px;width:54px;height:54px} .ke-slip-stamp b{font-size:15px} }
+
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
 .rcap span{font-family:var(--sans);font-weight:500;font-size:12px;color:var(--muted);margin-left:8px}
@@ -35511,18 +35553,18 @@ const ART_ALIAS = {bg_villa_ext_day:"bg_villa_day", bg_villa_ext_night:"bg_villa
 
 function artRec(){ if(!S.art) S.art = {}; return S.art; }
 // 기본 그림(캐릭터 시트에서 잘라 미리 올려 둔 것) — 사용자가 같은 칸에 올리면 그걸 먼저 쓴다
-const ART_DEFAULT = (()=>{ const B = {elder:"4109abbcd53608ceff032dda6e2b1724", ajumma:"e45355d41d675ecbb3ffc84f82a789d6", tough:"ff036848e598f95dfb09dda4dd49d8c7", youth:"c469e13027c0f1acbcd8a27ddef0a817", woman:"e6010ce19f519806ccd99d618de62f5f", broker:"66727b12c5d7e831bafdc7215deadaa3", mover:"d0337e8c0454de01806b4b399e399389", player:"a1dbaca6e354b7db28ffd9eade80dfb5"};
-  return {npc_oldman_neutral:B.elder, npc_ajumma_neutral:B.ajumma, npc_youngman_neutral:B.youth, npc_broker_neutral:B.broker, npc_mover_neutral:B.mover, npc_player_neutral:B.player, bg_room_clean:"36ead17906e050e290f7aff4f10b740e", npc_youngman_troubled:"2f38303048e034226249c929965ec94a", npc_youngman_angry:"b8f4702b4b02ee74454f01c36d1b66d4", npc_roughman_neutral:"43caf00db420926add6f9a2c230fcfe4", npc_roughman_angry:"ad1e49071b3fcd9e9ceae2a0eea04173", npc_ajumma_troubled:"a6a50385c2ad008ef0a50cb56a7ea35d", npc_youngwoman_neutral:"2388e3b0e49289c9d95186a5ca46e269", cut_moving:"bea6c141bcca5f6a1158c7372da62b34", bg_court:"8c21fbf1109b26531ca7fe7de1675f55", bg_stairs:"30b546af613470a372ac1304083eb83a", bg_villa_night:"b45b1eab23dc77ec7d3af22879b6c56e", npc_husband_neutral:"a8460a4f2bc8e4e704eb315d9fa707d5", npc_husband_angry:"eabe0d9b0ee18ee19be89a2db7b6a1e5", npc_husband_troubled:"9ebb3fc67528b482a4b5a46c2ddb6ea6", bg_alley:"b3d7065bf16221f0b6c904c38b404f9b", bg_villa_day:"1bca75fe1bb28d36d8d23e19744cbc6f", npc_bailiff_neutral:"139f17fe4c23bf5aceee4b46357dde92", npc_couple_hw_angry:"409948cb55f92e1f0c736563533e6f66", npc_couple_hw_neutral:"1eedfdd2d5e046cccd7292b54a161f7f", npc_couple_hw_troubled:"91b535fffb0793273033e6f7ea15f2b7", npc_foreman_angry:"a3b75439c25d165e952e8f970651f580", npc_foreman_neutral:"f2e4fc864e05774a22a669ec4c8a34b7", npc_foreman_troubled:"1678202881f01b0148dbb950da561b07", npc_grandma_neutral:"50e68811cc0dd5c84a596f71e9cb5d7f", npc_greedy_angry:"8b93caffa0371901bdb905e84750eff4", npc_greedy_neutral:"b5872b4c310a0d263d0d31b055a72893", npc_greedy_troubled:"d40bad14c81fee3c84ffdb931a1fb713", npc_kid_neutral:"3ecf427191ad9d001c1127759407539f", npc_locksmith_neutral:"38d5da1866d15d5ad30fe454131fdb13", npc_manager_neutral:"e1d783598c3f8d7f1ae351364946a6e6", npc_mind_angry:"8f7ed68fd4efc1aa97e084d86c6ca45f", npc_mind_neutral:"9290a91a8f192054a747ad87f21af43c", npc_mind_troubled:"8a2b174bf34954aca1fc409fb194c942", npc_owner_angry:"924b89c0ea5cc4a00d6ecaf2ceffe709", npc_owner_neutral:"4257a9eac46006062b37c35b12232e99", npc_owner_troubled:"eaa668dfed61ff20671c611da2e8629a", npc_student_cn_angry:"cc6e7d0857b286fdadc97d87e168e2b1", npc_student_cn_neutral:"c6c748e01b15a909a661ac9affc6f7fa", npc_student_cn_troubled:"bbdbbbcef7a624e34b95bdcdaecae440", npc_worker_angry:"da4ce0dd8b9a22f1af1cd7109857c47e", npc_worker_mn_angry:"f68e0eebc72aa19b93c9c5b25f8ad0f6", npc_worker_mn_neutral:"377e7032b975fcbe2517fa89737928c6", npc_worker_mn_troubled:"21e8cbd6a786def52a97c8cee57dcb70", npc_worker_neutral:"af05c98cd6cbaec55e227a9225f28880", npc_worker_troubled:"769756b502de56e39ff76dceacb60315", npc_workers_pk_angry:"1c0212eaf41681be0363207a10a3eb35", npc_workers_pk_neutral:"8d4c49a3dc05c6d89e66299ee0ba5d88", npc_workers_pk_troubled:"8eab8fcae14188ffdf42ddc9645c5364", prop_cat:"7aa330191eb959e48a9fbe6363d61476", prop_dog:"fc7835a5f72fffb65285c695ba078142", bg_banjiha:"05dfb34b4ffcb121418e53aa1860a452", bg_factory_dorm:"37a5c6228867f55b545cc4a202c6bc18", bg_oneroom:"e093651fe8fd664bc86de833b456d1df", bg_realtor:"7a5df7a4b0d3a211a26ac161837cb205", bg_rooftop:"3c2d861f913d226b1ca63ae7e3e90698", bg_room_messy:"102b655804e4b860a9fdaaf5e493e409", bg_shop_closed:"061b1be2fe03dbb1bed3f3036b86437e", bg_warehouse:"122726d17c8c251b82f55a0a8ce4940b", cut_aftermath:"4c9ee4eb006496f82f6f81b65d6c4b6d", cut_court_order:"1a4a1e8316b2b1ac31c853c6a5491b0d", cut_keys:"66301b4fef628a576149aa9df1dcbfb3", cut_notice:"1b79fc7e06a1d15d762ba1d2cba24d1e", cut_signing:"5647330c5a82bf256b6449825847c4ec"}; })();
+const ART_DEFAULT = (()=>{ const B = {elder:"6f26b3c0c61d4e77cb54a467f8736af1", ajumma:"ded574924ac128388814a2aa829acdf5", tough:"f818b3ef444f7e28ad1616f64fcc9ce3", youth:"0d072881d0b9c02fd68ad70ded4129f0", woman:"034fcc8bf140be4d4f5258922a594fce", broker:"7e5144bdcb2003a3aec2b554783d9526", mover:"af8789cc00e3c1313260e1d3b148b9a9", player:"a3e075a0d8123a722353f898cb1b1a8a"};
+  return {npc_oldman_neutral:B.elder, npc_ajumma_neutral:B.ajumma, npc_youngman_neutral:B.youth, npc_broker_neutral:B.broker, npc_mover_neutral:B.mover, npc_player_neutral:B.player, bg_room_clean:"36ead17906e050e290f7aff4f10b740e", npc_youngman_troubled:"b147d027aeffa09c5e56c9abc014761c", npc_youngman_angry:"0fb1ee681bfb4d3e3629de8f01fb533f", npc_roughman_neutral:"55a17b490d0793e4999f6900f5dbb3e1", npc_roughman_angry:"0e61920ef7a9f93ea79c78a144799462", npc_ajumma_troubled:"77c254a4524e4b6751ff008feeb5c91b", npc_youngwoman_neutral:"65e6565d2553321f06dc7e00407517ce", cut_moving:"bea6c141bcca5f6a1158c7372da62b34", bg_court:"8c21fbf1109b26531ca7fe7de1675f55", bg_stairs:"30b546af613470a372ac1304083eb83a", bg_villa_night:"b45b1eab23dc77ec7d3af22879b6c56e", npc_husband_neutral:"a109e81520c71193dc0b3f747d80b9a7", npc_husband_angry:"1c2741c4b9e3a8111ad5edcd1620da2d", npc_husband_troubled:"182830f402e8ecb5761b2bc233bfb626", bg_alley:"b3d7065bf16221f0b6c904c38b404f9b", bg_villa_day:"1bca75fe1bb28d36d8d23e19744cbc6f", npc_bailiff_neutral:"bd2755598ca6723f7e3d7988bda3343c", npc_couple_hw_angry:"290851cbbab42ab5a85d54990e4a5d28", npc_couple_hw_neutral:"4e336e88dcb234995ba0507dc5ec1b40", npc_couple_hw_troubled:"a4e92ad5753516c3d52487a7d409efc7", npc_foreman_angry:"59dff507382c361f63575baefc3d4133", npc_foreman_neutral:"46da65e92385f0c620bcdb5c27ab3c42", npc_foreman_troubled:"0c795d5acb7c95c44199e5b658186d8e", npc_grandma_neutral:"d696c7df88e29835d29aeed9d59e7293", npc_greedy_angry:"38645512586832a86db056dc678ef74d", npc_greedy_neutral:"0349f26beb2ff0e6c5541db6d194b3e7", npc_greedy_troubled:"b5a953bccad73402f98568b04001d606", npc_kid_neutral:"38d70aaa3e3033bbedf2891646bfecf5", npc_locksmith_neutral:"87885c501d40f9eda28d5a657a7cb0c2", npc_manager_neutral:"5b387eccea7318f846fff629e8a38661", npc_mind_angry:"20eadfba7b3e9e7706c9e3784bb0b51c", npc_mind_neutral:"4ade755def179340d64907f48430df08", npc_mind_troubled:"06aee723d8806190d246b8f4ac6b3dc7", npc_owner_angry:"80a97c5cf6c0c497cb69c8bbae1931c6", npc_owner_neutral:"4c65fb904bd938f14c775c4249d5780b", npc_owner_troubled:"9390f08b0a06dc44bd98131efa2dbab9", npc_student_cn_angry:"3be0a5f31ba767103254543978645899", npc_student_cn_neutral:"59b7112103105e118fc37bad9803e956", npc_student_cn_troubled:"6a6e7f6b715c770fff57bf76c42061e7", npc_worker_angry:"a53b21b2602742818bd8ddbffd3d2462", npc_worker_mn_angry:"878afee06dd527888e15a3a9e2855c37", npc_worker_mn_neutral:"a019b04ae8f301ffdf373e60e945e417", npc_worker_mn_troubled:"b3cbd63cd4308d420707dbd2e5cfc764", npc_worker_neutral:"d5b936583d9918b5741ebbc544c0e24a", npc_worker_troubled:"ffc4b043edefb2994baf69ded11e1431", npc_workers_pk_angry:"1ec4a86d874ac6ebca85f91ee826f709", npc_workers_pk_neutral:"5fdef6867eb21ba3edc59cc78dc99831", npc_workers_pk_troubled:"500fe0d6eb0d5bf029601b83507ea920", prop_cat:"079a1b94e32f580cf1309e4a77e93e6a", prop_dog:"2d0c2bd1334c518c1b990816a8798b06", bg_banjiha:"05dfb34b4ffcb121418e53aa1860a452", bg_factory_dorm:"37a5c6228867f55b545cc4a202c6bc18", bg_oneroom:"e093651fe8fd664bc86de833b456d1df", bg_realtor:"7a5df7a4b0d3a211a26ac161837cb205", bg_rooftop:"3c2d861f913d226b1ca63ae7e3e90698", bg_room_messy:"102b655804e4b860a9fdaaf5e493e409", bg_shop_closed:"061b1be2fe03dbb1bed3f3036b86437e", bg_warehouse:"122726d17c8c251b82f55a0a8ce4940b", cut_aftermath:"4c9ee4eb006496f82f6f81b65d6c4b6d", cut_court_order:"1a4a1e8316b2b1ac31c853c6a5491b0d", cut_keys:"66301b4fef628a576149aa9df1dcbfb3", cut_notice:"1b79fc7e06a1d15d762ba1d2cba24d1e", cut_signing:"5647330c5a82bf256b6449825847c4ec"}; })();
 // v31: 새 인물 그림 — 여동생(장미숙), 정은주 씨, 최만식 할아버지
 Object.assign(ART_DEFAULT, {
   bg_front_door:"f75514818f6ae785eef4793554996298",
-  npc_sister_troubled:"c192c3d43dacece11cee79ad348d4d10", npc_sister_neutral:"b62eea51a461e4a6cb4b56129b8bbbf8", npc_sister_angry:"d800cbdf151feff51b501466027e5850",
-  npc_p_coop_worried:"b480a2067c3ef9caf7036d47caeea55a", npc_p_coop_normal:"2ddc36691451c48e404ae65fb31cd7fb", npc_p_coop_angry:"5f7c4453a5ce5e9966d9ae5920312c6a",
-  npc_p_grandpa_worried:"f7bc44d5816e7eee899dd127bd96c723", npc_p_grandpa_normal:"3ac34402ce5f1ed4e8bab07c7864a636", npc_p_grandpa_angry:"0e6d59a6ec75bfa8ee24192ba7d635bf",
-  npc_p_grandpa_furious:"e3531dd6e69030580fbe3eb4abcaa8c4", npc_p_phishing_normal:"1c6b3dce4aef0e10dd0c6a6c7c407133", npc_p_phishing_angry:"f9a54944be0f1bd94c9d4680418d802a", npc_p_phishing_worried:"7ce522d075401f0445680782ea4dc18b", npc_p_5000_normal:"a25aee10eaddffcc1a59ec5f8ff26fad", npc_p_5000_angry:"8411f75dea3788ba83c45ca7b3324f43", npc_p_5000_worried:"fcf378d2e52f9b6b347aee850684c97b", npc_p_delay_normal:"98c781ac243d70adb1db2692bb3c1a9e", npc_p_delay_angry:"5f19cdba2bf1105be52a895f02f6ac91", npc_p_delay_worried:"05db0607eeda3adac94f4ab64e2b8209", npc_p_youth_normal:"1f3f7d1a97ca06fde26ed1fda6f849c7", npc_p_youth_angry:"78650e518c9db869b8d0a5194be5bee7", npc_p_youth_worried:"67d15b12be739c1c544d359ac80e1e65", npc_p_fake_normal:"085e7385ab0e7f476e01d700ca165ee7", npc_p_fake_angry:"f7b0d38237190cb359c2c66bdcba0764", npc_p_fake_worried:"975782de6e0d0943493688ae26b2d108", npc_p_ghost_normal:"5850d9bd9a4cc7f4782102db44f8070a", npc_p_ghost_angry:"124fa84c102959bc113b2866b43bf343", npc_p_ghost_worried:"a2f558098e7982a0551892c14b8111ca", npc_kim_normal:"0bf35a73681fce45850c68f9a0761a05", npc_kim_angry:"4c792e78461fc3e243d0ff9276b5450b", npc_kim_worried:"1e47b142bdd20920c282bdb81def4bd4", npc_parkbk_normal:"25e2ea64d5859d33e51b8033327e9f10", npc_parkbk_angry:"9f5d8c0c5e55c9b06c4d6bbe97f7acb4", npc_parkbk_worried:"4194d00c4df95162d53f535995ae84d2", npc_downstairs_normal:"47af8d505f0f8bd3821f7bd0f75da66b", npc_downstairs_angry:"a454e958b38c8d31a6357a42729b146e", npc_downstairs_worried:"bf6ed612ee6812c874c55524ed808263", npc_banker_normal:"a92af964128f079430e1c3f2b51664d2", npc_banker_angry:"44fe51bb4e251f783b52c0e9a2020f8c", npc_banker_worried:"0c4cee3ce0c3ba65780d18668219f0dd",npc_elec_normal:"527759e259220bfd1f1184dfbd515047",npc_elec_angry:"93263a35dbe7d09cacea92c5d30c1c80",npc_elec_worried:"565fd40e0b1a7d1ea13b228528cc6071",npc_interior_normal:"a70a3781d5d6b46fd8f656331d7a2025",npc_interior_angry:"ae083d7100f85eeebf91fb7fe7213dcb",npc_interior_worried:"1839b87d88776edd8d1e494a11f9a2c6",npc_keeper_normal:"01414e73990bc02b6014aeade913faae",npc_keeper_angry:"9d752e20473791b5cb41282cc1787a34",npc_keeper_worried:"fc7064adcb9a8d22ccc491d3e39c69d1",npc_office_normal:"0e7b10980637c2d5da88c22539682d0d",npc_office_angry:"e191a326a42e5cddbd2666283470e28e",npc_office_worried:"070ee9acfc12f56b59fc0c789f529c09",npc_brokerA_normal:"391ee79f92b44ebf5417c291d12489d7",npc_brokerA_angry:"ce60517ae6da7d73d6aeb27b6b563697",npc_brokerA_worried:"8422ca0ffd7abff163ace911fe8392e5",npc_brokerB_normal:"bbd0de26d0ed8fafb88b39d7390f851a",npc_brokerB_angry:"bacfcb2c013ad46138ef1270bf864574",npc_brokerB_worried:"d86025363f0e08b976ebdabf3448664c",npc_brokerC_normal:"a540e4921b4fb2759b1f996fcec3dc12",npc_brokerC_angry:"a6350169f3233d49f836805d0314bb4d",npc_brokerC_worried:"542d9a166bfef777aebdd3a60c6f0fff",npc_neighbor_normal:"50a973f17ffc7a4339916a033ed8821a",npc_neighbor_angry:"b3011bb5d90be9ae906840c3c076abee",npc_neighbor_worried:"78053be24c4da61c8a0ae8dfc71dff40", prop_envelope:"6b70248b85729fb33b2461dfbd070575",
+  npc_sister_troubled:"e6aa2e5d4d99802e995d76fdcdda756c", npc_sister_neutral:"9384319772679151841e9f2a9c4437bd", npc_sister_angry:"29e1c9be8f620565969a251d545b2a12",
+  npc_p_coop_worried:"b0dc2828f6446810b271a8fbab9bd0d2", npc_p_coop_normal:"9bb185db6f0c8c1cbef765aa8291b6ca", npc_p_coop_angry:"1d49de1bb6c421695f95c6cc23a87ea0",
+  npc_p_grandpa_worried:"2dd83febb8dfac33231d661d2dc37612", npc_p_grandpa_normal:"f3755e1682096d38c61b44f6a163d642", npc_p_grandpa_angry:"ffa7e66285fd67cbca4bd047de4982b1",
+  npc_p_grandpa_furious:"f1dcad0ce8e025684f065684a7313940", npc_p_phishing_normal:"238903faf79c01cd2a0898637a0e55af", npc_p_phishing_angry:"9a1712cce54480cb268ced850c84596f", npc_p_phishing_worried:"9b4084e977eb13688b64e1442d37a8a6", npc_p_5000_normal:"a8107a6e965b50d0aaf76709c4629345", npc_p_5000_angry:"ad47e028dddb7b3155b6bdce94c72f28", npc_p_5000_worried:"7db343764606a8c68e28fa0058d2fa8c", npc_p_delay_normal:"56e01d472021eb6191e845c679d19e3d", npc_p_delay_angry:"786732594917b6ba1a71a00ca2ea7f20", npc_p_delay_worried:"249bb94a04326df822e3aba08e390a3f", npc_p_youth_normal:"79346bfa66df74814ddb84121458b62d", npc_p_youth_angry:"7f09c05755c7bed1d74aa5431dbe5376", npc_p_youth_worried:"a673dc746bd23ac5033401484c5fbbb4", npc_p_fake_normal:"c2265f7623d34ad530a8dd0be9b5183a", npc_p_fake_angry:"5d9a64f610fa4a1616791df28cf5caf2", npc_p_fake_worried:"4b6b26c09d66a6dab0b9b58f4f73f25b", npc_p_ghost_normal:"09b8d946e4652fc304468b22ddce4539", npc_p_ghost_angry:"ede5c0eb694d1af0f40f9547b4bcec92", npc_p_ghost_worried:"c959686fec7186768af89bd8c878bf9f", npc_kim_normal:"5b47845fa7ad3f6a0f75261bee75c23b", npc_kim_angry:"c7050de88e7ed5eb0d638d2cb912b512", npc_kim_worried:"38deb4f24f1eb0210bd12eb48d2e4881", npc_parkbk_normal:"b4fa0b8d860797c2f5c327410b945d0c", npc_parkbk_angry:"38e0dca5970164dd5eb4d21a51d25079", npc_parkbk_worried:"d8267c84089eecd8bd642e8cd2e3c19f", npc_downstairs_normal:"9266877178f9efb5c2557af5aedfd94d", npc_downstairs_angry:"d9d3c7bdd66f4add613a8527972a7d69", npc_downstairs_worried:"aeb457d0c75989e62b37971cd7c63500", npc_banker_normal:"c79874caf63ec05d84473be1768bb2c4", npc_banker_angry:"40e204d93e5dd51a20f8b55e34448985", npc_banker_worried:"b5bc054474891d50905b81bc975258f3",npc_elec_normal:"052c20961506150d1ae25657ec25ac57",npc_elec_angry:"32476867e28b878bedcb092d8c7d61e5",npc_elec_worried:"7e323db14e83145621b9cd89ee6aebdd",npc_interior_normal:"25f70a23f22a477eabd91b7e8086556c",npc_interior_angry:"027c05b7e22fb393bfdac516dce0e4be",npc_interior_worried:"836919a6327f47d67b4aa0fc8786fb3e",npc_keeper_normal:"6d26a0031d19c251d5bda8677a0ee929",npc_keeper_angry:"96fcb83e229e47d7c3f0434a81d64e0e",npc_keeper_worried:"c5a8f253b681cbf2483a7a2a077d9a64",npc_office_normal:"5588846b5b6928e285b9df2014fa1fa5",npc_office_angry:"c5be2d69e8243540d3ea3b27d55b468a",npc_office_worried:"0685e66b3191f47066c5edec4436a498",npc_brokerA_normal:"781fc9c04ce7826e1b9b78647c9f4b64",npc_brokerA_angry:"72637d3e8f4c8f898d862a12d257a553",npc_brokerA_worried:"72dc3b45f62e1bdb5c0656d438ac0f7b",npc_brokerB_normal:"a969d18683c51baeb77dc46e21f850cc",npc_brokerB_angry:"f73a94a0bc348a2012d2d303f06be308",npc_brokerB_worried:"a5424bd7de225c4f3e4816463f73b00c",npc_brokerC_normal:"13a3c699dcffcbc6b1a9290b2c94779f",npc_brokerC_angry:"aebddcf285af8ef17cb826840192c12f",npc_brokerC_worried:"a4681e83010ba4de6163a11d04c973f6",npc_neighbor_normal:"489aa8c6eb241b68e84aeb4c542572d1",npc_neighbor_angry:"9954849cc103e62de94cf81279db278d",npc_neighbor_worried:"238c305a0eacc9350b19f0f3e54488b0", prop_envelope:"4f145e8a8822f7645578f77a6ee95106",
   bg_office_2:"a0bd8a4f4b41ee8c599f33430f928206", bg_office_3:"20ca2f3daec72e213c1b685582800944",
-  npc_playerf_normal:"6112a4728a32df041995383f476a7854", npc_playerf_happy:"0427b6827c5edc8d46bd1892dd369331", npc_playerf_angry:"3ed9956f02ccf6bb94da2fabf2e7d3cb",
-  npc_playerf_worried:"fec97a4ece463a52673603222ec03bd6", npc_playerf_shocked:"7082df30d14775bb3405481287662a70", npc_playerf_soft:"ac65e1aac877150ac7361899fb86bd45",
+  npc_playerf_normal:"993621f197179fbff0baa67278819d44", npc_playerf_happy:"dc29a3193b90683a0eb73acacacc85b8", npc_playerf_angry:"6b4bcd48cc1f432970e7e3206e52f991",
+  npc_playerf_worried:"013f6de1a66cf6f86f98a001fa77da34", npc_playerf_shocked:"bbbf55d07c7f096908cfe313284ea736", npc_playerf_soft:"409ad8e4560565e50ad91081f3291922",
   cut_bid_open:"4f38b2ef9b76d0db9e96b67bd21736bd", bg_bid_room:"07b55a4385794f3235b2ff7e1f594bda", bg_room_after:"89311a983e8f64a7c6c9a9471afb3342", bg_office_1:"9de4f638fa8ff6a4f3f1e3a0f5adadde"});
 ["normal","happy","angry","worried","shocked","soft"].forEach(e=>A_("npc_playerf_"+e,"npc","주인공 앞모습 — "+e,"주인공 앞모습","경매왕 반응"));
 [["bg_bid_room","입찰 법정"],["bg_room_after","수리 후 거실"]].forEach(([id,t])=>A_(id,"bg",t,t,"경매왕"));
@@ -35982,12 +36024,33 @@ function kTick(n){
   }
   kClampOcc();
 }
+
+/* 📞 따님 통화 — 한 줄짜리였던 걸 사연이 있는 통화로. 모두 가상의 인물이다. */
+const KD_CALL = [
+ [null,"옆집 할머니가 적어 준 번호로 전화를 건다. 신호가 네 번쯤 가고 나서야 받는다.","normal"],
+ ["따님 (전화)","여보세요? …아, 네. 저희 아버지 사시는 집 때문에요? 무슨 일 있으세요? 아버지 괜찮으세요?","worried"],
+ ["나","네, 괜찮으세요. 이 집이 경매로 넘어가서 제가 낙찰받았는데요, 이사 문제로 아버님이랑 이야기가 잘 안 풀려서요.","normal"],
+ ["따님 (전화)","…경매요? 아버지가 그런 말 한마디도 안 하셨어요. 지난주에 통화했을 때도 '별일 없다, 밥 잘 묵고 있다' 그러셨는데.","worried"],
+ ["따님 (전화)","하아… 죄송해요. 저희 아버지가 원래 그래요. 힘든 일 있으면 혼자 끌어안고 계시다가, 다 터지고 나서야 아세요.","worried"],
+ ["따님 (전화)","고집도 세세요. 한번 아니라고 하시면 동네 사람 다 와서 말려도 안 들으세요. 혹시 말씀 험하게 하셨으면 제가 대신 사과드릴게요.","worried"],
+ ["따님 (전화)","근데요, 이상하게 제 말은 들으세요. 제가 초등학교 3학년 때 한밤중에 열이 펄펄 났는데, 비 오는데 저를 업고 병원까지 뛰어가셨대요. 우산도 없이.","normal"],
+ ["따님 (전화)","그 뒤로 제가 '아빠 담배 끊어' 하니까 진짜로 끊으셨어요. 삼십 년 피운 걸요. 지금도 주머니에 넣고 다니시기만 하고 안 피우세요.","normal"],
+ [null,"아까 계단에 앉아 담배를 꺼냈다가 도로 넣던 할아버지가 떠오른다.","normal"],
+ ["따님 (전화)","엄마가 요새 깜빡깜빡하시는 것도 아시죠? 아버지는 그게 제일 걱정이실 거예요. 짐 싸는 거 보면 엄마가 불안해하시니까.","worried"],
+ ["따님 (전화)","오빠는 부산에 있어서 자주 못 와요. 제가 차로 사십 분 거리라, 저희 동네 근처에 방을 같이 알아볼게요. 그래야 엄마 병원도 제가 모시고 다니죠.","normal"],
+ ["따님 (전화)","그리고… 아버지가 이삿날 갑자기 돈 더 달라고 하실 수도 있어요. 예전에도 그러셨거든요. 그러면 그냥 저한테 바로 전화 주세요. 약속한 건 약속한 대로 하게 할게요.","normal"],
+ ["나","그렇게 해 주시면 저도 날짜랑 이사비 맞춰서 서류로 깔끔하게 정리할게요.","normal"],
+ ["따님 (전화)","네, 이번 주말에 제가 갈게요. 셋이 같이 앉아서 이야기해요. …그리고 전화 주셔서 고마워요. 그냥 문 잠그고 끝내실 수도 있었을 텐데.","normal"],
+ [null,"통화가 끝났다. 잠시 뒤 할아버지 쪽에서 휴대폰 벨소리가 울린다.","normal"],
+ ["","…은정이가? 니가 우째 알았노. …아이다, 화 안 났다. 알았다, 알았다 캐도. 주말에 온나.","worried"],
+ ["","(전화를 끊고 한참 있다가) …우리 딸이 그러네, 젊은 양반 사람 괜찮다꼬. 내가 뭐라 캤노 — 딱 보니 알겠더라.","normal"]
+];
 function kMove(id){
   const m = K_MOVES.find(x=>x.id===id), o = K.occ; if(!m || (m.need && !m.need(o))) return;
   if(m.s) K.style[m.s]++; o.turns++;
   if(id==="listen"){ o.coop += 14 + o.pride*6; o.resist -= 6; kSay(o.turns<=2 ? "…내가 이 나이에 어데로 가겠노. 현장 일 끊기믄 방세도 몬 낸다." : "들어 줘서 고맙데이. 사람 대접은 해 주네.", "worried"); }
   if(id==="center"){ o.place = false; o.coop += 10; o.resist -= 12; kSay("주거급여? 공공임대? …그런 기 내 같은 사람도 되나?", "worried"); kLog("🏛️ 갈 곳 문제가 풀리기 시작했다 — 원하는 이사비가 줄어든다."); }
-  if(id==="daughter"){ o.dInvolved = true; o.coop += 20; o.resist -= 20; kNarr("따님이 전화를 받았다. '아버지 고집 세셔도 제 말은 들으세요. 이번 주말에 제가 갈게요.'"); kLog("📞 가족이 들어오니 말바꾸기 위험이 사라졌다."); }
+  if(id==="daughter"){ o.dInvolved = true; o.coop += 20; o.resist -= 20; kNarr("따님과 긴 통화를 했다. '이번 주말에 제가 갈게요. 아버지는 제 말은 들으세요.'"); kLog("📞 가족이 들어오니 말바꾸기 위험이 사라졌다."); if(typeof mtPlay === "function") setTimeout(() => mtPlay(KD_CALL, {name:KP.occ.name, pid:KP.occ.pid, title:"📞 따님과 통화 중"}), 60); }
   if(id==="date"){
     if(o.coop < 45){ o.coop -= 4; kSay("날짜? 아직 갈 데도 없는데 무슨 날짜를 정하노.", "angry"); }
     else { const need = kOccNeed(); K.askNeed = need; kSay(need ? `…한 3주믄 되겠제. 대신 이사비 ${kMan(need)}은 줘야 된다.` : "3주 뒤에 나가께. 돈은 됐다.", "normal"); K.offering = true; }
@@ -38189,7 +38252,10 @@ function keBidSheet(){
 function keSealedHTML(){
   const S = K.sealed, rate = keRate(), P = S.pred || {};
   const hid = (id, v) => `<input type="hidden" id="${id}" value="${v==null?"":v}">`;
-  return keCaseMini() + `<div class="ke-env"><div class="ke-env-in"><div class="ke-flap"></div><div class="ke-letter"><small>입찰금액</small><b>₩ ${keWon(S.amt)}</b><span>${kcHangul(S.amt)}</span></div></div></div>
+  return keCaseMini() + `<div class="ke-env"><div class="ke-env-in"><div class="ke-flap"></div><div class="ke-letter ke-slip"><div class="ke-slip-h">기 일 입 찰 표<small>사건번호 CASE ${keNo()}</small></div>
+      <dl class="ke-slip-rows"><dt>최저매각가격</dt><dd>₩ ${keWon(KP.minBid)}</dd><dt>입찰보증금 <small>(최저가의 10%)</small></dt><dd>₩ ${keWon(Math.round(KP.minBid*0.1))}</dd></dl>
+      <div class="ke-slip-amt"><small>입찰금액</small><b>₩ ${keWon(S.amt)}</b><span>${kcHangul(S.amt)}</span></div>
+      <i class="ke-slip-stamp" aria-hidden="true"><b>입찰</b></i></div></div></div>
     <div class="panel ke-confirm">${rate < 70 ? `<p class="ke-warn">⚠️ 현재 정보 파악률 <b>${rate}%</b> — 그래도 입찰하시겠습니까?</p>` : `<p>정보 파악률 ${rate}%</p>`}<p class="note">제출 후에는 변경할 수 없습니다.</p>
     ${hid("kBid", S.amt)}${hid("kPredSale", P.sale)}${hid("kPredRepair", P.repair)}${hid("kPredMove", P.move)}
     <div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" data-kbid>📮 제출</button><button type="button" class="btn" data-kcunseal>✏️ 다시 쓰기</button></div></div>`;
@@ -38411,6 +38477,8 @@ const KE_TIPS = ["싸게 샀다는 사실은 아직 수익이 아닙니다.", "�
   "경쟁자 수도 시세만큼 중요합니다.", "점유자의 첫 요구액은 최종 요구액이 아닐 수 있습니다.", "말로 한 약속은 합의서가 되기 전까지 약속이 아닙니다."];
 function keTip(){ return KE_TIPS[Math.floor(Math.random() * KE_TIPS.length)]; }
 const _ke_intro = kcIntroHTML; kcIntroHTML = function(){ return _ke_intro().replace('<button type="button" class="kc-skip" data-kintro>', `<p class="ke-tip dark">💡 ${esc(keTip())}</p><button type="button" class="kc-skip" data-kintro>`); };
+// 봉투에 넣으면 도장이 '쾅' — 애니메이션(1.05초 뒤)에 맞춰 효과음
+document.addEventListener("click", e => { if(e.target.closest && e.target.closest("[data-kcseal]") && typeof kcSfx === "function") setTimeout(() => kcSfx("stamp"), 1200); });
 
 /* ================= 📁 CASE 002 — 은평구 투룸: "낙찰받았다고 끝까지 들고 가는 게 아니다" =================
    1번이 "잘 풀면 번다"라면 2번은 정보를 팔수록 '손절해야 하나?'가 커지는 판.
@@ -40719,30 +40787,30 @@ const _gx_sfxBtn = kcSfxBtn; kcSfxBtn = function(){ return _gx_sfxBtn().replace(
 const LF_CHAR_ART = {
   seoyun:{face:{normal:"1c566d13d8960c9915dad1cbb8b3feb8", happy:"6fd30bc8295c83a97fba61c22e67dc0d", shocked:"e0891f9ee8d6ed107b3751fc34348477",
                 worried:"4dbe6d8a4b9d28b69eee59b6ae1fd549", angry:"1713778c5f75972a617d6706b2224e72", tired:"34da9dccb585a20029ee6b6add14173c"},
-          front:"ce46abcdcb5282ab782ebe27ac9867cb", back:"f2aa59258e202df3373f640fd354579c", select:"0f505ffb62f59a667fcb89e54ee1d3d9",
+          front:"93bf76af31b7e325498402ba9df7db05", back:"745e6d11267dd21a40e3204041188bf9", select:"0f505ffb62f59a667fcb89e54ee1d3d9",
           found:"a6aa2aefe97342b2e6f47aeff0af5ec5", room:"6c5608542f69436fa41610b5486fb480"},
-  dohyun:{face:{normal:"2c6dcfc46662cb715ae6a15bbcb25796", happy:"6ad1f3e3a51585e063731fc107434ba1", shocked:"20537e78fcf156713f9a98c031ee3b05",
-                worried:"dea59f40e8e31a7876829a6909258f04", angry:"97343c701731a1677db55b0a34d4cc2b", tired:"d5e227dbe4e6c139a123621d0833a616"},
-          front:"460763b38132f69631dd9afc8b97c96b", back:"36d71073cf13f01299b6f6fe40f591d4", select:"b9c749443dc4065d593447850e605cbc",
+  dohyun:{face:{normal:"2c6dcfc46662cb715ae6a15bbcb25796", happy:"62041faa17176f8a731222ebf46b6050", shocked:"20537e78fcf156713f9a98c031ee3b05",
+                worried:"f92e0be6395575bc5e67e70b6884e9aa", angry:"97343c701731a1677db55b0a34d4cc2b", tired:"d5e227dbe4e6c139a123621d0833a616"},
+          front:"4e6c8504ae07eded7732125103624cc5", back:"2a1d7d91d759fb0ad1a580c1083c623a", select:"b9c749443dc4065d593447850e605cbc",
           commute:"3ff68bb122421084c31b3ab96ebbc1ea", room:"4e6edd4052a125094a0b506b7c91866e"},
-  mijeong:{face:{normal:"32c523858c5681e224be52caca502f9a", happy:"07b53544fd6eb5e854a37666ebd60b07", shocked:"ae54bf011d86fe7d8828789b6a8e39e6",
-                worried:"9f745640e94952c8a3167e2c152be3ea", angry:"6bc9e8d46f35a9f734bd19eda16d4ff3", tired:"8a469b739b8d34d2e81b8f257146eaa9"},
-          front:"7908e88b677af08faafdfb68a56fe6dc", back:"3f5ff0ba1b1ee0e30979aa50d1fd5dae", select:"07908fc86a73109107d59cf8e4479263",
+  mijeong:{face:{normal:"de2db819371c268760cde0f43bd2ab59", happy:"07b53544fd6eb5e854a37666ebd60b07", shocked:"3437e73c74f7f96d0a6fe5b063d7e891",
+                worried:"b74e4bdb5c03ed904e4fbf3a9e1fa291", angry:"fefc77dcc2e67e527bf141e68fbd2401", tired:"5f8364d8be29ac0e3706ce935180ebc3"},
+          front:"de23e0f0d5a92e041efbd9c81d7324a1", back:"f22e08926e3bda4d14e8b58626dd6d69", select:"07908fc86a73109107d59cf8e4479263",
           shop:"80fa4024531bc6844278f4a1bec404ec", room:"3d69a0468b0060ad25ce8910b4093d4b"},
   // 박재훈 — 표정: 기본 · 멋쩍게 웃음(happy) · 놀람 · 턱 만지며 의심(worried) · 팔짱 결심(angry) · 수건으로 땀(tired)
   jaehoon:{face:{normal:"57f8a7399c2b314071d8ed618a05652b", happy:"32edd6959f579b5be13566eb3e81cf5a", shocked:"e115ea1cd8e1acb71d25020554f8457f",
-                worried:"9459b9ba54cfb16d50f81edb2504a7cf", angry:"b9f99fcdf9dbe847a42f7fb44c21474b", tired:"a26f8b8bab7891c00cd99d37ca8dde6f"},
-          front:"b4dc5f10fae374867317d9a0cfa424d6", back:"47ae8b1c6e9b40cbe5c2a5712e966769", select:"0fb410d2a57eed863e40f7ea7f1ac3dc",
+                worried:"29c601659301d95b1bf8c502e7a52838", angry:"c19ad3f85599464a1c93fb7d358e8387", tired:"b216b6ade96c0a156e308e81d6c09d4d"},
+          front:"e876caa0b76a4f1bb174c47844da7c76", back:"c40ffb12739126df025442eab3e6a5b6", select:"0fb410d2a57eed863e40f7ea7f1ac3dc",
           site:"38752f63e0013680ff416faa69ffc6da", room:"28a1cf1a44efbf9ef7e0e889e481f058"},
   // 최은경 — 표정: 기본 · 옅은 미소(happy) · 놀람 · 계산기 보며 걱정(worried) · 안경 올리며 결심(angry) · 관자놀이 누름(tired)
-  eunkyung:{face:{normal:"8336de9700e8867cef7780f9eb5100b8", happy:"4af47be1b355fa6d1bb4cf6b33138034", shocked:"6ac2ed5732b7577e826f0faa7fde89a0",
+  eunkyung:{face:{normal:"8336de9700e8867cef7780f9eb5100b8", happy:"2819d5a85a308b4aef80f6f992df8e4d", shocked:"6ac2ed5732b7577e826f0faa7fde89a0",
                 worried:"9bc30ab83c619c296a59bb886e2cdccc", angry:"051cf9287aa3edef659dd6bcfd3ba3a9", tired:"37800e7039244c49f1057cb020a82930"},
-          front:"161bb82508161fb9813ce4a1c2ef6b2e", back:"da966f6f11cff93debb276f20106cc14", select:"21337f6463a3fe6b47f7499ff4954b39",
+          front:"0215373c26b5ef5c462d918cff0e805d", back:"a3c6638aa8d29d618dee4cfd84e0a233", select:"21337f6463a3fe6b47f7499ff4954b39",
           morning:"e484c60840c93b1948e7870ab73d4d19", room:"75d039a099fc0a99a7efba48f6d09783"},
   // 김태식 — 표정: 기본 · 허허 웃음(happy) · 놀람 · 서류 보며 걱정(worried) · 안경 벗어 들고 단호(angry) · 뒷목 주무름(tired)
   taesik:{face:{normal:"15c1b2126eed366fc28b475d5a53cf4d", happy:"5a9a05d1f40badfdc2451dc2c3ede869", shocked:"a2658ef567cb0ac710ef90a84aad80e1",
-                worried:"6db1cdae5024e5daa6e5c0bb90fa8a4a", angry:"e13b034770f92fcfdcedab51a787c1f4", tired:"fd7209e092894569b2ec654bc0d19e14"},
-          front:"e38563f6d902753010dc4d6283980bf0", back:"845ed5f0e277b6d31d290543db5404d0", select:"2452f4871394a4843ed2e61f2a74d9cc",
+                worried:"668e464467eaa67e93bed94c1fad6adf", angry:"63e410a90be5f63f37ba67a7a325e30c", tired:"1bc95fd990dfd6e6cd98d2d1531181d5"},
+          front:"ea53ae0c31f4d6dd906f927db721b12a", back:"77d6b61c414cfe5836348388ec794cde", select:"2452f4871394a4843ed2e61f2a74d9cc",
           morning:"3b86d1750b7daf85991c90dbccd52b74", room:"5590c2eb1aedda87ae1ffffc4c65752d"}};
 const LF_FACE_ALIAS = {soft:"happy", neutral:"normal", troubled:"worried", furious:"angry"};
 // 배경·컷 칸으로도 등록해 둔다(그림 관리 화면·오프닝이 같은 이름으로 찾게)
@@ -40803,18 +40871,18 @@ const _ca_sel = lfSelectHTML; lfSelectHTML = function(){
 
 // 표정 추가분(유형별 공용 인물) — 사용자가 받아온 그림을 잘라 넣은 것
 Object.assign(ART_DEFAULT, {
-  npc_oldman_angry:"fcc7cfffff7eacd0b17ef2826695465a", npc_oldman_troubled:"b0be3eb3877369e0f331140f4aa2a778",
-  npc_ajumma_angry:"794f4071761ea649ca0e624f07fb8cc0", npc_roughman_troubled:"19eea9a9f3405b0de67a53fac0188d68",
-  npc_youngwoman_angry:"24119c2a4221b7134f09674ef8e12ace", npc_youngwoman_troubled:"4c061c7eeb1e5a0e670645fd1cfacfa1",
-  npc_broker_angry:"a0314110d1f06801734397463698e2b6", npc_broker_troubled:"df0ef3afa8747d10455a68cf21968f62",
-  npc_mover_angry:"c82dc00671840d4938147d88dc1b78af", npc_mover_troubled:"83976aafef64c135db8d05114f04280e",
-  npc_bailiff_normal:"771b3c26f7242bd10265e921d6f69a38"});
+  npc_oldman_angry:"144a322fd80e32681f70641e7e4fc024", npc_oldman_troubled:"893687515138e76c019a8959f48b3f01",
+  npc_ajumma_angry:"418917e1fceea53717bf4ca48c5df592", npc_roughman_troubled:"cac08fac2fe3e58b2cda0c2e289ef935",
+  npc_youngwoman_angry:"30f950b5283848dbd88bd2b269e4fc6d", npc_youngwoman_troubled:"19f5132d18ff5aea237feb4e72ed1415",
+  npc_broker_angry:"f9c6bd97ecd060a5df237e134416877f", npc_broker_troubled:"00c79ef78a4e38cad84bab1118e7d037",
+  npc_mover_angry:"7ef41728723c4636f4a2fbd25b858aa7", npc_mover_troubled:"da13db86052f7ab60f38f360eeb1431b",
+  npc_bailiff_normal:"753d467e63d8e35d6e4242e88b9de720"});
 
 // 소품 시트 1
-Object.assign(ART_DEFAULT, { prop_keys:"7059fb81a6d57bc439fd5024522e5588", prop_doorlock:"06d82fa0eaac7d5f9bb76cc7298d05bc", prop_letter:"1e384ffbe93d01ac4965d8340ace2b35", prop_order:"d204d14461d036ac98090c161ad7c0a9", prop_confirm:"d64273376769a7d9db9681014b252e1a", prop_boxes:"bebc3ce4f786c807a14b77deb58c0e71", prop_cash:"a9b6410a700caaec777f99058f9c3ebf", prop_notice:"21747c71f0aafade4ae3da853f183c0e", prop_truck:"2339f9b18426feb1315879ff6ee20074"});
+Object.assign(ART_DEFAULT, { prop_keys:"1dec16bd8a6acfaba2533fddde5dbb44", prop_doorlock:"c4f92d364746346833a4b55d6aaead6c", prop_letter:"b2281c57aad6ac86a87859dc861c6ed0", prop_order:"b6750cac30b5bfe735eef0128ae16daf", prop_confirm:"9d65195ebfe4fcec0669fbe5ce53a56f", prop_boxes:"beb210bc4a5617530e69617a41923a78", prop_cash:"dba6864c843485b6c3622aed56e13bb2", prop_notice:"4dd36113a80ac4e08ade22dcc148b1ec", prop_truck:"8258758d43538665526fc4a54876fa6b"});
 
 // 소품 시트 2·3 + 사건 뒤 빈 거실 컷
-Object.assign(ART_DEFAULT, { prop_phone:"4a27e45a85728ea403c93c2d46b2bc49", prop_calendar:"4eb9ef8eee578c7727263a8b0d14328d", prop_bill:"f913b3f81e6a9488e77baaa5b25b3f8c", prop_drink:"5ecd637c980a8d4231b558051afc78d5", prop_toolbox:"217deb542ae1c274fa5dfe54f6a6d44d", prop_delivery_boxes:"437b82011ccdaf679260944b29a25915", prop_trash_bags:"d44b9b02fb1bc3216aa3cfb914840cdd", prop_mail_bundle:"c245b5a0f4a7723578f8a34b2df09297", prop_shoes_slippers:"55ee5095f373e186b2ee17fb69c87380", prop_safe_box:"6e47d37dbefd34858f7a448b1370870a", cut_empty_after:"ebb5e6cf420574784e9e1aad5dbc7bfa"});
+Object.assign(ART_DEFAULT, { prop_phone:"4595d8d28c8011c600942eb4892cdcb1", prop_calendar:"b7aa83a85dc9576f3088fd15f6b6aa34", prop_bill:"fe178400373bf5686f15bff967f8f9ac", prop_drink:"835c29e0504b6c7f81b545be298b21d9", prop_toolbox:"c11b5c7120c4bd5016e4ce06f597a28c", prop_delivery_boxes:"ffe3cef883f1ebbfc575ce9658810c94", prop_trash_bags:"e59c39078561481755ee176c15854381", prop_mail_bundle:"cccc3406e57affdd54f883247431f172", prop_shoes_slippers:"96c5127b5a2c59f3afb6a1615b6232bb", prop_safe_box:"e5e50fe05c450464022deb80bafad79c", cut_empty_after:"ebb5e6cf420574784e9e1aad5dbc7bfa"});
 
 /* ================= 🗂️ 조사 화면 정리 — 서류는 그림 위에, 행동은 접어서 =================
    오른쪽 패널이 한없이 길어지던 걸 줄인다: 사건 파일·입찰표는 왼쪽 그림 위 종이로 겹쳐 띄우고,
@@ -41939,7 +42007,13 @@ const MT_TALES = {
    ["","아 그리고 이삿짐센터가요, 손 없는 날은 다 찼대요. 그다음 날은 애 방학식이고요. 그 다음 주는…","normal"]],
   [["아내","(작게) 여보, 대출 서류 아직 안 냈잖아…","worried"],
    ["","아니 그게, 내려고 했지! …사장님, 솔직히 말씀드릴게요. 나가기가 무서워요. 새 동네도, 대출도, 다 처음이라.","worried"],
-   ["","날짜 박아 주시면 지킬게요. 제가 핑계가 많은 거 저도 알아요. 이번엔 종이에 써 주세요. 그래야 저도 움직여요.","normal"]]],
+   ["","날짜 박아 주시면 지킬게요. 제가 핑계가 많은 거 저도 알아요. 이번엔 종이에 써 주세요. 그래야 저도 움직여요.","normal"]],
+  [["","아 근데 사장님, 혹시 이사 많이 해 보셨어요? 저는 이번이 세 번째인데요, 첫 번째 이사 때 냉장고가 문에 안 들어가서 창문으로 뺐거든요.","normal"],
+   ["","사다리차 부르니까 15만원 더 달래요. 그래서 제가 흥정을 했죠. 10만원에 해 주면 음료수도 드린다고. 결국 15만원에 음료수까지 드렸어요.","normal"],
+   ["","두 번째 이사 때는 이삿날 비가 왔어요. 손 없는 날이라고 비싸게 잡았는데. 손은 없는데 비가 있더라고요. 하하…","normal"],
+   ["아내","(작게) 여보, 사장님 바쁘셔.","worried"],
+   ["","아 맞다. 그러니까 제 말은, 이번엔 이사를 잘하고 싶다는 거예요. 핑계 대는 게 아니라… 아니, 핑계는 맞는데, 이번엔 진짜 잘하고 싶어요.","worried"],
+   ["","다음 달 12일로 해요. 제가 달력에 빨간 펜으로 동그라미 칠게요. 사장님도 치세요. 둘이 치면 못 바꾸잖아요.","normal"]]],
  p_youth:[
   [["","아… 안녕하세요. 문자 받고 무서워서 계속 검색해 봤어요. 경매요. 제가 뭘 잘못한 거예요?","worried"],
    ["","저 보육원에서 나올 때 받은 돈으로 여기 들어왔어요. 500이요. 그게 제 전부예요. 이거 없어지면 저…","worried"],
@@ -42038,7 +42112,7 @@ function mtPlay(lines, o){
   if(!lines || !lines.length) return;
   // 자동 흐름 테스트용: 이야기 창을 띄우지 않고 바로 끝낸다(게임 쪽 효과는 그대로).
   if(window.MT_SKIP_TALE){ if(o && o.done) o.done(); return; }
-  MT = {lines, i:0, name:o.name || "", pid:o.pid || null, done:o.done || null};
+  MT = {lines, i:0, name:o.name || "", pid:o.pid || null, done:o.done || null, title:o.title || ""};
   mtPaint();
   if(typeof kcSfx === "function") kcSfx("paper");
 }
@@ -42054,7 +42128,7 @@ function mtPaint(){
   const face = who === "" ? mtFace(ex) : "";
   const nm = who === null ? "" : who === "" ? MT.name : who;
   el.innerHTML = `<div class="mt-veil" data-mtnext></div><div class="mt-card ${who === null ? "narr" : ""} ${who && who !== "" ? "other" : ""}" data-mtnext>
-    <div class="mt-top"><small>🙇 사정 끝까지 듣는 중 · ${MT.i + 1}/${MT.lines.length}</small><button type="button" class="mt-skip" data-mtskip>건너뛰기 ›</button></div>
+    <div class="mt-top"><small>${MT.title ? esc(MT.title) : "🙇 사정 끝까지 듣는 중"} · ${MT.i + 1}/${MT.lines.length}</small><button type="button" class="mt-skip" data-mtskip>건너뛰기 ›</button></div>
     <div class="mt-body">${face ? `<div class="mt-face">${face}</div>` : ""}<div class="mt-say">${nm ? `<b class="mt-nm">${esc(nm)}</b>` : ""}<p>${esc(t)}</p></div></div>
     <div class="mt-next">${last ? "끝까지 들었다 ✓" : "▼ 계속 듣기"}</div></div>`;
 }
@@ -42247,7 +42321,10 @@ function nxApply(){
   stage.querySelectorAll(".nx-dock").forEach(x => x.remove());
   const dock = document.createElement("div"); dock.className = "nx-dock";
   const bar = document.createElement("div"); bar.className = "nx-bar"; bar.setAttribute("role", "toolbar"); bar.setAttribute("aria-label", "조사 행동");
-  const items = note ? grps.concat([note]) : grps;
+  // PC: 조사 노트는 버튼 줄에서 빼서 '사건 파일' 옆 탭(공책)으로 — 행동 버튼과 섞여 헷갈렸다
+  const tabs = stage.querySelector(".stg-tabs"), noteTab = !!(note && tabs && !nxMobile());
+  if(noteTab) nxNoteTab(stage, tabs, note);
+  const items = note && !noteTab ? grps.concat([note]) : grps;
   items.forEach(d => {
     const sum = d.querySelector(":scope > summary"); if(!sum) return;
     const s = nxShort(sum), isNote = d === note;
@@ -42285,10 +42362,10 @@ function nxPlace(){
   let top = 12;
   if(box){ const br = box.getBoundingClientRect(); if(br.bottom < sr.top + sr.height * 0.6) top = Math.round(br.bottom - sr.top + 10); }
   dock.style.top = top + "px";
-  // 입찰표처럼 무대 오른쪽에 떠 있는 서류가 있으면, 버튼 줄이 그 위를 덮지 않게 왼쪽 공간까지만 쓴다
-  dock.style.maxWidth = "";
-  const sh = stage.querySelector(".stg-sheet");
-  if(sh){ const r = sh.getBoundingClientRect(), dr = dock.getBoundingClientRect(); if(r.width && r.left > dr.left + 160 && r.left < dr.right) dock.style.maxWidth = Math.round(r.left - dr.left - 10) + "px"; }
+  // 오른쪽에 붙인다 — 왼쪽엔 주인공이 서서 혼잣말(말풍선)을 한다. 입찰표 칸이 있으면 그 바로 왼쪽까지
+  dock.style.maxWidth = ""; dock.style.right = "12px";
+  const col = stage.querySelector(".stg-col");
+  if(col){ const r = col.getBoundingClientRect(); if(r.width && r.left > sr.left + 200) dock.style.right = Math.round(sr.right - r.left + 10) + "px"; }
   dock.style.setProperty("--nx-room", Math.max(160, Math.round(sr.height - top - 70)) + "px");
 }
 let NX_MOB = null;
@@ -42306,6 +42383,30 @@ document.addEventListener("click", e => {
 }, true);
 document.addEventListener("keydown", e => { if(e.key === "Escape" && document.querySelector(".nx-bar > details[open]")) nxCloseAll(null); });
 const _nx_render = renderArena; renderArena = function(){ _nx_render(); queueMicrotask(() => queueMicrotask(nxApply)); };
+
+// ---------- 📒 조사 노트 탭 (PC) — 사건 파일 옆 공책. 새 줄이 생기면 NEW ----------
+function nxNoteTab(stage, tabs, note){
+  const items = [...note.querySelectorAll("li")].map(li => li.textContent);
+  const n = items.length, fresh = n > (NX.seen || 0) && !NX.note;
+  if(NX.note) NX.seen = n;
+  note.remove();
+  const tb = document.createElement("button"); tb.type = "button"; tb.className = "stg-tab nx-notetab" + (NX.note ? " on" : "") + (fresh ? " new" : "");
+  tb.dataset.nxnote = ""; tb.setAttribute("aria-expanded", NX.note);
+  tb.innerHTML = `📒 조사 노트 <small>${n}</small>${fresh ? "<i>NEW</i>" : ""}`;
+  tabs.insertBefore(tb, tabs.firstChild);
+  const dock = stage.querySelector(".stg-dock"); if(!dock) return;
+  const p = document.createElement("div"); p.className = "stg-paper nx-notepaper"; p.hidden = !NX.note;
+  p.innerHTML = `<button type="button" class="stg-x" data-nxnote aria-label="조사 노트 닫기">✕</button>
+    <div class="nx-book"><h3>📒 조사 노트 <small>${n}줄 · 조사할 때마다 한 줄씩 적혀요</small></h3>
+    <ol>${items.map((t, i) => `<li class="${i === n - 1 ? "last" : ""}">${esc(t)}</li>`).join("")}</ol></div>`;
+  dock.appendChild(p);
+  dock.classList.toggle("nx-noteopen", !!NX.note);
+}
+document.addEventListener("click", e => {
+  const t = e.target; if(!t.closest) return;
+  if(t.closest("[data-nxnote]")){ e.preventDefault(); NX.note = !NX.note; if(NX.note && typeof STG !== "undefined") STG.file = false; if(typeof renderArena === "function") renderArena(); return; }
+  if(t.closest("[data-stg]") && NX.note){ NX.note = false; }
+}, true);
 
 /* ============================== 첫 플레이 동선 · 입찰표 돈 계획 ============================== */
 /* 처음 온 사람에게는 입구를 하나만 보여 준다. 나머지 메뉴는 없애지 않고 접어 두었다가,
@@ -42846,12 +42947,12 @@ const _lfv_kStage = kStage; kStage = function(bg, who, ex, text, name){
 };
 // 낙찰·패찰 포즈 그림 (P 발주 — 받은 사람부터)
 const LFV_POSE = {
-  seoyun:{won:"fd7621303deddef2407af8c6816bfc6b", lost:"1e15acf99ad9a0140ebf19a753980995"},
-  dohyun:{won:"fd6fb8caad85ae763decc8233251573d", lost:"955649be6263b2d8847016c23a881e6a"},
-  mijeong:{won:"7f96fe2cbb81901934b84742468b9ac3", lost:"4354fe023f539f86bf6cb86a3d466e51"},
-  jaehoon:{won:"9cdf4145912fd973573da6946753d10e", lost:"a6195809a9b5389746ce2ebb7d9b81e0"},
-  taesik:{won:"8ee5fea1e13e88f114fdbf2a1b510d5a", lost:"90e7328687e4fdaa42e7e5e5d0da4c3d"},
-  eunkyung:{won:"55e304e6ed08f37d9adf0997e554f2e1", lost:"d273f906dd5c9e5c8551e6124d4d61d7"}};
+  seoyun:{won:"0733e69c746133cb7276f548a8421865", lost:"face136833a2a021dd0834094c5263a8"},
+  dohyun:{won:"ea8be2fe9f3bb3e70e32db4e7590e97c", lost:"7978a248203e17d169bf0588754d51ac"},
+  mijeong:{won:"6e341c20709cd3f5d3c8acba06f5dbd9", lost:"3cb6444be7fe70b23679900741845e3a"},
+  jaehoon:{won:"8d9afdae806377e99c823f9b4efeaacf", lost:"43e866f2b9345ffcf93484b68426a02e"},
+  taesik:{won:"6d8ea7ee6928ea783c1658ad78d9c537", lost:"e163cb61a8a9df43189049e937295259"},
+  eunkyung:{won:"e25efc5d4fea6ac44af8e7b546c13781", lost:"ab9c881cdd065be3cac046cf7300f4a3"}};
 // ③ 그 사람만 하는 행동 (능력치 성장·관계에 조금씩)
 Object.assign(LF_ACTS, {
   sig_seoyun:{spot:"sig_seoyun", ic:"📱", t:"경매 카페·커뮤니티 눈팅", min:60, sta:2, stress:-3, grow:["info", 2], note:"정보 경험치 · 서윤 전용"},
@@ -42874,14 +42975,14 @@ const _lfv_panel = lfPanel; lfPanel = function(id){
    입찰 결과표의 "초보 과입찰러 1억 2,390만원"이 글자뿐이었다 → 이름 옆에 얼굴.
    패찰이면 나를 이긴 1등이, 낙찰이면 아깝게 진 2등이 무대 오른쪽에 선다. 그림 없는 라이벌은 예전처럼 글자만. */
 const RV_ART = {
-  "초보 과입찰러":{normal:"77e942337a7e494092b3bacb72f03c21", angry:"f660c9c18dec9ea81c03848340c66afc", worried:"38492b411658f21f5df868884a8c6af3"},
-  "지역 실수요자":{normal:"28f7bf47ecfa43a14bd0693dccda310c", angry:"fee3c6665d618126951c1af54d8bdfac", worried:"e8f193670a4c3fe84b4d12fe9351eb99"},
-  "전문 투자자":{normal:"105bfde0b4123a3f47fcf3330ea6c078", angry:"669560ce4a942783786cc2849590fe29", worried:"0ac926fb407841f2b7b312e8c59867b8"},
-  "무조건 저가형":{normal:"0bf5acafb678833ee2cd6d5bdb9fc76d", angry:"9d29b5c4c4aa8183ddfb7657bbb8e770", worried:"df7dea18a945dc879b0b46abb16a32dc"},
-  "인테리어 업자":{normal:"ac5e8c9f581c8c0e733c4a108559fb71", angry:"7e22f7758b4da31a4242f3b7441f94eb", worried:"c723786892a84375c22e26694fd45188"},
-  "겉 마진 보고 온 투자자":{normal:"d035cca17396112ec49b97509cae7485", angry:"45cf9e41f011d4f48023d3e77516988a", worried:"f1feaab570f5bebdaea6870eb0de684d"},
-  "감정가 맹신러":{normal:"b8f2e1b04eca252147f35893cd59bbd7", angry:"2f5ed73e216edb68b44bdb027e44fce1", worried:"56b25139ac9a12b2ed77444d00ec25b8"},
-  "이사철 실수요자":{normal:"3a901d2df46e71b8ed36f2b8de593ee9", angry:"f03b509b52ed82c0bd79f5365aed2fe4", worried:"380de5cd83b1229b7fa4143cb27cd69b", pair:true}};   // pair = 두 사람 그림(얼굴 동그라미를 덜 확대)
+  "초보 과입찰러":{normal:"2554c349faec4a4334d4642044ce56bb", angry:"a97de7c2b8d37096da1ae6b177fa8f67", worried:"d7b15bb5b920c3502da821f91c181a9f"},
+  "지역 실수요자":{normal:"365f291c360b35630af92287ea3a7e9e", angry:"0e94711136a8069145a516e2cabd179f", worried:"8d15d6fbf11f46c28205619bb87bffdc"},
+  "전문 투자자":{normal:"2671bce1d07bb9d2975116b968ae654f", angry:"f1ce94238f0e06a04eedf25b503c901d", worried:"9c72eb7a5f89deb39440d94ef20df66a"},
+  "무조건 저가형":{normal:"9b70fb5980a2a4ee5cbfa3b5a332d039", angry:"1ea6af88728f02da511ebce94cad9cf6", worried:"3cb6a49b0a6eca64bbb45d9859e78053"},
+  "인테리어 업자":{normal:"1b0bc65ebdc7f60b3709ce4ebb98e081", angry:"e9d15c8e3a41e8e5b8ed6a7f9100adf2", worried:"977ed007cef8be8c24618133bfd26db4"},
+  "겉 마진 보고 온 투자자":{normal:"9078ffbb0cbaafd33416d918160e0a8d", angry:"ed47edb2b24e833d732dfdb1efa5d21b", worried:"9401d833d68e92d034c99819e95d6ac8"},
+  "감정가 맹신러":{normal:"81c4b1409731ba5e69e42dfedc53c05d", angry:"9e359773a6e9ef9589e31edc1afc0e9b", worried:"a6b0fc29e11f795ba82bc4c43aded4f0"},
+  "이사철 실수요자":{normal:"bf6ba1f104722f50cb938c08ea650c2f", angry:"b45169a22a9e7116dc8f70e58c6dede6", worried:"4351e5b9cc1ca8c27196bdc74ce81467", pair:true}};   // pair = 두 사람 그림(얼굴 동그라미를 덜 확대)
 function rvUrl(who, ex){ const A = RV_ART[who]; if(!A) return null; const id = A[ex] || A.normal; return window.GMW_STANDALONE ? "assets/" + id + ".webp" : "/_blob/" + id; }
 const _rv_table = kBidTable; kBidTable = function(){
   let h = _rv_table();
@@ -42903,12 +43004,12 @@ const _rv_kStage = kStage; kStage = function(bg, who, ex, text, name){
    매도 단계 "○○ 손님이요, ○○만원이면 계약한대요" — 글로만 오던 매수자가 무대에 선다(유형마다 표정 하나).
    입찰표 제출 뒤 '개찰 중' 화면에는 법원 경매계 직원이 서류판을 들고 선다. 그림 없는 유형은 예전처럼 글만. */
 const BY_ART = {
-  "신혼부부":{art:{normal:"42ba34ca9096587590a17c50d97ee66e", angry:"f9b432598dcce3ba5c51121bd89bf265", worried:"7bdbbfb80b88c53520125aa54a655954"}, ex:"normal"},
-  "대출 최대한도형":{art:{normal:"afe41bc6b965e7c08d28f4a45fb8dc6d", angry:"d60ff4027a09cd1792564d7f5ae1b36e", worried:"1d931496364e3680bcd1f3be013f91c7"}, ex:"worried"},
-  "가격 깎기형":{art:{normal:"f45c055e05ec53a8dea385f8724158b0", angry:"435b42a4c01e296722ba06fd89dba26b", worried:"16fa7e5d65b3b0de3e4ec6a4730bfbeb"}, ex:"angry"},
-  "부모 지원형":{art:{normal:"5a4c5f646deaacaf7f94b9bb026ecd3f", angry:"f2ad200297a815956d6dd23fca6f678d", worried:"03aef00ef60234a4721a3fe1198aa8ec"}, ex:"normal"},
-  "급하게 이사해야 하는 사람":{art:{normal:"c0c33a76490bcc192af94fa1751e9f1d", angry:"ae90a4254520fb80edc2cce8e774fa16", worried:"9886834a9f0cdf3227de37ba3b5ae5ea"}, ex:"angry"}};
-const BY_CLERK = {normal:"a5afb83a672e21ca2d83efae9e6abd06", angry:"cd585d3ffc6940277fcf41838c8e7328", worried:"5e338651ac3cd8f66b50192d29159bf0"};
+  "신혼부부":{art:{normal:"e4a8946e4957bcb20dad860f8d60ca52", angry:"217a51ac1a722f8fbe5a6faf9154e9b1", worried:"2efa2b1fcb2a84248589c3acbfa64126"}, ex:"normal"},
+  "대출 최대한도형":{art:{normal:"93e7017c81a2397cf745230bc2982135", angry:"69f4bc2bf604303ec5d4646a0b3c3833", worried:"dada1e64977b64d0083595612b42fca8"}, ex:"worried"},
+  "가격 깎기형":{art:{normal:"9b7bf3f830ca53a1ca25f1f2f161cd41", angry:"b782f1d94910eeff54407a461ab688ca", worried:"9f3b984dfecd79b2948999dfe1075f67"}, ex:"angry"},
+  "부모 지원형":{art:{normal:"9b16a6329341cb77d525c96dbeaaa6a7", angry:"1d852e168af9aa99f2daf357cd7b7b91", worried:"15b31970bb75d823e750a55164242026"}, ex:"normal"},
+  "급하게 이사해야 하는 사람":{art:{normal:"887ffd7fa5a4257a3484dc54c2f1da20", angry:"36a8cb065e6fa65f16348c1f1abf1937", worried:"c0fac525d097068808cd46169838d481"}, ex:"angry"}};
+const BY_CLERK = {normal:"e6795efccc22c19f86aa2aadcf8df4e9", angry:"ac13568abaff106913b04260642111bb", worried:"de875545fddd60d45996a6188e8cd81f"};
 function byUrl(id){ return window.GMW_STANDALONE ? "assets/" + id + ".webp" : "/_blob/" + id; }
 const _by_kStage = kStage; kStage = function(bg, who, ex, text, name){
   const h = _by_kStage(bg, who, ex, text, name);
@@ -42924,13 +43025,13 @@ const _by_reveal = keRevealHTML; keRevealHTML = function(){
 /* ================= 🆕 새 점유자 5명 (O 발주) — 자유 플레이·문자 협상에 들어가는 인물 =================
    불쾌한 인상은 태도·꾸밈새로만 냈다(인종·체형은 이유가 아니다). 법적 위치는 일반적인 설명이다. */
 const NEWOCC_ART = {
-  p_hawaii:{normal:"4ea3f55fea10cdc9640186080c765a95", angry:"c80eaf4ed0359760e72d6f2560ac1ef7", worried:"8547cbf420245be5d31e1989e574e336"},
-  p_live:{normal:"fa002e9bb134aae648df505235d1f54c", angry:"ffddc146ccecb42616c632df4c979658", worried:"48b4c64fb03c037ddc59cf1d50d79c40"},
-  p_tojuk:{normal:"53dca1692719afcdfda646e18dfc7d7f", angry:"8f17d657f0c4cdb20ea031dace9ed9bf", worried:"47d9e289cc0dfb6b5270097856223369"},
-  p_chain:{normal:"bfd3cf495bcd6caada5e058b400e79ec", angry:"2a5a086e1d3261939f7367fa07b3d234", worried:"ed4ebb6f2871053313dc1640ba5409d6"},
-  p_gamer:{normal:"b477a384ffca76cbe3ede1b8fe21124e", angry:"ee5432b0aa1be76dfe3480d05f5b61c8", worried:"3b5d440154b8359f10a3761b85fcf88a"},
-  p_law:{normal:"0efa9fabfe464b0f3c18335d494a091c", angry:"7b49188d39741eadbf8692049ef36bd2", worried:"1da47388f3d39f6f159cc82e4e5ceb20"},
-  p_madam:{normal:"fedcaef10e4e39bc3feebad1727f4951", angry:"5a51c1db7226b05ba8ee41e2f8098dc8", worried:"50ea34a25518a2baa396079bac447671"}};
+  p_hawaii:{normal:"5beca7cb921dfcb0df268bcdf43aa2a6", angry:"33c31dbadc4ee75463ac20ce42b53c3c", worried:"a5f0fa4f5b7ec4dfce08d4561663019c"},
+  p_live:{normal:"f1be5803f5e9b4abad9df547f6c34b83", angry:"8a64d1a5f692116841a34f9c45ab97c3", worried:"b219e8e9103b2f28fcf665edd8327104"},
+  p_tojuk:{normal:"c32fe330761442377213207da102d39f", angry:"4d7007bc8b2d62bb6fe9ebd54979357e", worried:"aa07c26bd2f2796e96620689dac3ceb8"},
+  p_chain:{normal:"06bf194c42b8a73ce110fea306d65420", angry:"2b33f1e29451d8593fc7cdced3617d96", worried:"353b9b673a1b434e8174a246b9254e6c"},
+  p_gamer:{normal:"0d5bf008f63fd022cde9869003a4eef6", angry:"1683f9a474eebeb62cd5dd82ae58f198", worried:"e500b8cfc7bba3ad9a5a23898e315859"},
+  p_law:{normal:"c2ced8b9dbfee66825bdd8e1451c8075", angry:"c136e7e406e2f082f02e023e975a62ec", worried:"6904b6e20e2014c8b3deaeaa0dcb2d83"},
+  p_madam:{normal:"63d01dd80c3daf951b21d4ceb4869065", angry:"096b76cebc1522637fa64d087ef4a0ab", worried:"5a610d3b59cc2236db943bb667ffccd9"}};
 Object.keys(NEWOCC_ART).forEach(pid => Object.keys(NEWOCC_ART[pid]).forEach(ex => { ART_DEFAULT[`npc_${pid}_${ex}`] = NEWOCC_ART[pid][ex]; }));
 const NEW_PERSONAS = [
  {id:"p_hawaii", type:"bully", emoji:"🌴", name:"황금철 씨 (63)", who:"전 소유자(채무자)",
@@ -43000,20 +43101,59 @@ NEW_PERSONAS.forEach(P => { if(!PERSONAS.some(x => x.id === P.id)) PERSONAS.push
 
 /* 새 매수자 3명 (B 발주) — 매도 단계에 제안하는 사람으로 등장. 목록 끝에 붙이므로 기존 유형은 그대로다. */
 const NEW_BUYERS = [
-  {t:"은퇴한 선생님", flex:0.008, cancel:0.05, art:{normal:"6301eded5a19a84201be15062c0195c3", angry:"b912a35570ee57c839e2a4be57ef98c0", worried:"85615f463e1cdb01373b7e5651f11b20"}, ex:"normal",
+  {t:"은퇴한 선생님", flex:0.008, cancel:0.05, art:{normal:"52d5859a580e4290969e6666e7a95c08", angry:"0fcb5349c61df64e821eb267ba6f6a9c", worried:"af135039dd996d6216e3026ce0ae7d0a"}, ex:"normal",
    say:["\"천천히 봐유. 집은 오래 사는 거니께.\"", "뒷짐을 지고 베란다에 한참 서 있었다."]},
-  {t:"꼼꼼한 외국인 연구원", flex:0.005, cancel:0.12, art:{normal:"db28ff828c2e6584db866ab6048b38bc", angry:"eae5bfb3739ba8db3c87e91e60626322", worried:"eb34623badd6b8dec34c407d9a09f3a5"}, ex:"normal",
+  {t:"꼼꼼한 외국인 연구원", flex:0.005, cancel:0.12, art:{normal:"20668f4d1df78ce919d32100ec2d6617", angry:"8a2f156e03a1892fdb97972f9a1bae85", worried:"544a9ac18e074b240692d14c21d12c96"}, ex:"normal",
    say:["\"등기부 을구, 한 번 더 보여 주실 수 있을까요?\"", "서류에 형광펜으로 줄을 그으며 하나씩 물었다."]},
-  {t:"휠체어를 쓰는 실수요자", flex:0.01, cancel:0.1, seated:true, art:{normal:"0e203d74094ba7b98a8627d4c1160878", angry:"363606027895554c03b944d533453593", worried:"743433849b189077bfe4d85f5bad719c"}, ex:"angry",
+  {t:"휠체어를 쓰는 실수요자", flex:0.01, cancel:0.1, seated:true, art:{normal:"61ac665facbbe8343f47d0f642838bf3", angry:"ec79ac58b68663f4ed4b4f62a9547b74", worried:"98f3a6dd97032d23c43b40dca799a4c7"}, ex:"angry",
    say:["\"현관 턱이 몇 센티예요? 욕실 문 폭도 재 봐도 될까요?\"", "줄자로 현관과 욕실 문을 꼼꼼히 쟀다."]},
-  {t:"야간 근무 마친 간호사", flex:0.007, cancel:0.08, art:{normal:"ad643cba3a0853b81318d30c13efe0a5", angry:"dbe07d391e9a52efd5f92bea281bcefe", worried:"21e570c07b6d7317b1e4dad5d248803c"}, ex:"angry",
+  {t:"야간 근무 마친 간호사", flex:0.007, cancel:0.08, art:{normal:"e76c73378d13591cf1643b2b28c84ebf", angry:"14266d0588e647e6e7236cb74c411bd6", worried:"44bb066002bcb203aed9f71e6f252c8d"}, ex:"angry",
    say:["\"병원까지 20분이면 돼요. 이 가격이면 오늘 바로 할게요.\"", "퇴근길 수술복 차림으로 계산기를 두드리며 들어왔다."]},
-  {t:"아이 학교 가까운 집 찾는 식당 사장님", flex:0.009, cancel:0.06, art:{normal:"d408112d8b1bbe18aaecdc7ca5b27527", angry:"d185001944989b88c63de1d1b8b37758", worried:"da1c1dc9ba9b27e4eef092f56aa9c4c7"}, ex:"angry",
+  {t:"아이 학교 가까운 집 찾는 식당 사장님", flex:0.009, cancel:0.06, art:{normal:"d2264c7a29e5b7fff8dc3ecdb2cf5ad3", angry:"63f33b20b6e90a96050fe984c1b7df52", worried:"a566d2a5b384dc0e4ae2498aa3d49b07"}, ex:"angry",
    say:["\"학교까지 걸어서 몇 분이에요? 아이 혼자 다녀야 해서요.\"", "휴대폰 지도로 학교 가는 길을 두 번이나 확인했다."]}];
 NEW_BUYERS.forEach(b => {
   if(!K_BUYERS.some(x => x.t === b.t)) K_BUYERS.push({t:b.t, flex:b.flex, cancel:b.cancel});
   BY_ART[b.t] = {art:b.art, ex:b.ex, seated:!!b.seated};
   if(typeof DP_BUYER_SAY !== "undefined") DP_BUYER_SAY[b.t] = b.say;
+});
+
+/* ---------- 🙇 사정 듣기: 몇몇은 유난히 길게 주절댄다(전부 그러지는 않는다). 모두 가상의 인물이다.
+   황금철 씨는 장난 반 짜증 반으로 욕이 튀어나오는 사람 — 화면에는 순화 표기(Tlqkf, 🐶)로만 나간다. ---------- */
+if(typeof MT_TALES !== "undefined") Object.assign(MT_TALES, {
+ p_hawaii:[
+  [[null,"황금철 씨가 이쑤시개를 굴리며 문틀에 짝다리로 기댄다. 알로하 셔츠 단추가 하나 어긋나 있다.","normal"],
+   ["","아이고 사장님, 들어 봐요. 내가 이 동네에서 노래방을 17년 했어. '금철이네 노래방'. 모르면 간첩이지, 이 골목에서.","normal"],
+   ["","IMF도 버텼고, 메르스도 버텼어. 근데 그놈의 코로나가 딱 오더니 문을 닫으래. 두 달이면 된다며? 두 달이 2년이 됐어. Tlqkf, 누가 두 달이래.","angry"],
+   ["","아 미안미안, 욕한 거 아니야. 이건 그냥… 추임새야, 추임새. 우리 나이 되면 입에 붙어.","normal"],
+   ["","그래서 대출을 받았지. 은행 대리가 싹싹하더라고. '사장님 금리 걱정 마세요~' 걱정 말래서 안 했지. 금리가 두 배가 되더라? 🐶놈의 시키, 지금은 전화도 안 받아.","angry"],
+   ["","그다음엔 보험 깨고, 차 팔고, 마누라 금반지까지 팔았어. 그 반지가 결혼 30주년 때 내가 사 준 거야. 그거 팔 때 마누라가 아무 말도 안 하더라. 그게 더 무섭지.","worried"],
+   ["","…아무튼! 그래서 나는 천은 받아야겠다 이거야. 20년 산 집에서 빈손으로 나가는 게 말이 돼요?","angry"]],
+  [["","근데 사장님 되게 오래 듣네? 다른 놈들은 3분 만에 '법대로 합시다' 하고 가던데.","normal"],
+   ["","솔직히 말할까. 천 얘기는 형님들이 해 준 거야. '금철아, 버티면 천은 나온다.' 그 형님들도 다 망했어. 망한 사람들 조언을 내가 듣고 있네, 🐶뿔.","normal"],
+   ["마누라","(안에서) 당신 또 사장님한테 소리 지르지? 목소리 다 들려!","angry"],
+   ["","안 질렀어! 대화하는 거야, 대화! …저 양반이 우리 집 진짜 사장이야. 노래방 망할 때도 저 사람이 카운터 봤어.","normal"],
+   ["","마누라가 요 앞 식당에서 설거지 일을 해. 아침 여섯 시에 나가. 나는 뭐 하냐고? 대리운전. 밤에. 둘이 얼굴 볼 시간이 없어요, 요즘.","worried"],
+   ["","그래도 이 집에서는 마주쳤거든. 새벽에 내가 들어오고 마누라가 나갈 때, 현관에서 딱 30초. '밥 먹어.' '어, 잘 다녀와.' 그게 다야. 근데 그게 좋았어.","worried"]],
+  [["","…알았어요, 알았어. 강제집행 비용이 그렇게 나오면 나도 계산은 할 줄 알아. 노래방 17년 한 사람이야, 산수는 해.","normal"],
+   ["","날짜 박읍시다. 마누라 식당 쉬는 날이 둘째 주 월요일이야. 그날 짐 빼. 이사비는… 250. 거기서 Tlqkf 더는 못 깎아요, 사장님도 양심이 있으면.","normal"],
+   ["","문자로 남기자고? 좋아. 나도 이제 말로 하는 약속은 안 믿어. 은행 대리한테 배웠지.","normal"],
+   [null,"황금철 씨가 이쑤시개를 뱉어 휴지에 싼다. 처음 봤을 때보다 어깨가 조금 내려가 있다.","normal"],
+   ["","그리고 사장님. 나중에 이 동네에 노래방 다시 차리면 와요. 서비스 30분 줄게. …진짜로.","normal"]]],
+ p_tojuk:[
+  [[null,"염복순 할머니가 대문 앞 평상에 앉는다. 옆집에서 누가 고개를 내밀다 들어간다.","normal"],
+   ["","워매, 또 왔소? 내가 여그서 40년을 살았어. 사십 년! 저 전봇대 세울 때도 내가 여그 있었당께.","angry"],
+   ["","저 앞에 슈퍼 있지라? 거그 주인이 삼대째여. 할아부지 때부터 내가 외상 달았응께. 요새는 안 달아, 요새는 카드로 긁어.","normal"],
+   ["","아 긍께 내가 무슨 말을 하려 했드라… 아, 그랴. 우리 아들놈 얘기.","normal"],
+   ["","아들이 인테리어 가게를 한다고 혀서 보증을 섰어. 엄마 도장 한 번만 찍어 달라고. 한 번이 세 번 되드만. 그게 다 이 집이 된 거여.","worried"],
+   ["","아들 욕은 하지 마쇼. 그놈도 지 딴에는 열심히 혔어. 그냥 운이 없었던 거여. …밥은 먹고 다니나 몰라.","worried"]],
+  [["","우리 영감 살아 있을 때는 이 마당에 고추를 널었어. 가을마다 온 골목이 빨갰당께. 사진 보여 줄까? 어디 있드라…","normal"],
+   ["옆집 아주머니","(담 너머로) 언니, 그 사진 우리 집에 있어! 작년에 빌려 갔잖아!","normal"],
+   ["","아이고 그랬냐. …봐, 동네 사람들이 다 내 편이여. 그렁께 함부로 하지 마쇼.","angry"],
+   ["","…근디 그 사람들도 다 알아. 내가 여그서 못 버틴다는 거. 다들 말은 안 하고 반찬만 갖다 줘. 그게 더 서러워.","worried"],
+   ["","딸이 자기 동네로 오라고 혀. 전셋집 하나 알아본다고. 근디 거그는 아는 사람이 하나도 없어. 이 나이에 새로 사귀어야 혀?","worried"]],
+  [["","…두 달만 주쇼. 딸이랑 집 보러 다닐 시간. 그리고 이사비 150. 고추 말리던 평상은 가져갈 거여, 그건 말리지 마쇼.","normal"],
+   ["","그래도 사장님은 인사부터 허드만. 굴러온 돌이라고 한 거, 반은 취소할랑께.","normal"],
+   [null,"할머니가 평상을 손바닥으로 두 번 두드리고 일어난다.","normal"]]]
 });
 
 /* ================= 🔎 단서 번쩍 — 조사하면 방금 얻은 걸 대화창에 6초 띄우고 스르르 사라진다 =================

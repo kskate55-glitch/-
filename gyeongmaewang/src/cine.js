@@ -343,13 +343,16 @@ const _gx_basePanel = lfPanel; lfPanel = function(id){
   if(L && lfPathDue() && id !== "board"){ const P = LF_PATHS[L.char]; h = `<div class="panel lf-path"><b>🧭 인생의 갈림길</b><p>${esc(P.q)}</p><div class="lf-acts">${P.opts.map(o => `<button type="button" class="ag-act" data-lfpath="${o.id}"><span><b>${esc(o.t)}</b><span class="note" style="display:block">${esc(o.d)}</span></span></button>`).join("")}</div><small class="note">한 번 고르면 되돌릴 수 없어요 — 인생이니까요.</small></div>` + h; }
   if(id === "wall" && L){
     const c = kcRec(), seen = lfOpsSeen();
-    const eps = LF_CHARS.map(C => { const E = LF_EPILOGUES[C.id], mine = C.id === L.char, open = mine && (L.epi || {})[C.id]; return `<li class="${open ? "" : "off"}"><b>${C.emo} ${esc(E.t)}</b> <small>${esc(E.need)}</small>${open ? `<p>${esc(E.txt)}</p>` : mine ? "" : `<small class="note"> — ${esc(C.name)}(으)로 플레이하면</small>`}</li>`; }).join("");
+    const eps = LF_CHARS.map(C => { const E = LF_EPILOGUES[C.id], mine = C.id === L.char, open = mine && (L.epi || {})[C.id]; return `<li class="${open ? "" : "off"}"><b>${C.emo} ${esc(E.t)}</b> <small>${esc(E.need)}</small>${open ? `${lfEpiArt(C.id)}<p>${esc(E.txt)}</p>` : mine ? "" : `<small class="note"> — ${esc(C.name)}(으)로 플레이하면</small>`}</li>`; }).join("");
     const ops = LF_CHARS.filter(C => seen[C.id]).map(C => `<button type="button" class="btn" data-gxreplay="${C.id}">🎬 ${C.emo} EP.0 「${esc(LF_EP0[C.id])}」</button>`).join("");
     h += `<div class="panel"><b>🎞️ 오프닝 다시 보기</b><div class="lf-acts">${ops || `<small class="note">아직 본 오프닝이 없어요.</small>`}</div></div><div class="panel"><b>📜 후일담</b><ul class="lf-epi">${eps}</ul></div>
       <div class="panel"><b>⚙️ 연출</b><div class="lf-acts"><label>화면 전환 효과 <select data-gxopt="level"><option value="max" ${gxLevel()==="max"?"selected":""}>많음 — DAY 배너·몽타주·장소 이동 전부</option><option value="mid" ${gxLevel()==="mid"?"selected":""}>보통</option><option value="min" ${gxLevel()==="min"?"selected":""}>최소 — 짧은 페이드만</option></select></label><label><input type="checkbox" data-gxopt="alwaysOp" ${gxCfg().alwaysOp?"checked":""}> 새 게임 때 오프닝 항상 재생</label></div></div>`;
   }
   return h;
 };
+// 📜 후일담 그림(받은 것만 — 없으면 글만 나온다)
+const LF_EPI_ART = {eunkyung:"6afe731dc314968ceaffbbbeac6cdf95", taesik:"6a6847e0305d0bb88761b5829be9bd6b"};
+function lfEpiArt(id){ const a = LF_EPI_ART[id]; return a ? `<div class="lf-epi-art"><img src="/_blob/${a}" alt="" loading="lazy"></div>` : ""; }
 function lfEpiCheck(){ const L = lfRec(); if(!L) return; L.epi = L.epi || {}; const E = LF_EPILOGUES[L.char]; if(E && !L.epi[L.char] && E.ok(kcRec(), L)){ L.epi[L.char] = L.t; if(typeof HUB_TOAST !== "undefined") HUB_TOAST.push({t:`📜 후일담 해금 — 「${E.t}」 (벽에서 읽기)`, big:true}); } }
 const _gx_titles = lfTitles; lfTitles = function(){ _gx_titles(); lfEpiCheck(); };
 document.addEventListener("click", e => {

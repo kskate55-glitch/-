@@ -2142,6 +2142,15 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .bw-cash{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;margin:8px 0;padding:10px 12px;border-radius:10px;background:#f4f7fb;border:1px solid #d6dee8;color:#1f1f1f;font-size:13.5px;line-height:1.55}
 .bw-cash>b{flex-basis:100%;font-size:14px}.bw-cash p{flex-basis:100%;margin:4px 0 0}
 .bw-cash-warn{border-color:#e0a13a;background:#fffaf0}.bw-cash-danger{border-color:#e05252;background:#fff1f0}
+/* 보증금 신용대출 (credit.js) */
+.cr{margin:10px 0;padding:12px 14px;border-radius:12px;border:1.5px solid #e05252;background:#fff5f4;color:#1f1f1f;font-size:14px;line-height:1.6}
+.cr p{margin:6px 0}.cr-h{display:block;font-size:15.5px;color:#b42318}
+.cr-have{border-color:#cfd6df;background:#f6f8fb}.cr-have b{color:#1f1f1f}
+.cr-opts{display:grid;gap:6px;margin:8px 0}
+.cr-opt{display:flex;gap:10px;align-items:center;text-align:left;padding:9px 12px;border-radius:10px;border:1px solid #d6dee8;background:#fff;color:#1f1f1f;cursor:pointer;font:inherit}
+.cr-opt:hover:not([disabled]){border-color:#3b6fd8;background:#f3f7ff}
+.cr-opt[disabled]{opacity:.5;cursor:not-allowed}
+.cr-opt b{display:block}.cr-opt small{display:block;color:#555;font-size:12.5px}.cr-ic{font-size:22px}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -44119,7 +44128,20 @@ function kfStd(S){
     {id:"map", loc:"any", ic:"🗺️", t:"지도·로드뷰로 주변 보기", dur:20, iv:1, rel:3, base:{text:"역·학교·큰길까지 거리를 확인했다."}},
     {id:"night", loc:"site", trip:true, ic:"🌙", t:"밤에 다시 와 보기", dur:100, iv:1, rel:4, base:{text:"밤 분위기와 주차 사정을 봤다."}}];
 }
-function kfMake(S){
+// 시세 조사(중개사 전화)는 모든 물건의 기본 조사다 — 예전엔 명세에 '시세 함정'이 적힌 10개 물건에만 있어서
+// 나머지 12개(도현 f22·f23 등)에선 중개사에게 시세를 물어볼 방법 자체가 없었다(플레이 중 발견).
+// 함정이 없는 물건은 '중개사 말이 대체로 맞는' 평범한 시세 조사로 채운다 — 명세(S.hidden)는 건드리지 않는다.
+function kfBrokerHidden(S){
+  const T = S.trueMid, r100 = v => Math.round(v / 100) * 100, shop = ["f31","f32","f61","f63","f64"].includes(S.id);
+  const who = shop ? "상가·공장 전문 중개사" : "동네 중개사";
+  return {id:"price", k:"price", cost:0, t:"중개사 시세", d:`세 곳 중 두 곳이 ${kMan(r100(T * 0.99))} 안팎을 말했다 — 한 곳은 광고 호가(${kMan(r100(T * 1.08))}) 기준.`,
+    act:{loc:"any", ic:"☎️", t:"중개사 3곳 전화(시세)", dur:40, p:0.85,
+      say:[[`${who} A`, `${kMan(r100(T * 1.08))}은 받아요. 광고가 다 그 정도예요.`], [`${who} B`, `실제로 계약되는 건 ${kMan(r100(T * 0.98))} 선이에요.`], [`${who} C`, `${kMan(r100(T))} 넘기면 오래 걸려요.`]],
+      card:["☎️", "중개사 시세", "세 곳 말 모음"]}};
+}
+function kfMake(S0){
+  kfPrice(S0);   // 최저가·감정가 계산은 원래처럼 명세 자체에 남긴다(목록 화면이 읽는다)
+  const S = S0.hidden.some(h => h.k === "price") ? S0 : Object.assign({}, S0, {hidden:S0.hidden.concat([kfBrokerHidden(S0)])});
   const acts = kfStd(S), cards = [{id:"docs", src:"docs", ic:"📄", t:"매각물건명세서", d:S.occ.legal.split(" · ")[0], w:15}];
   S.hidden.forEach(h => {
     const a = h.act, aid = "h_" + h.id;
@@ -44129,6 +44151,13 @@ function kfMake(S){
       base:{text: a.loc === "site" ? "이번엔 별다른 걸 못 봤다." : "확실한 답은 못 들었다."}});
     cards.push({id:h.id, src:aid, ic:a.card[0], t:a.card[1], d:a.card[2], w:Math.round(60 / S.hidden.length)});
   });
+  // 시세 단서가 중개사 전화가 아닌 다른 조사(동별 실거래 비교 등)로만 나오는 물건 — 중개사 전화도 따로 둔다.
+  //    중개사 말은 광고 호가에 끌려 제각각이라 같은 단서를 덜 확실하게(p 0.55) 준다.
+  if(!acts.some(a => /중개/.test(a.t))){
+    const pr = S.hidden.find(h => h.k === "price"), bh = kfBrokerHidden(S);
+    if(pr) acts.push({id:"h_broker", loc:"any", ic:"☎️", t:"중개사 3곳 전화(시세)", dur:40, iv:3, rel:3,
+      out:[{p:0.55, reveal:pr.id, text:"", say:bh.act.say, useful:true}], base:{text:"다들 광고 호가 얘기만 한다 — 확실한 답은 못 들었다."}});
+  }
   cards.push({id:"rivals", src:"court", ic:"📊", t:"사건 조회수", d:"경쟁자 규모 짐작", w:6});
   cards.push({id:"inside", src:null, ic:"🚪", t:"???", d:"문을 열어 봐야 안다", w:0});
   const T = S.trueMid, round = v => Math.round(v / 10) * 10;
@@ -46079,7 +46108,7 @@ function bwCashHTML(amt){
   return `<div class="bw-cash bw-cash-${lv}"><b>💼 자금 계획</b>
     <span>입찰보증금 <b>${kMan(C.dep)}</b></span><span>낙찰되면 필요한 돈 <b>${kMan(C.bal)}</b> <small>(입찰가+취득세 등)</small></span><span>지금 현금 <b>${C.cash < 0 ? "대출 " + kMan(-C.cash) : kMan(C.cash)}</b></span>
     ${C.loan ? `<span>→ 대출 약 <b>${kMan(C.loan)}</b> 필요 · 연 ${BW_RATE}%면 한 달 이자 약 <b>${kMan(C.month)}</b></span>` : `<span class="up">→ 대출 없이 살 수 있어요</span>`}
-    ${C.noDep ? `<p class="down">⚠️ 입찰보증금(${kMan(C.dep)})도 현금에 없어요. 실제 경매에선 입찰 때 보증금을 내야 해서 <b>입찰 자체를 못 해요</b> — 게임에선 빚으로 처리해 줄 뿐이에요.</p>` : C.share > 0.8 ? `<p class="note">필요한 돈의 ${Math.round(C.share * 100)}%를 빌리게 돼요 — 매도가 늦어질수록 이자가 수익을 깎아요.</p>` : ""}</div>`;
+    ${C.noDep ? `<p class="down">⚠️ 입찰보증금(${kMan(C.dep)})도 현금에 없어요. 실제 경매에선 입찰 때 보증금을 내야 해서 <b>입찰 자체를 못 해요</b>${(K.mode || KC_MODE) === "career" ? " — 위 🏦 신용대출로 마련하거나 이 물건은 넘기세요." : "."}</p>` : C.share > 0.8 ? `<p class="note">필요한 돈의 ${Math.round(C.share * 100)}%를 빌리게 돼요 — 매도가 늦어질수록 이자가 수익을 깎아요.</p>` : ""}</div>`;
 }
 if(typeof qaBidLine === "function"){
   const _bw_line = qaBidLine;
@@ -46088,6 +46117,89 @@ if(typeof qaBidLine === "function"){
 if(typeof keSealedHTML === "function"){
   const _bw_sealed2 = keSealedHTML;
   keSealedHTML = function(){ const h = _bw_sealed2(), c = bwCashHTML(K && K.sealed && K.sealed.amt); return c ? h.replace('<p class="note">제출 후에는 변경할 수 없습니다.</p>', c + '<p class="note">제출 후에는 변경할 수 없습니다.</p>') : h; };
+}
+
+/* ============================== 🏦 보증금이 모자라면 — 신용대출로 마련 ==============================
+   실제 경매는 입찰할 때 입찰보증금(보통 최저가의 10%)을 현금·수표로 낸다 — 없으면 입찰 자체를 못 한다.
+   예전엔 커리어 모드가 이걸 빚으로 조용히 처리해 줘서, 무리한 플레이가 현금이 바닥나도 계속 입찰할 수 있었다(t_leverage.js).
+   이제 커리어 모드에선 보증금이 모자라면 봉투에 못 넣고, 대신 신용대출로 마련하는 길을 연다.
+   ⚠️ 아래 셋은 실제 상품이 아니라 게임용 표본 — 금리는 2026년 공개 자료에서 보이는 범위(은행 신용대출 5~7%대,
+      저축은행 10%대, 카드론 14~16%대, 법정 최고금리 20%)를 참고해 다듬었다. */
+const CR_OFFERS = [
+  {id:"bank", ic:"🏛️", t:"주거래은행 신용대출", rate:6.5, limit:1500, wait:60,  note:"소득·재직 확인 — 심사에 한 시간"},
+  {id:"sav",  ic:"🏦", t:"저축은행 신용대출",   rate:13.9, limit:2500, wait:20, note:"심사 빠름 — 대신 금리가 두 배"},
+  {id:"card", ic:"💳", t:"카드론",             rate:15.5, limit:1000, wait:0,  note:"바로 나옴 — 금리가 가장 높고 신용점수에 흔적이 남아요"}];
+const CR_TOTAL_CAP = 4000;   // 신용대출은 합쳐서 이만큼까지(게임용 단순화 — 실제 한도는 소득·기존 빚에 따라 다르다)
+function crRec(){ const c = kcRec(); if(!Array.isArray(c.credit)) c.credit = []; return c.credit; }
+function crOwed(){ return crRec().reduce((s, x) => s + x.amt, 0); }
+function crOn(){ return K && KP && (K.mode || KC_MODE) === "career" && K.step === "brief"; }
+function crDep(){ return Math.round(KP.minBid * 0.1 / 10) * 10; }
+function crGap(){ const cash = +kcRec().cash || 0, d = crDep() - cash; return d > 0 ? Math.ceil(d / 100) * 100 : 0; }
+function crLeft(o){ const used = crRec().filter(x => x.id === o.id).reduce((s, x) => s + x.amt, 0); return Math.max(0, Math.min(o.limit - used, CR_TOTAL_CAP - crOwed())); }
+function crTake(id){
+  const o = CR_OFFERS.find(x => x.id === id), gap = crGap(); if(!o || !gap || !crOn()) return false;
+  const amt = Math.min(crLeft(o), gap); if(amt < gap) return false;   // 모자란 만큼 다 안 나오면 못 빌린다(보증금은 한 번에 내야 한다)
+  const c = kcRec(); c.cash = (+c.cash || 0) + amt;
+  crRec().push({id:o.id, t:o.t, rate:o.rate, amt, at:K.caseNo || 0});
+  if(o.wait && K.timeLeft != null) K.timeLeft = Math.max(0, K.timeLeft - o.wait);
+  kLog(`🏦 ${o.t} ${kMan(amt)} · 연 ${o.rate}% — 입찰보증금을 마련했다. (한 달 이자 약 ${kMan(Math.round(amt * o.rate / 100 / 12))})`);
+  if(typeof save === "function") save(); return true;
+}
+function crRepay(days){
+  const c = kcRec(), L = crRec(); if(!L.length) return 0;
+  const owed = crOwed(), intr = Math.max(1, Math.round(L.reduce((s, x) => s + x.amt * x.rate / 100 * (days || 7) / 365, 0)));
+  if((+c.cash || 0) < owed + intr) return 0;
+  c.cash -= owed + intr; c.credit = [];
+  if(K) kLog(`🏦 신용대출 ${kMan(owed)} 상환 — 이자 ${kMan(intr)}`);
+  if(typeof save === "function") save(); return owed + intr;
+}
+function crHTML(){
+  if(!crOn()) return "";
+  const gap = crGap(), L = crRec(), owed = crOwed(), cash = +kcRec().cash || 0;
+  if(!gap && !owed) return "";
+  if(!gap) return `<div class="cr cr-have"><b>🏦 갚지 않은 신용대출 ${kMan(owed)}</b> <small class="note">${L.map(x => `${esc(x.t)} 연 ${x.rate}%`).join(" · ")} — 매도로 현금이 생기면 갚을 수 있어요. 잔금 대출 심사 때 기존 빚으로 잡혀요.</small>${cash >= owed + 50 ? ` <button type="button" class="btn" data-crpay>지금 갚기</button>` : ""}</div>`;
+  const rows = CR_OFFERS.map(o => { const left = crLeft(o), can = left >= gap, m = Math.round(gap * o.rate / 100 / 12);
+    return `<button type="button" class="cr-opt" data-crtake="${o.id}" ${can ? "" : "disabled"}><span class="cr-ic">${o.ic}</span><span><b>${o.t} · 연 ${o.rate}%</b><small>${can ? `${kMan(gap)} 빌리면 한 달 이자 약 ${kMan(m)}` : `한도가 모자라요(남은 한도 ${kMan(left)})`} · ${o.note}</small></span></button>`; }).join("");
+  const none = CR_OFFERS.every(o => crLeft(o) < gap);
+  return `<div class="cr cr-need" id="crBox"><b class="cr-h">💼 입찰보증금 ${kMan(crDep())}이 현금(${cash < 0 ? "빚 " + kMan(-cash) : kMan(cash)})보다 많아요</b>
+    <p>실제 경매에선 보증금이 없으면 입찰 자체를 못 해요. <b>${kMan(gap)}</b>을 빌리면 쓸 수 있어요.</p>
+    <div class="cr-opts">${rows}</div>
+    <p class="note">패찰하면 보증금은 그날 돌려받으니 바로 갚으면 이자가 거의 없어요. 낙찰되면 이 빚을 안고 잔금 대출까지 받게 돼요 — 신용대출이 많을수록 잔금 대출 심사에 불리해요.</p>
+    ${none ? `<p class="down">빌릴 수 있는 곳이 없어요 (신용대출은 합쳐서 ${kMan(CR_TOTAL_CAP)}까지) — 이 물건은 넘기고 보증금이 작은 물건을 고르세요.</p>` : ""}</div>`;
+}
+if(typeof keBidSheet === "function"){
+  const _cr_sheet = keBidSheet;
+  keBidSheet = function(){ const h = _cr_sheet(), c = crHTML(); return c ? h.replace('<div class="ke-err" id="kBidErr"', c + '<div class="ke-err" id="kBidErr"') : h; };
+}
+// 보증금이 없으면 봉투에 못 넣는다 — feel.js 봉투 처리보다 먼저(캡처)
+document.addEventListener("click", e => {
+  if(!e.target.closest) return;
+  const t = e.target.closest("[data-crtake]");
+  if(t){ e.stopImmediatePropagation(); if(crTake(t.dataset.crtake)){ const el = document.getElementById("kBid"), v = el && el.value; renderArena(); const n = document.getElementById("kBid"); if(n && v){ n.value = v; n.dispatchEvent(new Event("input", {bubbles:true})); } } return; }
+  if(e.target.closest("[data-crpay]")){ e.stopImmediatePropagation(); crRepay(7); renderArena(); return; }
+  if(e.target.closest("[data-kcseal]") && crOn() && crGap() > 0){
+    e.preventDefault(); e.stopImmediatePropagation();
+    const box = document.getElementById("crBox"); if(box){ box.classList.remove("bw-shake"); void box.offsetWidth; box.classList.add("bw-shake"); box.scrollIntoView({block:"center", behavior:"smooth"}); }
+    const err = document.getElementById("kBidErr"); if(err) err.textContent = "입찰보증금이 모자라요 — 위에서 마련하거나 이 물건은 넘기세요.";
+  }
+}, true);
+// 낙찰 → 매도까지 걸린 날만큼 이자를 보유비에 넣는다
+if(typeof kFinish === "function"){
+  const _cr_kFinish = kFinish;
+  kFinish = function(){
+    if(K && K.cost && !K.crCharged && (K.mode || "career") === "career"){ const L = crRec(); if(L.length){ K.crCharged = true; const i = Math.round(L.reduce((s, x) => s + x.amt * x.rate / 100 * (K.day || 0) / 365, 0)); if(i > 0){ K.cost.hold += i; kLog(`🏦 신용대출 이자 ${kMan(i)}(${K.day}일)`); } } }
+    return _cr_kFinish.apply(this, arguments);
+  };
+}
+// 패찰하면 보증금이 돌아온다 — 바로 갚는 버튼
+if(typeof kingHTML === "function"){
+  const _cr_king = kingHTML;
+  kingHTML = function(){
+    const h = _cr_king(); if(!K || K.step !== "lost" || (K.mode || "career") !== "career" || !crOwed()) return h;
+    const owed = crOwed(), intr = Math.max(1, Math.round(crRec().reduce((s, x) => s + x.amt * x.rate / 100 * 7 / 365, 0))), can = (+kcRec().cash || 0) >= owed + intr;
+    const box = `<div class="cr cr-have"><b>🏦 보증금을 돌려받았어요 — 신용대출 ${kMan(owed)}</b> <small class="note">${can ? `지금 갚으면 이자는 한 주치 약 ${kMan(intr)}뿐이에요.` : "현금이 모자라 아직 못 갚아요."}</small>${can ? ` <button type="button" class="btn pri" data-crpay>바로 갚기</button>` : ""}</div>`;
+    return h.replace(/(<div class="lw-cta">)/, box + "$1");
+  };
 }
 
 window.GMW_STANDALONE = true;

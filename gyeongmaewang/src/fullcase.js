@@ -344,7 +344,20 @@ function kfStd(S){
     {id:"map", loc:"any", ic:"🗺️", t:"지도·로드뷰로 주변 보기", dur:20, iv:1, rel:3, base:{text:"역·학교·큰길까지 거리를 확인했다."}},
     {id:"night", loc:"site", trip:true, ic:"🌙", t:"밤에 다시 와 보기", dur:100, iv:1, rel:4, base:{text:"밤 분위기와 주차 사정을 봤다."}}];
 }
-function kfMake(S){
+// 시세 조사(중개사 전화)는 모든 물건의 기본 조사다 — 예전엔 명세에 '시세 함정'이 적힌 10개 물건에만 있어서
+// 나머지 12개(도현 f22·f23 등)에선 중개사에게 시세를 물어볼 방법 자체가 없었다(플레이 중 발견).
+// 함정이 없는 물건은 '중개사 말이 대체로 맞는' 평범한 시세 조사로 채운다 — 명세(S.hidden)는 건드리지 않는다.
+function kfBrokerHidden(S){
+  const T = S.trueMid, r100 = v => Math.round(v / 100) * 100, shop = ["f31","f32","f61","f63","f64"].includes(S.id);
+  const who = shop ? "상가·공장 전문 중개사" : "동네 중개사";
+  return {id:"price", k:"price", cost:0, t:"중개사 시세", d:`세 곳 중 두 곳이 ${kMan(r100(T * 0.99))} 안팎을 말했다 — 한 곳은 광고 호가(${kMan(r100(T * 1.08))}) 기준.`,
+    act:{loc:"any", ic:"☎️", t:"중개사 3곳 전화(시세)", dur:40, p:0.85,
+      say:[[`${who} A`, `${kMan(r100(T * 1.08))}은 받아요. 광고가 다 그 정도예요.`], [`${who} B`, `실제로 계약되는 건 ${kMan(r100(T * 0.98))} 선이에요.`], [`${who} C`, `${kMan(r100(T))} 넘기면 오래 걸려요.`]],
+      card:["☎️", "중개사 시세", "세 곳 말 모음"]}};
+}
+function kfMake(S0){
+  kfPrice(S0);   // 최저가·감정가 계산은 원래처럼 명세 자체에 남긴다(목록 화면이 읽는다)
+  const S = S0.hidden.some(h => h.k === "price") ? S0 : Object.assign({}, S0, {hidden:S0.hidden.concat([kfBrokerHidden(S0)])});
   const acts = kfStd(S), cards = [{id:"docs", src:"docs", ic:"📄", t:"매각물건명세서", d:S.occ.legal.split(" · ")[0], w:15}];
   S.hidden.forEach(h => {
     const a = h.act, aid = "h_" + h.id;
@@ -354,6 +367,13 @@ function kfMake(S){
       base:{text: a.loc === "site" ? "이번엔 별다른 걸 못 봤다." : "확실한 답은 못 들었다."}});
     cards.push({id:h.id, src:aid, ic:a.card[0], t:a.card[1], d:a.card[2], w:Math.round(60 / S.hidden.length)});
   });
+  // 시세 단서가 중개사 전화가 아닌 다른 조사(동별 실거래 비교 등)로만 나오는 물건 — 중개사 전화도 따로 둔다.
+  //    중개사 말은 광고 호가에 끌려 제각각이라 같은 단서를 덜 확실하게(p 0.55) 준다.
+  if(!acts.some(a => /중개/.test(a.t))){
+    const pr = S.hidden.find(h => h.k === "price"), bh = kfBrokerHidden(S);
+    if(pr) acts.push({id:"h_broker", loc:"any", ic:"☎️", t:"중개사 3곳 전화(시세)", dur:40, iv:3, rel:3,
+      out:[{p:0.55, reveal:pr.id, text:"", say:bh.act.say, useful:true}], base:{text:"다들 광고 호가 얘기만 한다 — 확실한 답은 못 들었다."}});
+  }
   cards.push({id:"rivals", src:"court", ic:"📊", t:"사건 조회수", d:"경쟁자 규모 짐작", w:6});
   cards.push({id:"inside", src:null, ic:"🚪", t:"???", d:"문을 열어 봐야 안다", w:0});
   const T = S.trueMid, round = v => Math.round(v / 10) * 10;

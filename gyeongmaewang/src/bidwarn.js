@@ -74,7 +74,7 @@ function bwCashHTML(amt){
   return `<div class="bw-cash bw-cash-${lv}"><b>💼 자금 계획</b>
     <span>입찰보증금 <b>${kMan(C.dep)}</b></span><span>낙찰되면 필요한 돈 <b>${kMan(C.bal)}</b> <small>(입찰가+취득세 등)</small></span><span>지금 현금 <b>${C.cash < 0 ? "대출 " + kMan(-C.cash) : kMan(C.cash)}</b></span>
     ${C.loan ? `<span>→ 대출 약 <b>${kMan(C.loan)}</b> 필요 · 연 ${BW_RATE}%면 한 달 이자 약 <b>${kMan(C.month)}</b></span>` : `<span class="up">→ 대출 없이 살 수 있어요</span>`}
-    ${C.noDep ? `<p class="down">⚠️ 입찰보증금(${kMan(C.dep)})도 현금에 없어요. 실제 경매에선 입찰 때 보증금을 내야 해서 <b>입찰 자체를 못 해요</b> — 게임에선 빚으로 처리해 줄 뿐이에요.</p>` : C.share > 0.8 ? `<p class="note">필요한 돈의 ${Math.round(C.share * 100)}%를 빌리게 돼요 — 매도가 늦어질수록 이자가 수익을 깎아요.</p>` : ""}</div>`;
+    ${C.noDep ? `<p class="down">⚠️ 입찰보증금(${kMan(C.dep)})도 현금에 없어요. 실제 경매에선 입찰 때 보증금을 내야 해서 <b>입찰 자체를 못 해요</b>${(K.mode || KC_MODE) === "career" ? " — 위 🏦 신용대출로 마련하거나 이 물건은 넘기세요." : "."}</p>` : C.share > 0.8 ? `<p class="note">필요한 돈의 ${Math.round(C.share * 100)}%를 빌리게 돼요 — 매도가 늦어질수록 이자가 수익을 깎아요.</p>` : ""}</div>`;
 }
 if(typeof qaBidLine === "function"){
   const _bw_line = qaBidLine;

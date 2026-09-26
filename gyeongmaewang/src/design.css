@@ -771,3 +771,12 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .bw-cash{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;margin:8px 0;padding:10px 12px;border-radius:10px;background:#f4f7fb;border:1px solid #d6dee8;color:#1f1f1f;font-size:13.5px;line-height:1.55}
 .bw-cash>b{flex-basis:100%;font-size:14px}.bw-cash p{flex-basis:100%;margin:4px 0 0}
 .bw-cash-warn{border-color:#e0a13a;background:#fffaf0}.bw-cash-danger{border-color:#e05252;background:#fff1f0}
+/* 보증금 신용대출 (credit.js) */
+.cr{margin:10px 0;padding:12px 14px;border-radius:12px;border:1.5px solid #e05252;background:#fff5f4;color:#1f1f1f;font-size:14px;line-height:1.6}
+.cr p{margin:6px 0}.cr-h{display:block;font-size:15.5px;color:#b42318}
+.cr-have{border-color:#cfd6df;background:#f6f8fb}.cr-have b{color:#1f1f1f}
+.cr-opts{display:grid;gap:6px;margin:8px 0}
+.cr-opt{display:flex;gap:10px;align-items:center;text-align:left;padding:9px 12px;border-radius:10px;border:1px solid #d6dee8;background:#fff;color:#1f1f1f;cursor:pointer;font:inherit}
+.cr-opt:hover:not([disabled]){border-color:#3b6fd8;background:#f3f7ff}
+.cr-opt[disabled]{opacity:.5;cursor:not-allowed}
+.cr-opt b{display:block}.cr-opt small{display:block;color:#555;font-size:12.5px}.cr-ic{font-size:22px}

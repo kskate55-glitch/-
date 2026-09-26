@@ -333,3 +333,6 @@ Object.assign(ART_DEFAULT, { cg_il_m01:"3f36e33d22ea53c4189bb9d44377adcb", cg_il
 
 // 외전 장면 그림(v197): D03 b 권 세무사 상담(s4) / M03 미정 — a 카운터에서 장부·통장(s1, 통장 글자 흐림) · b 셔터 올린 빈 가게와 조 대표(s3, 대표·운동화 표시 흐림) · c 셔터 앞 달력 동그라미(s8)
 Object.assign(ART_DEFAULT, { cg_il_d03_b:"c1327a4d5c43a24cc43f4ddaab921ac7", cg_il_m03:"c757d02d5db29f5a1319c775a44f2fe2", cg_il_m03_a:"2286f1b3537a0506ced4a3823bb6c362", cg_il_m03_b:"c757d02d5db29f5a1319c775a44f2fe2", cg_il_m03_c:"26eb89cff7c6cdd5124fe3acc0e0ba2a" });
+
+// 외전 장면 그림(v198): J01 재훈 가족 — a 저녁 식탁에서 들쭉날쭉한 달력을 올려다보는 세 식구(s1, 대표·머그 기호 흐림)
+Object.assign(ART_DEFAULT, { cg_il_j01:"7ee4ad100a40a69360d84bcd69942df4", cg_il_j01_a:"7ee4ad100a40a69360d84bcd69942df4" });

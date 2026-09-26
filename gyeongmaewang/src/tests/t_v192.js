@@ -4,7 +4,7 @@ const { chromium } = require('playwright');
 const p=await b.newPage({viewport:{width:1280,height:900}}); p.on('pageerror',e=>errs.push('pageerror '+e.message));
 await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(800);
 const list=await p.evaluate(()=>{ const out=[]; IL_ORDER.forEach(id=>{ const d=IL[id]; (d.scenes||[]).forEach(sc=>{ const n=d.prog[sc.pc]; if(n&&n.cg&&artUrl(n.cg)) out.push({id,sid:sc.id,cg:n.cg}); }); }); return out; });
-ok(['cg_il_s01_a','cg_il_s01_b','cg_il_s01_c','cg_il_d01_a','cg_il_d01_b','cg_il_s03_c','cg_il_d01_c','cg_il_d03_a','cg_il_s03_a','cg_il_s03_b','cg_il_m01_a','cg_il_m01_b','cg_il_m01_c','cg_il_d03_c','cg_il_d03_b','cg_il_m03_a','cg_il_m03_b','cg_il_m03_c'].every(c=>list.some(x=>x.cg===c)), '장면 그림 등록 ('+list.length+'칸)');
+ok(['cg_il_s01_a','cg_il_s01_b','cg_il_s01_c','cg_il_d01_a','cg_il_d01_b','cg_il_s03_c','cg_il_d01_c','cg_il_d03_a','cg_il_s03_a','cg_il_s03_b','cg_il_m01_a','cg_il_m01_b','cg_il_m01_c','cg_il_d03_c','cg_il_d03_b','cg_il_m03_a','cg_il_m03_b','cg_il_m03_c','cg_il_j01_a'].every(c=>list.some(x=>x.cg===c)), '장면 그림 등록 ('+list.length+'칸)');
 for(const x of list){
   const r=await p.evaluate(async x=>{ localStorage.clear(); const d=IL[x.id]; lfNew(d.ch); ilStart(x.id,{album:true}); ilCfgSet({speed:'instant'}); ilGoScene(x.sid);
     const img=document.querySelector('.il-cg img'); if(!img) return {shown:false};

@@ -63,6 +63,7 @@ const OE_ART = {
   oe_mijeong_op3:"a44f06d011334c3b155ebbb029df9dc0",  // 처음 '경매'를 검색한 밤
   oe_mijeong_end1:"6c74a8f946a0931e41af1a76fc9fd60a", // 쉬는 날엔 뭐 하세요, 두 번째 대답
   oe_eunkyung_op1:"04720350f59e2fa77306b087565ef609", // 병원 일정으로 가득 찬 퇴직 후의 수첩
-  oe_eunkyung_op2:"36e34c23c106d4e93799907cde233141"  // 병원 대기실, 아버지 곁에서 미룬 내 예약
+  oe_eunkyung_op2:"36e34c23c106d4e93799907cde233141", // 병원 대기실, 아버지 곁에서 미룬 내 예약
+  oe_eunkyung_op3:"769a616d8d34c67fb4b9b7fab9e83344"  // 밤의 식탁, 깨어나는 오래된 감각
 };
 if(typeof ART_DEFAULT !== "undefined") Object.assign(ART_DEFAULT, OE_ART);

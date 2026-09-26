@@ -104,3 +104,7 @@ Object.assign(ART_DEFAULT, AS_OP_ART);
 // 받은 오프닝 10차(v149): 서윤 — 반지하 방에서 은행 앱
 AS_OP_ART.op_seoyun_2 = "b6dca34b68f22486df37de13ed89eab8";
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 11차(v150): 서윤 — 생각 구름이 톡 터지고 천장 곰팡이(서윤 6칸 완료)
+AS_OP_ART.op_seoyun_2_4 = "c330c35a5f9547d42271e028b0fd2f22";
+Object.assign(ART_DEFAULT, AS_OP_ART);

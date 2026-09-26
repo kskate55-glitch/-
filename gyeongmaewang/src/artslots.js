@@ -339,3 +339,6 @@ Object.assign(ART_DEFAULT, { cg_il_j01:"7ee4ad100a40a69360d84bcd69942df4", cg_il
 
 // 외전 장면 그림(v199): J01 b 민 사장이 건물 아래 땅 칸을 짚는 장면(s3)
 Object.assign(ART_DEFAULT, { cg_il_j01_b:"78d6e89e664df5342fe98960f0afdfc4" });
+
+// 외전 장면 그림(v200): J01 c 현장 쉼터에서 오 반장이 휴대폰 보여 주는 해 질 녘(s7) · J03 a 수리 끝난 빈 방에서 전화 받는 재훈(s1, 줄자 표시 흐림)
+Object.assign(ART_DEFAULT, { cg_il_j01_c:"5b96c950ca549b4376d82e0fb4036217", cg_il_j03_a:"129687202a94c4bd002312ce3c91d96b" });

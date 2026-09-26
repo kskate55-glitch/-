@@ -1058,3 +1058,16 @@ body.nx-quiet .stg-file{animation:none!important}
 }
 #kfsRoot .ke-confirm .bw,#kfsRoot .ke-confirm .bw-cash{margin:6px 0}
 .dp-off{opacity:.45;cursor:not-allowed}.dp-why{margin:6px 0}
+/* v217 💬 사연 중간 선택지 */
+.tt-card .mt-nm{font-size:16px;margin-bottom:8px;display:block}
+.tt-opts{display:flex;flex-direction:column;gap:8px}
+.tt-opt{display:block;width:100%;text-align:left;padding:11px 14px;border-radius:12px;border:1.5px solid #d9dde3;background:#fff;color:#1c2230;font-size:14.5px;line-height:1.45;cursor:pointer;transition:transform .08s,border-color .15s,background .15s}
+.tt-opt:hover{border-color:#23476b;background:#f4f7fb;transform:translateX(2px)}
+.tt-opt b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#23476b;color:#fff;font-size:12px;margin-right:6px}
+.tt-opt small{display:inline-block;font-weight:800;font-size:11.5px;padding:1px 7px;border-radius:999px;margin-right:4px;background:#eef1f5;color:#23476b}
+.tt-warm small{background:#fde8ec;color:#a3284a}.tt-fix small{background:#e6f4ea;color:#1f7a3d}.tt-firm small{background:#e8eef7;color:#23476b}
+.tt-prev{margin:0 0 10px;padding:8px 12px;border-left:3px solid #d9861a;background:rgba(217,134,26,.1);border-radius:8px;font-size:14px;line-height:1.55}.tt-prev b{color:#ffb347}
+/* v218 예상 깨기 — 개찰 희비극 */
+.panel.sp-court{background:rgba(120,120,140,.12)!important;border-left:4px solid #8a8fa3;padding:10px 14px}
+.sp-court .sp-line{margin:4px 0;font-size:15px}
+.sp-court .sp-hush{margin:6px 0 4px}

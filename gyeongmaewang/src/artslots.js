@@ -348,3 +348,6 @@ Object.assign(ART_DEFAULT, { cg_il_j03:"828e2d849e98db8da727af766a5fa600", cg_il
 
 // 외전 장면 그림(v202): E01 은경 — a 찻집에서 민혜경이 사진 밀어 주는 장면(s2, 대표) · b 막대 짧은 표 두 장 비교(s5) · c 밤 버스 창가(s6) / E03 — a 폴더 두 개 앞의 세 사람(s3, 대표) · c 세 사람 서명하는 손(s8)
 Object.assign(ART_DEFAULT, { cg_il_e01:"5e5a262652300234f5641f26e6acfef0", cg_il_e01_a:"5e5a262652300234f5641f26e6acfef0", cg_il_e01_b:"a19c03b379b24a4f9f0324573d5cca7e", cg_il_e01_c:"d8d9e3caf779e200fe916af96f72824f", cg_il_e03:"9145e20f1c38d1d9a404c9b70b755c1f", cg_il_e03_a:"9145e20f1c38d1d9a404c9b70b755c1f", cg_il_e03_c:"c0cd62911aecc7ad1ec978686497bdb6" });
+
+// 외전 장면 그림(v203): T01 태식 — a 주차장에서 SUV 자랑하는 김사장(s2, 엠블럼 흐림) · b 태블릿 공매 아이콘(s3, 대표) · c 문보다 넓은 기계와 줄자 재는 오반장(s5) / T03 — a 카운터에서 부탁하는 박영수(s2, 모자 로고 흐림) · b 밤 강의실의 동기들(s6, 대표)
+Object.assign(ART_DEFAULT, { cg_il_t01:"aafeb0898f170954f5ca63b7aae67c1b", cg_il_t01_a:"6d6016d1487ef7ac32dc812b3ec50a53", cg_il_t01_b:"aafeb0898f170954f5ca63b7aae67c1b", cg_il_t01_c:"62e035001ae54b7dc9f621aea2143779", cg_il_t03:"665b19f97e2f69ad49845dfb9c522d2f", cg_il_t03_a:"1bad707a69799662cc3cc26ebc7ce00b", cg_il_t03_b:"665b19f97e2f69ad49845dfb9c522d2f" });

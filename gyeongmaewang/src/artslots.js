@@ -315,3 +315,6 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 32차(v191): f54 면목동 2층 현관 — 빨간 책가방·실내화 주머니·기린 키재기 스티커
 Object.assign(AS_BG_ART, { bg_case_f54_door: "f70bd1ad4d3825cde577897479525fab" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 외전 장면 그림(v192): S01 서윤 — a 영수증 더미 책상(대표·책장 표지) · b 서점에서 민지 선배와 책 비교 · c 노을 속 영수증 세 칸 분류
+Object.assign(ART_DEFAULT, { cg_il_s01:"21c95dd4c072b9f0af0b2960dc230b81", cg_il_s01_a:"21c95dd4c072b9f0af0b2960dc230b81", cg_il_s01_b:"97ed6818165f172869b741654039c955", cg_il_s01_c:"c9f40c6d6dfc98da123bacd6bd299da0" });

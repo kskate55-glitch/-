@@ -1,0 +1,18 @@
+// v192 — 외전 장면 그림: 장면에 cg=가 붙어 있고 그림이 등록된 칸은 그 장면에서 실제로 뜨는지(모든 편 자동 순회)
+const { chromium } = require('playwright');
+(async()=>{const b=await chromium.launch(); const errs=[]; const ok=(c,m)=>{ console.log((c?'✅ ':'❌ ')+m); if(!c) errs.push(m); };
+const p=await b.newPage({viewport:{width:1280,height:900}}); p.on('pageerror',e=>errs.push('pageerror '+e.message));
+await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(800);
+const list=await p.evaluate(()=>{ const out=[]; IL_ORDER.forEach(id=>{ const d=IL[id]; (d.scenes||[]).forEach(sc=>{ const n=d.prog[sc.pc]; if(n&&n.cg&&artUrl(n.cg)) out.push({id,sid:sc.id,cg:n.cg}); }); }); return out; });
+ok(list.some(x=>x.cg==='cg_il_s01_a')&&list.some(x=>x.cg==='cg_il_s01_b')&&list.some(x=>x.cg==='cg_il_s01_c'), 'S01 장면 그림 3칸 등록 ('+list.length+'칸)');
+for(const x of list){
+  const r=await p.evaluate(async x=>{ localStorage.clear(); const d=IL[x.id]; lfNew(d.ch); ilStart(x.id,{album:true}); ilCfgSet({speed:'instant'}); ilGoScene(x.sid);
+    const img=document.querySelector('.il-cg img'); if(!img) return {shown:false};
+    const w=await new Promise(r=>{ if(img.complete&&img.naturalWidth) return r(img.naturalWidth); img.onload=()=>r(img.naturalWidth); img.onerror=()=>r(0); });
+    const box=document.querySelector('.il-cg'); const shown=!box.hidden && img.getAttribute('src')===artUrl(x.cg); ilClose(true); return {shown,w}; }, x);
+  ok(r.shown && r.w>1000, `${x.id} ${x.sid} → ${x.cg} 화면에 뜸`);
+}
+const end=await p.evaluate(async()=>{ localStorage.clear(); lfNew('seoyun'); ilStart('S01',{album:true}); ilFinish(); const i=document.querySelector('.il-end-cg'); const s=i&&i.getAttribute('src'); ilClose(true); return s===artUrl('cg_il_s01_a'); });
+ok(end, 'S01 끝 화면 대표 그림 = 영수증 더미(a)');
+ok(errs.filter(e=>e.startsWith('pageerror')).length===0, 'JS 오류 없음 '+errs.filter(e=>e.startsWith('pageerror')).join('|'));
+console.log(errs.length?'FAIL':'ALL OK'); await b.close(); })();

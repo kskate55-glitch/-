@@ -18,8 +18,12 @@ const FR_STEPS = [["🔍", "조사", "시간 안에서 서류·현장·사람을
 function frHome(){
   const menu = document.querySelector(".kc-menu"); if(!menu || menu.dataset.fr) return;
   menu.dataset.fr = "1";
-  const go = menu.querySelector("[data-lfgo]");
-  if(go){
+  // 지금 입구는 스토리 STAGE 버튼(.ep-home)이다 — 예전 '자유 인생'(data-lfgo)만 찾으면 그 버튼까지 접혀 들어가 첫 화면에 시작 버튼이 없어졌다
+  const story = menu.querySelector(".ep-home");
+  const go = story || menu.querySelector("[data-lfgo]");
+  if(story){
+    story.innerHTML = story.innerHTML.replace(/^📖 /, "▶ ");
+  } else if(go){
     go.removeAttribute("data-lfgo"); go.setAttribute("data-frgo", "");
     go.innerHTML = `▶ 첫 경매 시작하기 <small>한서윤(25)과 서울 빌라 한 채 — 조사부터 매도까지 한 바퀴</small>`;
   }

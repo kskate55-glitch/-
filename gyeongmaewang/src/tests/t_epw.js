@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch(); const errs=[]; const ok=(c,m)=>{console.log((c?'✅':'❌')+' '+m); if(!c) errs.push(m);};
 for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{width:w,height:h}}); p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept());
 await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(700);
-await p.evaluate(()=>{ localStorage.clear(); kcRec().fr={full:true}; page='arena'; arenaTab='home'; renderArena(); }); await p.waitForTimeout(600);
+await p.evaluate(()=>{ localStorage.clear(); IL_AUTOPLAY=false; kcRec().fr={full:true}; page='arena'; arenaTab='home'; renderArena(); }); await p.waitForTimeout(600);
 ok(await p.evaluate(()=>!document.querySelector('.lf-home-go')), w+' 첫 화면에 자유 인생 버튼 없음');
 await p.click('.ep-home'); await p.waitForTimeout(1500);
 for(let k=0;k<4;k++){ await p.evaluate(()=>{const s=document.querySelector('[data-gxskip]'); if(s) s.click();}); await p.waitForTimeout(500); }
@@ -21,6 +21,7 @@ const t0=await p.evaluate(()=>lfRec().t);
 await p.click('[data-ep="nextep"]'); await p.waitForTimeout(900);
 ok(await p.evaluate((t0)=>arenaTab==='life' && lfRec().t>t0+100*1440, t0), w+' 방으로 돌아오고 몇 달 흐름');
 for(let e=1;e<4;e++){
+  { const lt=await p.$('[data-illater]'); if(lt){ await lt.click(); await p.waitForTimeout(300); } }
   await p.click('.ep-alert [data-epgo]'); await p.waitForTimeout(700);
   const want=await p.evaluate((e)=>EP_PLAN.seoyun.eps[e].k,e);
   ok(await p.evaluate((want)=>arenaTab==='king' && K && KP.id===want && K.epStory && KP.gen, want), w+` EP${e+1} = 새 풀 경매(${want})`);

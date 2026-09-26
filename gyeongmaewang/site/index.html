@@ -1901,6 +1901,8 @@ img[src*="d934d843a6ee1ccdc0e4aad748263bae"], img[src*="66fcffef1b56a7bd4110523b
 img.vn-sprite[src*="d934d843a6ee1ccdc0e4aad748263bae"], img.vn-sprite[src*="66fcffef1b56a7bd4110523b5109a8e8"], img.vn-sprite[src*="bf31796584ca616f8c533687ce4270be"]{bottom:0!important;height:84%!important;max-width:92%!important}
 .kc-menu .ep-home{background:linear-gradient(135deg,#f2b33d,#e0a63a)!important;color:#1b1406!important;border-color:#f2b33d!important;font-weight:900}
 .kc-menu .ep-home small{color:#4a3508!important}
+.kc-menu .ep-restart{background:rgba(20,26,38,.55)!important;color:#e9e2d2!important;border:1px dashed rgba(255,255,255,.35)!important;font-size:13px;min-height:34px;padding:6px 12px;margin-top:-2px}
+.kc-menu .ep-restart:hover{border-color:#f2b33d!important;color:#fff!important}
 .kc-box{border:1px solid rgba(255,255,255,.18);border-radius:14px;background:rgba(20,28,44,.72)}
 .kc-box>summary{list-style:none;cursor:pointer;padding:13px 16px;font-weight:800;color:#f3efe4;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:48px;justify-content:center}
 .kc-box>summary::-webkit-details-marker{display:none}
@@ -43013,8 +43015,12 @@ const FR_STEPS = [["🔍", "조사", "시간 안에서 서류·현장·사람을
 function frHome(){
   const menu = document.querySelector(".kc-menu"); if(!menu || menu.dataset.fr) return;
   menu.dataset.fr = "1";
-  const go = menu.querySelector("[data-lfgo]");
-  if(go){
+  // 지금 입구는 스토리 STAGE 버튼(.ep-home)이다 — 예전 '자유 인생'(data-lfgo)만 찾으면 그 버튼까지 접혀 들어가 첫 화면에 시작 버튼이 없어졌다
+  const story = menu.querySelector(".ep-home");
+  const go = story || menu.querySelector("[data-lfgo]");
+  if(story){
+    story.innerHTML = story.innerHTML.replace(/^📖 /, "▶ ");
+  } else if(go){
     go.removeAttribute("data-lfgo"); go.setAttribute("data-frgo", "");
     go.innerHTML = `▶ 첫 경매 시작하기 <small>한서윤(25)과 서울 빌라 한 채 — 조사부터 매도까지 한 바퀴</small>`;
   }
@@ -45154,12 +45160,44 @@ if(typeof homeHTML === "function"){
       h = h.replace(/<button type="button" class="btn[^"]*" data-(?:kcnew="career"[^>]*|ofgo="board"|kcnew="weekly")>[\s\S]*?<\/button>/g, m => { box.push(m.replace(/class="btn pri"/, 'class="btn"')); return ""; });
       h = h.replace(/<button type="button" class="btn pri lf-home-go"[^>]*>[\s\S]*?<\/button>/, "");   // 자유 인생 버튼은 없앤다 — 스토리가 곧 인생
       const boxHTML = box.length ? `<details class="kc-box"><summary>🗂️ 케이스 상자 <small>CASE ${box.filter(b => /data-kcnew="career"/.test(b)).length}개 · 게시판 · 이번 주 경매</small></summary><div class="kc-box-in">${box.join("")}</div></details>` : "";
+      if(epHasProgress()) top += `<button type="button" class="btn ep-restart" data-eprestart>↺ 처음부터 새로 하기 <small>STAGE 1 · 한서윤부터</small></button>`;
       h = h.replace(/(<div class="kc-menu">)/, `$1${top}`);
       h = h.replace(/(<div class="kc-menu-row">)/, `${boxHTML}$1`);
     }catch(e){}
     return h;
   };
 }
+/* ---------- ↺ STAGE 1부터 처음부터 새로 하기 ----------
+   지우는 것: 스토리 진행(스테이지·에피소드·엔딩 해금·외전 진행·인물별 보관 세이브)과 보유자금·인생(시간·방)·진행 중인 사건.
+   남기는 것: 경매인 레벨·업적·도감·연습실 문제 기록·소리·화면 설정 — 사람이 쌓은 실력은 그대로 둔다. */
+function epHasProgress(){
+  try{
+    const P = cpRec();
+    if(Object.keys(P.cleared || {}).length) return true;
+    if(CP_ORDER.some(id => epOf(id).res.length)) return true;
+    const c = arenaRec().career; if(c && (c.cases || c.life)) return true;
+  }catch(e){}
+  return false;
+}
+function epRestartAll(){
+  const R = arenaRec();
+  delete R.career; delete R.campaign;
+  try{ if(typeof K !== "undefined") K = null; }catch(e){}
+  try{ if(typeof EP !== "undefined") EP = null; }catch(e){}
+  try{ if(typeof ILR !== "undefined" && ILR && typeof ilClose === "function") ilClose(true); }catch(e){}
+  try{ if(typeof IL_LATER !== "undefined") IL_LATER = {}; }catch(e){}
+  try{ if(typeof epPaint === "function") epPaint(); }catch(e){}
+  cpRec();   // 새 기록 틀(서윤 해금)부터 다시 만든다
+  if(typeof save === "function") save();
+  page = "arena"; arenaTab = "home";
+  renderArena();
+  try{ window.scrollTo(0, 0); }catch(e){}
+}
+document.addEventListener("click", e => {
+  if(!(e.target.closest && e.target.closest("[data-eprestart]"))) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if(safeConfirm("STAGE 1(한서윤)부터 처음부터 새로 할까요?\n\n스테이지·에피소드 진행, 보유자금, 인생(시간·방), 외전 진행이 모두 처음으로 돌아가요.\n경매인 레벨·업적·도감·연습실 기록·설정은 그대로 남아요.")) epRestartAll();
+}, true);
 document.addEventListener("click", e => { if(e.target.closest && e.target.closest("[data-crreplay]")){ e.preventDefault(); e.stopImmediatePropagation(); crOpen(); } }, true);
 
 /* ================= 🏠 스토리는 '그 사람의 방'에서 진행된다 =================

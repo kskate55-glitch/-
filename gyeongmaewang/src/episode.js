@@ -339,12 +339,44 @@ if(typeof homeHTML === "function"){
       h = h.replace(/<button type="button" class="btn[^"]*" data-(?:kcnew="career"[^>]*|ofgo="board"|kcnew="weekly")>[\s\S]*?<\/button>/g, m => { box.push(m.replace(/class="btn pri"/, 'class="btn"')); return ""; });
       h = h.replace(/<button type="button" class="btn pri lf-home-go"[^>]*>[\s\S]*?<\/button>/, "");   // 자유 인생 버튼은 없앤다 — 스토리가 곧 인생
       const boxHTML = box.length ? `<details class="kc-box"><summary>🗂️ 케이스 상자 <small>CASE ${box.filter(b => /data-kcnew="career"/.test(b)).length}개 · 게시판 · 이번 주 경매</small></summary><div class="kc-box-in">${box.join("")}</div></details>` : "";
+      if(epHasProgress()) top += `<button type="button" class="btn ep-restart" data-eprestart>↺ 처음부터 새로 하기 <small>STAGE 1 · 한서윤부터</small></button>`;
       h = h.replace(/(<div class="kc-menu">)/, `$1${top}`);
       h = h.replace(/(<div class="kc-menu-row">)/, `${boxHTML}$1`);
     }catch(e){}
     return h;
   };
 }
+/* ---------- ↺ STAGE 1부터 처음부터 새로 하기 ----------
+   지우는 것: 스토리 진행(스테이지·에피소드·엔딩 해금·외전 진행·인물별 보관 세이브)과 보유자금·인생(시간·방)·진행 중인 사건.
+   남기는 것: 경매인 레벨·업적·도감·연습실 문제 기록·소리·화면 설정 — 사람이 쌓은 실력은 그대로 둔다. */
+function epHasProgress(){
+  try{
+    const P = cpRec();
+    if(Object.keys(P.cleared || {}).length) return true;
+    if(CP_ORDER.some(id => epOf(id).res.length)) return true;
+    const c = arenaRec().career; if(c && (c.cases || c.life)) return true;
+  }catch(e){}
+  return false;
+}
+function epRestartAll(){
+  const R = arenaRec();
+  delete R.career; delete R.campaign;
+  try{ if(typeof K !== "undefined") K = null; }catch(e){}
+  try{ if(typeof EP !== "undefined") EP = null; }catch(e){}
+  try{ if(typeof ILR !== "undefined" && ILR && typeof ilClose === "function") ilClose(true); }catch(e){}
+  try{ if(typeof IL_LATER !== "undefined") IL_LATER = {}; }catch(e){}
+  try{ if(typeof epPaint === "function") epPaint(); }catch(e){}
+  cpRec();   // 새 기록 틀(서윤 해금)부터 다시 만든다
+  if(typeof save === "function") save();
+  page = "arena"; arenaTab = "home";
+  renderArena();
+  try{ window.scrollTo(0, 0); }catch(e){}
+}
+document.addEventListener("click", e => {
+  if(!(e.target.closest && e.target.closest("[data-eprestart]"))) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if(safeConfirm("STAGE 1(한서윤)부터 처음부터 새로 할까요?\n\n스테이지·에피소드 진행, 보유자금, 인생(시간·방), 외전 진행이 모두 처음으로 돌아가요.\n경매인 레벨·업적·도감·연습실 기록·설정은 그대로 남아요.")) epRestartAll();
+}, true);
 document.addEventListener("click", e => { if(e.target.closest && e.target.closest("[data-crreplay]")){ e.preventDefault(); e.stopImmediatePropagation(); crOpen(); } }, true);
 
 /* ================= 🏠 스토리는 '그 사람의 방'에서 진행된다 =================

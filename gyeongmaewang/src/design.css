@@ -804,6 +804,9 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .il-who-art.thought img{opacity:.78}
 .il-who-art.npc{width:auto}
 .il-who-art.npc span{display:inline-grid;place-items:center;width:64px;height:64px;border-radius:50%;background:#2b3a55;border:3px solid #f2b33d;font-weight:800;font-size:20px}
+.il-who-art.il-v-o1 span{border-color:#5fb4ff;color:#9ed4ff}
+.il-who-art.il-v-o2 span{border-color:#4fd1a5;color:#8ff0c8}
+.il-who-art.il-v-o3 span{border-color:#ff8fb4;color:#ffb8cf}
 .il-box{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;width:min(900px,calc(100% - 20px));min-height:128px;max-height:46%;overflow:auto;background:rgba(14,18,28,.93);border:2px solid rgba(242,179,61,.75);border-radius:16px;padding:14px 18px 22px;z-index:2;cursor:pointer;outline:none}
 .il-box:focus-visible{box-shadow:0 0 0 3px #7fb4ff}
 .il-name{font-weight:800;color:#f2b33d;font-size:15px;margin-bottom:4px;min-height:1em}
@@ -811,6 +814,18 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .il-next{position:absolute;right:14px;bottom:6px;font-size:12px;color:#f2b33d;animation:ilBob 1s infinite}
 @keyframes ilBob{50%{transform:translateY(3px)}}
 .il-box.il-narr .il-text{color:#d9d3c4;font-style:italic}
+.il-box.il-v-me{border-color:#f2b33d}
+.il-box.il-v-me .il-name{color:#ffc857}
+.il-box.il-v-me .il-text{color:#ffe29a}
+.il-box.il-v-o1{border-color:#5fb4ff}
+.il-box.il-v-o1 .il-name{color:#7cc4ff}
+.il-box.il-v-o1 .il-text{color:#9ed4ff}
+.il-box.il-v-o2{border-color:#4fd1a5}
+.il-box.il-v-o2 .il-name{color:#6fe0b8}
+.il-box.il-v-o2 .il-text{color:#8ff0c8}
+.il-box.il-v-o3{border-color:#ff8fb4}
+.il-box.il-v-o3 .il-name{color:#ffa6c4}
+.il-box.il-v-o3 .il-text{color:#ffb8cf}
 .il-box.il-thought{border-style:dashed;background:rgba(24,28,44,.9)}
 .il-box.il-thought .il-text{color:#cfe0ff}
 .il-box.il-msg{border-color:#5fb0ff;background:rgba(18,30,48,.95)}
@@ -927,3 +942,27 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .il-side-t tr.hl th,.il-side-t tr.hl td{background:rgba(245,192,74,.14)}
 @media (max-width:900px){.il-calc-2col{grid-template-columns:1fr}}
 .il-panel:has(.il-calc-2col){padding-left:max(14px,calc(50% - 640px));padding-right:max(14px,calc(50% - 640px))}
+
+/* 조사 노트를 열고 닫을 때 이미 떠 있던 사건 파일이 다시 등장 애니메이션을 틀지 않게 */
+body.nx-quiet .stg-file{animation:none!important}
+
+/* 사건 파일을 가운데 빈 곳에 띄울 때(넓은 화면 + 입찰표 있음) — 입찰표는 그대로 보인다 */
+#kfsRoot .stg-dock.stg-mid .stg-sheet{visibility:visible!important}
+#kfsRoot .stg-dock .stg-paper.stg-mid-file{right:auto!important;bottom:auto!important;max-height:none!important;transform:none;display:flex;flex-direction:column;overflow:hidden!important;padding-top:0}
+#kfsRoot .stg-paper.stg-mid-file>.ke-case{flex:1 1 auto;overflow-y:auto;min-height:0!important}
+#kfsRoot .stg-paper.stg-mid-file[hidden]{display:none!important}
+#kfsRoot .stg-grip{flex:0 0 auto;cursor:grab;user-select:none;touch-action:none;text-align:center;font-size:12px;font-weight:700;color:#7a6a45;background:linear-gradient(#efe4c8,#e6d8b4);border-bottom:1px solid #d9ccb0;padding:5px 40px 5px;letter-spacing:.02em}
+#kfsRoot .stg-paper.stg-mid-file.dragging{box-shadow:0 26px 60px rgba(0,0,0,.6);opacity:.97}
+#kfsRoot .stg-paper.stg-mid-file.dragging .stg-grip{cursor:grabbing}
+#kfsRoot .stg-dock.stg-mid.stg-front{z-index:13}
+#kfsRoot .stg-paper.stg-mid-file>.stg-x{position:absolute!important;top:36px!important;right:10px!important;left:auto!important;margin:0!important;z-index:3}
+
+/* 💬 명도대상자 말풍선 · 맨 위 나레이션 칸 */
+#kfsRoot .k-stage>.vn-box{top:0;min-height:0}
+#kfsRoot .k-stage>.vn-box.vn-npcbub{position:absolute!important;margin:0!important;bottom:auto!important;min-height:0!important;max-height:none;padding:26px 16px 14px!important;background:#fffdf7!important;color:#1c1a16!important;border:3px solid #e25d8a!important;border-radius:18px!important;box-shadow:0 10px 28px rgba(0,0,0,.45)!important;backdrop-filter:none;z-index:6;overflow:visible}
+#kfsRoot .k-stage>.vn-box.vn-npcbub .vn-name{position:absolute;top:-14px;left:14px;margin:0;background:#e25d8a;color:#fff;border-radius:999px;padding:3px 12px;font-size:13px;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+#kfsRoot .k-stage>.vn-box.vn-npcbub .vn-text{color:#1c1a16!important;font-weight:700;font-size:16px;line-height:1.55;text-align:left!important;max-width:none!important;padding:0!important;margin:0!important}
+#kfsRoot .k-stage>.vn-box.vn-npcbub .vn-next{color:#e25d8a}
+#kfsRoot .k-stage>.vn-box.vn-npcbub::before{content:"";position:absolute;left:-12px;top:22px;width:18px;height:18px;background:#fffdf7;border-left:3px solid #e25d8a;border-bottom:3px solid #e25d8a;transform:rotate(45deg)}
+#kfsRoot .k-stage>.vn-box.vn-npcbub.npb-over::before{left:40px;top:-11px;border-left:3px solid #e25d8a;border-bottom:none;border-top:3px solid #e25d8a;transform:rotate(45deg)}
+@media (max-width:600px){ #kfsRoot .k-stage>.vn-box.vn-npcbub .vn-text{font-size:14.5px} #kfsRoot .k-stage>.vn-box.vn-npcbub{padding:22px 12px 10px!important} }

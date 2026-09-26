@@ -116,11 +116,18 @@ function nxNoteTab(stage, tabs, note){
   if(float){ stage.appendChild(p); nxNotePlace(stage, p); p.scrollTop = p.scrollHeight; }   // 넓은 화면: 주인공 바로 옆에 떠 있는 공책
   else { dock.appendChild(p); dock.classList.toggle("nx-noteopen", !!NX.note); p.scrollTop = p.scrollHeight; }   // 새로 적은 줄이 먼저 보이게
 }
+/* 조사 노트와 사건 파일은 별개 — 한쪽을 열고 닫을 때 이미 떠 있던 다른 쪽이 다시 그려지며
+   등장 애니메이션을 처음부터 다시 틀어 '한 번 깜빡'이던 문제. 이미 열려 있던 쪽은 애니메이션을 끝 상태로 바로 보낸다. */
+function nxQuietRender(sel){
+  const was = !!document.querySelector(sel + ":not([hidden])");
+  if(was){ document.body.classList.add("nx-quiet"); clearTimeout(nxQuietRender.t); nxQuietRender.t = setTimeout(() => document.body.classList.remove("nx-quiet"), 450); }
+  if(typeof renderArena === "function") renderArena();
+}
 document.addEventListener("click", e => {
   const t = e.target; if(!t.closest) return;
   // 넓은 화면: 조사 노트는 사건 파일 '왼쪽 옆'에 따로 떠서 둘 다 동시에 볼 수 있다. 좁은 화면만 하나씩.
   const wide = window.innerWidth >= 1100;
-  if(t.closest("[data-nxnote]")){ e.preventDefault(); NX.note = !NX.note; if(NX.note && !wide && typeof STG !== "undefined") STG.file = false; if(typeof renderArena === "function") renderArena(); return; }
+  if(t.closest("[data-nxnote]")){ e.preventDefault(); NX.note = !NX.note; if(NX.note && !wide && typeof STG !== "undefined") STG.file = false; nxQuietRender(".stg-file"); return; }
   if(t.closest("[data-stg]") && NX.note && !wide){
     // 노트를 닫고 사건 파일이 바로 보이게 — 예전엔 노트 종이가 그대로 남아 파일을 덮었다
     NX.note = false;

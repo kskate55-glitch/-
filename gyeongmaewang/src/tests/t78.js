@@ -20,10 +20,12 @@ ok(!(await R(p,'.kfs-panel')), tag+' Esc로 닫힘');
 await p.click('[data-sfside]'); await p.waitForTimeout(200); await p.mouse.click(200,500); await p.waitForTimeout(200);
 ok(!(await R(p,'.kfs-panel')), tag+' 바깥을 누르면 닫힘');
 await p.click('[data-stg="file"]'); await p.waitForTimeout(350);
-const file=await R(p,'.stg-file'); ok(!!file && !(await R(p,'.stg-sheet')) && !over(file,await R(p,'.nx-bar')), tag+' 사건 파일은 입찰표 자리에 — 메뉴와 안 겹침');
+const file=await R(p,'.stg-file');
+if(w>=1100 && await p.evaluate(()=>!!document.querySelector('.stg-dock.stg-mid'))){ const sh=await R(p,'.stg-sheet'), pl=await R(p,'.vn-player'); ok(!!file && !!sh && !over(file,sh) && !over(file,await R(p,'.nx-bar')) && !(pl && file.l < pl.r-1), tag+' v210: 사건 파일은 가운데 빈 곳 — 입찰표·메뉴·주인공과 안 겹침(입찰표도 그대로 보임)'); }
+else ok(!!file && !(await R(p,'.stg-sheet')) && !over(file,await R(p,'.nx-bar')), tag+' 사건 파일은 입찰표 자리에 — 메뉴와 안 겹침');
 ok(await p.evaluate(()=>{const b=document.querySelector('.stg-file .ke-grid b'); return b && getComputedStyle(b).color!=='rgb(22, 27, 37)' && getComputedStyle(document.querySelector('.stg-file .ke-case')).backgroundColor==='rgb(251, 247, 238)';}), tag+' 사건 파일 크림색 종이 · 글씨 보임');
 await p.click('.stg-x'); await p.waitForTimeout(300);
-ok(!!(await R(p,'.stg-sheet')) && !(await R(p,'.stg-file')), tag+' 사건 파일 닫으면 입찰표 다시');
+ok(!!(await R(p,'.stg-sheet')) && !(await R(p,'.stg-file')), tag+' 사건 파일 닫으면 입찰표 다시(넓은 화면은 원래도 보임)');
 ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), tag+' 가로 스크롤 없음');
 await p.screenshot({path:`../t78_${w}.png`}); await p.close();}
 console.log('errors',errs); await b.close();})();

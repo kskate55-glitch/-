@@ -232,17 +232,27 @@ function ilSpeaker(n){
   const id = IL_NAMES[n.who] || (n.who && Object.keys(IL_NAMES).find(k => n.who.startsWith(k)) ? IL_NAMES[Object.keys(IL_NAMES).find(k => n.who.startsWith(k))] : null);
   return id;
 }
+/* 번갈아 말할 때 누가 말하는지 글자색으로 바로 갈리게: 주인공 = 따뜻한 크림, 상대 = 등장 순서대로 하늘·민트·분홍 */
+function ilVoiceClass(R, n){
+  if(n.kind !== "say" || !n.who) return "";
+  const cid = ilSpeaker(n);
+  if(cid && R.def && cid === R.def.ch) return " il-v-me";
+  const key = String(n.who).replace(/\(.*\)/, "").trim();
+  R.voices = R.voices || [];
+  let i = R.voices.indexOf(key); if(i < 0){ R.voices.push(key); i = R.voices.length - 1; }
+  return " il-v-o" + (i % 3 + 1);
+}
 function ilShowLine(n){
   const R = ILR, box = R.el.querySelector(".il-box"), tx = box.querySelector(".il-text"), nm = box.querySelector(".il-name");
   const text = ilFill(R.def, n.t);
-  box.className = "il-box il-" + n.kind; box.hidden = false; R.el.querySelector(".il-choice").hidden = true;
+  box.className = "il-box il-" + n.kind + ilVoiceClass(R, n); box.hidden = false; R.el.querySelector(".il-choice").hidden = true;
   nm.textContent = n.kind === "narr" ? "" : n.kind === "thought" ? `${n.who} (속마음)` : n.tag && n.kind === "msg" ? `${n.who} · ${n.tag}` : n.who;
   // 초상: 주인공이면 표정 그림, 아니면 이름 머리글자
   const art = R.el.querySelector(".il-who-art"), cid = ilSpeaker(n);
   if(cid && typeof LF_CHAR_ART !== "undefined" && LF_CHAR_ART[cid] && n.kind !== "msg"){
     const f = LF_CHAR_ART[cid].face[n.ex] || LF_CHAR_ART[cid].face.normal;
     art.className = "il-who-art on" + (n.kind === "thought" ? " thought" : ""); art.innerHTML = `<img src="${lfBlob(f)}" alt="${esc(n.who)}">`;
-  } else if(n.kind === "say" && n.who){ art.className = "il-who-art on npc"; art.innerHTML = `<span>${esc(n.who.replace(/\(.*\)/, "").trim().slice(0, 2))}</span>`; }
+  } else if(n.kind === "say" && n.who){ art.className = "il-who-art on npc" + ilVoiceClass(R, n); art.innerHTML = `<span>${esc(n.who.replace(/\(.*\)/, "").trim().slice(0, 2))}</span>`; }
   else { art.className = "il-who-art"; art.innerHTML = ""; }
   R.log.push(R.pc); if(R.log.length > 600) R.log.shift();
   if(!R.album){ const S = ilState(R.id); S.pc = R.pc; S.seen[R.pc] = 1; }

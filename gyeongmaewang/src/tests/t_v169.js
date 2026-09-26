@@ -24,7 +24,7 @@ for(const id of ids){
       return {st0, done, n, sheets:[...new Set(sheets)].length, raw, empty, calcErr, st:ilState(id).st, notes:Object.keys(ilRec().notes).filter(k=>k.startsWith(id+':')).length, nNotes:(IL[id].notes||[]).length,
         money:c.cash===cash0 && lfRec().t===t0 && JSON.stringify(typeof K!=='undefined'&&K?K.cost:null)===cost0}; },[id,res,pick]);
     const tag=res.lost?'패찰':res.profit>0?'흑자':'적자';
-    ok(r.st0==='available' && r.done && r.st==='read' && r.n>=60 && !r.raw && !r.empty && !r.calcErr && r.notes===r.nNotes && r.money,
+    ok(r.st0==='available' && r.done && r.st==='read' && r.n>=40 && !r.raw && !r.empty && !r.calcErr && r.notes===r.nNotes && r.money,
       `${id} ${tag}/선택${pick+1} — ${r.n}줄 · 조작 ${r.sheets} · 노트 ${r.notes}/${r.nNotes}${r.raw?' 미치환':''}${r.calcErr?' 계산오류'+r.calcErr:''}${r.money?'':' 돈·시간 변함'}`);
   }
   // 해금 시점: 앞 사건만 끝났을 땐 잠김

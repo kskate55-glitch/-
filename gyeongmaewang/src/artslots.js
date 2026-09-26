@@ -192,3 +192,10 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 8차(v165): f23 수원 율전동 — 벚꽃 핀 대학가 원룸촌 외관
 AS_BG_ART.bg_case_f23_ext = "cdef05543c0e09045ac327e43f8ff9c6";
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 9차(v166): f23 율전동 — 에코백 걸린 4층 복도(슬리퍼 세 줄 무늬는 브랜드처럼 보여 지움)·이층 침대 원룸(f23 완료)
+Object.assign(AS_BG_ART, {
+  bg_case_f23_door: "2c835ac5a88aafcdbdddb52b2bcc1205",
+  bg_case_f23_in:   "3ac8478cec45edd3e3f960dede06550a",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

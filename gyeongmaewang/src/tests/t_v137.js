@@ -36,6 +36,6 @@ ok(g4.join()==='bg_case_f21_ext,bg_case_f21_door,bg_room_empty', 'f21 외관·�
 const g5=await p.evaluate(()=>{ K_PROP_NEXT='f22'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
 ok(g5.join()==='bg_case_f22_ext,bg_case_f22_door,bg_case_f22_in', 'f22 전용 배경 3장');
 const g6=await p.evaluate(()=>{ K_PROP_NEXT='f23'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
-ok(g6.join()==='bg_case_f23_ext,bg_front_door,bg_room_empty', 'f23 외관만 전용, 나머지는 공용 배경');
+ok(g6.join()==='bg_case_f23_ext,bg_case_f23_door,bg_case_f23_in', 'f23 전용 배경 3장');
 ok(!errs.some(e=>e.startsWith('pageerror')), 'JS 오류 없음');
 console.log(errs.length?'FAIL':'ALL OK'); await b.close(); })();

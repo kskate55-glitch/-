@@ -9,7 +9,8 @@ ok(box.length>=4 && box.some(t=>/서류 한 장과 이삿날/.test(t)), w+' 케�
 if(w===1280){ await p.screenshot({path:'v120_box.png'}); }
 await p.click('.ep-home'); await p.waitForTimeout(1500);
 for(let k=0;k<4;k++){ await p.evaluate(()=>{const s=document.querySelector('[data-gxskip]'); if(s) s.click();}); await p.waitForTimeout(450); }
-await p.evaluate(()=>{ epOf('seoyun').res=[{id:'k1',pct:80,full:true}]; lfRec().t+=100; renderArena(); }); await p.waitForTimeout(800);
+await p.evaluate(()=>{ IL_AUTOPLAY=false; epOf('seoyun').res=[{id:'k1',pct:80,full:true}]; lfRec().t+=100; renderArena(); }); await p.waitForTimeout(800);
+if(w<600){ ok(await p.evaluate(()=>{const e=document.querySelector('.lf-stage .ep-alert'); return !document.querySelector('.il-alert')||!e||getComputedStyle(e).display==='none';}), w+' 좁은 화면: 외전 알림이 먼저, 에피소드 알림은 그 뒤'); const lt=await p.$('[data-illater]'); if(lt){ await lt.click(); await p.waitForTimeout(300); } }
 const al=await p.$('.lf-stage .ep-alert'); ok(!!al, w+' 알림 카드');
 const t=await p.evaluate(()=>document.querySelector('.lf-stage .ep-alert').innerText);
 ok(/남양주/.test(t) && /의정부지방법원 남양주지원/.test(t), w+' EP2 알림 = 남양주 빌라 · 법원 · 풀 경매');

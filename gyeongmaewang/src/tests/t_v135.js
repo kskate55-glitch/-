@@ -4,7 +4,7 @@ const p=await b.newPage({viewport:{width:1280,height:900}}); p.on('pageerror',e=
 await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(800);
 // 1) 도현 평일 조사 시간
 let r=await p.evaluate(()=>{ localStorage.clear(); lfNew('dohyun'); return {wd:lfWindow(2), we:lfWindow(6)}; });
-ok(r.wd[0]===1140 && r.wd[1]===210, '도현 평일: 19:00부터 210분(3시간 반) '+JSON.stringify(r.wd));
+ok(r.wd[0]===1140 && r.wd[1]===240, '도현 평일: 19:00부터 240분(4시간 — 모든 캐릭터 하루 최소 4시간) '+JSON.stringify(r.wd));
 ok(r.we[1]===280, '주말은 그대로 280분');
 // 2) 평일 하루로 조사 4개 이상 가능한지 — 도현 물건들
 r=await p.evaluate(()=>{ const out=[]; for(const id of ['f21','f22','f23']){ const c=kcRec(); c.fr={full:true}; arenaTab='king'; KC_MODE='career'; K_PROP_NEXT=id; kStart(3); K.intro=false;
@@ -17,12 +17,13 @@ ok(r.n===141 && r.ch===6, '그림 칸 141개 등록(오프닝 '+r.op+' · 주인
 // 4) 물건 전용 배경·점유자: 올리면 바뀌고, 안 올리면 그대로
 const FAKE='5961986acf90e000dd87644d50e24d72';
 r=await p.evaluate((F)=>{ localStorage.clear(); const c=kcRec(); delete c.life; c.fr={full:true}; arenaTab='king'; KC_MODE='career'; K_PROP_NEXT='f64'; kStart(4); K.intro=false;
+  const KEEP=ART_DEFAULT['bg_case_f64_door']; delete ART_DEFAULT['bg_case_f64_door'];
   const before=vnBgPick('bg_front_door'), occ0=artNpc(KP.occ.pid,'normal');
   artRec()['bg_case_f64_door']=F; artRec()['npc_occ_f64_normal']=F;
   const after=vnBgPick('bg_front_door'), occ1=artNpc(KP.occ.pid,'normal'), stage=kStage('bg_front_door','occ','normal','테스트');
   // 다른 물건은 영향 없음
   K_PROP_NEXT='f21'; kStart(4); K.intro=false; const other=vnBgPick('bg_front_door');
-  delete artRec()['bg_case_f64_door']; delete artRec()['npc_occ_f64_normal'];
+  delete artRec()['bg_case_f64_door']; delete artRec()['npc_occ_f64_normal']; ART_DEFAULT['bg_case_f64_door']=KEEP;
   return {before, after, other, occ0, occ1, has:stage.includes(F)}; },FAKE);
 ok(r.before!=='bg_case_f64_door' && r.after==='bg_case_f64_door', '물건 전용 현관 그림을 올리면 f64 명도 장면 배경이 바뀜');
 ok(r.other!=='bg_case_f64_door', '다른 물건(f21)은 그대로');

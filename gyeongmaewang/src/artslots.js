@@ -361,3 +361,18 @@ Object.assign(ART_DEFAULT, { cg_il_e03_b:"5f52f9758bedae4de12bb29df379d3d2" });
 // 받은 배경 33차(v206): f31 영등포 미용실 — 거울 뗀 자국·샴푸대 배관, 위에서 내려다본 구도(병 라벨 흐림) — 본편 배경 전부 완성
 Object.assign(AS_BG_ART, { bg_case_f31_in: "0acd61737a78b6394e783283aebe4086" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 상가·식당·모텔·공장(KP.use === "commercial")은 명도 뒤 '빈집·수리 끝' 장면에 가정집 거실 그림이 뜨면 안 된다
+// — 그 물건의 전용 외관 그림으로 바꾼다(사용자 지적: 중국집을 수리했는데 거실이 떴다)
+const AS_ROOM_SLOTS = ["bg_room_clean", "bg_room_messy", "bg_room_empty", "bg_room_after"];
+if(typeof kStage === "function"){
+  const _as_kStage = kStage;
+  kStage = function(bg, who, ex, text, name){
+    try{
+      if(AS_ROOM_SLOTS.includes(bg) && K && (K.repair || K.step === "defect") && typeof KP !== "undefined" && KP && KP.use === "commercial" && KP.gen){
+        const id = `bg_case_${KP.id}_ext`; if(artUrl(id)) bg = id;
+      }
+    }catch(e){}
+    return _as_kStage(bg, who, ex, text, name);
+  };
+}

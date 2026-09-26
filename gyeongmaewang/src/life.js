@@ -12,8 +12,8 @@ const LF_CHARS = [
    intro:["신림동 반지하 원룸. 창문 높이로 사람들 발목이 지나간다.","노트북을 켠다. 즐겨찾기 맨 위 — 법원 경매정보.","'돈은 없어도 시간은 있다. 발품은 내가 제일 많이 판다.'"], time:"21:40"},
   {id:"dohyun", name:"이도현", sex:"남", age:32, emo:"👨‍💼", tag:"균형형 직장인", job:"대기업 사무직", base:"hwagok", cash:7000,
    st:{stamina:78, info:72, nego:56, law:47, market:60, field:52, interior:48, broker:55, repair:45, sell:60},
-   pros:["능력치가 고르다","매달 월급이 들어온다"], cons:["평일 낮엔 회사 — 퇴근 후(저녁 7시~10시 반)에만 움직인다","압도적인 강점은 없다"],
-   passives:[["🌙","퇴근 후 세 시간 반","평일 저녁 7시~10시 반 · 7시 이후 조사 효율 +15%"],["💳","월급날","매달 월급 입금"]],
+   pros:["능력치가 고르다","매달 월급이 들어온다"], cons:["평일 낮엔 회사 — 퇴근 후(저녁 7시~11시)에만 움직인다","압도적인 강점은 없다"],
+   passives:[["🌙","퇴근 후 네 시간","평일 저녁 7시~11시 · 7시 이후 조사 효율 +15%"],["💳","월급날","매달 월급 입금"]],
    intro:["화곡동 6평 원룸. 퇴근하고 넥타이를 푼다. 밤 8시.","책상 위엔 어제 뽑아 둔 사건 목록.","'무리하지 말자. 대신 꾸준히.'"], time:"20:00"},
   {id:"mijeong", name:"윤미정", sex:"여", age:41, emo:"👩‍🍳", tag:"사람 잘 다루는 자영업자", job:"서비스업 사장 15년", base:"yeongdeungpo", cash:9500,
    st:{stamina:67, info:52, nego:84, law:42, market:64, field:66, interior:70, broker:86, repair:55, sell:73},
@@ -78,11 +78,12 @@ function lfWindowTable(){
   const L = lfRec(), note = L && L.char === "dohyun" && L.path !== "quit" ? `<small class="note">🏢 평일 입찰일엔 반차(0.5일)를 써요 · 남은 연차 ${L.leave}일</small>` : "";
   return `<table class="lf-wtab">${rows.map(r => `<tr><th>${name(r.d)}</th><td>${hm(r.s)} ~ ${hm(r.s + r.len)}</td><td class="note">${krFmt(r.len)}</td></tr>`).join("")}</table>${note}`;
 }
+const LF_MIN_DAY = 240;   // 모든 캐릭터·모든 요일·모든 갈림길에서 하루 조사 시간은 최소 4시간(사용자 요청 — 예전엔 2시간 10분짜리 날도 있어 조사를 고를 수가 없었다)
 function lfWindow(dow){
   const L = lfRec(); let w = LF_WINDOW[L.char](dow);
   const P = LF_PATHS[L.char] && L.path ? LF_PATHS[L.char].opts.find(o => o.id === L.path) : null;
   if(P && P.window) w = P.window(dow, w);
-  return w;
+  return [w[0], Math.max(LF_MIN_DAY, w[1])];
 }
 
 /* ---------- 상태 ---------- */
@@ -247,10 +248,10 @@ const _lf_kStart = kStart; kStart = function(seed){
   K.lf = {day0, rday:0};
   const days = lfResearchDays(); K.lf.days = days;
   // 생활 사정 — 예약돼 있던 일이 조사 첫날 시간을 깎는다
-  if(L.fx.cutFirst){ days[0].len = Math.max(40, days[0].len - L.fx.cutFirst[0]); kLog(L.fx.cutFirst[1]); L.fx.cutFirst = null; }
+  if(L.fx.cutFirst){ days[0].len = Math.max(LF_MIN_DAY, days[0].len - L.fx.cutFirst[0]); kLog(L.fx.cutFirst[1]); L.fx.cutFirst = null; }
   K.lf.total = days.reduce((s, d) => s + d.len, 0);
   if(typeof lfEntryLine === "function") lfEntryLine();
-  K.timeLeft = days[0].len - (L.fx.updatePenalty || 0); if(L.fx.updatePenalty){ kLog(`💻 노트북 업데이트 — 첫날 조사 시간 ${L.fx.updatePenalty}분이 날아갔다.`); L.fx.updatePenalty = 0; }
+  K.timeLeft = Math.max(Math.min(LF_MIN_DAY, days[0].len), days[0].len - (L.fx.updatePenalty || 0)); if(L.fx.updatePenalty){ kLog(`💻 노트북 업데이트 — 첫날 조사 시간 ${L.fx.updatePenalty}분이 날아갔다.`); L.fx.updatePenalty = 0; }
   K.loc = "home"; K.rlog = K.rlog || []; K.hint = K.hint || {};
   K.lf.nd = lfResearchDayCount(); K.cal0 = LF_EPOCH + (day0 + K.lf.nd * 1440) * 60000;     // 입찰일
   const N = typeof snNow === "function" ? snNow() : null; if(N){ K.rain = N.W.id === "rain" || N.W.id === "monsoon"; }

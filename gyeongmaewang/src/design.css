@@ -649,6 +649,7 @@ body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .h
 .ke-court{font-size:12.5px;font-weight:800;color:#8a5a12;letter-spacing:.02em;margin-bottom:2px}
 @media (max-width:600px){ .lf-stage .ep-alert{right:14px;left:14px;width:auto} .lf-stage .ep-alert[data-moved]{right:auto;width:min(420px,calc(100% - 28px))} }
 .lf-stage .ep-alert{animation:epAlert2 .5s cubic-bezier(.2,1.4,.4,1)}
+@media (max-width:600px){ .lf-stage:has(.il-alert) .ep-alert{display:none} }
 @keyframes epAlert2{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:none}}
 /* ===== v121: 조사 버튼 줄을 머리줄 가운데로 ===== */
 #kfsRoot .kfs-head.has-dock{grid-template-columns:auto minmax(0,auto) 1fr auto}
@@ -759,7 +760,7 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .ev-legend{font-size:11.5px;line-height:1.9;margin:4px 0 8px;opacity:.9}
 /* 입찰 직전 '모르는 비용' 경고 (bidwarn.js) */
 .bw{margin:10px 0;padding:12px 14px;border-radius:12px;border:1.5px solid #e6d3a3;background:#fff9ea;color:#2b2b2b;font-size:14px;line-height:1.6}
-.bw p{margin:6px 0}.bw ul{margin:4px 0 6px 18px;padding:0}.bw .note{color:#555}
+.bw p{margin:6px 0}.bw ul{margin:4px 0 6px 18px;padding:0}.bw .note,.bw p.note{color:#1f1f1f !important;opacity:1 !important;font-weight:600}
 .bw-h{display:block;font-size:15.5px}
 .bw-danger{border-color:#e05252;background:#fff1f0}.bw-danger .bw-h{color:#b42318}
 .bw-warn{border-color:#e0a13a}.bw-warn .bw-h{color:#9a5b00}
@@ -839,6 +840,9 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .il-tbl-wrap{overflow-x:auto;margin:8px 0}
 .il-tbl{border-collapse:collapse;min-width:100%;font-size:14px}
 .il-tbl th,.il-tbl td{border:1px solid rgba(255,255,255,.18);padding:6px 8px;text-align:left;vertical-align:top}
+.il-panel .il-tbl th,.il-panel .il-tbl td{color:#f3efe4}
+.il-panel .il-calc tr.minus td{color:#ffb4a8}
+.il-panel .il-calc tr.sum th,.il-panel .il-calc tr.sum td{color:#e9ffe9}
 .il-tbl th{background:rgba(242,179,61,.14)}
 .il-calc tr.sum th,.il-calc tr.sum td{background:rgba(127,208,138,.18);font-weight:800}
 .il-calc tr.minus td{color:#ffb4a8}
@@ -911,3 +915,13 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
   .il-cg{top:calc(var(--il-top,88px) + 8px)}
 }
 .il-end-cg{display:block;max-width:min(720px,100%);max-height:40vh;margin:4px auto 0;border-radius:12px;object-fit:contain}
+
+/* 외전 계산표 + 옆 참고표(재개발 단계 등) */
+.il-calc-2col{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
+.il-side>b{display:block;margin:0 0 6px;font-size:14.5px;color:#f5c04a}
+.il-side small{display:block;margin-top:6px;color:#c9d2de;font-size:12.5px;line-height:1.55}
+.il-side-t th,.il-side-t td{font-size:12.5px;line-height:1.45;vertical-align:top}
+.il-side-t tr:first-child th{background:#2a3446;color:#fff}
+.il-side-t tr.hl th,.il-side-t tr.hl td{background:rgba(245,192,74,.14)}
+@media (max-width:900px){.il-calc-2col{grid-template-columns:1fr}}
+.il-panel:has(.il-calc-2col){padding-left:max(14px,calc(50% - 640px));padding-right:max(14px,calc(50% - 640px))}

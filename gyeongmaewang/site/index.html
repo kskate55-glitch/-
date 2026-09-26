@@ -2020,6 +2020,7 @@ body:has(#lnRoot) .hub-toast, body:has(#epRoot) .hub-toast, body:has(#crRoll) .h
 .ke-court{font-size:12.5px;font-weight:800;color:#8a5a12;letter-spacing:.02em;margin-bottom:2px}
 @media (max-width:600px){ .lf-stage .ep-alert{right:14px;left:14px;width:auto} .lf-stage .ep-alert[data-moved]{right:auto;width:min(420px,calc(100% - 28px))} }
 .lf-stage .ep-alert{animation:epAlert2 .5s cubic-bezier(.2,1.4,.4,1)}
+@media (max-width:600px){ .lf-stage:has(.il-alert) .ep-alert{display:none} }
 @keyframes epAlert2{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:none}}
 /* ===== v121: 조사 버튼 줄을 머리줄 가운데로 ===== */
 #kfsRoot .kfs-head.has-dock{grid-template-columns:auto minmax(0,auto) 1fr auto}
@@ -2130,7 +2131,7 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .ev-legend{font-size:11.5px;line-height:1.9;margin:4px 0 8px;opacity:.9}
 /* 입찰 직전 '모르는 비용' 경고 (bidwarn.js) */
 .bw{margin:10px 0;padding:12px 14px;border-radius:12px;border:1.5px solid #e6d3a3;background:#fff9ea;color:#2b2b2b;font-size:14px;line-height:1.6}
-.bw p{margin:6px 0}.bw ul{margin:4px 0 6px 18px;padding:0}.bw .note{color:#555}
+.bw p{margin:6px 0}.bw ul{margin:4px 0 6px 18px;padding:0}.bw .note,.bw p.note{color:#1f1f1f !important;opacity:1 !important;font-weight:600}
 .bw-h{display:block;font-size:15.5px}
 .bw-danger{border-color:#e05252;background:#fff1f0}.bw-danger .bw-h{color:#b42318}
 .bw-warn{border-color:#e0a13a}.bw-warn .bw-h{color:#9a5b00}
@@ -2210,6 +2211,9 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .il-tbl-wrap{overflow-x:auto;margin:8px 0}
 .il-tbl{border-collapse:collapse;min-width:100%;font-size:14px}
 .il-tbl th,.il-tbl td{border:1px solid rgba(255,255,255,.18);padding:6px 8px;text-align:left;vertical-align:top}
+.il-panel .il-tbl th,.il-panel .il-tbl td{color:#f3efe4}
+.il-panel .il-calc tr.minus td{color:#ffb4a8}
+.il-panel .il-calc tr.sum th,.il-panel .il-calc tr.sum td{color:#e9ffe9}
 .il-tbl th{background:rgba(242,179,61,.14)}
 .il-calc tr.sum th,.il-calc tr.sum td{background:rgba(127,208,138,.18);font-weight:800}
 .il-calc tr.minus td{color:#ffb4a8}
@@ -2282,6 +2286,16 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
   .il-cg{top:calc(var(--il-top,88px) + 8px)}
 }
 .il-end-cg{display:block;max-width:min(720px,100%);max-height:40vh;margin:4px auto 0;border-radius:12px;object-fit:contain}
+
+/* 외전 계산표 + 옆 참고표(재개발 단계 등) */
+.il-calc-2col{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
+.il-side>b{display:block;margin:0 0 6px;font-size:14.5px;color:#f5c04a}
+.il-side small{display:block;margin-top:6px;color:#c9d2de;font-size:12.5px;line-height:1.55}
+.il-side-t th,.il-side-t td{font-size:12.5px;line-height:1.45;vertical-align:top}
+.il-side-t tr:first-child th{background:#2a3446;color:#fff}
+.il-side-t tr.hl th,.il-side-t tr.hl td{background:rgba(245,192,74,.14)}
+@media (max-width:900px){.il-calc-2col{grid-template-columns:1fr}}
+.il-panel:has(.il-calc-2col){padding-left:max(14px,calc(50% - 640px));padding-right:max(14px,calc(50% - 640px))}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -40260,8 +40274,8 @@ const LF_CHARS = [
    intro:["신림동 반지하 원룸. 창문 높이로 사람들 발목이 지나간다.","노트북을 켠다. 즐겨찾기 맨 위 — 법원 경매정보.","'돈은 없어도 시간은 있다. 발품은 내가 제일 많이 판다.'"], time:"21:40"},
   {id:"dohyun", name:"이도현", sex:"남", age:32, emo:"👨‍💼", tag:"균형형 직장인", job:"대기업 사무직", base:"hwagok", cash:7000,
    st:{stamina:78, info:72, nego:56, law:47, market:60, field:52, interior:48, broker:55, repair:45, sell:60},
-   pros:["능력치가 고르다","매달 월급이 들어온다"], cons:["평일 낮엔 회사 — 퇴근 후(저녁 7시~10시 반)에만 움직인다","압도적인 강점은 없다"],
-   passives:[["🌙","퇴근 후 세 시간 반","평일 저녁 7시~10시 반 · 7시 이후 조사 효율 +15%"],["💳","월급날","매달 월급 입금"]],
+   pros:["능력치가 고르다","매달 월급이 들어온다"], cons:["평일 낮엔 회사 — 퇴근 후(저녁 7시~11시)에만 움직인다","압도적인 강점은 없다"],
+   passives:[["🌙","퇴근 후 네 시간","평일 저녁 7시~11시 · 7시 이후 조사 효율 +15%"],["💳","월급날","매달 월급 입금"]],
    intro:["화곡동 6평 원룸. 퇴근하고 넥타이를 푼다. 밤 8시.","책상 위엔 어제 뽑아 둔 사건 목록.","'무리하지 말자. 대신 꾸준히.'"], time:"20:00"},
   {id:"mijeong", name:"윤미정", sex:"여", age:41, emo:"👩‍🍳", tag:"사람 잘 다루는 자영업자", job:"서비스업 사장 15년", base:"yeongdeungpo", cash:9500,
    st:{stamina:67, info:52, nego:84, law:42, market:64, field:66, interior:70, broker:86, repair:55, sell:73},
@@ -40326,11 +40340,12 @@ function lfWindowTable(){
   const L = lfRec(), note = L && L.char === "dohyun" && L.path !== "quit" ? `<small class="note">🏢 평일 입찰일엔 반차(0.5일)를 써요 · 남은 연차 ${L.leave}일</small>` : "";
   return `<table class="lf-wtab">${rows.map(r => `<tr><th>${name(r.d)}</th><td>${hm(r.s)} ~ ${hm(r.s + r.len)}</td><td class="note">${krFmt(r.len)}</td></tr>`).join("")}</table>${note}`;
 }
+const LF_MIN_DAY = 240;   // 모든 캐릭터·모든 요일·모든 갈림길에서 하루 조사 시간은 최소 4시간(사용자 요청 — 예전엔 2시간 10분짜리 날도 있어 조사를 고를 수가 없었다)
 function lfWindow(dow){
   const L = lfRec(); let w = LF_WINDOW[L.char](dow);
   const P = LF_PATHS[L.char] && L.path ? LF_PATHS[L.char].opts.find(o => o.id === L.path) : null;
   if(P && P.window) w = P.window(dow, w);
-  return w;
+  return [w[0], Math.max(LF_MIN_DAY, w[1])];
 }
 
 /* ---------- 상태 ---------- */
@@ -40495,10 +40510,10 @@ const _lf_kStart = kStart; kStart = function(seed){
   K.lf = {day0, rday:0};
   const days = lfResearchDays(); K.lf.days = days;
   // 생활 사정 — 예약돼 있던 일이 조사 첫날 시간을 깎는다
-  if(L.fx.cutFirst){ days[0].len = Math.max(40, days[0].len - L.fx.cutFirst[0]); kLog(L.fx.cutFirst[1]); L.fx.cutFirst = null; }
+  if(L.fx.cutFirst){ days[0].len = Math.max(LF_MIN_DAY, days[0].len - L.fx.cutFirst[0]); kLog(L.fx.cutFirst[1]); L.fx.cutFirst = null; }
   K.lf.total = days.reduce((s, d) => s + d.len, 0);
   if(typeof lfEntryLine === "function") lfEntryLine();
-  K.timeLeft = days[0].len - (L.fx.updatePenalty || 0); if(L.fx.updatePenalty){ kLog(`💻 노트북 업데이트 — 첫날 조사 시간 ${L.fx.updatePenalty}분이 날아갔다.`); L.fx.updatePenalty = 0; }
+  K.timeLeft = Math.max(Math.min(LF_MIN_DAY, days[0].len), days[0].len - (L.fx.updatePenalty || 0)); if(L.fx.updatePenalty){ kLog(`💻 노트북 업데이트 — 첫날 조사 시간 ${L.fx.updatePenalty}분이 날아갔다.`); L.fx.updatePenalty = 0; }
   K.loc = "home"; K.rlog = K.rlog || []; K.hint = K.hint || {};
   K.lf.nd = lfResearchDayCount(); K.cal0 = LF_EPOCH + (day0 + K.lf.nd * 1440) * 60000;     // 입찰일
   const N = typeof snNow === "function" ? snNow() : null; if(N){ K.rain = N.W.id === "rain" || N.W.id === "monsoon"; }
@@ -40968,7 +40983,7 @@ document.addEventListener("click", e => {
 /* ---------- 🧭 인생 갈림길 — 누적 수익 1억(또는 5건)에서 한 번 ---------- */
 const LF_PATHS = {
   seoyun:{q:"통장이 조금씩 불었다. 부모님은 \"이제 취업은?\" 하고 물으신다.", opts:[
-    {id:"job", t:"취업한다", d:"월급 300만원이 생긴다. 대신 평일은 퇴근 후 2시간만", econ:E => ({inc:[300, 300], incT:"월급(신입)"}), window:(dow, w) => dow === 0 || dow === 6 ? [600, 280] : [1170, 130]},
+    {id:"job", t:"취업한다", d:"월급 300만원이 생긴다. 대신 평일은 퇴근 후 저녁 4시간만", econ:E => ({inc:[300, 300], incT:"월급(신입)"}), window:(dow, w) => dow === 0 || dow === 6 ? [600, 280] : [1170, 130]},
     {id:"fulltime", t:"전업투자에 도전한다", d:"시간은 그대로(조사 3일). 현금흐름은 계속 불안하다"}]},
   dohyun:{q:"누적 수익이 연봉을 넘었다. 사직서 양식을 한 번 열어 봤다.", opts:[
     {id:"stay", t:"회사를 계속 다닌다", d:"월급 유지 · 시간 제약 유지"},
@@ -46707,8 +46722,23 @@ Object.assign(ART_DEFAULT, { cg_il_e03_b:"5f52f9758bedae4de12bb29df379d3d2" });
 Object.assign(AS_BG_ART, { bg_case_f31_in: "0acd61737a78b6394e783283aebe4086" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
 
+// 상가·식당·모텔·공장(KP.use === "commercial")은 명도 뒤 '빈집·수리 끝' 장면에 가정집 거실 그림이 뜨면 안 된다
+// — 그 물건의 전용 외관 그림으로 바꾼다(사용자 지적: 중국집을 수리했는데 거실이 떴다)
+const AS_ROOM_SLOTS = ["bg_room_clean", "bg_room_messy", "bg_room_empty", "bg_room_after"];
+if(typeof kStage === "function"){
+  const _as_kStage = kStage;
+  kStage = function(bg, who, ex, text, name){
+    try{
+      if(AS_ROOM_SLOTS.includes(bg) && K && (K.repair || K.step === "defect") && typeof KP !== "undefined" && KP && KP.use === "commercial" && KP.gen){
+        const id = `bg_case_${KP.id}_ext`; if(artUrl(id)) bg = id;
+      }
+    }catch(e){}
+    return _as_kStage(bg, who, ex, text, name);
+  };
+}
+
 /* ================= 📖 외전 — 사건과 사건 사이의 긴 이야기(비주얼노벨형 실무 학습) =================
-   캐릭터마다 첫 번째·세 번째 스토리 사건이 끝나면 방에 '새 이야기' 알림이 뜬다(강제 재생 없음).
+   캐릭터마다 첫 번째·세 번째 스토리 사건이 끝나 방으로 돌아오면 외전이 바로 시작된다(편마다 한 번, 이후엔 알림·책장).
    · 대본은 il_<ID>.js의 script(작은 문법)로 쓰고, 여기서 한 줄짜리 명령 목록(pc)으로 바꿔 돌린다.
    · 외전 안의 숫자·계산·체험은 모두 교육용 가상 사례다 — 본편 현금·보증금·입찰가·RNG를 건드리지 않는다.
    · 저장: cpRec().il = {v, eps:{ID:{st, pc, scene, ver, picks, sheets, seen}}, notes:{}} — index가 아니라
@@ -46773,6 +46803,7 @@ function ilParse(def){
         if(top.type === "choice") prog[top.pc].opts.forEach(o => { if(o.to == null) errs.push(`${ln + 1}행: 선택지 ${o.id}에 @when 없음`); });
         continue;
       }
+      if(cmd === "sheet" && (def.sheets || {})[arg] && def.sheets[arg].type === "sort") continue;   // 칸 나누기 퀴즈는 뺐다(사용자 요청) — 대사는 그대로 흐른다
       if(cmd === "sheet"){ push({k:"sheet", id:arg}); if(!(def.sheets || {})[arg]) errs.push(`${ln + 1}행: 시트 ${arg} 정의 없음`); continue; }
       if(cmd === "note"){ push({k:"note", id:arg}); if(!(def.notes || []).find(n => n.id === arg)) errs.push(`${ln + 1}행: 노트 ${arg} 정의 없음`); continue; }
       if(cmd === "cg"){ push({k:"cg", id:arg}); continue; }
@@ -47089,7 +47120,7 @@ function ilSheetHTML(sh){
     st.vals = st.vals || {}; sh.inputs.forEach(inp => { if(st.vals[inp.id] == null) st.vals[inp.id] = inp.def; });
     let rows = []; try{ rows = sh.rows(st.vals) || []; }catch(e){ rows = [["계산 오류", String(e.message || e)]]; }
     mid = `<div class="il-calc-in">${sh.inputs.map(inp => `<div class="il-cfg"><b>${esc(inp.label)}</b><div>${inp.opts.map(o => `<button type="button" class="btn sm${st.vals[inp.id] === o.v ? " pri" : ""}" data-ilcalc="${esc(inp.id)}:${esc(String(o.v))}">${esc(o.t)}</button>`).join("")}</div></div>`).join("")}</div>
-      <div class="il-tbl-wrap"><table class="il-tbl il-calc">${rows.map(r => `<tr class="${r[2] || ""}"><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join("")}</table></div>`;
+      <div class="${sh.side ? "il-calc-2col" : ""}"><div class="il-tbl-wrap"><table class="il-tbl il-calc">${rows.map(r => `<tr class="${r[2] || ""}"><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join("")}</table></div>${sh.side ? ilSideHTML(sh.side) : ""}</div>`;
     st.checked = true;
   } else if(sh.type === "doc"){ st.checked = true; }
   const foot = sh.foot ? `<ul class="il-foot">${sh.foot.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
@@ -47100,6 +47131,10 @@ function ilSheetHTML(sh){
     ? `<button type="button" class="btn" data-ilsheet="show">📖 설명 보고 진행</button>${right && st.checked ? `<button type="button" class="btn pri" data-ilsheet="done">계속 읽기 ▶</button>` : `<button type="button" class="btn pri" data-ilsheet="check"${allAns ? "" : " disabled"}>확인</button>`}`
     : `<button type="button" class="btn pri" data-ilsheet="done">${sh.type === "doc" ? "확인했어요 ▶" : "계속 읽기 ▶"}</button>`;
   return `${head}${docRows}${mid}${msg}${foot}<div class="il-row">${btns}</div>`;
+}
+// 계산표 옆에 나란히 붙는 참고 표(예: 재개발·재건축 단계) — 좁은 화면에선 아래로 내려간다
+function ilSideHTML(sd){
+  return `<div class="il-side"><b>${esc(sd.title)}</b><div class="il-tbl-wrap"><table class="il-tbl il-side-t">${sd.head ? `<tr>${sd.head.map(h => `<th>${esc(h)}</th>`).join("")}</tr>` : ""}${sd.rows.map(r => `<tr class="${r.hl ? "hl" : ""}">${(r.c || r).map((c, i) => i === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table></div>${sd.foot ? `<small>${esc(sd.foot)}</small>` : ""}</div>`;
 }
 function ilSheetDone(){
   const R = ILR; if(!R) return; const sh = R.def.sheets[R.sheetId];
@@ -47170,6 +47205,14 @@ function ilCardHTML(ch){
   if(shelf.length) h += `<button type="button" class="btn il-shelf-btn" data-ilshelf="${ch}">📚 외전 ${shelf.length}</button>`;
   return h;
 }
+// 사건이 끝나 방으로 돌아오면 새로 열린 외전은 누르지 않아도 바로 시작한다(사용자 요청). 한 편에 한 번만 — 중간에 '나중에 계속'으로 나오면 그 뒤엔 알림으로 이어 읽는다.
+let IL_AUTOPLAY = true;
+function ilAutoPlay(ch){
+  if(!IL_AUTOPLAY || ILR) return;
+  const d = ilForChar(ch).find(x => ilState(x.id).st === "available" && !IL_LATER[x.id] && !ilState(x.id).auto); if(!d) return;
+  ilState(d.id).auto = true; ilSave();
+  setTimeout(() => { if(!ILR && ilState(d.id).st === "available") ilStart(d.id); }, 450);
+}
 function ilAfterTxt(d){ return `${["첫 번째","두 번째","세 번째","네 번째"][d.after] || ""} 사건 뒤${d.coda ? " · 후일담" : ""}`; }
 function ilShelfHTML(ch){
   const list = ilForChar(ch).filter(d => ilState(d.id).st !== "locked");
@@ -47202,7 +47245,7 @@ if(typeof lfBaseHTML === "function"){
   const _il_base = lfBaseHTML;
   lfBaseHTML = function(){
     let h = _il_base();
-    try{ const L = lfRec(); if(L && L.story && typeof EP_PLAN !== "undefined" && EP_PLAN[L.char]){ const c = ilCardHTML(L.char); if(c) h = h.replace(/(<div class="vn of-stage lf-stage[^"]*">)/, `$1<div class="il-dock">${c}</div>`); } }catch(e){}
+    try{ const L = lfRec(); if(L && L.story && typeof EP_PLAN !== "undefined" && EP_PLAN[L.char]){ const c = ilCardHTML(L.char); if(c) h = h.replace(/(<div class="vn of-stage lf-stage[^"]*">)/, `$1<div class="il-dock">${c}</div>`); ilAutoPlay(L.char); } }catch(e){}
     return h;
   };
 }
@@ -49273,33 +49316,52 @@ IL_DEF({
         {t:"나중에 추가로 낼 돈(추가부담)이 얼마일지", b:"unk", why:"계획이 확정되기 전에는 알 수 없어요. 계산표에서는 가상 금액으로만 넣어 봐요."}],
       okText:"말 두 개, 문서 두 개, 모르는 것 세 개. '모르는 것' 칸이 제일 중요한 숙제예요.",
       foot:["교육용 가상 정보예요.","틀려도 돈을 잃거나 진행이 막히지 않아요."], note:"q5"},
-    hold:{type:"calc", title:"기다리는 동안 필요한 현금 — 가상 계산표", prompt:"보유기간과 가정을 바꿔 보세요. '얼마 벌까'가 아니라 '얼마를 버텨야 하나'를 보는 표예요.",
+    hold:{type:"calc", title:"기다리는 동안 필요한 현금 — 가상 계산표", prompt:"보유기간과 가정을 바꿔 보세요. '얼마 벌까'가 아니라 '얼마를 버텨야 하나'를 보는 표예요. 오른쪽은 사업이 어떤 순서로 흘러가는지예요.",
       inputs:[
         {id:"yr", label:"보유기간(가정)", def:"3", opts:[{v:"2", t:"2년"},{v:"3", t:"3년"},{v:"5", t:"5년"},{v:"8", t:"8년"}]},
         {id:"rate", label:"대출 금리(가상)", def:"5", opts:[{v:"4", t:"연 4% 예시"},{v:"5", t:"연 5% 예시"},{v:"6", t:"연 6% 예시"}]},
         {id:"rent", label:"그동안 세를 놓으면", def:"none", opts:[{v:"none", t:"빈집으로 둔다"},{v:"wol", t:"월 45만원(예시)"}]},
-        {id:"add", label:"추가부담(가상, 시점 미정)", def:"0", opts:[{v:"0", t:"넣지 않음"},{v:"50000000", t:"5,000만원 가정"},{v:"100000000", t:"1억원 가정"}]}],
+        {id:"stage", label:"보유 중 어디까지 가나(가정)", def:"pre", opts:[{v:"pre", t:"이주 전 단계에서 보유"},{v:"move", t:"관리처분 뒤 이주·철거까지(마지막 2년)"}]},
+        {id:"mv", label:"이주비 대출 이자(가상)", def:"union", opts:[{v:"union", t:"조합이 부담하는 조건(예시)"},{v:"self", t:"내가 연 5% 부담(예시)"}]},
+        {id:"add", label:"추가부담·분담금(가상, 시점 미정)", def:"0", opts:[{v:"0", t:"넣지 않음"},{v:"50000000", t:"5,000만원 가정"},{v:"100000000", t:"1억원 가정"}]}],
       rows:v => {
         const y = Number(v.yr), r = Number(v.rate) / 100, add = Number(v.add), m = y * 12;
-        const own = 80000000, fee = 8000000, fix = 15000000, keep = 100000 * m;
+        const move = v.stage === "move", mvM = move ? Math.min(24, m) : 0;          // 이주 뒤 공사 기간(가정) — 세도 못 놓고 유지비도 안 든다
+        const own = 80000000, fee = 8000000, fix = move ? 0 : 15000000, keep = 100000 * (m - mvM);
         const interest = Math.round(120000000 * r * y);
-        const rent = v.rent === "wol" ? 450000 * m : 0;
-        const total = own + fee + fix + keep + interest - rent + add;
+        const rent = v.rent === "wol" ? 450000 * (m - mvM) : 0;
+        const mvLoan = move ? 60000000 : 0;                                            // 종전자산 평가 1억5천만원(가정) × 40%(예시)
+        const mvInt = move && v.mv === "self" ? Math.round(mvLoan * 0.05 * mvM / 12) : 0;
+        const total = own + fee + fix + keep + interest + mvInt - rent + add;
         const f = n => n.toLocaleString("ko-KR") + "원";
         return [
           ["낙찰가(가정)", "200,000,000원 = 자기자본 80,000,000원 + 대출 120,000,000원"],
           ["자기자본(처음에 들어가는 현금)", f(own)],
           ["취득 부대비용(예시)", f(fee)],
-          ["수리(1회, 예시)", f(fix)],
-          ["유지비 월 10만원 × " + m + "개월", f(keep)],
+          ["수리(1회, 예시)", move ? "0원 — 곧 철거될 집에 수리비를 쓰지 않는다" : f(fix)],
+          ["유지비 월 10만원 × " + (m - mvM) + "개월", f(keep)],
           ["대출이자 " + v.rate + "% × " + y + "년(가상)", f(interest)],
-          ["월세 수입(예시)", rent ? "- " + f(rent) : "0원 (빈집)", rent ? "minus" : undefined],
-          ["추가부담(가상)", add ? f(add) + " — 언제 나갈지 모름" : "넣지 않음"],
+          ["월세 수입(예시)", rent ? "- " + f(rent) + (move ? " (이주하면 끊긴다)" : "") : "0원 (빈집)", rent ? "minus" : undefined],
+          ["이주비 대출(가상)", move ? f(mvLoan) + " 받음 — 종전자산 평가 1억5천만원 가정 × 40% 예시 · 기존 대출부터 갚는 데 쓰일 수 있음" : "해당 없음(이주 전 단계)"],
+          ["이주비 이자(" + mvM + "개월)", move ? (mvInt ? f(mvInt) + " — 내가 부담" : "0원 — 조합 부담 조건(대신 사업비에 들어가 분담금에 반영될 수 있음)") : "해당 없음"],
+          ["추가부담·분담금(가상)", add ? f(add) + " — 관리처분 때 윤곽, 입주 때 정산" : "넣지 않음"],
           ["기간 동안 필요한 현금 합계", f(total), "sum"],
-          ["별도: 끝날 때 갚아야 할 대출원금", "120,000,000원 (비용 아님, 따로 준비)"]];
+          ["별도: 끝날 때 갚아야 할 돈", (120000000 + mvLoan).toLocaleString("ko-KR") + "원 = 대출원금 1억2천만원" + (move ? " + 이주비 6천만원" : "") + " (비용 아님, 따로 준비)"]];
       },
-      foot:["가정: 낙찰가·부대비용·수리비·유지비·금리·월세·추가부담은 모두 교육용 예시예요. 실제 세금·금리·한도는 해당 기관에서 확인하세요.",
-            "포함: 처음 넣는 현금, 부대비용, 수리·유지, 이자, 추가부담 가정. 제외: 미래 매도가·분양가 예측, 개별 분양자격.",
+      side:{title:"🏗️ 재개발·재건축은 이렇게 흘러가요 (일반적인 순서)", head:["단계", "무엇이 정해지나", "투자자가 볼 것"], rows:[
+        {c:["① 기본계획·정비구역 지정", "사업을 할 구역의 경계", "내 지번이 경계 안인지 — 골목 이름 말고 지번으로"], hl:true},
+        ["(재건축만) 안전진단", "건물이 재건축할 만큼 낡았는지", "최근 법 개정으로 이름('재건축진단')과 받는 시기가 달라졌어요 — 최신 기준 확인"],
+        ["② 추진위원회 승인", "조합을 만들 준비 모임", "동의율, 주민 분위기 — 아직 확정된 건 없다"],
+        ["③ 조합설립인가", "조합이 생긴다 — 소유자가 조합원", "투기과열지구 재건축은 이때부터 조합원 지위 양도가 막힐 수 있음(예외 있음)"],
+        ["④ 사업시행인가", "무엇을 몇 세대 짓는지", "사업 규모, 일반분양 물량"],
+        {c:["⑤ 관리처분인가", "누가 어떤 집을 받고 얼마를 내는지", "내 권리가액·분담금, 이주비 조건 — 돈이 구체적으로 보이는 단계"], hl:true},
+        {c:["⑥ 이주·철거", "이주비 대출 실행, 건물 철거", "월세가 끊기고 이주비 이자가 시작될 수 있다"], hl:true},
+        ["⑦ 착공·일반분양", "공사 시작, 남는 집 일반분양", "분양가에 따라 분담금이 달라질 수 있다"],
+        ["⑧ 준공·입주 → 이전고시·청산", "새 집 입주, 등기 정리", "분담금·청산금 최종 정산"]],
+        foot:"도시 및 주거환경정비법 기준의 일반적인 흐름이에요. 사업 방식(공공재개발·신속통합기획 등)·지역·법 개정에 따라 순서와 요건이 달라질 수 있어요. 지금 몇 단계인지는 구청 고시와 공개 자료(서울은 정비사업 정보몽땅)로 확인하세요."},
+      foot:["가정: 낙찰가·부대비용·수리비·유지비·금리·월세·이주비·추가부담은 모두 교육용 예시예요. 실제 세금·금리·한도는 해당 기관에서 확인하세요.",
+            "이주비 대출의 한도·금리·이자 부담 주체는 사업장과 시기(대출 규제)에 따라 달라요. 기존 담보대출을 먼저 갚는 데 쓰이는 경우가 많아요.",
+            "포함: 처음 넣는 현금, 부대비용, 수리·유지, 이자, 이주비 이자, 추가부담 가정. 제외: 미래 매도가·분양가 예측, 개별 분양자격.",
             "월세 수입은 세입자가 끊김 없이 있다고 가정한 값이에요. 이 계산은 본편 통장과 관계없어요."]}
   },
   script:`

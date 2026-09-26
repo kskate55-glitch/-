@@ -1,5 +1,5 @@
 /* ================= 📖 외전 — 사건과 사건 사이의 긴 이야기(비주얼노벨형 실무 학습) =================
-   캐릭터마다 첫 번째·세 번째 스토리 사건이 끝나면 방에 '새 이야기' 알림이 뜬다(강제 재생 없음).
+   캐릭터마다 첫 번째·세 번째 스토리 사건이 끝나 방으로 돌아오면 외전이 바로 시작된다(편마다 한 번, 이후엔 알림·책장).
    · 대본은 il_<ID>.js의 script(작은 문법)로 쓰고, 여기서 한 줄짜리 명령 목록(pc)으로 바꿔 돌린다.
    · 외전 안의 숫자·계산·체험은 모두 교육용 가상 사례다 — 본편 현금·보증금·입찰가·RNG를 건드리지 않는다.
    · 저장: cpRec().il = {v, eps:{ID:{st, pc, scene, ver, picks, sheets, seen}}, notes:{}} — index가 아니라
@@ -64,6 +64,7 @@ function ilParse(def){
         if(top.type === "choice") prog[top.pc].opts.forEach(o => { if(o.to == null) errs.push(`${ln + 1}행: 선택지 ${o.id}에 @when 없음`); });
         continue;
       }
+      if(cmd === "sheet" && (def.sheets || {})[arg] && def.sheets[arg].type === "sort") continue;   // 칸 나누기 퀴즈는 뺐다(사용자 요청) — 대사는 그대로 흐른다
       if(cmd === "sheet"){ push({k:"sheet", id:arg}); if(!(def.sheets || {})[arg]) errs.push(`${ln + 1}행: 시트 ${arg} 정의 없음`); continue; }
       if(cmd === "note"){ push({k:"note", id:arg}); if(!(def.notes || []).find(n => n.id === arg)) errs.push(`${ln + 1}행: 노트 ${arg} 정의 없음`); continue; }
       if(cmd === "cg"){ push({k:"cg", id:arg}); continue; }
@@ -380,7 +381,7 @@ function ilSheetHTML(sh){
     st.vals = st.vals || {}; sh.inputs.forEach(inp => { if(st.vals[inp.id] == null) st.vals[inp.id] = inp.def; });
     let rows = []; try{ rows = sh.rows(st.vals) || []; }catch(e){ rows = [["계산 오류", String(e.message || e)]]; }
     mid = `<div class="il-calc-in">${sh.inputs.map(inp => `<div class="il-cfg"><b>${esc(inp.label)}</b><div>${inp.opts.map(o => `<button type="button" class="btn sm${st.vals[inp.id] === o.v ? " pri" : ""}" data-ilcalc="${esc(inp.id)}:${esc(String(o.v))}">${esc(o.t)}</button>`).join("")}</div></div>`).join("")}</div>
-      <div class="il-tbl-wrap"><table class="il-tbl il-calc">${rows.map(r => `<tr class="${r[2] || ""}"><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join("")}</table></div>`;
+      <div class="${sh.side ? "il-calc-2col" : ""}"><div class="il-tbl-wrap"><table class="il-tbl il-calc">${rows.map(r => `<tr class="${r[2] || ""}"><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join("")}</table></div>${sh.side ? ilSideHTML(sh.side) : ""}</div>`;
     st.checked = true;
   } else if(sh.type === "doc"){ st.checked = true; }
   const foot = sh.foot ? `<ul class="il-foot">${sh.foot.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
@@ -391,6 +392,10 @@ function ilSheetHTML(sh){
     ? `<button type="button" class="btn" data-ilsheet="show">📖 설명 보고 진행</button>${right && st.checked ? `<button type="button" class="btn pri" data-ilsheet="done">계속 읽기 ▶</button>` : `<button type="button" class="btn pri" data-ilsheet="check"${allAns ? "" : " disabled"}>확인</button>`}`
     : `<button type="button" class="btn pri" data-ilsheet="done">${sh.type === "doc" ? "확인했어요 ▶" : "계속 읽기 ▶"}</button>`;
   return `${head}${docRows}${mid}${msg}${foot}<div class="il-row">${btns}</div>`;
+}
+// 계산표 옆에 나란히 붙는 참고 표(예: 재개발·재건축 단계) — 좁은 화면에선 아래로 내려간다
+function ilSideHTML(sd){
+  return `<div class="il-side"><b>${esc(sd.title)}</b><div class="il-tbl-wrap"><table class="il-tbl il-side-t">${sd.head ? `<tr>${sd.head.map(h => `<th>${esc(h)}</th>`).join("")}</tr>` : ""}${sd.rows.map(r => `<tr class="${r.hl ? "hl" : ""}">${(r.c || r).map((c, i) => i === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table></div>${sd.foot ? `<small>${esc(sd.foot)}</small>` : ""}</div>`;
 }
 function ilSheetDone(){
   const R = ILR; if(!R) return; const sh = R.def.sheets[R.sheetId];
@@ -461,6 +466,14 @@ function ilCardHTML(ch){
   if(shelf.length) h += `<button type="button" class="btn il-shelf-btn" data-ilshelf="${ch}">📚 외전 ${shelf.length}</button>`;
   return h;
 }
+// 사건이 끝나 방으로 돌아오면 새로 열린 외전은 누르지 않아도 바로 시작한다(사용자 요청). 한 편에 한 번만 — 중간에 '나중에 계속'으로 나오면 그 뒤엔 알림으로 이어 읽는다.
+let IL_AUTOPLAY = true;
+function ilAutoPlay(ch){
+  if(!IL_AUTOPLAY || ILR) return;
+  const d = ilForChar(ch).find(x => ilState(x.id).st === "available" && !IL_LATER[x.id] && !ilState(x.id).auto); if(!d) return;
+  ilState(d.id).auto = true; ilSave();
+  setTimeout(() => { if(!ILR && ilState(d.id).st === "available") ilStart(d.id); }, 450);
+}
 function ilAfterTxt(d){ return `${["첫 번째","두 번째","세 번째","네 번째"][d.after] || ""} 사건 뒤${d.coda ? " · 후일담" : ""}`; }
 function ilShelfHTML(ch){
   const list = ilForChar(ch).filter(d => ilState(d.id).st !== "locked");
@@ -493,7 +506,7 @@ if(typeof lfBaseHTML === "function"){
   const _il_base = lfBaseHTML;
   lfBaseHTML = function(){
     let h = _il_base();
-    try{ const L = lfRec(); if(L && L.story && typeof EP_PLAN !== "undefined" && EP_PLAN[L.char]){ const c = ilCardHTML(L.char); if(c) h = h.replace(/(<div class="vn of-stage lf-stage[^"]*">)/, `$1<div class="il-dock">${c}</div>`); } }catch(e){}
+    try{ const L = lfRec(); if(L && L.story && typeof EP_PLAN !== "undefined" && EP_PLAN[L.char]){ const c = ilCardHTML(L.char); if(c) h = h.replace(/(<div class="vn of-stage lf-stage[^"]*">)/, `$1<div class="il-dock">${c}</div>`); ilAutoPlay(L.char); } }catch(e){}
     return h;
   };
 }

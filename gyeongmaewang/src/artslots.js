@@ -177,3 +177,7 @@ Object.assign(AS_BG_ART, {
   bg_case_f21_door: "0c11cb383f78a3adbffbb075a5b21b2b",
 });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 6차(v163): f22 인천 부평 — 새벽 택배 화물차 외관
+AS_BG_ART.bg_case_f22_ext = "d1a709e75bb64c5da3e7358a79180664";
+Object.assign(ART_DEFAULT, AS_BG_ART);

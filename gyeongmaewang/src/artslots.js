@@ -126,3 +126,8 @@ Object.assign(ART_DEFAULT, AS_OP_ART);
 // 받은 오프닝 15차(v154): 은경 — 아침 마포 오피스텔, 한강
 AS_OP_ART.op_eunkyung_1 = "45c78447f3897aa60587e5a8b68db32e";
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 16차(v155): 은경 — 계산기 클로즈업 · 소파 통화(시든 퇴직 꽃다발)
+AS_OP_ART.op_eunkyung_1_4 = "fa6054e0a12f81c0643d475601b7ba9b";
+AS_OP_ART.op_eunkyung_2   = "e71076aefff0af507b450be3e0b3108a";
+Object.assign(ART_DEFAULT, AS_OP_ART);

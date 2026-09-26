@@ -151,3 +151,10 @@ const AS_BG_ART = {
   bg_case_f11_in:   "b547ef27dcd47e0e7b7b85deef1bee6b",
 };
 Object.assign(ART_DEFAULT, AS_OP_ART, AS_BG_ART);
+
+// 받은 배경 2차(v159): f12 의정부 가능동 원룸 — 외관(경전철 고가)·3층 복도(빈집은 아직 → 공용 배경)
+Object.assign(AS_BG_ART, {
+  bg_case_f12_ext:  "560d004349d82572f08c0b2c9cf3b01e",
+  bg_case_f12_door: "a7432f865b29701a311d1c1d5cf55166",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

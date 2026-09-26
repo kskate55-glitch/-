@@ -745,3 +745,6 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .mb-list{list-style:none;margin:6px 0;padding:0;line-height:1.7}.mb-list li{opacity:.75}.mb-list li.on{opacity:1;font-weight:700}
 .ag-act.mb-act{border-left:4px solid #c98a14!important}
 .mb-tip{margin-top:6px;padding:6px 9px;border-radius:8px;background:rgba(242,179,61,.14);color:inherit!important;opacity:1!important}
+/* v129 — 읽은 대사 */
+.mt-rdskip{background:#f2b33d!important;color:#1b1406!important;font-weight:800;margin-right:6px}
+.rd-tag{display:inline-block;margin-left:4px;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.18);font-size:11px}

@@ -181,3 +181,10 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 6차(v163): f22 인천 부평 — 새벽 택배 화물차 외관
 AS_BG_ART.bg_case_f22_ext = "d1a709e75bb64c5da3e7358a79180664";
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 7차(v164): f22 부평 — 고양이 내다보는 2층 현관·캣타워 거실(f22 완료)
+Object.assign(AS_BG_ART, {
+  bg_case_f22_door: "2784e3bf8a5eab6377f314d22fadc1f1",
+  bg_case_f22_in:   "1f980f71e6f131d6f379db818ba391b6",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

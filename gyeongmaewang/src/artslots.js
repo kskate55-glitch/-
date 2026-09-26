@@ -342,3 +342,6 @@ Object.assign(ART_DEFAULT, { cg_il_j01_b:"78d6e89e664df5342fe98960f0afdfc4" });
 
 // 외전 장면 그림(v200): J01 c 현장 쉼터에서 오 반장이 휴대폰 보여 주는 해 질 녘(s7) · J03 a 수리 끝난 빈 방에서 전화 받는 재훈(s1, 줄자 표시 흐림)
 Object.assign(ART_DEFAULT, { cg_il_j01_c:"5b96c950ca549b4376d82e0fb4036217", cg_il_j03_a:"129687202a94c4bd002312ce3c91d96b" });
+
+// 외전 장면 그림(v201): J03 재훈 가족 — b 꽃병 든 현주·줄자 든 다은·배치도 그리는 재훈(s5, 대표) · c 방 사진 찍는 현주와 조명 드는 재훈(s6, 줄자 표시 흐림)
+Object.assign(ART_DEFAULT, { cg_il_j03:"828e2d849e98db8da727af766a5fa600", cg_il_j03_b:"828e2d849e98db8da727af766a5fa600", cg_il_j03_c:"9f091b843d2a9a08377911ddf1227904" });

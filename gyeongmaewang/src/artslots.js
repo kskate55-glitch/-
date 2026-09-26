@@ -271,3 +271,6 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 20차(v179): f61 인계동 — 현수막·임대 종이 붙은 5층 상가(차 엠블럼·번호판·옆 가게 간판 글자 흐림)
 Object.assign(AS_BG_ART, { bg_case_f61_ext: "96e8d181ec69e464b3ca1175f82a7952" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 21차(v180): f61 인계동 — 리모델링이 끝난 빈 2층 상가(비닐 덮인 새 문·자재·공구함)
+Object.assign(AS_BG_ART, { bg_case_f61_in: "e228e88a9ed21324060daf43c887a48f" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

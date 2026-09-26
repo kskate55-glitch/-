@@ -42,7 +42,7 @@ for(const id of ids){
     if(st.flip){ await click('[data-kflip="0"]'); continue; }
     if(st.off){ const need=await p.evaluate(()=>K.askNeed); const has=await p.evaluate(n=>{ const bs=[...document.querySelectorAll('[data-koffer]')].map(b=>+b.dataset.koffer); const pick=bs.find(v=>v>=n) ?? bs[bs.length-1]; const e=document.querySelector(`[data-koffer="${pick}"]`); if(e){ e.click(); return true;} return false; },need); if(!has) await p.evaluate(()=>kOffer(K.askNeed)); continue; }
     if(st.agreed){ if(!st.paper) await click('[data-kmove="paper"]'); else { if(!(await click('[data-kwait]'))) await p.evaluate(()=>kTick(1)); } continue; }
-    if(await p.evaluate(()=>{ const b=[...document.querySelectorAll('[data-kmove^="mb"]')].find(x=>x.dataset.kmove!=='mb_bridge'); if(b){ b.click(); return true; } return false; })) continue;
+    if(await p.evaluate(()=>{ const b=[...document.querySelectorAll('[data-kmove^="mb"],[data-kmove="sp_bridge"]')].find(x=>x.dataset.kmove!=='mb_bridge'); if(b){ b.click(); return true; } return false; })) continue;
     const seq=['listen','daughter','center','listen','date','order']; const m=seq[g%seq.length];
     if(!(await click(`[data-kmove="${m}"]`))) await click('[data-kmove="date"]');
     if(g%6===0) await scan(id+' 명도 중');

@@ -73,7 +73,7 @@ if(typeof kMove === "function"){
     if(id === "sp_bridge"){
       if(!o.spAsk || o.spBridged) return;
       const amt = Math.max(50, Math.round((typeof kfOccNeed === "function" ? kfOccNeed() : 150) * 0.4 / 10) * 10);
-      o.spBridged = true; o.turns++; K.cost.move += amt; o.coop += 18; o.resist -= 15; o.paper = true;
+      o.spBridged = true; o.turns++; K.cost.move += amt; o.coop = Math.max(o.coop + 18, 60); o.resist = Math.min(o.resist - 15, 35); o.paper = true;
       kSay(`…진짜요? 그럼 이번 주에 계약하고, 적은 날짜에 나갈게요. 합의서에 다 쓰죠.`, "normal");
       kLog(`💵 계약금 일부 ${kMan(amt)} 선지급 — 합의서에 퇴거일과 '짐이 다 빠진 걸 확인한 뒤 나머지 지급'을 적었다.`);
       if(typeof kClampOcc === "function") kClampOcc(); if(typeof kfTick === "function") kfTick(2); else kTick(2); spCheckCall(); return;

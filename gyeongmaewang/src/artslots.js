@@ -299,3 +299,7 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 28차(v187): f54 면목동 투룸 거실(받아쓰기 공책·가족 달력·칫솔 컵) · f62 간석동 다가구 공용 복도(우편함 여섯 칸)
 Object.assign(AS_BG_ART, { bg_case_f54_in: "f8d3027b79f11b11a4e8eac0e36b88e1", bg_case_f62_door: "7e4f879da83d5625a73fe480dadf05ee" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 29차(v188): f61 인계동 상가 현관(체인 걸린 유리문·접이식 의자·전단) · f21 심곡동 쓰리룸 거실(가죽 소파·트로피·양주 장식장, TV 표시 흐림)
+Object.assign(AS_BG_ART, { bg_case_f61_door: "ef34b7565030460ff66e77096e8e9768", bg_case_f21_in: "ca450150bd3349876dc27aed62cf29ae" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

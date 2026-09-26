@@ -303,3 +303,7 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 29차(v188): f61 인계동 상가 현관(체인 걸린 유리문·접이식 의자·전단) · f21 심곡동 쓰리룸 거실(가죽 소파·트로피·양주 장식장, TV 표시 흐림)
 Object.assign(AS_BG_ART, { bg_case_f61_door: "ef34b7565030460ff66e77096e8e9768", bg_case_f21_in: "ca450150bd3349876dc27aed62cf29ae" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 30차(v189): f64 화성 공장 내부 — CNC 기계 줄·천장 크레인(크레인 라벨·기계 명판 흐림)
+Object.assign(AS_BG_ART, { bg_case_f64_in: "95ba53be159f7d5a2b61298e88f39b6e" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

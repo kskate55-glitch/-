@@ -18,3 +18,12 @@ artNpc = function(pid, ex){
   }
   return _as_artNpc(pid, ex);
 };
+// 물건 속 인물이 자유 플레이 인물과 이름이 다르면(= 다른 사람) 그 자유 플레이 인물을 '만났다'고 도감에 올리지 않는다
+//   예: f63 모텔의 탁만수 사장은 자유 플레이의 황금철 씨(노래방)와 다른 사람이다 — 예전엔 "도감 등록 — 황금철 씨"가 떴다
+function asOtherPerson(pid){
+  if(typeof K === "undefined" || !K || typeof KP === "undefined" || !KP || !KP.gen || !KP.occ || pid !== KP.occ.pid) return false;
+  const P = typeof personaById === "function" ? personaById(pid) : null; if(!P) return false;
+  const base = n => String(n || "").replace(/\s*\(.*\)\s*$/, "").replace(/\s*(씨|사장|원장|할아버지|할머니)$/, "").trim();
+  return base(P.name) !== base(KP.occ.name);
+}
+if(typeof hubMeet === "function"){ const _as_hubMeet = hubMeet; hubMeet = function(pid){ if(asOtherPerson(pid)) return; return _as_hubMeet(pid); }; }

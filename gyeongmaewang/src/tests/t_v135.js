@@ -13,7 +13,7 @@ r=await p.evaluate(()=>{ const out=[]; for(const id of ['f21','f22','f23']){ con
 ok(r.every(x=>+x.split(':')[1]<=210), '평일 하루에 현장 1곳 + 조사 3개(총 4개)가 들어감 '+r.join(' '));
 // 3) 그림 칸 등록
 r=await p.evaluate(()=>({n:ART_SLOTS.filter(s=>/^(op_|npc_occ_|bg_case_)/.test(s.id)).length, op:ART_SLOTS.filter(s=>/^op_/.test(s.id)).length, ch:[...new Set(ART_SLOTS.filter(s=>/^op_/.test(s.id)).map(s=>s.id.split('_')[1]))].length}));
-ok(r.n===129 && r.ch===6, '그림 칸 129개 등록(오프닝 '+r.op+' · 주인공 '+r.ch+'명)');
+ok(r.n===141 && r.ch===6, '그림 칸 141개 등록(오프닝 '+r.op+' · 주인공 '+r.ch+'명)');
 // 4) 물건 전용 배경·점유자: 올리면 바뀌고, 안 올리면 그대로
 const FAKE='5961986acf90e000dd87644d50e24d72';
 r=await p.evaluate((F)=>{ localStorage.clear(); const c=kcRec(); delete c.life; c.fr={full:true}; arenaTab='king'; KC_MODE='career'; K_PROP_NEXT='f22'; kStart(4); K.intro=false;

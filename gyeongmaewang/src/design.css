@@ -757,3 +757,14 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .ev-doc{background:#e3f1ea;color:#1f6b45}.ev-est{background:#fff1d6;color:#8a5a00}.ev-claim{background:#ece6fb;color:#5b3fa8}
 .ev-meta{display:block;margin-top:3px;font-size:11px;line-height:1.45;opacity:.85}
 .ev-legend{font-size:11.5px;line-height:1.9;margin:4px 0 8px;opacity:.9}
+/* 입찰 직전 '모르는 비용' 경고 (bidwarn.js) */
+.bw{margin:10px 0;padding:12px 14px;border-radius:12px;border:1.5px solid #e6d3a3;background:#fff9ea;color:#2b2b2b;font-size:14px;line-height:1.6}
+.bw p{margin:6px 0}.bw ul{margin:4px 0 6px 18px;padding:0}.bw .note{color:#555}
+.bw-h{display:block;font-size:15.5px}
+.bw-danger{border-color:#e05252;background:#fff1f0}.bw-danger .bw-h{color:#b42318}
+.bw-warn{border-color:#e0a13a}.bw-warn .bw-h{color:#9a5b00}
+.bw-info{border-color:#cfd6df;background:#f6f8fb}
+.bw-ok{display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:700;cursor:pointer}
+.bw-ok input{width:18px;height:18px}
+.bw-shake{animation:bwShake .35s}
+@keyframes bwShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}

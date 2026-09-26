@@ -71,5 +71,7 @@ const g16=await p.evaluate(async()=>{ K_PROP_NEXT='f62'; kStart(5); K.intro=fals
 ok(g16.a.startsWith('bg_case_f62_ext,') && g16.a.endsWith(',bg_case_f62_in') && !g16.a.includes('f62_door') && g16.ok, 'f62 외관·실내 전용 + 로드');
 const g17=await p.evaluate(async()=>{ K_PROP_NEXT='f63'; kStart(5); K.intro=false; const a=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); const ok=await new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f63_ext'); }); const ok2=await Promise.all(['door','in'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f63_'+k); }))); return {a:a.join(), ok:ok&&ok2.every(Boolean)}; });
 ok(g17.a==='bg_case_f63_ext,bg_case_f63_door,bg_case_f63_in' && g17.ok, 'f63 3장 전용 + 로드');
+const g18=await p.evaluate(async()=>{ K_PROP_NEXT='f64'; kStart(5); K.intro=false; const a=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); const ok=await new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f64_ext'); }); return {a:a.join(), ok}; });
+ok(g18.a==='bg_case_f64_ext,bg_front_door,bg_room_empty' && g18.ok, 'f64 외관 전용 + 로드(문·실내는 공용)');
 ok(!errs.some(e=>e.startsWith('pageerror')), 'JS 오류 없음');
 console.log(errs.length?'FAIL':'ALL OK'); await b.close(); })();

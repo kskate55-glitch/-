@@ -283,3 +283,7 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 24차(v183): f63 평택 — 1층 카운터(열쇠 걸이·탁상시계)·붉은 카펫 복도와 열린 객실
 Object.assign(AS_BG_ART, { bg_case_f63_door: "76ec863d3ff55953f4d3904392dfac4b", bg_case_f63_in: "aca71ad0314f29fee6c7ead17857b412" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 25차(v184): f64 화성 — 체인·자물쇠 셋 걸린 공장 셔터·지게차 마당(지게차 스티커 흐림)
+Object.assign(AS_BG_ART, { bg_case_f64_ext: "86d5be3b1b4566ba03b6ec2d4c412e55" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

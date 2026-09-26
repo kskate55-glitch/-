@@ -287,3 +287,7 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 25차(v184): f64 화성 — 체인·자물쇠 셋 걸린 공장 셔터·지게차 마당(지게차 스티커 흐림)
 Object.assign(AS_BG_ART, { bg_case_f64_ext: "86d5be3b1b4566ba03b6ec2d4c412e55" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 26차(v185): f41 정릉 반지하 방 — 벽 아래 물 찬 자국·전기장판·약통(TV·냉장고 로고 흐림)
+Object.assign(AS_BG_ART, { bg_case_f41_in: "00c1463da3e8e28a37c591633cc2cbf1" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

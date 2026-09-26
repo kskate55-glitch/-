@@ -33,7 +33,7 @@ function scenes(name, arr, min, max, lmin, lmax, endLast){
   if(n < lmin || n > lmax) errs.push(`${name}: 대사 ${n}줄 (필요 ${lmin}~${lmax})`);
   return n;
 }
-const nOp = scenes("opening", D.opening, 9, 13, 60, 90);
+const nOp = scenes("opening", D.opening, 5, 8, 28, 42);   // v216: 오프닝이 지루하다는 지적으로 절반으로 줄였다
 const E = D.ending || {};
 const nCore = scenes("ending.core", E.core, 3, 5, 22, 40);
 const nv = {}; ["normal", "good", "bad", "special"].forEach(t => { nv[t] = scenes("ending." + t, E[t], 1, 2, 5, 12, true); });

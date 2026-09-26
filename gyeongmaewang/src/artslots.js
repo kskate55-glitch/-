@@ -63,3 +63,11 @@ Object.assign(AS_OP_ART, {
   op_dohyun_1_2: "b731ddefed2edadf29932375749b9052",
 });
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 3차(v142): 도현 현관 도어락 · 원룸 넥타이 · 월급 스쳐 가는 알림
+Object.assign(AS_OP_ART, {
+  op_dohyun_2:   "7f2d48e7ef12da9d67a9b4a797db7f10",
+  op_dohyun_3:   "6b6360bc5c4d5e75210c5604d52ea4a1",
+  op_dohyun_3_2: "3730caad0c5232f4b3e98f3ff77261f1",
+});
+Object.assign(ART_DEFAULT, AS_OP_ART);

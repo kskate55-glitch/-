@@ -20,7 +20,7 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; K=null; LF_PICK='dohyun'; renderArena(); }); await p.waitForTimeout(500);
  ok(await p.evaluate(()=>document.querySelectorAll('.lf-card .lf-face img').length===6 && /b9c749/.test(document.querySelector('.lf-focus-art').src)), w+' 선택: 여섯 명 얼굴·도현 일러스트');
  await p.click('[data-lfstart="dohyun"]'); await p.waitForTimeout(1500); await p.click('#gxOp'); await p.waitForTimeout(1500); await p.screenshot({path:`ca_op_dh_${w}.png`});
- ok(await p.evaluate(()=>/3ff68bb1/.test(document.querySelector('#gxOp .gx-bgimg.on').style.backgroundImage)), w+' 도현 오프닝 첫 장면 = 퇴근길');
+ ok(await p.evaluate(()=>{ const u=gxArtOf(GX_OP, LF_OPENINGS.dohyun[0].art)||artUrl(LF_OPENINGS.dohyun[0].bg); const im=document.querySelector('#gxOp .gx-bgimg.on'); return !!u && !!im && im.style.backgroundImage.includes(u.slice(-40)); }), w+' 도현 오프닝 첫 장면 = 새 대본 첫 장면 그림');
  await p.click('[data-gxskip]'); await p.waitForTimeout(300); await p.click('[data-gxskip]'); await p.waitForTimeout(1300); await p.screenshot({path:`ca_base_dh_${w}.png`});
  ok(broken.length===0, w+' 깨진 그림 없음 '+broken.join(','));
  ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), w+' 가로 스크롤 없음');

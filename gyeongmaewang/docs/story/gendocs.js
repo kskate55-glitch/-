@@ -1,7 +1,7 @@
 // 사용: cd src && node ../docs/story/gendocs.js ../docs/story   — 대본 데이터(oe_*.js)로 문서·매니페스트 다시 만들기
 // 대본 데이터(oe_*.js) → 문서 3종 + 매니페스트
 const fs=require('fs'); const OUT=process.argv[2]; const OE_DATA={};
-const TAIL='\n\n[공통 조건] 첨부 1 인물의 얼굴·머리·옷 특징을 그대로 유지하고, 첨부 2의 선·채색·흙빛 레트로 2D 톤을 맞춘다. 16:9 가로 장면 일러스트 한 장. 게임 UI·자막·말풍선·글자·숫자판·로고·실제 브랜드·실존 인물 얼굴 없이. 휴대폰·모니터 화면은 빛만 나고 내용은 보이지 않게. 화면 아래 1/4은 대사창이 올라가므로 얼굴·손·중요한 물건을 두지 않는다.';
+const TAIL='\n\n[공통 조건] 첨부한 캐릭터 원본의 얼굴·머리·체형·옷 특징을 반드시 유지한다(다른 사람처럼 바뀌지 않게). 화풍: 따뜻한 흙빛(갈색·앰버·올리브) 팔레트의 레트로 2D 애니메이션 게임 일러스트, 깔끔한 선화와 부드러운 셀 채색, 영화 같은 부드러운 조명. 16:9 가로, 고해상도로 선명하게(흐림·뭉개짐·노이즈 없이). 게임 UI·자막·말풍선·글자·숫자·로고·실제 브랜드·실존 인물 얼굴 없음. 휴대폰·모니터 화면은 빛만 나고 내용은 보이지 않게. 화면 아래 1/4은 대사창이 올라가므로 얼굴·손·중요한 물건을 두지 않는다.';
 const IDS=['seoyun','dohyun','mijeong','jaehoon','eunkyung','taesik'];
 const NAME={seoyun:'한서윤',dohyun:'이도현',mijeong:'윤미정',jaehoon:'박재훈',eunkyung:'최은경',taesik:'김태식'};
 for(const id of IDS) new Function('OE_DATA',fs.readFileSync(`oe_${id}.js`,'utf8'))(OE_DATA);
@@ -35,7 +35,7 @@ const unused=slots.filter(s=>/^op_/.test(s.id)&&!usedOp.has(s.id)).map(s=>'- `'+
 fs.writeFileSync(OUT+'/ASSET_LIST.md',a);
 fs.writeFileSync(OUT+'/oe_manifest.json',JSON.stringify(manifest,null,1));
 // 3) 프롬프트
-let p=`# 오프닝·엔딩 새 일러스트 — GPT 이미지 생성 프롬프트 (24장)\n\n쓰는 법: 새 대화에서 **첨부 1 = 주인공 참고 이미지, 첨부 2 = 화풍 참고 이미지(기존 사건 일러스트 아무거나)** 를 올리고, 아래 코드 블록을 통째로 복사해 붙여 넣는다. 조연은 프롬프트 안에 외모가 묘사돼 있어 따로 첨부하지 않아도 된다.\n\n완성본은 슬롯 id를 말해 주며 보내 주면 게임에 연결한다.\n`;
+let p=`# 오프닝·엔딩 새 일러스트 — GPT 이미지 생성 프롬프트 (24장)\n\n쓰는 법: 새 대화에서 **그 캐릭터 원본 이미지 1장**을 올리고 아래 코드 블록을 통째로 복사해 붙여 넣는다. 화풍은 프롬프트 안에 글로 적혀 있고, 조연 외모도 프롬프트에 묘사돼 있어 따로 첨부하지 않아도 된다.\n\n완성본은 슬롯 id를 말해 주며 보내 주면 게임에 연결한다.\n`;
 for(const id of IDS){ p+=`\n---\n\n## ${NAME[id]}\n`; for(const x of OE_DATA[id].art) p+=`\n### \`${x.id}\` — ${x.title}\n\n장면: ${x.scene}\n\n\`\`\`\n${x.prompt}${TAIL}\n\`\`\`\n`; }
 fs.writeFileSync(OUT+'/IMAGE_PROMPTS.md',p);
 console.log('ok', Object.keys(manifest.characters).length, unused.length+' unused op');

@@ -1165,3 +1165,6 @@ body.nx-quiet .stg-file{animation:none!important}
 .ez-tip{position:fixed;z-index:2147483200;background:#fff;color:#222;border:1px solid #4fb5ff;border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.55;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .ez-tip b{display:block;margin-bottom:3px;color:#0b6bb3}
 .ez-ask{align-items:center}
+.ez-coach{align-items:center}
+.ez-coach-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}.ez-coach-h b{color:#0b6bb3;font-size:16px}.ez-coach-h small{color:#888}
+.ez-coach-big{font-size:18px!important;font-weight:800;line-height:1.5}

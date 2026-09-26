@@ -38,7 +38,8 @@ node tests/check_oe.js oe_mijeong.js   # 대본 형식 검사
 | `oe_seoyun_op1` · `op2` · `op3` · `end1` | ✅ 연결 (`src/story_oe.js`의 `OE_ART`) |
 | `oe_dohyun_op3` · `end1` | ✅ 연결 |
 | `oe_mijeong_op1` · `op2` · `op3` · `end1` | ✅ 연결 |
-| `oe_eunkyung_op1` · `op2` · `op3` | ✅ 연결 |
-| 도현 op1·op2 · 은경 end1 · 재훈·태식 각 4장 | 대기 — 기존 그림·배경이 대신 나온다 |
+| `oe_eunkyung_op1` · `op2` · `op3` · `end1` | ✅ 연결 |
+| `oe_taesik_op1` · `op2` | ✅ 연결 |
+| 도현 op1·op2 · 재훈 4장 · 태식 op3·end1 | 대기 — 기존 그림·배경이 대신 나온다 |
 
 새 그림을 받으면 자산 저장소에 올리고 `OE_ART`에 `슬롯 이름: 자산 id` 한 줄만 추가하면 된다.

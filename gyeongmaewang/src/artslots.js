@@ -318,3 +318,6 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 
 // 외전 장면 그림(v192): S01 서윤 — a 영수증 더미 책상(대표·책장 표지) · b 서점에서 민지 선배와 책 비교 · c 노을 속 영수증 세 칸 분류
 Object.assign(ART_DEFAULT, { cg_il_s01:"21c95dd4c072b9f0af0b2960dc230b81", cg_il_s01_a:"21c95dd4c072b9f0af0b2960dc230b81", cg_il_s01_b:"97ed6818165f172869b741654039c955", cg_il_s01_c:"c9f40c6d6dfc98da123bacd6bd299da0" });
+
+// 외전 장면 그림(v193): D01 도현 — a 구내식당에서 동료 둘이 캐묻는 점심(s2) · b 밤 책상 위 입찰가 메모(s8, 대표) / S03 서윤 — c 법원 창구 앞 대기(s6)
+Object.assign(ART_DEFAULT, { cg_il_d01:"343f773cc5e2161e281e8d898a2cb462", cg_il_d01_a:"bc0adfead5808ea17c1f97a01f1086e4", cg_il_d01_b:"343f773cc5e2161e281e8d898a2cb462", cg_il_s03_c:"ce9dc6e37cdb8b800edf71d940fd817d" });

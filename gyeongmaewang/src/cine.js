@@ -225,6 +225,8 @@ function gxOpStart(id, opt){
   if(typeof kaWant === "function"){ KA_UNLOCKED = true; kaCtx(); kaWant("op_" + id); }
   gxPrelude(0);
 }
+// "누군가는 집을 사려고…" 막간은 첫 캐릭터(서윤) 오프닝에서만 — 두 번째 캐릭터부터는 반복돼서 지루하다(v215)
+function gxPreludeFirst(id){ return id === "seoyun"; }
 function gxPrelude(k){
   const O = GX_OP; if(!O) return;
   const cine = O.el.querySelector(".gx-cine");
@@ -232,7 +234,7 @@ function gxPrelude(k){
     if(k === 0){ cine.innerHTML = `<div class="gx-ep"><small>경매왕</small><b>EPILOGUE</b><h2>${esc(LF_CHARS.find(x => x.id === O.id).name)}의 그 후</h2></div>`; O.t = setTimeout(() => gxPrelude(1), gxMs(2400)); return; }
     cine.innerHTML = ""; gxScene(0); return;
   }
-  if(k === 0){ cine.innerHTML = `<div class="gx-ep"><small>경매왕</small><b>EP.0</b><h2>「${esc(LF_EP0[O.id])}」</h2></div>`; O.t = setTimeout(() => gxPrelude(1), gxMs(2600)); return; }
+  if(k === 0){ cine.innerHTML = `<div class="gx-ep"><small>경매왕</small><b>EP.0</b><h2>「${esc(LF_EP0[O.id])}」</h2></div>`; O.t = setTimeout(() => gxPrelude(gxPreludeFirst(O.id) ? 1 : LF_PRELUDE.length + 1), gxMs(2600)); return; }
   if(k <= LF_PRELUDE.length){ cine.innerHTML = `<p class="gx-line">${esc(LF_PRELUDE[k - 1])}</p>`; O.t = setTimeout(() => gxPrelude(k + 1), gxMs(k === LF_PRELUDE.length ? 2600 : 1800)); return; }
   cine.innerHTML = ""; gxScene(0);
 }

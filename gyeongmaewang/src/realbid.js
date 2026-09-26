@@ -7,17 +7,22 @@
    근거(교육용 참고값, 날짜 표기): 2026년 상반기 공개 보도에 인용된 경매정보업체 집계 — 수도권 빌라 낙찰가율
    경기 약 77% · 인천 약 70% · 서울(일반 응찰자) 약 73~75%, 평균 응찰자 수 경기 4.4명 · 인천 4.2명.
    동 단위 평균은 한 동의 한 해 빌라 경매가 몇 건 안 돼 표본이 너무 작아서 쓰지 않는다(시·도 평균만). */
+// ⚠️ v215 개정 — 사용자 현장 경험 반영: 요즘 빌라는 두세 번 유찰되는 게 흔하고, 낙찰은 감정가의 67% 안팎,
+//    입찰자는 한두 명~세 명이 보통이며 많아야 다섯 명 정도다(아파트만 사람이 많이 몰린다). 예전 값(응찰 4.2~4.4명,
+//    낙찰가율 70~77%)은 보도 인용 수치였는데, 그대로 두니 거의 매번 몰린 판·고가 낙찰처럼 보였다.
+//    아래는 통계로 검증한 값이 아니라 게임용 참고값이다(화면에도 "참고"로만 표시).
 const RB_REGION = {
-  서울:{rate:0.745, bidders:4.3}, 경기:{rate:0.77, bidders:4.4}, 인천:{rate:0.70, bidders:4.2}, 기타:{rate:0.74, bidders:4.0}};
-const RB_KIND = {villa:{rateAdd:0, bidMul:1}, apt:{rateAdd:0.06, bidMul:1.35}, comm:{rateAdd:-0.06, bidMul:0.6}};
+  서울:{rate:0.68, bidders:2.2}, 경기:{rate:0.67, bidders:2.2}, 인천:{rate:0.65, bidders:2.1}, 기타:{rate:0.67, bidders:2.1}};
+const RB_KIND = {villa:{rateAdd:0, bidMul:1}, apt:{rateAdd:0.13, bidMul:3.7}, comm:{rateAdd:-0.06, bidMul:0.8}};
+const RB_MAX_RIVALS = 4;   // 빌라·상가: 나 포함 많아야 5명
 // 성향 계수: 지역 평균 낙찰가율에 곱한다(한 명만 봤을 때 대략 이 범위를 쓴다)
 const RB_STYLE = [[/저가/, 0.83, 0.90], [/전문|투자/, 0.88, 0.96], [/실수요|이사철|소문/, 0.90, 0.99], [/인테리어|업자|운영자/, 0.91, 1.00], [/초보|과입찰|아는/, 0.94, 1.03], [/맹신/, 0.99, 1.08]];
 function rbRegion(){ const s = String((KP && (KP.addr || "")) + " " + (KP && (KP.title || ""))); return /^\s*서울|서울 /.test(s) ? "서울" : /인천/.test(s) ? "인천" : /경기|수원|부천|고양|남양주|의정부|안산|평택|화성|성남|용인/.test(s) ? "경기" : "기타"; }
 function rbKind(){ const s = String((KP.title || "") + " " + (KP.short || "")); return /아파트/.test(s) ? "apt" : /상가|근린|모텔|공장|미용실|식당|중식당|빌딩/.test(s) ? "comm" : "villa"; }
 // 경쟁자 수(나 제외) — 평균이 (평균 응찰자 수 − 1) 근처가 되는 치우친 분포: 한두 명이 흔하고, 가끔 많이 몰린다
 function rbCount(r, mean){
-  const u = r(); if(u < 0.14) return 0;
-  const k = mean / 0.86; let n = 0, t = r(); while(t > Math.exp(-k) && n < 12){ n++; t *= r(); }   // 포아송(평균 k) 뽑기
+  const u = r(); if(u < 0.22) return 0;   // 단독 입찰도 흔하다
+  const k = mean / 0.78; let n = 0, t = r(); while(t > Math.exp(-k) && n < 12){ n++; t *= r(); }   // 포아송(평균 k) 뽑기
   return Math.max(1, n);
 }
 function rbStyle(name){ for(const [re, lo, hi] of RB_STYLE) if(re.test(name)) return [lo, hi]; return [0.89, 0.98]; }
@@ -29,8 +34,9 @@ function rbApply(){
   // ① 인원
   const pool = (KP.rivals && KP.rivals.length ? KP.rivals : K_RIVALS);
   let want = K.crowd === "quiet" ? 0 : rbCount(K.r, Math.max(0.6, (reg.bidders - 1) * kind.bidMul));
-  if(K.crowd === "surge") want = Math.max(want, 5 + Math.floor(K.r() * 4));          // 몰리는 날은 그대로 몰린다(다만 5~8명)
+  if(K.crowd === "surge") want = Math.max(want, 5 + Math.floor(K.r() * 4));          // 몰리는 날 — 아파트는 5~8명, 빌라·상가는 아래에서 4명으로 자른다
   if(firstBid) want = Math.min(3, Math.max(1, want));                                 // 생애 첫 입찰은 '보통' 판
+  if(rbKind() !== "apt") want = Math.min(RB_MAX_RIVALS, want);                     // 빌라·상가는 몰려도 나 포함 5명 안팎
   const cur = K.rivals.slice(); for(let i = cur.length - 1; i > 0; i--){ const j = Math.floor(K.r() * (i + 1)); [cur[i], cur[j]] = [cur[j], cur[i]]; }
   while(cur.length < want){ const v = pool[Math.floor(K.r() * pool.length)]; cur.push({t:v.t, lo:v.lo, hi:v.hi, p:v.p}); }
   K.rivals = cur.slice(0, want);
@@ -49,7 +55,7 @@ if(typeof keCaseHTML === "function"){
     const h = _rb_case.apply(this, arguments);
     try{
       const s = rbStat(), K2 = {villa:"빌라", apt:"아파트", comm:"상가·수익형"}[s.kind];
-      const row = `<span>지역 평균(참고)</span><b>${s.reg === "기타" ? "수도권" : s.reg} ${K2} 낙찰가율 약 ${Math.round(s.rate * 100)}% · 응찰 ${s.bidders}명 <small class="note">2026 상반기 공개 집계 기준 · 물건마다 다름</small></b>`;
+      const row = `<span>지역 평균(참고)</span><b>${s.reg === "기타" ? "수도권" : s.reg} ${K2} 낙찰가율 약 ${Math.round(s.rate * 100)}% · 응찰 ${s.bidders}명 <small class="note">게임용 참고값 · 물건마다 다름</small></b>`;
       return h.replace(/(<span>경쟁 분위기<\/span>[\s\S]*?)(<\/div>\s*<div class="ke-rate">)/, `$1${row}$2`);
     }catch(e){ return h; }
   };

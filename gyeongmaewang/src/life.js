@@ -58,7 +58,7 @@ const LF_ECON = {
   jaehoon: {inc:[150, 400], incT:"현장·설비 프로젝트(변동)", fixed:260, housing:"대출 이자 · 관리비", liab:["slow_online_research"], liabT:"컴퓨터 앞에선 느리다 — 서류·온라인이 약하다", life:"눈으로 보믄 다 안다. 컴퓨터가 문제제.", quote:"사진 말고 직접 봐야 안다 아이가."},
   eunkyung:{inc:[170, 190], incT:"퇴직연금·금융소득", fixed:190, housing:"오피스텔 관리비 · 보험", liab:["field_fatigue"], liabT:"하루에 현장 여러 곳은 무리 — 체력이 먼저 바닥난다", life:"계산은 누구보다 정확하다. 발이 못 따라올 뿐.", quote:"일단 숫자부터 맞춰보죠."},
   taesik:  {inc:[200, 230], incT:"연금 + 임대수입", fixed:200, housing:"자가 — 관리비·병원비·경조사", liab:["low_stamina"], liabT:"몸으로 때울 수 없다 — 전화와 핵심 임장 하나로 승부", life:"돈도 있고 인맥도 있다. 하지만 몸으로 때울 수는 없다.", quote:"싸다고 좋은 물건이면 다 부자 됐지."}};
-const LF_LEAVE_PER_YEAR = 15;
+const LF_LEAVE_PER_YEAR = 3;   // v215: 15일은 스토리 사건 4건에 비해 너무 많았다 — 3일(반차면 6번)만. 나머지는 대리입찰로(dohyunproxy.js)
 // 조사할 수 있는 시간대(요일별) — 분 단위 [시작, 길이]
 const LF_WINDOW = {
   seoyun:  () => [600, 260],

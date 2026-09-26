@@ -1038,3 +1038,23 @@ body.nx-quiet .stg-file{animation:none!important}
 .panel.sf-week{display:flex;gap:8px;align-items:center;font-size:13.5px;padding:8px 10px;border-left:3px solid #6f9bd1!important}
 .sf-bk-mini{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:top;flex:none;background:rgba(255,255,255,.9)}
 .sf-miss{color:#ffb347;font-size:12.5px}
+/* v215 오프닝·엔딩 소품(사건 노트 등) 글씨 — 기본체처럼 얇아 보여서 굵고 진하게 */
+.gx-ui{font-family:"IBM Plex Sans KR",sans-serif;color:#1c1a14}
+.gx-note b{font-family:"Do Hyeon","IBM Plex Sans KR",sans-serif;font-weight:400;font-size:19px;letter-spacing:.5px;color:#15130d}
+.gx-note div{font-weight:700;font-size:15px;color:#221f16}
+/* v215 입찰표 제출 화면 — 스크롤 없이 한 화면. 넓은 화면: 왼쪽 봉투·입찰표 / 오른쪽 확인·자금·제출. 좁은 화면: 봉투 그림 작게 */
+@media (min-width:901px){
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip){display:grid;grid-template-columns:minmax(300px,400px) minmax(0,640px);grid-auto-rows:auto;column-gap:26px;align-items:start;align-content:center;justify-content:center}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip)>.kc-mode{grid-column:1/-1;justify-self:stretch;margin:0 0 8px!important}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip)>.ke-env{grid-column:1;margin:6px 0 0!important}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip)>.ke-confirm{grid-column:2;margin-top:10px!important}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip)>*:not(.kc-mode):not(.ke-env):not(.ke-confirm){grid-column:1/-1}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip) .ke-env-img{width:min(200px,56%)}
+}
+@media (max-width:900px){
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip) .ke-env-img{display:none}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip)>.ke-env{margin:4px 0!important}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip) .ke-confirm{padding:10px 12px}
+}
+#kfsRoot .ke-confirm .bw,#kfsRoot .ke-confirm .bw-cash{margin:6px 0}
+.dp-off{opacity:.45;cursor:not-allowed}.dp-why{margin:6px 0}

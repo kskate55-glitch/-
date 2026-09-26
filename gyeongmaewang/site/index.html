@@ -2409,6 +2409,26 @@ body.nx-quiet .stg-file{animation:none!important}
 .panel.sf-week{display:flex;gap:8px;align-items:center;font-size:13.5px;padding:8px 10px;border-left:3px solid #6f9bd1!important}
 .sf-bk-mini{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:top;flex:none;background:rgba(255,255,255,.9)}
 .sf-miss{color:#ffb347;font-size:12.5px}
+/* v215 오프닝·엔딩 소품(사건 노트 등) 글씨 — 기본체처럼 얇아 보여서 굵고 진하게 */
+.gx-ui{font-family:"IBM Plex Sans KR",sans-serif;color:#1c1a14}
+.gx-note b{font-family:"Do Hyeon","IBM Plex Sans KR",sans-serif;font-weight:400;font-size:19px;letter-spacing:.5px;color:#15130d}
+.gx-note div{font-weight:700;font-size:15px;color:#221f16}
+/* v215 입찰표 제출 화면 — 스크롤 없이 한 화면. 넓은 화면: 왼쪽 봉투·입찰표 / 오른쪽 확인·자금·제출. 좁은 화면: 봉투 그림 작게 */
+@media (min-width:901px){
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip){display:grid;grid-template-columns:minmax(300px,400px) minmax(0,640px);grid-auto-rows:auto;column-gap:26px;align-items:start;align-content:center;justify-content:center}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip)>.kc-mode{grid-column:1/-1;justify-self:stretch;margin:0 0 8px!important}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip)>.ke-env{grid-column:1;margin:6px 0 0!important}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip)>.ke-confirm{grid-column:2;margin-top:10px!important}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip)>*:not(.kc-mode):not(.ke-env):not(.ke-confirm){grid-column:1/-1}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip) .ke-env-img{width:min(200px,56%)}
+}
+@media (max-width:900px){
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip) .ke-env-img{display:none}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip)>.ke-env{margin:4px 0!important}
+  #kfsRoot .kfs-panel:has(>.ke-env .ke-slip) .ke-confirm{padding:10px 12px}
+}
+#kfsRoot .ke-confirm .bw,#kfsRoot .ke-confirm .bw-cash{margin:6px 0}
+.dp-off{opacity:.45;cursor:not-allowed}.dp-why{margin:6px 0}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -40433,7 +40453,7 @@ const LF_ECON = {
   jaehoon: {inc:[150, 400], incT:"현장·설비 프로젝트(변동)", fixed:260, housing:"대출 이자 · 관리비", liab:["slow_online_research"], liabT:"컴퓨터 앞에선 느리다 — 서류·온라인이 약하다", life:"눈으로 보믄 다 안다. 컴퓨터가 문제제.", quote:"사진 말고 직접 봐야 안다 아이가."},
   eunkyung:{inc:[170, 190], incT:"퇴직연금·금융소득", fixed:190, housing:"오피스텔 관리비 · 보험", liab:["field_fatigue"], liabT:"하루에 현장 여러 곳은 무리 — 체력이 먼저 바닥난다", life:"계산은 누구보다 정확하다. 발이 못 따라올 뿐.", quote:"일단 숫자부터 맞춰보죠."},
   taesik:  {inc:[200, 230], incT:"연금 + 임대수입", fixed:200, housing:"자가 — 관리비·병원비·경조사", liab:["low_stamina"], liabT:"몸으로 때울 수 없다 — 전화와 핵심 임장 하나로 승부", life:"돈도 있고 인맥도 있다. 하지만 몸으로 때울 수는 없다.", quote:"싸다고 좋은 물건이면 다 부자 됐지."}};
-const LF_LEAVE_PER_YEAR = 15;
+const LF_LEAVE_PER_YEAR = 3;   // v215: 15일은 스토리 사건 4건에 비해 너무 많았다 — 3일(반차면 6번)만. 나머지는 대리입찰로(dohyunproxy.js)
 // 조사할 수 있는 시간대(요일별) — 분 단위 [시작, 길이]
 const LF_WINDOW = {
   seoyun:  () => [600, 260],
@@ -41189,6 +41209,8 @@ function gxOpStart(id, opt){
   if(typeof kaWant === "function"){ KA_UNLOCKED = true; kaCtx(); kaWant("op_" + id); }
   gxPrelude(0);
 }
+// "누군가는 집을 사려고…" 막간은 첫 캐릭터(서윤) 오프닝에서만 — 두 번째 캐릭터부터는 반복돼서 지루하다(v215)
+function gxPreludeFirst(id){ return id === "seoyun"; }
 function gxPrelude(k){
   const O = GX_OP; if(!O) return;
   const cine = O.el.querySelector(".gx-cine");
@@ -41196,7 +41218,7 @@ function gxPrelude(k){
     if(k === 0){ cine.innerHTML = `<div class="gx-ep"><small>경매왕</small><b>EPILOGUE</b><h2>${esc(LF_CHARS.find(x => x.id === O.id).name)}의 그 후</h2></div>`; O.t = setTimeout(() => gxPrelude(1), gxMs(2400)); return; }
     cine.innerHTML = ""; gxScene(0); return;
   }
-  if(k === 0){ cine.innerHTML = `<div class="gx-ep"><small>경매왕</small><b>EP.0</b><h2>「${esc(LF_EP0[O.id])}」</h2></div>`; O.t = setTimeout(() => gxPrelude(1), gxMs(2600)); return; }
+  if(k === 0){ cine.innerHTML = `<div class="gx-ep"><small>경매왕</small><b>EP.0</b><h2>「${esc(LF_EP0[O.id])}」</h2></div>`; O.t = setTimeout(() => gxPrelude(gxPreludeFirst(O.id) ? 1 : LF_PRELUDE.length + 1), gxMs(2600)); return; }
   if(k <= LF_PRELUDE.length){ cine.innerHTML = `<p class="gx-line">${esc(LF_PRELUDE[k - 1])}</p>`; O.t = setTimeout(() => gxPrelude(k + 1), gxMs(k === LF_PRELUDE.length ? 2600 : 1800)); return; }
   cine.innerHTML = ""; gxScene(0);
 }
@@ -41899,7 +41921,7 @@ function cpDots(){
 /* ---------- 엔딩 ---------- */
 const CP_SPECIAL = {
   seoyun:{need:"한 번도 손해 보지 않고 3건 이상", ok:(c, L) => c.cases >= 3 && (+c.fails || 0) === 0},
-  dohyun:{need:"회사를 지키면서 연차를 5일 넘게 남긴다", ok:(c, L, o) => o && o.id === "stay" && L.leave > 5},
+  dohyun:{need:"회사를 지키면서 연차를 1일 이상 남긴다", ok:(c, L, o) => o && o.id === "stay" && L.leave >= 1},
   mijeong:{need:"네 사람 이상과 깊은 인맥", ok:(c, L) => Object.values(L.rel || {}).filter(v => +v >= 4).length >= 4},
   jaehoon:{need:"'하자탐정'이 되고 현장을 떠나지 않는다", ok:(c, L, o) => !!(L.titles || {}).detective && o && o.id === "keep"},
   eunkyung:{need:"보수적으로 가면서 손해 본 CASE 0건", ok:(c, L, o) => o && o.id === "safe" && (+c.fails || 0) === 0 && c.cases >= 2},
@@ -50063,17 +50085,22 @@ document.addEventListener("load", e => { if(e.target && e.target.classList && e.
    근거(교육용 참고값, 날짜 표기): 2026년 상반기 공개 보도에 인용된 경매정보업체 집계 — 수도권 빌라 낙찰가율
    경기 약 77% · 인천 약 70% · 서울(일반 응찰자) 약 73~75%, 평균 응찰자 수 경기 4.4명 · 인천 4.2명.
    동 단위 평균은 한 동의 한 해 빌라 경매가 몇 건 안 돼 표본이 너무 작아서 쓰지 않는다(시·도 평균만). */
+// ⚠️ v215 개정 — 사용자 현장 경험 반영: 요즘 빌라는 두세 번 유찰되는 게 흔하고, 낙찰은 감정가의 67% 안팎,
+//    입찰자는 한두 명~세 명이 보통이며 많아야 다섯 명 정도다(아파트만 사람이 많이 몰린다). 예전 값(응찰 4.2~4.4명,
+//    낙찰가율 70~77%)은 보도 인용 수치였는데, 그대로 두니 거의 매번 몰린 판·고가 낙찰처럼 보였다.
+//    아래는 통계로 검증한 값이 아니라 게임용 참고값이다(화면에도 "참고"로만 표시).
 const RB_REGION = {
-  서울:{rate:0.745, bidders:4.3}, 경기:{rate:0.77, bidders:4.4}, 인천:{rate:0.70, bidders:4.2}, 기타:{rate:0.74, bidders:4.0}};
-const RB_KIND = {villa:{rateAdd:0, bidMul:1}, apt:{rateAdd:0.06, bidMul:1.35}, comm:{rateAdd:-0.06, bidMul:0.6}};
+  서울:{rate:0.68, bidders:2.2}, 경기:{rate:0.67, bidders:2.2}, 인천:{rate:0.65, bidders:2.1}, 기타:{rate:0.67, bidders:2.1}};
+const RB_KIND = {villa:{rateAdd:0, bidMul:1}, apt:{rateAdd:0.13, bidMul:3.7}, comm:{rateAdd:-0.06, bidMul:0.8}};
+const RB_MAX_RIVALS = 4;   // 빌라·상가: 나 포함 많아야 5명
 // 성향 계수: 지역 평균 낙찰가율에 곱한다(한 명만 봤을 때 대략 이 범위를 쓴다)
 const RB_STYLE = [[/저가/, 0.83, 0.90], [/전문|투자/, 0.88, 0.96], [/실수요|이사철|소문/, 0.90, 0.99], [/인테리어|업자|운영자/, 0.91, 1.00], [/초보|과입찰|아는/, 0.94, 1.03], [/맹신/, 0.99, 1.08]];
 function rbRegion(){ const s = String((KP && (KP.addr || "")) + " " + (KP && (KP.title || ""))); return /^\s*서울|서울 /.test(s) ? "서울" : /인천/.test(s) ? "인천" : /경기|수원|부천|고양|남양주|의정부|안산|평택|화성|성남|용인/.test(s) ? "경기" : "기타"; }
 function rbKind(){ const s = String((KP.title || "") + " " + (KP.short || "")); return /아파트/.test(s) ? "apt" : /상가|근린|모텔|공장|미용실|식당|중식당|빌딩/.test(s) ? "comm" : "villa"; }
 // 경쟁자 수(나 제외) — 평균이 (평균 응찰자 수 − 1) 근처가 되는 치우친 분포: 한두 명이 흔하고, 가끔 많이 몰린다
 function rbCount(r, mean){
-  const u = r(); if(u < 0.14) return 0;
-  const k = mean / 0.86; let n = 0, t = r(); while(t > Math.exp(-k) && n < 12){ n++; t *= r(); }   // 포아송(평균 k) 뽑기
+  const u = r(); if(u < 0.22) return 0;   // 단독 입찰도 흔하다
+  const k = mean / 0.78; let n = 0, t = r(); while(t > Math.exp(-k) && n < 12){ n++; t *= r(); }   // 포아송(평균 k) 뽑기
   return Math.max(1, n);
 }
 function rbStyle(name){ for(const [re, lo, hi] of RB_STYLE) if(re.test(name)) return [lo, hi]; return [0.89, 0.98]; }
@@ -50085,8 +50112,9 @@ function rbApply(){
   // ① 인원
   const pool = (KP.rivals && KP.rivals.length ? KP.rivals : K_RIVALS);
   let want = K.crowd === "quiet" ? 0 : rbCount(K.r, Math.max(0.6, (reg.bidders - 1) * kind.bidMul));
-  if(K.crowd === "surge") want = Math.max(want, 5 + Math.floor(K.r() * 4));          // 몰리는 날은 그대로 몰린다(다만 5~8명)
+  if(K.crowd === "surge") want = Math.max(want, 5 + Math.floor(K.r() * 4));          // 몰리는 날 — 아파트는 5~8명, 빌라·상가는 아래에서 4명으로 자른다
   if(firstBid) want = Math.min(3, Math.max(1, want));                                 // 생애 첫 입찰은 '보통' 판
+  if(rbKind() !== "apt") want = Math.min(RB_MAX_RIVALS, want);                     // 빌라·상가는 몰려도 나 포함 5명 안팎
   const cur = K.rivals.slice(); for(let i = cur.length - 1; i > 0; i--){ const j = Math.floor(K.r() * (i + 1)); [cur[i], cur[j]] = [cur[j], cur[i]]; }
   while(cur.length < want){ const v = pool[Math.floor(K.r() * pool.length)]; cur.push({t:v.t, lo:v.lo, hi:v.hi, p:v.p}); }
   K.rivals = cur.slice(0, want);
@@ -50105,7 +50133,7 @@ if(typeof keCaseHTML === "function"){
     const h = _rb_case.apply(this, arguments);
     try{
       const s = rbStat(), K2 = {villa:"빌라", apt:"아파트", comm:"상가·수익형"}[s.kind];
-      const row = `<span>지역 평균(참고)</span><b>${s.reg === "기타" ? "수도권" : s.reg} ${K2} 낙찰가율 약 ${Math.round(s.rate * 100)}% · 응찰 ${s.bidders}명 <small class="note">2026 상반기 공개 집계 기준 · 물건마다 다름</small></b>`;
+      const row = `<span>지역 평균(참고)</span><b>${s.reg === "기타" ? "수도권" : s.reg} ${K2} 낙찰가율 약 ${Math.round(s.rate * 100)}% · 응찰 ${s.bidders}명 <small class="note">게임용 참고값 · 물건마다 다름</small></b>`;
       return h.replace(/(<span>경쟁 분위기<\/span>[\s\S]*?)(<\/div>\s*<div class="ke-rate">)/, `$1${row}$2`);
     }catch(e){ return h; }
   };
@@ -50571,6 +50599,206 @@ document.addEventListener("click", e => {
   }
   if(typeof save === "function") save(); renderArena();
 }, true);
+
+/* ================= 🏢 이도현 — 연차 3일 · 대리입찰은 최소 한두 번 (v215) =================
+   스토리 사건은 4건인데 연차가 15일이라 대리입찰(외전 D01)을 쓸 일이 없었다.
+   이제: 연차는 1년에 3일(반차면 6번). 그리고
+     ① 세 번째 사건 입찰일은 회사 분기 결산 주간 — 아직 대리입찰을 한 번도 안 썼다면 직접 참석을 못 한다.
+     ② 연차가 반차(0.5일)도 안 남은 평일 입찰은 직접 참석을 못 한다(예전엔 점심시간에 뛰어가 스트레스 +8).
+   둘 다 대리입찰 이용료를 낼 돈이 있을 때만 강제한다 — 돈이 모자라면 예전처럼 직접 참석(보류도 가능).
+   경쟁자·결과는 건드리지 않는다(K.r() 호출 없음). */
+const DP_LEAVE_MAX = 3;
+function dpLeaveFix(){ const L = typeof lfRec === "function" && lfRec(); if(L && L.char === "dohyun" && !L.leave3){ L.leave3 = true; if(L.leave > DP_LEAVE_MAX) L.leave = DP_LEAVE_MAX; } }
+function dpProxyUsed(){ const b = typeof ilProxyRec === "function" ? ilProxyRec() : {}; return Object.keys(b).filter(k => /^dohyun:/.test(k) && b[k].mode === "proxy").length; }
+function dpBidWeekday(){ if(!K || !K.lf || typeof lfDate !== "function") return true; const D = lfDate(K.lf.day0 + K.lf.nd * 1440); return D.dow >= 1 && D.dow <= 5; }
+function dpForceReason(){
+  if(typeof ilProxyOn !== "function" || !ilProxyOn() || !K.sealed) return null;
+  const L = lfRec(); if(!L || L.char !== "dohyun" || L.path === "quit") return null;
+  if(!ilProxyAfford()) return null;
+  if(K.epStory.i >= 2 && dpProxyUsed() < 1) return "📅 이번 입찰일은 회사 분기 결산 주간 — 팀장이 반차를 안 받아 준다. 이번엔 대리입찰로 넣는다.";
+  if(dpBidWeekday() && L.leave < 0.5) return `🏢 남은 연차 ${L.leave}일 — 반차도 못 쓴다. 평일 입찰은 대리입찰로 넣는다.`;
+  return null;
+}
+if(typeof ilProxyPanel === "function"){
+  const _dp_panel = ilProxyPanel;
+  ilProxyPanel = function(){
+    dpLeaveFix();
+    const why = dpForceReason();
+    if(why) K.ilAttend = "proxy";
+    let h = _dp_panel.apply(this, arguments); if(!why || !h) return h;
+    h = h.replace(/<button type="button" class="btn( pri)?" data-ilattend="direct"([^>]*)>/, '<button type="button" class="btn dp-off" data-ilattend="direct"$2 disabled>');
+    return h.replace('<div class="il-proxy-opts">', `<p class="ke-warn dp-why">${esc(why)}</p><div class="il-proxy-opts">`);
+  };
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest('[data-ilattend="direct"]'); if(b && K && K.sealed && dpForceReason()){ e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+}
+// 저장된 인생에도 적용(예전 15일 → 3일, 한 번만)
+if(typeof renderArena === "function"){ const _dp_r = renderArena; renderArena = function(){ try{ dpLeaveFix(); }catch(e){} return _dp_r.apply(this, arguments); }; }
+
+/* ================= 🌆 환경음 — 장소·날씨·매물마다 다른 '거기 있는 소리' (v215) =================
+   BGM 밑에 얇게 깔린다. 녹음 파일 없이 전부 WebAudio로 만든다(외부 음원·저작권 없음).
+   · 장소:  법원(웅성거림·발소리·안내 차임·종이) / 현장 골목(차 지나가는 소리·경적·자전거 따르릉·아이들 꺄르륵·새)
+            / 집(방 공기·냉장고 웅) / 중개사무소(도로 웅·키보드·전화벨·출입문 차임) / 수리 현장(망치·드릴)
+   · 날씨:  비·장마 = 빗소리(밖에선 크게, 안에선 창 너머로 먹먹하게 + 물방울) · 추위 = 바람 · 여름 = 매미 · 밤 = 풀벌레
+   · 매물:  주소·물건 설명의 낱말로 성격을 정한다(큰길·역 → 차 많음, 학교 → 아이들, 시장 → 사람 소리, 공장 → 기계 웅)
+            + 물건마다 고정된 난수로 조금씩 달라서 같은 '골목'도 매번 똑같이 들리지 않는다.
+   ⚠️ 게임 난수(K.r)는 쓰지 않는다 — 소리는 Math.random·자체 난수만. 볼륨은 소리 설정의 '🌆 환경음' 막대. */
+const AMB_ON = true;
+if(typeof KA_DEF !== "undefined" && KA_DEF.amb == null) KA_DEF.amb = 80;
+let AMB = null;              // {g, beds:{}, scene, key}
+let AMB_BROWN = null, AMB_WHITE = null;
+function ambBuf(kind){
+  const ac = KA.ac, n = ac.sampleRate * 3, buf = ac.createBuffer(1, n, ac.sampleRate), a = buf.getChannelData(0);
+  if(kind === "brown"){ let l = 0; for(let i = 0; i < n; i++){ l = (l + 0.02 * (Math.random() * 2 - 1)) / 1.02; a[i] = l * 3.5; } }
+  else for(let i = 0; i < n; i++) a[i] = Math.random() * 2 - 1;
+  return buf;
+}
+function ambVol(){ const c = kaCfg(); return c.mute ? 0 : ((c.amb == null ? 80 : c.amb) / 100) * 0.42; }
+function ambInit(){
+  if(AMB) return AMB; const A = kaCtx(); if(!A) return null;
+  const g = A.ac.createGain(); g.gain.value = ambVol(); g.connect(A.comp);
+  AMB_WHITE = ambBuf("white"); AMB_BROWN = ambBuf("brown");
+  AMB = {g, beds:{}, scene:null, key:"", ev:{}};
+  return AMB;
+}
+function ambPan(node, p){ const ac = KA.ac; if(!ac.createStereoPanner) return node; const s = ac.createStereoPanner(); s.pan.value = p; node.connect(s); return s; }
+
+/* ---------- 계속 깔리는 소리(bed) ---------- */
+function ambLoop(buf, type, fq, q){ const ac = KA.ac, s = ac.createBufferSource(); s.buffer = buf; s.loop = true; s.loopStart = 0; s.loopEnd = buf.duration; const f = ac.createBiquadFilter(); f.type = type; f.frequency.value = fq; f.Q.value = q || 0.7; s.connect(f); s.start(0, Math.random() * 2); return {s, f}; }
+function ambLfo(param, rate, depth, base){ const ac = KA.ac, o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = rate; g.gain.value = depth; o.connect(g); g.connect(param); if(base != null) param.value = base; o.start(); return o; }
+const AMB_BEDS = {
+  // 비: 밝은 쉬익(바깥) — 안에선 lowpass로 먹먹하게
+  rain:(v, inside) => { const a = ambLoop(AMB_WHITE, "lowpass", inside ? 1300 : 5200, 0.5), b = ambLoop(AMB_BROWN, "lowpass", 700, 0.4); const g = KA.ac.createGain(); a.f.connect(g); b.f.connect(g); return {src:[a.s, b.s], out:g, vol:v}; },
+  wind:(v) => { const a = ambLoop(AMB_BROWN, "bandpass", 500, 0.9); const o = ambLfo(a.f.frequency, 0.09, 260, 520); const g = KA.ac.createGain(); a.f.connect(g); const o2 = ambLfo(g.gain, 0.13, 0.5, 0.6); return {src:[a.s], osc:[o, o2], out:g, vol:v}; },
+  traffic:(v) => { const a = ambLoop(AMB_BROWN, "lowpass", 260, 0.6); const g = KA.ac.createGain(); a.f.connect(g); const o = ambLfo(g.gain, 0.05, 0.35, 0.7); return {src:[a.s], osc:[o], out:g, vol:v}; },
+  room:(v) => { const a = ambLoop(AMB_BROWN, "lowpass", 160, 0.5); const ac = KA.ac, h = ac.createOscillator(), hg = ac.createGain(); h.frequency.value = 58; hg.gain.value = 0.05; h.connect(hg); h.start(); const g = ac.createGain(); a.f.connect(g); hg.connect(g); return {src:[a.s], osc:[h], out:g, vol:v}; },
+  // 법원 복도 웅성거림: 말소리 대역 잡음에 음절 속도(3~6Hz) 흔들림을 두 겹
+  murmur:(v) => { const ac = KA.ac, g = ac.createGain(), out = [];
+    [[420, 4.1], [880, 5.3], [1500, 3.2]].forEach(([fq, r], i) => { const a = ambLoop(i ? AMB_WHITE : AMB_BROWN, "bandpass", fq, 1.6); const m = ac.createGain(); a.f.connect(m); m.connect(g); out.push(a.s, ambLfo(m.gain, r, 0.45, 0.55), ambLfo(m.gain, r * 0.37, 0.25)); });
+    return {src:out.filter(x => x.buffer), osc:out.filter(x => !x.buffer), out:g, vol:v}; },
+  // 매미(여름 낮) — 높은 대역 잡음을 빠르게 떨고, 몇 초마다 크게 울었다 잦아든다
+  cicada:(v) => { const a = ambLoop(AMB_WHITE, "bandpass", 5200, 3.5), g = KA.ac.createGain(); a.f.connect(g); const o = ambLfo(g.gain, 28, 0.35, 0.4), o2 = ambLfo(g.gain, 0.22, 0.35); return {src:[a.s], osc:[o, o2], out:g, vol:v}; },
+  crickets:(v) => { const ac = KA.ac, o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 4400; o.type = "sine"; o.connect(g); g.gain.value = 0; const t = ambLfo(g.gain, 14, 0.5, 0), t2 = ambLfo(g.gain, 0.6, 0.4); o.start(); return {src:[], osc:[o, t, t2], out:g, vol:v}; },
+  machine:(v) => { const ac = KA.ac, o = ac.createOscillator(), g = ac.createGain(), f = ac.createBiquadFilter(); o.type = "sawtooth"; o.frequency.value = 47; f.type = "lowpass"; f.frequency.value = 300; o.connect(f); f.connect(g); o.start(); const l = ambLfo(g.gain, 0.8, 0.2, 0.6); return {src:[], osc:[o, l], out:g, vol:v}; }};
+function ambBedOn(id, vol, inside){
+  const B = AMB.beds[id], t = KA.ac.currentTime;
+  if(B && B.inside === !!inside){ B.g.gain.setTargetAtTime(vol, t, 0.8); return; }
+  if(B) ambBedOff(id);
+  const b = AMB_BEDS[id](vol, inside), g = KA.ac.createGain(); g.gain.value = 0.0001; b.out.connect(g); g.connect(AMB.g); g.gain.setTargetAtTime(vol, t, 1.2);
+  AMB.beds[id] = {g, src:b.src || [], osc:b.osc || [], inside:!!inside};
+}
+function ambBedOff(id){
+  const B = AMB.beds[id]; if(!B) return; delete AMB.beds[id];
+  const t = KA.ac.currentTime; B.g.gain.setTargetAtTime(0.0001, t, 0.6);
+  setTimeout(() => { [...B.src, ...B.osc].forEach(n => { try{ n.stop(); }catch(e){} }); try{ B.g.disconnect(); }catch(e){} }, 3500);
+}
+
+/* ---------- 가끔 들리는 소리(event) ---------- */
+function ambN(dest, t, d, vol, fq, q, type, buf){ const ac = KA.ac, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = buf || AMB_WHITE; f.type = type || "bandpass"; f.frequency.value = fq; f.Q.value = q || 0.8; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.03, d / 3)); g.gain.exponentialRampToValueAtTime(0.0001, t + d); s.connect(f); f.connect(g); g.connect(dest); s.start(t, Math.random() * 2); s.stop(t + d + 0.05); return {f, g}; }
+function ambT(dest, f, t, d, type, vol, f2){ const ac = KA.ac, o = ac.createOscillator(), g = ac.createGain(); o.type = type || "sine"; o.frequency.setValueAtTime(f, t); if(f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.012, d / 4)); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g); g.connect(dest); o.start(t); o.stop(t + d + 0.03); }
+function ambOut(pan, vol){ const g = KA.ac.createGain(); g.gain.value = vol == null ? 1 : vol; ambPan(g, pan).connect(AMB.g); return g; }
+const AMB_EV = {
+  // 차가 옆을 지나간다 — 부웅 커졌다 작아지며 왼→오
+  car:() => { const ac = KA.ac, t = ac.currentTime + 0.05, d = 2.6 + Math.random() * 1.6, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = AMB_BROWN; f.type = "lowpass"; f.Q.value = 1.1;
+    f.frequency.setValueAtTime(260, t); f.frequency.linearRampToValueAtTime(1100, t + d * 0.5); f.frequency.linearRampToValueAtTime(320, t + d);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.9, t + d * 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    s.connect(f); f.connect(g); let n = g; if(ac.createStereoPanner){ const p = ac.createStereoPanner(), dir = Math.random() < 0.5 ? -1 : 1; p.pan.setValueAtTime(-0.8 * dir, t); p.pan.linearRampToValueAtTime(0.8 * dir, t + d); g.connect(p); n = p; } n.connect(AMB.g); s.start(t, Math.random()); s.stop(t + d + 0.1); },
+  honk:() => { const o = ambOut(Math.random() * 1.4 - 0.7, 0.5), t = KA.ac.currentTime + 0.05, two = Math.random() < 0.5; [0, two ? 0.28 : null].filter(x => x != null).forEach(dt => { ambT(o, 352, t + dt, 0.24, "square", 0.08); ambT(o, 443, t + dt, 0.24, "square", 0.07); }); },
+  // 자전거 따르릉 — 종을 빠르게 여러 번 친다
+  bike:() => { const o = ambOut(Math.random() * 1.2 - 0.6, 0.6), t = KA.ac.currentTime + 0.05, n = 7 + (Math.random() * 5 | 0); for(let i = 0; i < n; i++){ const tt = t + i * 0.045, v = 0.12 * (1 - i / (n + 2)); ambT(o, 2350, tt, 0.35, "sine", v); ambT(o, 3490, tt, 0.25, "sine", v * 0.6); ambT(o, 5120, tt, 0.14, "sine", v * 0.35); } },
+  // 아이들 꺄르륵 — 높은 목소리가 짧게 오르내리며 겹친다
+  kids:() => { const pan = Math.random() * 1.6 - 0.8, o = ambOut(pan, 0.55), ac = KA.ac, t0 = ac.currentTime + 0.05, f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1500; f.Q.value = 1.2; f.connect(o);
+    const voices = 1 + (Math.random() * 2 | 0) + (Math.random() < 0.4 ? 1 : 0);
+    for(let v = 0; v < voices; v++){ const base = 780 + Math.random() * 420, st = t0 + v * (0.15 + Math.random() * 0.4), n = 4 + (Math.random() * 5 | 0);
+      for(let i = 0; i < n; i++){ const tt = st + i * (0.1 + Math.random() * 0.04), fq = base * (1.25 - i * 0.05) * (0.94 + Math.random() * 0.12); ambT(f, fq, tt, 0.09, "triangle", 0.1, fq * 1.18); ambN(f, tt, 0.07, 0.03, 2500, 1); } }
+    if(Math.random() < 0.5) for(let i = 0; i < 6; i++) ambN(o, t0 + 0.9 + i * 0.18, 0.06, 0.05, 260, 1.5);   // 뛰어가는 발소리
+  },
+  birds:() => { const o = ambOut(Math.random() * 1.6 - 0.8, 0.35), t = KA.ac.currentTime + 0.05, n = 2 + (Math.random() * 4 | 0), b = 2900 + Math.random() * 1800; for(let i = 0; i < n; i++) ambT(o, b, t + i * 0.13, 0.08, "sine", 0.07, b * (1.25 + Math.random() * 0.3)); },
+  steps:() => { const o = ambOut(Math.random() * 1.4 - 0.7, 0.7), t = KA.ac.currentTime + 0.05, n = 4 + (Math.random() * 5 | 0), heel = Math.random() < 0.5; for(let i = 0; i < n; i++){ ambN(o, t + i * 0.42, 0.07, heel ? 0.12 : 0.08, heel ? 1900 : 320, heel ? 2.5 : 1.2); } },
+  chime:() => { const o = ambOut(0, 0.45), t = KA.ac.currentTime + 0.05; ambT(o, 659, t, 0.9, "sine", 0.09); ambT(o, 523, t + 0.45, 1.2, "sine", 0.09); },
+  paper:() => { const o = ambOut(Math.random() - 0.5, 0.5), t = KA.ac.currentTime + 0.05; for(let i = 0; i < 3; i++) ambN(o, t + i * 0.09, 0.12, 0.05, 4200, 0.6, "highpass"); },
+  voice:() => { const o = ambOut(Math.random() * 1.2 - 0.6, 0.35), ac = KA.ac, t = ac.currentTime + 0.05, f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 700; f.Q.value = 2; f.connect(o); const b = 140 + Math.random() * 90, n = 3 + (Math.random() * 5 | 0); for(let i = 0; i < n; i++) ambT(f, b * (0.9 + Math.random() * 0.25), t + i * 0.16, 0.14, "sawtooth", 0.04); },
+  phone:() => { const o = ambOut(0.5, 0.35), t = KA.ac.currentTime + 0.05; for(let k = 0; k < 2; k++) for(let i = 0; i < 20; i++){ const tt = t + k * 1.6 + i * 0.05; ambT(o, 440, tt, 0.045, "sine", 0.05); ambT(o, 480, tt, 0.045, "sine", 0.05); } },
+  keys:() => { const o = ambOut(-0.3, 0.4), t = KA.ac.currentTime + 0.05, n = 5 + (Math.random() * 10 | 0); for(let i = 0; i < n; i++) ambN(o, t + i * (0.08 + Math.random() * 0.1), 0.03, 0.06, 3000, 2); },
+  drip:() => { const o = ambOut(Math.random() - 0.5, 0.5), t = KA.ac.currentTime + 0.05, f = 900 + Math.random() * 700; ambT(o, f, t, 0.12, "sine", 0.06, f * 1.7); },
+  hammer:() => { const o = ambOut(0.4, 0.5), t = KA.ac.currentTime + 0.05, n = 2 + (Math.random() * 4 | 0); for(let i = 0; i < n; i++) ambN(o, t + i * 0.55, 0.12, 0.2, 520, 1.4); },
+  drill:() => { const o = ambOut(-0.4, 0.3), ac = KA.ac, t = ac.currentTime + 0.05, d = 1 + Math.random() * 1.5, s = ac.createOscillator(), g = ac.createGain(), f = ac.createBiquadFilter(); s.type = "sawtooth"; s.frequency.setValueAtTime(180, t); s.frequency.linearRampToValueAtTime(260, t + 0.3); f.type = "bandpass"; f.frequency.value = 1400; f.Q.value = 1.5; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.1); g.gain.setValueAtTime(0.05, t + d); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.2); s.connect(f); f.connect(g); g.connect(o); s.start(t); s.stop(t + d + 0.3); },
+  market:() => { for(let i = 0; i < 2 + (Math.random() * 2 | 0); i++) setTimeout(() => AMB && AMB_EV.voice(), i * 500); }};
+
+/* ---------- 지금 어디, 무슨 날씨, 어떤 동네인가 ---------- */
+function ambWx(){
+  try{ if(typeof snNow === "function" && typeof K !== "undefined" && K){ const N = snNow(); if(N) return {id:N.W.id, m:N.D.m}; } }catch(e){}
+  try{ if(typeof lfRec === "function" && lfRec() && typeof snWeatherOf === "function"){ const D = lfDate(); const W = snWeatherOf({y:D.y, m:D.m, d:D.d}); return {id:W.id, m:D.m}; } }catch(e){}
+  return {id:"clear", m:0};
+}
+function ambHour(){ try{ if(typeof lfRec === "function" && lfRec() && typeof lfDate === "function") return lfDate().h; }catch(e){} return 14; }
+function ambTraits(){
+  const s = typeof KP !== "undefined" && KP ? [KP.addr, KP.title, KP.short, KP.trait].join(" ") : "";
+  const T = {traffic:0.5, honk:0.18, kids:0.45, bike:0.35, birds:0.4, market:0, machine:0};
+  if(/대로|역세권|역 |역에|사거리|큰길|버스|도로변/.test(s)){ T.traffic = 1; T.honk = 0.6; T.birds = 0.15; }
+  if(/학교|초등|학원|놀이터|아이/.test(s)) T.kids = 1.1;
+  if(/시장|상가|식당|중식|미용실|카페|모텔|숙박/.test(s)){ T.market = 0.8; T.traffic = Math.max(T.traffic, 0.7); }
+  if(/공장|팔탄|창고/.test(s)){ T.machine = 0.7; T.kids = 0.05; T.bike = 0.1; T.traffic = 0.35; }
+  if(/읍|면 |리 /.test(s)){ T.traffic = 0.25; T.birds = 0.9; T.honk = 0.05; }
+  // 물건마다 조금씩 다르게(고정된 난수 — 게임 난수와 무관)
+  const r = kRng((String(KP && KP.id || s).split("").reduce((a, c) => a * 31 + c.charCodeAt(0) >>> 0, 7) ^ 0xA3B1) >>> 0);
+  Object.keys(T).forEach(k => T[k] = Math.max(0, T[k] * (0.7 + r() * 0.6)));
+  return T;
+}
+function ambScene(){
+  if(!AMB_ON || typeof page === "undefined" || page !== "arena") return null;
+  if(typeof GX_OP !== "undefined" && GX_OP) return null;                    // 오프닝·엔딩 연출은 자체 음악만
+  if(document.getElementById("mtTale")) return AMB && AMB.scene;              // 사연 듣는 중엔 그대로
+  if(arenaTab !== "king" || typeof K === "undefined" || !K) return "home";
+  if(K.intro || K.sealed || K.revealing || K.step === "won" || K.step === "lost") return "court";
+  if(K.step === "brief") return K.loc === "site" ? "street" : "home";
+  if(K.step === "move") return "street";
+  if(K.step === "defect" || K.step === "list") return "work";
+  if(K.step === "sell") return "office";
+  return "home";
+}
+// 장면 → (bed 목록, event 빈도[초당])
+function ambPlan(scene){
+  const w = ambWx(), wet = w.id === "rain" || w.id === "monsoon", h = ambHour(), night = h >= 20 || h < 6, T = ambTraits();
+  const beds = {}, ev = {}, out = scene === "street";
+  const inside = !out;
+  if(wet) beds.rain = [w.id === "monsoon" ? (out ? 0.55 : 0.28) : (out ? 0.38 : 0.18), inside];
+  if(w.id === "cold" || w.id === "snow") beds.wind = [out ? 0.22 : 0.08, false];
+  if(scene === "court"){ beds.murmur = [0.2]; beds.room = [0.18]; Object.assign(ev, {steps:0.1, paper:0.06, chime:0.012, voice:0.12}); }
+  if(scene === "home"){ beds.room = [0.22]; if(!wet) Object.assign(ev, {birds:night ? 0 : 0.015, car:0.02}); if(wet) ev.drip = 0.1; }
+  if(scene === "office"){ beds.room = [0.16]; beds.traffic = [0.12]; Object.assign(ev, {keys:0.06, phone:0.008, chime:0.01, car:0.03, voice:0.04}); }
+  if(scene === "work"){ beds.room = [0.16]; Object.assign(ev, {hammer:0.05, drill:0.03, car:0.02, steps:0.02}); }
+  if(scene === "street"){
+    beds.traffic = [0.08 + T.traffic * 0.16];
+    if(T.machine) beds.machine = [T.machine * 0.1];
+    const dry = wet ? 0.35 : 1, snowy = w.id === "snow" ? 0.4 : 1;
+    Object.assign(ev, {car:(0.04 + T.traffic * 0.1) * snowy, honk:T.honk * 0.03 * snowy, bike:T.bike * 0.025 * dry, kids:night ? 0 : T.kids * 0.035 * dry, birds:night ? 0 : T.birds * 0.04 * dry, steps:0.03, market:T.market * 0.03 * dry});
+    if(!wet && !night && w.m >= 6 && w.m <= 8 && w.id !== "cloudy") beds.cicada = [0.07];
+    if(night && !wet && w.m >= 5 && w.m <= 10) beds.crickets = [0.05];
+  }
+  return {beds, ev, key:scene + "|" + w.id + "|" + (night ? "n" : "d") + "|" + (KP && KP.id || "")};
+}
+function ambSync(){
+  const off = typeof KA_UNLOCKED === "undefined" || !KA_UNLOCKED || kaCfg().mute || !(kaCfg().amb > 0);
+  const scene = off ? null : ambScene();
+  if(!scene){ if(AMB){ Object.keys(AMB.beds).forEach(ambBedOff); AMB.ev = {}; AMB.scene = null; AMB.key = ""; } return; }
+  if(!ambInit()) return;
+  const P = ambPlan(scene); if(AMB.key === P.key) return;
+  AMB.key = P.key; AMB.scene = scene; AMB.ev = P.ev;
+  Object.keys(AMB.beds).forEach(id => { if(!P.beds[id]) ambBedOff(id); });
+  Object.entries(P.beds).forEach(([id, [v, inside]]) => ambBedOn(id, v, inside));
+}
+// 가끔 들리는 소리 — 0.5초마다 빈도대로 굴린다(한 번에 너무 겹치지 않게 최근 발생은 잠깐 쉰다)
+setInterval(() => {
+  if(!AMB || !AMB.scene || !KA || KA.ac.state !== "running" || document.hidden) return;
+  const now = performance.now();
+  Object.entries(AMB.ev).forEach(([k, rate]) => { if(!rate || !AMB_EV[k]) return; if((AMB.last || 0) > now - 700) return; if(Math.random() < rate * 0.5){ AMB.last = now; try{ AMB_EV[k](); }catch(e){} } });
+}, 500);
+setInterval(() => { try{ ambSync(); }catch(e){} }, 1500);
+if(typeof renderArena === "function"){ const _amb_r = renderArena; renderArena = function(){ const o = _amb_r.apply(this, arguments); try{ ambSync(); }catch(e){} return o; }; }
+document.addEventListener("pointerdown", () => setTimeout(() => { try{ ambSync(); }catch(e){} }, 60), true);
+// 볼륨: 소리 설정에 '🌆 환경음' 막대
+if(typeof kaApplyVol === "function"){ const _amb_v = kaApplyVol; kaApplyVol = function(){ _amb_v.apply(this, arguments); if(AMB && KA) AMB.g.gain.setTargetAtTime(ambVol(), KA.ac.currentTime, 0.05); }; }
+if(typeof kcSfxBtn === "function"){ const _amb_btn = kcSfxBtn; kcSfxBtn = function(){ const h = _amb_btn.apply(this, arguments), c = kaCfg(), a = c.amb == null ? 80 : c.amb; return h.replace('<label class="kc-audio-mute">', `<label>🌆 환경음 <input type="range" min="0" max="100" value="${a}" data-kaset="amb"><output>${a}</output></label><label class="kc-audio-mute">`); }; }
 
 /* 🎬 캐릭터 오프닝·엔딩 에필로그 데이터 — oe_<캐릭터>.js 가 여기에 채운다(story_oe.js 가 게임에 연결) */
 const OE_DATA = {};

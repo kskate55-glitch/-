@@ -66,7 +66,7 @@ function cpDots(){
 /* ---------- 엔딩 ---------- */
 const CP_SPECIAL = {
   seoyun:{need:"한 번도 손해 보지 않고 3건 이상", ok:(c, L) => c.cases >= 3 && (+c.fails || 0) === 0},
-  dohyun:{need:"회사를 지키면서 연차를 5일 넘게 남긴다", ok:(c, L, o) => o && o.id === "stay" && L.leave > 5},
+  dohyun:{need:"회사를 지키면서 연차를 1일 이상 남긴다", ok:(c, L, o) => o && o.id === "stay" && L.leave >= 1},
   mijeong:{need:"네 사람 이상과 깊은 인맥", ok:(c, L) => Object.values(L.rel || {}).filter(v => +v >= 4).length >= 4},
   jaehoon:{need:"'하자탐정'이 되고 현장을 떠나지 않는다", ok:(c, L, o) => !!(L.titles || {}).detective && o && o.id === "keep"},
   eunkyung:{need:"보수적으로 가면서 손해 본 CASE 0건", ok:(c, L, o) => o && o.id === "safe" && (+c.fails || 0) === 0 && c.cases >= 2},

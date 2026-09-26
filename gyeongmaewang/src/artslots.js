@@ -262,3 +262,6 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 17차(v176): f53 원곡동 — 작업화·분홍 아이 운동화·어린이집 가방 현관
 Object.assign(AS_BG_ART, { bg_case_f53_door: "4dbf6a3f677ebebd167dce9112de54d6" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 18차(v177): f53 원곡동 — 암막 커튼 방과 아이 장난감 거실
+Object.assign(AS_BG_ART, { bg_case_f53_in: "7dd47b7c131b37d310ddf99f6a8dff26" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

@@ -71,3 +71,12 @@ Object.assign(AS_OP_ART, {
   op_dohyun_3_2: "3730caad0c5232f4b3e98f3ff77261f1",
 });
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 4차(v143): 도현 새벽 2시·불 켜진 창 / 미정 마감·알바생
+Object.assign(AS_OP_ART, {
+  op_dohyun_5:   "fcf061e3a7da7de5dbfdb7bad5b72bc2",
+  op_dohyun_5_2: "00872ec25a2d0bc32828d2258e640aad",
+  op_mijeong_1:  "29002eb8040577685f2ea2f334e2e93d",
+  op_mijeong_2:  "bd2d30b27fc1e8a680d213884981d6a2",
+});
+Object.assign(ART_DEFAULT, AS_OP_ART);

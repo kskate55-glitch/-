@@ -988,3 +988,53 @@ body.nx-quiet .stg-file{animation:none!important}
 .kc-audio .bv-prev select{flex:1 1 140px;min-width:0;font-size:12.5px;padding:4px 6px;border-radius:8px}
 .kc-audio .bv-prev .bv-btns{display:flex;gap:4px;flex-wrap:wrap}
 .kc-audio .bv-prev .btn.sm{padding:4px 8px;font-size:12px}
+
+/* 📋 조사 상황판 — 한 장짜리 대시보드 (v214) */
+.lf-dash{position:sticky;top:6px;z-index:5;padding:12px 14px !important;border:1.5px solid rgba(255,196,77,.45);background:linear-gradient(180deg,#1f2433,#171b27) !important;color:#f3efe4;box-shadow:0 6px 18px rgba(0,0,0,.28)}
+.lf-dash .lfd-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lf-dash .lfd-pips{display:flex;align-items:center;gap:0}
+.lf-dash .lfd-pip{display:flex;flex-direction:column;align-items:center;line-height:1}
+.lf-dash .lfd-pip b{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:14px;background:#2d3446;color:#9aa3b8;border:2px solid #3a4258}
+.lf-dash .lfd-pip small{font-size:10.5px;color:#9aa3b8;margin-top:3px}
+.lf-dash .lfd-pip.now b{background:#ffc44d;color:#1b1b1b;border-color:#ffe29a;box-shadow:0 0 0 4px rgba(255,196,77,.18)}
+.lf-dash .lfd-pip.now small{color:#ffe29a;font-weight:700}
+.lf-dash .lfd-pip.past b{background:#2e5a44;color:#bff3d4;border-color:#3f7a5d}
+.lf-dash .lfd-line{width:14px;height:2px;background:#3a4258;margin:0 2px 14px}
+.lf-dash .lfd-now{font-size:15px;font-weight:800;color:#ffe29a;white-space:nowrap;background:rgba(255,196,77,.12);border-radius:999px;padding:4px 10px}
+.lf-dash .lfd-left{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:10px 0 4px}
+.lf-dash .lfd-left small{font-size:12.5px;color:#c9cfdd}
+.lf-dash .kr-left{font-size:26px !important;font-weight:900;color:#ffc44d;white-space:nowrap}
+.lf-dash .kr-left.low{color:#ff7b7b}
+.lf-dash .kr-bar{height:10px !important;border-radius:999px;margin-bottom:10px}
+.lf-dash .lfd-meters{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lf-dash .lfd-meter{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px;font-size:12px;color:#c9cfdd}
+.lf-dash .lfd-meter .lf-bar{display:block;height:7px;border-radius:999px;background:#2d3446;overflow:hidden}
+.lf-dash .lfd-meter .lf-bar>i{display:block;height:100%;background:#4cd18a;border-radius:999px}
+.lf-dash .lfd-meter .lf-bar>i.low{background:#ff7b7b}
+.lf-dash .lfd-meter .lf-bar.st>i{background:#ff9f5a}
+.lf-dash .lfd-meter b{font-size:12px;color:#f3efe4}
+.lf-dash .lfd-warn{margin:8px 0 0;font-size:12.5px;color:#ffb3b3}
+.lf-dash .lfd-next{display:flex;flex-direction:column;align-items:center;width:100%;margin-top:10px;padding:10px 12px;font-size:16px;font-weight:900;border-radius:12px;background:linear-gradient(180deg,#ffd46b,#ffb52e) !important;color:#1b1b1b !important;border:0;box-shadow:0 4px 0 #c98612}
+.lf-dash .lfd-next small{font-size:12px;font-weight:600;opacity:.8}
+.lf-dash .lfd-next:active{transform:translateY(2px);box-shadow:0 2px 0 #c98612}
+.lf-dash .lfd-last{margin:10px 0 0;padding:8px 10px;border-radius:10px;background:rgba(255,123,123,.12);color:#ffcaca;font-size:13px;font-weight:700;text-align:center}
+.lf-dash .lfd-leave{width:100%;margin-top:6px;font-size:13px}
+.lf-dash .lfd-leave small{opacity:.8}
+.lf-dash .lfd-sub{display:block;margin-top:6px;font-size:11.5px;color:#9aa3b8}
+.lf-dash .lfd-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;margin-top:10px;font-size:12.5px;color:#c9cfdd}
+.lf-dash .lfd-foot b{color:#9ed4ff}
+.lfd-feelnote{margin:4px 2px 8px;font-size:11.5px;color:#8a92a6;line-height:1.4}
+/* v214 🏢 중개사 카드 · 컨설팅비 · 주간 한마디 (어두운 화면 기준 — 색은 반투명으로) */
+.panel.sf-bk{border-left:4px solid #6f9bd1!important;padding:10px 12px}
+.sf-bk-row{display:flex;gap:10px;align-items:center}
+.sf-bk-img{width:64px;height:64px;object-fit:cover;object-position:top;border-radius:12px;background:rgba(255,255,255,.9);flex:none}
+.sf-bk-h{font-size:14.5px}.sf-bk-t{font-size:13px;opacity:.85;margin-top:3px;line-height:1.5}
+.sf-tag{display:inline-block;font-size:11.5px;background:#fff4df;color:#8a4b00;border-radius:999px;padding:1px 8px;margin-left:4px;font-weight:700}
+.sf-acts{margin-top:8px}.sf-picked{margin-top:6px;color:#5fd08a!important}
+.panel.sf-cart{border:2px solid #d9861a!important;background:rgba(217,134,26,.12)!important;padding:12px}
+.sf-cart-h{font-weight:800;font-size:15.5px;color:#ffb347;margin-bottom:4px}
+.sf-cart p{font-size:13.5px;line-height:1.6;margin:4px 0}.panel.sf-cart.done{border-width:1px!important;font-size:13.5px}
+.sf-cart .sf-law{font-size:12.5px;opacity:.8;border-top:1px dashed rgba(217,134,26,.6);padding-top:6px}
+.panel.sf-week{display:flex;gap:8px;align-items:center;font-size:13.5px;padding:8px 10px;border-left:3px solid #6f9bd1!important}
+.sf-bk-mini{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:top;flex:none;background:rgba(255,255,255,.9)}
+.sf-miss{color:#ffb347;font-size:12.5px}

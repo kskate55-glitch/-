@@ -9,7 +9,9 @@ function npbPlace(){
     if(!box) return;
     // 조사 단계(사건 파일·입찰표가 떠 있는 판)는 예전 맨 위 칸 그대로 — 말풍선이 입찰표 밑에 깔리고 파일 자리를 밀어낸다
     const busy = st.querySelector(".stg-dock") || (typeof K !== "undefined" && K && K.step === "brief");
-    const talk = !busy && spr && box.querySelector(".vn-name") && !box.classList.contains("narr");
+    // 말풍선은 명도 단계에서만 — 매도·수리 단계의 무대 인물은 주인공이라, 매수자·중개사 대사를 주인공 가슴에 붙이면 겹치고 잘린다(v214)
+    const moveStep = typeof K !== "undefined" && K && K.step === "move";
+    const talk = moveStep && !busy && spr && box.querySelector(".vn-name") && !box.classList.contains("narr");
     box.classList.toggle("vn-npcbub", !!talk);
     if(!talk){ ["left","top","width","right"].forEach(k => box.style.removeProperty(k)); box.classList.remove("npb-over"); return; }
     const sr = st.getBoundingClientRect(), r = spr.getBoundingClientRect();

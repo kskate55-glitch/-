@@ -199,3 +199,10 @@ Object.assign(AS_BG_ART, {
   bg_case_f23_in:   "3ac8478cec45edd3e3f960dede06550a",
 });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 10차(v167): f31 영등포 상가주택 — 1층 미용실 외관·미용실 안쪽 입구
+Object.assign(AS_BG_ART, {
+  bg_case_f31_ext:  "5075818ed0341aec9714fdc18e0ac399",
+  bg_case_f31_door: "d0d3f4f5affb30eb51e53e01afd3743c",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

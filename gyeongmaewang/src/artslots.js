@@ -311,3 +311,7 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 31차(v190): f64 화성 셔터 앞 — 체인·자물쇠 셋, 접이식 의자·보온병(의자 로고·지게차 글자 흐림)
 Object.assign(AS_BG_ART, { bg_case_f64_door: "83df3e6ef2c1b35b116ca996c901dbc0" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 32차(v191): f54 면목동 2층 현관 — 빨간 책가방·실내화 주머니·기린 키재기 스티커
+Object.assign(AS_BG_ART, { bg_case_f54_door: "f70bd1ad4d3825cde577897479525fab" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

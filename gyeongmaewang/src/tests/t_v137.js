@@ -23,10 +23,10 @@ ok(o.n===33 && o.ok===33 && o.distinct===33, '오프닝 33칸 전부 전용 그�
 const g=await p.evaluate(async()=>{ localStorage.clear(); const c=kcRec(); delete c.life; c.fr={full:true}; page='arena'; arenaTab='king'; KC_MODE='career'; K_PROP_NEXT='f11'; KC_INTRO=false; kStart(5); K.intro=false;
   const pick=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s));
   const loads=await Promise.all(pick.map(k=>new Promise(r=>{ const u=artUrl(k); if(!u) return r(false); const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=u; })));
-  K_PROP_NEXT='f54'; kStart(5); K.intro=false; const other=vnBgPick('bg_front_door');
+  K_PROP_NEXT='f31'; kStart(5); K.intro=false; const other=vnBgPick('bg_room_empty');
   return {pick, loads, other}; });
 ok(g.pick.join()==='bg_case_f11_ext,bg_case_f11_door,bg_case_f11_in' && g.loads.every(Boolean), 'f11 조사·명도·빈집 장면이 전용 배경 3장으로 바뀜');
-ok(g.other==='bg_front_door', '배경이 아직 없는 칸(f54 현관)은 원래 공용 배경 그대로');
+ok(g.other==='bg_room_empty', '배경이 아직 없는 칸(f31 실내)은 원래 공용 배경 그대로');
 const g2=await p.evaluate(()=>{ K_PROP_NEXT='f12'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
 ok(g2.join()==='bg_case_f12_ext,bg_case_f12_door,bg_case_f12_in', 'f12 외관·복도·빈 원룸 전용 배경 3장');
 const g3=await p.evaluate(()=>{ K_PROP_NEXT='f13'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
@@ -63,8 +63,8 @@ const g13=await p.evaluate(()=>{ const out={}; for(const id of ['f52','f53']){ K
 ok(g13.f52==='bg_case_f52_ext,bg_case_f52_door,bg_case_f52_in' && g13.f53==='bg_case_f53_ext,bg_case_f53_door,bg_case_f53_in', 'f52·f53 3장 전용');
 const l13=await p.evaluate(async()=>Promise.all(['f51_in','f52_ext','f52_door','f52_in','f53_ext','f53_door','f53_in'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_'+k); }))));
 ok(l13.every(Boolean), 'f51·f52·f53 배경 5장 로드');
-const g14=await p.evaluate(async()=>{ K_PROP_NEXT='f54'; kStart(5); K.intro=false; const a=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); const ok=await new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f54_ext'); }); const ok2=await new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f54_in'); }); return {a:a.join(), ok:ok&&ok2}; });
-ok(g14.a==='bg_case_f54_ext,bg_front_door,bg_case_f54_in' && g14.ok, 'f54 외관·실내 전용(현관은 공용) + 로드');
+const g14=await p.evaluate(async()=>{ K_PROP_NEXT='f54'; kStart(5); K.intro=false; const a=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); const ok=await new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f54_ext'); }); const ok2=await new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f54_in'); }); const ok3=await new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f54_door'); }); return {a:a.join(), ok:ok&&ok2&&ok3}; });
+ok(g14.a==='bg_case_f54_ext,bg_case_f54_door,bg_case_f54_in' && g14.ok, 'f54 3장 전용 + 로드');
 const g15=await p.evaluate(async()=>{ K_PROP_NEXT='f61'; kStart(5); K.intro=false; const a=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); const ok=await new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f61_ext'); }); const ok2=await new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f61_door'); }); return {a:a.join(), ok:ok&&ok2}; });
 ok(g15.a==='bg_case_f61_ext,bg_case_f61_door,bg_case_f61_in' && g15.ok, 'f61 3장 전용 + 로드');
 const g16=await p.evaluate(async()=>{ K_PROP_NEXT='f62'; kStart(5); K.intro=false; const a=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); const ok=await Promise.all(['ext','door','in'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f62_'+k); }))); return {a:a.join(), ok:ok.every(Boolean)}; });

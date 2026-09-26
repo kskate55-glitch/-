@@ -321,3 +321,6 @@ Object.assign(ART_DEFAULT, { cg_il_s01:"21c95dd4c072b9f0af0b2960dc230b81", cg_il
 
 // 외전 장면 그림(v193): D01 도현 — a 구내식당에서 동료 둘이 캐묻는 점심(s2) · b 밤 책상 위 입찰가 메모(s8, 대표) / S03 서윤 — c 법원 창구 앞 대기(s6)
 Object.assign(ART_DEFAULT, { cg_il_d01:"343f773cc5e2161e281e8d898a2cb462", cg_il_d01_a:"bc0adfead5808ea17c1f97a01f1086e4", cg_il_d01_b:"343f773cc5e2161e281e8d898a2cb462", cg_il_s03_c:"ce9dc6e37cdb8b800edf71d940fd817d" });
+
+// 외전 장면 그림(v194): D01 c 회의실 발표 / 법원 대리인 반반 구도(s9) · D03 a 금요일 밤 폴더 셋·식은 컵라면(s1, 노트북 글자 흐림)
+Object.assign(ART_DEFAULT, { cg_il_d01_c:"4d024ea938f2307583e5ad2eff16a398", cg_il_d03_a:"74b6412ac7137aa36a52f43a6f6c83b9" });

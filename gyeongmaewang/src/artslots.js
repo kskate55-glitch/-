@@ -351,3 +351,6 @@ Object.assign(ART_DEFAULT, { cg_il_e01:"5e5a262652300234f5641f26e6acfef0", cg_il
 
 // 외전 장면 그림(v203): T01 태식 — a 주차장에서 SUV 자랑하는 김사장(s2, 엠블럼 흐림) · b 태블릿 공매 아이콘(s3, 대표) · c 문보다 넓은 기계와 줄자 재는 오반장(s5) / T03 — a 카운터에서 부탁하는 박영수(s2, 모자 로고 흐림) · b 밤 강의실의 동기들(s6, 대표)
 Object.assign(ART_DEFAULT, { cg_il_t01:"aafeb0898f170954f5ca63b7aae67c1b", cg_il_t01_a:"6d6016d1487ef7ac32dc812b3ec50a53", cg_il_t01_b:"aafeb0898f170954f5ca63b7aae67c1b", cg_il_t01_c:"62e035001ae54b7dc9f621aea2143779", cg_il_t03:"665b19f97e2f69ad49845dfb9c522d2f", cg_il_t03_a:"1bad707a69799662cc3cc26ebc7ce00b", cg_il_t03_b:"665b19f97e2f69ad49845dfb9c522d2f" });
+
+// 외전 장면 그림(v204): T03 c 늦은 밤 카운터에서 낮 메모·밤 필기가 이어진 노트 보는 태식(s9, 창밖 네온 글자 흐림)
+Object.assign(ART_DEFAULT, { cg_il_t03_c:"345b11b347f9bcc046fbed2843ca743a" });

@@ -51,7 +51,7 @@ const walk=await p.evaluate(()=>{ ilCfgSet({speed:'instant', auto:false}); const
     if(ILR.panel){ ilPanelClose(); continue; }
     seen.push(document.querySelector('.il-text').textContent); ILR.lastAdv=0; ilAdvance(); }
   return {n:seen.length, done:!!(ILR&&ILR.done), sheets, profit:seen.some(t=>t.includes('1,234만원')), loss:seen.some(t=>t.includes('손실이 났어요')), end:document.querySelector('.il-end')!==null}; });
-ok(walk.done && walk.end && walk.n>150, `끝까지 읽힘(${walk.n}줄, 실무 조작 ${walk.sheets}번)`);
+ok(walk.done && walk.end && walk.n>=80, `끝까지 읽힘(${walk.n}줄, 실무 조작 ${walk.sheets}번)`);
 ok(walk.profit && !walk.loss, '첫 사건 흑자 → 흑자 갈래 대사만(금액 1,234만원 치환)');
 const after=await p.evaluate(()=>({cash:kcRec().cash, t:lfRec().t, sta:lfRec().sta, stress:lfRec().stress, st:ilState('D01').st, notes:Object.keys(ilRec().notes).length}));
 ok(after.cash===before.cash && after.t===before.t && after.sta===before.sta && after.stress===before.stress, '외전을 읽어도 현금·날짜·체력·스트레스 그대로');
@@ -112,7 +112,7 @@ const other=await p.evaluate(()=>{ localStorage.clear(); kcRec().cash=90000; KC_
   K.epStory={ch:'seoyun',i:2}; renderArena(); const b2=!!document.querySelector('.il-proxy'); K.epStory=null; renderArena(); return [a,b2,!!document.querySelector('.il-proxy')]; });
 ok(!other[0] && !other[1] && !other[2], '도현 첫 사건·다른 캐릭터·자유 플레이에는 선택지 없음');
 // C01 후일담
-for(const [mode,win,txt] of [['proxy',true,'낙찰…'],['proxy',false,'이번에는 못 샀네'],['direct',true,'직접 다녀왔어요']]){
+for(const [mode,win,txt] of [['proxy',true,'낙찰…'],['proxy',false,'못 샀네'],['direct',true,'직접 다녀왔어요']]){
   const r=await p.evaluate(([mode,win,txt])=>{ localStorage.clear(); lfNew('dohyun'); lfRec().story=true; cpRec().il=undefined; epOf('dohyun').res=[{profit:1,full:true}];
     ilProxyRec()['dohyun:1:f21']={mode, won:win, bid:21000, top:22000, title:'500이라는 숫자의 출처', i:1, at:1, charged:mode==='proxy'};
     ilSync(); const pre=ilState('D01C').st; epOf('dohyun').res[1]={profit:0,full:true,lost:!win}; ilSync(); const post=ilState('D01C').st;

@@ -69,6 +69,7 @@ const OE_ART = {
   oe_taesik_op1:"79078bf2177a97f9205f02c84e256ecb",   // 갈 데 없는 화요일 새벽
   oe_taesik_op2:"497fe031f046fe91045b850bf31bcb71",   // 공원 정자의 아저씨들
   oe_taesik_op3:"8fb27c9ede1c77f3858535935714bb8f",   // 손녀가 알려 준 대로 처음 열어 본 화면
+  oe_taesik_end1:"bc10047dc19f4b912949ce410017572f",  // 수첩과 태블릿, 지도와 발
   oe_dohyun_op1:"50b459fde65f315d0bb7a42df2aade9d",   // 퇴근 후 원룸에서 가계 엑셀을 여는 밤
   oe_dohyun_op2:"f3684437d1281c4b2c38534823abee5b",   // 주거비 기사를 보다 한숨 쉬는 비 오는 밤
   oe_jaehoon_op2:"4a934f029d3b7ee8f7abd2ed93522b10",  // 저녁 식탁, 딸의 '월급날' 한마디

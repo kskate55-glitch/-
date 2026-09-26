@@ -52,9 +52,9 @@ ok(g10.f41==='bg_case_f41_ext,bg_case_f41_door,bg_case_f41_in' && g10.f42==='bg_
 const l10=await p.evaluate(async()=>Promise.all(['f34_in','f41_ext','f41_door','f41_in','f42_ext','f42_door'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_'+k); }))));
 ok(l10.every(Boolean), 'f34·f41·f42 배경 6장 로드');
 const g11=await p.evaluate(()=>{ const out={}; for(const id of ['f43','f44']){ K_PROP_NEXT=id; kStart(5); K.intro=false; out[id]=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)).join(); } return out; });
-ok(g11.f43==='bg_case_f43_ext,bg_case_f43_door,bg_room_empty' && g11.f44==='bg_case_f44_ext,bg_case_f44_door,bg_case_f44_in', 'f43 외관·현관 · f44 3장 전용');
-const l11=await p.evaluate(async()=>Promise.all(['f42_in','f43_ext','f43_door','f44_ext'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_'+k); }))));
-ok(l11.every(Boolean), 'f42·f43·f44 배경 4장 로드');
+ok(g11.f43==='bg_case_f43_ext,bg_case_f43_door,bg_case_f43_in' && g11.f44==='bg_case_f44_ext,bg_case_f44_door,bg_case_f44_in', 'f43·f44 3장 전용');
+const l11=await p.evaluate(async()=>Promise.all(['f42_in','f43_ext','f43_door','f43_in','f44_ext'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_'+k); }))));
+ok(l11.every(Boolean), 'f42·f43·f44 배경 5장 로드');
 const g12=await p.evaluate(()=>{ K_PROP_NEXT='f51'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)).join(); });
 ok(g12==='bg_case_f51_ext,bg_case_f51_door,bg_case_f51_in', 'f51 3장 전용');
 const l12=await p.evaluate(async()=>Promise.all(['f44_door','f44_in','f51_ext','f51_door'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_'+k); }))));

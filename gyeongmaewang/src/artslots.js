@@ -291,3 +291,7 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 26차(v185): f41 정릉 반지하 방 — 벽 아래 물 찬 자국·전기장판·약통(TV·냉장고 로고 흐림)
 Object.assign(AS_BG_ART, { bg_case_f41_in: "00c1463da3e8e28a37c591633cc2cbf1" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 27차(v186): f43 가락동 원룸 — 방송 스튜디오처럼 꾸민 방(인형은 전부 오리지널, IP 없음)
+Object.assign(AS_BG_ART, { bg_case_f43_in: "8b534ad4bf674dd538ef1af2522e1775" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

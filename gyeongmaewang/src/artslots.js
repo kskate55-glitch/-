@@ -250,3 +250,12 @@ Object.assign(AS_BG_ART, {
   bg_case_f51_door: "bab73e23686c63a2bf78843e35bfc439",
 });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 16차(v175): f51 결혼사진·파란 파일 거실 / f52 신정동 — 대단지·엘리베이터 홀·서재 거실 / f53 원곡동 — 공단 굴뚝·송전탑 골목
+Object.assign(AS_BG_ART, {
+  bg_case_f51_in:   "7abd64d68d44870215f76782d7121be3",
+  bg_case_f52_ext:  "7264c93597614e092c61b39e1eaefc76",
+  bg_case_f52_door: "e318dd21a0f30ebf2e8cf969122dccce",
+  bg_case_f52_in:   "e0fb7fd62fea3bf81b4a1d35efc9d4ff",
+  bg_case_f53_ext:  "dc6c3442e36951028cc218690d3ac892",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

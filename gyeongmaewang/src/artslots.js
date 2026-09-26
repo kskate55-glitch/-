@@ -84,3 +84,7 @@ Object.assign(ART_DEFAULT, AS_OP_ART);
 // 받은 오프닝 5차(v144): 미정 — 유리창 너머 불 꺼진 상가
 AS_OP_ART.op_mijeong_2_3 = "c55461f714f4a7aee259fd8914c675f4";
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 6차(v145): 도현 회상 — 구내식당(도현 오프닝 8칸 완료)
+AS_OP_ART.op_dohyun_4 = "3e43e434aef97b631af367f4833175fd";
+Object.assign(ART_DEFAULT, AS_OP_ART);

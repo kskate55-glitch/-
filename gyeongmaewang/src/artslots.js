@@ -354,3 +354,6 @@ Object.assign(ART_DEFAULT, { cg_il_t01:"aafeb0898f170954f5ca63b7aae67c1b", cg_il
 
 // 외전 장면 그림(v204): T03 c 늦은 밤 카운터에서 낮 메모·밤 필기가 이어진 노트 보는 태식(s9, 창밖 네온 글자 흐림)
 Object.assign(ART_DEFAULT, { cg_il_t03_c:"345b11b347f9bcc046fbed2843ca743a" });
+
+// 외전 장면 그림(v205): E03 b 화이트보드 앞 '어려운 질문 다섯 개' — 손 든 서지원·팔짱 낀 강문호·정리하는 은경(s5)
+Object.assign(ART_DEFAULT, { cg_il_e03_b:"5f52f9758bedae4de12bb29df379d3d2" });

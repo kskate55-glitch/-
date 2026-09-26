@@ -142,3 +142,12 @@ AS_OP_ART.op_taesik_1 = "b6267514fd943b8a93b95599f2900221";
 AS_OP_ART.op_taesik_2 = "b62b05032d65fdf57f254b165038b186";
 AS_OP_ART.op_taesik_3 = "d2bef68e2b2431214517a4d2f04f5138";
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 그림 19차(v158): 태식 서재 빌라 사진(오프닝 33장 완료) + 첫 물건 배경 f11 남양주 화도읍(외관·현관·빈집)
+AS_OP_ART.op_taesik_4 = "0d766b486ed2ddf29bed68150943cf97";
+const AS_BG_ART = {
+  bg_case_f11_ext:  "fc03b1660dc5d99eb6b2d61882fd1aac",
+  bg_case_f11_door: "933abeeb1dad1ee88f7ec86fed71d1f1",
+  bg_case_f11_in:   "b547ef27dcd47e0e7b7b85deef1bee6b",
+};
+Object.assign(ART_DEFAULT, AS_OP_ART, AS_BG_ART);

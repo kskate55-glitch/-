@@ -277,3 +277,6 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 22차(v181): f62 간석동 — 공단 옆 4층 다가구(옥상 빨래·작업화 신발장)·네 명이 함께 사는 방
 Object.assign(AS_BG_ART, { bg_case_f62_ext: "4b2cbb531eab9fb89ea0d3dd4d839a29", bg_case_f62_in: "654fccfd4ab8c411844b4d566e03d630" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 23차(v182): f63 평택 — 네온이 반쯤 꺼진 모텔 외관·주차장 가림막(작은 네온 간판 글자 흐림)
+Object.assign(AS_BG_ART, { bg_case_f63_ext: "1169257f30345a5695e5b351571a3bf4" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

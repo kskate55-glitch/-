@@ -87,15 +87,16 @@ const run=async(mode,seed,amtMul)=>p.evaluate(([mode,seed,amtMul])=>{ localStora
   const panel=!!document.querySelector('.il-proxy'); if(mode) document.querySelector(`[data-ilattend="${mode}"]`).click();
   const sum=document.querySelector('.il-proxy-sum')?document.querySelector('.il-proxy-sum').innerText:'';
   const cash0=kcRec().cash, legal0=K.cost.legal||0, leave0=L.leave;
+  const _mr=Math.random; Math.random=()=>0.999;   // 패찰 뒤 인생 시계가 돌며 생기는 무작위 생활 사건을 두 실행에서 똑같이
   kBid(amt); const res={win:K.result.win, bids:K.result.bids.map(x=>x.amt).join(','), legal:(K.cost.legal||0)-legal0, cash:kcRec().cash-cash0, leave:leave0-L.leave, log:(K.log||[]).join(' ')};
   kBid(amt); res.legal2=(K.cost.legal||0)-legal0; res.cash2=kcRec().cash-cash0;
-  res.book=JSON.stringify(ilRec().proxy); res.dbg=JSON.stringify({q:res.cash,l:res.legal,log:res.log.slice(-300)}); res.panel=panel; res.sum=sum; return res; },[mode,seed,amtMul]);
+  Math.random=_mr; res.book=JSON.stringify(ilRec().proxy); res.dbg=JSON.stringify({q:res.cash,l:res.legal,log:res.log.slice(-300)}); res.panel=panel; res.sum=sum; return res; },[mode,seed,amtMul]);
 for(const [seed,mul] of [[7,1.02],[7,1.6],[11,1.25]]){
   const d=await run('direct',seed,mul), q=await run('proxy',seed,mul);
   ok(d.panel && q.panel, `seed ${seed} — 봉투 확인 화면에 참석 방식 선택`);
   ok(d.bids===q.bids && d.win===q.win, `seed ${seed}×${mul} — 참석 방식이 경쟁자·결과를 바꾸지 않음(${q.win?'낙찰':'패찰'})`);
   ok(d.legal===0 && !/이용료/.test(d.log), `직접 참석 — 이용료 0`);
-  ok(q.win ? (q.legal===15 && q.cash-d.cash===0) : (q.legal===0 && q.cash-d.cash===-15), `대리입찰 — ${q.win?'사건 비용 +15만원':'통장 −15만원'}(직접 참석 대비)`);
+  ok(q.win ? (q.legal===15 && q.cash-d.cash===0) : (q.legal===0 && q.cash-d.cash===-15), `대리입찰 — ${q.win?'사건 비용 +15만원':'통장 −15만원'}(직접 참석 대비) d=${d.cash} q=${q.cash} ql=${q.legal} ${q.win!==d.win?'결과다름':''} || ${q.log.slice(-200)} || ${d.log.slice(-200)}`);
   ok(q.legal2===q.legal && q.cash2-q.cash===d.cash2-d.cash, '다시 제출해도 이용료 한 번만');
   ok(q.sum.includes('가상 이용료') && q.sum.includes('보증금'), '최종 검토표 — 가상 이용료·보증금 구분 표시');
 }

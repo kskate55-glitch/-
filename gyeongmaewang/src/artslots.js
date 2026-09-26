@@ -208,3 +208,10 @@ Object.assign(AS_BG_ART, {
   bg_case_f31_door: "d0d3f4f5affb30eb51e53e01afd3743c",
 });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 11차(v170): f32 30년 중식당 — 가게 외관·홀(입구 쪽)·주방
+Object.assign(AS_BG_ART, {
+  bg_case_f32_ext:  "43d9983708207e0e40a501b06d231c7f",
+  bg_case_f32_door: "b499f21825169d63597e0a4a474a7ea3",
+  bg_case_f32_in:   "e48b6ec33c1a6fd8cdd5ab3500afbf25",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

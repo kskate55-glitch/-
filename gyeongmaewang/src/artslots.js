@@ -92,3 +92,7 @@ Object.assign(ART_DEFAULT, AS_OP_ART);
 // 받은 오프닝 7차(v146): 미정 — 동네 부동산 사무실
 AS_OP_ART.op_mijeong_4 = "0a7a0b769418acadcbddc6ad6c572027";
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 8차(v147): 재훈 — 수리 현장 계단참
+AS_OP_ART.op_jaehoon_1 = "3255a0b5d3c1b0ba1da770840281fde6";
+Object.assign(ART_DEFAULT, AS_OP_ART);

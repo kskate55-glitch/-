@@ -30,3 +30,12 @@
 cd src && node ../docs/story/gendocs.js ../docs/story
 node tests/check_oe.js oe_mijeong.js   # 대본 형식 검사
 ```
+
+## 받은 그림 (연결 완료)
+
+| 슬롯 | 상태 |
+|---|---|
+| `oe_seoyun_op1` · `op2` · `op3` · `end1` | ✅ 연결 (`src/story_oe.js`의 `OE_ART`) |
+| 나머지 20장 | 대기 — 기존 그림·배경이 대신 나온다 |
+
+새 그림을 받으면 자산 저장소에 올리고 `OE_ART`에 `슬롯 이름: 자산 id` 한 줄만 추가하면 된다.

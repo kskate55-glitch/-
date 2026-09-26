@@ -48,3 +48,13 @@ if(typeof cpEndHTML === "function"){
     return h;
   };
 }
+
+/* ---------- 새로 받은 오프닝·엔딩 그림 (사용자 제작) ---------- */
+// 슬롯 이름 → 자산 id. 여기 없는 슬롯은 대본의 art 후보 뒤쪽(기존 그림·배경)이 대신 나온다.
+const OE_ART = {
+  oe_seoyun_op1:"7e30113a5ce89f464d13fa9e4b2488df",   // 채용 결과 앞에서 멈춘 오후
+  oe_seoyun_op2:"1cf4cbcf34402f6d904ac9cba997b93a",   // 엄마와 통화하며 괜찮다고 말하는 저녁
+  oe_seoyun_op3:"9c15b54bfda87802e9ec060b8adf6103",   // 비 오는 밤, 경매를 처음 알아보는 책상
+  oe_seoyun_end1:"00debb02c89e091626597df99f794995"   // 숨지 않고 자신의 판단을 설명하는 얼굴
+};
+if(typeof ART_DEFAULT !== "undefined") Object.assign(ART_DEFAULT, OE_ART);

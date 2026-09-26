@@ -28,6 +28,6 @@ const g=await p.evaluate(async()=>{ localStorage.clear(); const c=kcRec(); delet
 ok(g.pick.join()==='bg_case_f11_ext,bg_case_f11_door,bg_case_f11_in' && g.loads.every(Boolean), 'f11 조사·명도·빈집 장면이 전용 배경 3장으로 바뀜');
 ok(g.other==='bg_front_door', '배경이 아직 없는 물건(f21)은 원래 공용 배경 그대로');
 const g2=await p.evaluate(()=>{ K_PROP_NEXT='f12'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
-ok(g2.join()==='bg_case_f12_ext,bg_case_f12_door,bg_room_empty', 'f12 외관·복도는 전용, 아직 없는 빈집 칸은 공용 배경으로 대신');
+ok(g2.join()==='bg_case_f12_ext,bg_case_f12_door,bg_case_f12_in', 'f12 외관·복도·빈 원룸 전용 배경 3장');
 ok(!errs.some(e=>e.startsWith('pageerror')), 'JS 오류 없음');
 console.log(errs.length?'FAIL':'ALL OK'); await b.close(); })();

@@ -158,3 +158,7 @@ Object.assign(AS_BG_ART, {
   bg_case_f12_door: "a7432f865b29701a311d1c1d5cf55166",
 });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 3차(v160): f12 빈 원룸(창밖 서울 타워는 의정부에서 안 보여서 지움) — f12 3장 완료
+AS_BG_ART.bg_case_f12_in = "f0925c0f238138101f9b9c2ce8a3d41b";
+Object.assign(ART_DEFAULT, AS_BG_ART);

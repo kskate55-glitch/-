@@ -1,0 +1,1403 @@
+{
+ "generated": "2026-09-26",
+ "note": "art 후보는 앞에서부터 있는 첫 그림. \"@end\" = cpEndArt(캐릭터, 판정) 기존 엔딩 그림",
+ "characters": {
+  "seoyun": {
+   "name": "한서윤",
+   "data": "src/oe_seoyun.js",
+   "newSlots": [
+    {
+     "id": "oe_seoyun_op1",
+     "use": "opening",
+     "title": "한서윤 오프닝 — 채용 결과 앞에서 멈춘 오후",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_seoyun_2"
+    },
+    {
+     "id": "oe_seoyun_op2",
+     "use": "opening",
+     "title": "한서윤 오프닝 — 엄마와 통화하며 괜찮다고 말하는 저녁",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_seoyun_1"
+    },
+    {
+     "id": "oe_seoyun_op3",
+     "use": "opening",
+     "title": "한서윤 오프닝 — 비 오는 밤, 경매를 처음 알아보는 책상",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_seoyun_1"
+    },
+    {
+     "id": "oe_seoyun_end1",
+     "use": "ending",
+     "title": "한서윤 엔딩 — 숨지 않고 자신의 판단을 설명하는 얼굴",
+     "fallback": "없으면 대신 쓰는 기존 그림: bg_office_2"
+    }
+   ],
+   "reusedOpeningArt": [
+    "op_seoyun_1",
+    "op_seoyun_1_2",
+    "op_seoyun_2",
+    "op_seoyun_2_3",
+    "op_seoyun_2_4",
+    "op_seoyun_3"
+   ],
+   "reusedBackgrounds": [
+    "bg_alley",
+    "bg_base_sillim",
+    "bg_office_2",
+    "bg_office_3",
+    "bg_room_empty",
+    "bg_shop_closed",
+    "cut_keys",
+    "cut_seoyun_found"
+   ],
+   "endingArt": "CP_END_ART (기존 4장)",
+   "opening": [
+    {
+     "scene": 1,
+     "art": [
+      "oe_seoyun_op1",
+      "op_seoyun_2"
+     ],
+     "bg": "bg_base_sillim",
+     "beats": null,
+     "lines": 8
+    },
+    {
+     "scene": 2,
+     "art": [
+      "oe_seoyun_op2",
+      "op_seoyun_1"
+     ],
+     "bg": "bg_base_sillim",
+     "beats": null,
+     "lines": 10
+    },
+    {
+     "scene": 3,
+     "art": [
+      "op_seoyun_2"
+     ],
+     "bg": "bg_base_sillim",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 4,
+     "art": [
+      "bg_alley"
+     ],
+     "bg": "bg_alley",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 5,
+     "art": [
+      "op_seoyun_2"
+     ],
+     "bg": "bg_base_sillim",
+     "beats": {
+      "3": [
+       "op_seoyun_2_3"
+      ],
+      "5": [
+       "op_seoyun_2_4"
+      ]
+     },
+     "lines": 6
+    },
+    {
+     "scene": 6,
+     "art": [
+      "op_seoyun_1"
+     ],
+     "bg": "bg_base_sillim",
+     "beats": {
+      "3": [
+       "op_seoyun_1_2"
+      ]
+     },
+     "lines": 7
+    },
+    {
+     "scene": 7,
+     "art": [
+      "oe_seoyun_op3",
+      "op_seoyun_1"
+     ],
+     "bg": "bg_base_sillim",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 8,
+     "art": [
+      "op_seoyun_2"
+     ],
+     "bg": "bg_base_sillim",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 9,
+     "art": [
+      "bg_alley"
+     ],
+     "bg": "bg_alley",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 10,
+     "art": [
+      "oe_seoyun_op2",
+      "op_seoyun_1"
+     ],
+     "bg": "bg_base_sillim",
+     "beats": null,
+     "lines": 5
+    },
+    {
+     "scene": 11,
+     "art": [
+      "op_seoyun_3",
+      "cut_seoyun_found"
+     ],
+     "bg": "cut_seoyun_found",
+     "beats": null,
+     "lines": 7
+    }
+   ],
+   "ending": {
+    "core": [
+     {
+      "scene": 1,
+      "art": [
+       "bg_base_sillim"
+      ],
+      "bg": "bg_base_sillim",
+      "lines": 5
+     },
+     {
+      "scene": 2,
+      "art": [
+       "oe_seoyun_end1",
+       "bg_office_2"
+      ],
+      "bg": "bg_office_2",
+      "lines": 10
+     },
+     {
+      "scene": 3,
+      "art": [
+       "bg_office_3"
+      ],
+      "bg": "bg_office_3",
+      "lines": 7
+     },
+     {
+      "scene": 4,
+      "art": [
+       "oe_seoyun_op2",
+       "bg_base_sillim"
+      ],
+      "bg": "bg_base_sillim",
+      "lines": 6
+     }
+    ],
+    "normal": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_base_sillim",
+      "lines": 6
+     }
+    ],
+    "good": [
+     {
+      "scene": 1,
+      "art": [
+       "cut_keys",
+       "bg_room_empty"
+      ],
+      "bg": "bg_room_empty",
+      "lines": 2
+     },
+     {
+      "scene": 2,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_room_empty",
+      "lines": 5
+     }
+    ],
+    "bad": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_shop_closed",
+      "lines": 7
+     }
+    ],
+    "special": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_office_3",
+      "lines": 7
+     }
+    ]
+   }
+  },
+  "dohyun": {
+   "name": "이도현",
+   "data": "src/oe_dohyun.js",
+   "newSlots": [
+    {
+     "id": "oe_dohyun_op1",
+     "use": "opening",
+     "title": "이도현 오프닝 — 퇴근 후 원룸에서 가계 엑셀을 여는 밤",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_dohyun_3_2 (그다음 op_dohyun_3)"
+    },
+    {
+     "id": "oe_dohyun_op2",
+     "use": "opening",
+     "title": "이도현 오프닝 — 주거비 기사를 보다 한숨 쉬는 비 오는 밤",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_dohyun_3"
+    },
+    {
+     "id": "oe_dohyun_op3",
+     "use": "opening",
+     "title": "이도현 오프닝 — 밤늦게 처음으로 '경매'를 검색하는 순간",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_dohyun_5"
+    },
+    {
+     "id": "oe_dohyun_end1",
+     "use": "ending",
+     "title": "이도현 엔딩 — 점심 자리에서 자기 말로 미래를 설명하다",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_dohyun_4 (색 바랜 회상 톤 대신 밝게) / bg_office_2"
+    }
+   ],
+   "reusedOpeningArt": [
+    "op_dohyun_1",
+    "op_dohyun_1_2",
+    "op_dohyun_2",
+    "op_dohyun_3",
+    "op_dohyun_3_2",
+    "op_dohyun_4",
+    "op_dohyun_5",
+    "op_dohyun_5_2"
+   ],
+   "reusedBackgrounds": [
+    "bg_alley",
+    "bg_base_hwagok",
+    "bg_office_1",
+    "bg_office_2",
+    "bg_office_3",
+    "bg_villa_day",
+    "bg_villa_night",
+    "cut_dohyun_commute"
+   ],
+   "endingArt": "CP_END_ART (기존 4장)",
+   "opening": [
+    {
+     "scene": 1,
+     "art": [
+      "op_dohyun_1"
+     ],
+     "bg": "cut_dohyun_commute",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 2,
+     "art": [
+      "op_dohyun_1_2"
+     ],
+     "bg": "bg_alley",
+     "beats": null,
+     "lines": 5
+    },
+    {
+     "scene": 3,
+     "art": [
+      "op_dohyun_2",
+      "op_dohyun_3"
+     ],
+     "bg": "bg_base_hwagok",
+     "beats": {
+      "4": [
+       "op_dohyun_3"
+      ]
+     },
+     "lines": 6
+    },
+    {
+     "scene": 4,
+     "art": [
+      "oe_dohyun_op1",
+      "op_dohyun_3_2"
+     ],
+     "bg": "bg_base_hwagok",
+     "beats": null,
+     "lines": 8
+    },
+    {
+     "scene": 5,
+     "art": [
+      "bg_office_2"
+     ],
+     "bg": "bg_office_1",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 6,
+     "art": [
+      "oe_dohyun_op2",
+      "op_dohyun_3"
+     ],
+     "bg": "bg_base_hwagok",
+     "beats": null,
+     "lines": 8
+    },
+    {
+     "scene": 7,
+     "art": [
+      "bg_base_hwagok"
+     ],
+     "bg": "bg_base_hwagok",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 8,
+     "art": [
+      "op_dohyun_4"
+     ],
+     "bg": "bg_office_2",
+     "beats": null,
+     "lines": 8
+    },
+    {
+     "scene": 9,
+     "art": [
+      "oe_dohyun_op3",
+      "op_dohyun_5"
+     ],
+     "bg": "bg_base_hwagok",
+     "beats": null,
+     "lines": 8
+    },
+    {
+     "scene": 10,
+     "art": [
+      "op_dohyun_5_2"
+     ],
+     "bg": "bg_villa_night",
+     "beats": null,
+     "lines": 5
+    },
+    {
+     "scene": 11,
+     "art": [
+      "op_dohyun_5",
+      "op_dohyun_3"
+     ],
+     "bg": "bg_base_hwagok",
+     "beats": null,
+     "lines": 5
+    }
+   ],
+   "ending": {
+    "core": [
+     {
+      "scene": 1,
+      "art": [
+       "cut_dohyun_commute",
+       "op_dohyun_1"
+      ],
+      "bg": "cut_dohyun_commute",
+      "lines": 6
+     },
+     {
+      "scene": 2,
+      "art": [
+       "oe_dohyun_end1",
+       "bg_office_2"
+      ],
+      "bg": "bg_office_1",
+      "lines": 8
+     },
+     {
+      "scene": 3,
+      "art": [
+       "bg_office_3",
+       "bg_office_1"
+      ],
+      "bg": "bg_office_1",
+      "lines": 6
+     },
+     {
+      "scene": 4,
+      "art": [
+       "op_dohyun_3",
+       "bg_base_hwagok"
+      ],
+      "bg": "bg_base_hwagok",
+      "lines": 6
+     }
+    ],
+    "normal": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "cut_dohyun_commute",
+      "lines": 6
+     }
+    ],
+    "good": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_villa_day",
+      "lines": 6
+     }
+    ],
+    "bad": [
+     {
+      "scene": 1,
+      "art": [
+       "bg_office_3"
+      ],
+      "bg": "bg_office_1",
+      "lines": 3
+     },
+     {
+      "scene": 2,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_office_1",
+      "lines": 4
+     }
+    ],
+    "special": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_villa_day",
+      "lines": 7
+     }
+    ]
+   }
+  },
+  "mijeong": {
+   "name": "윤미정",
+   "data": "src/oe_mijeong.js",
+   "newSlots": [
+    {
+     "id": "oe_mijeong_op1",
+     "use": "opening",
+     "title": "윤미정 오프닝 — 새벽 5시 50분, 또 셔터를 올린다",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_mijeong_1 (밤 마감 장면), 그다음 cut_mijeong_shop"
+    },
+    {
+     "id": "oe_mijeong_op2",
+     "use": "opening",
+     "title": "윤미정 오프닝 — 브레이크 타임, 멈춘 행주",
+     "fallback": "없으면 대신 쓰는 기존 그림: cut_mijeong_shop"
+    },
+    {
+     "id": "oe_mijeong_op3",
+     "use": "opening",
+     "title": "윤미정 오프닝 — 처음 '경매'를 검색한 밤",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_mijeong_3"
+    },
+    {
+     "id": "oe_mijeong_end1",
+     "use": "ending",
+     "title": "윤미정 엔딩 — 쉬는 날엔 뭐 하세요, 두 번째 대답",
+     "fallback": "없으면 대신 쓰는 기존 그림: cut_mijeong_shop"
+    }
+   ],
+   "reusedOpeningArt": [
+    "op_mijeong_1",
+    "op_mijeong_2",
+    "op_mijeong_2_3",
+    "op_mijeong_3"
+   ],
+   "reusedBackgrounds": [
+    "bg_base_yeongdeungpo",
+    "bg_shop_closed",
+    "cut_mijeong_shop"
+   ],
+   "endingArt": "CP_END_ART (기존 4장)",
+   "opening": [
+    {
+     "scene": 1,
+     "art": [
+      "oe_mijeong_op1",
+      "op_mijeong_1",
+      "cut_mijeong_shop"
+     ],
+     "bg": "cut_mijeong_shop",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 2,
+     "art": [
+      "oe_mijeong_op1",
+      "op_mijeong_1",
+      "cut_mijeong_shop"
+     ],
+     "bg": "cut_mijeong_shop",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 3,
+     "art": [
+      "cut_mijeong_shop",
+      "op_mijeong_2"
+     ],
+     "bg": "cut_mijeong_shop",
+     "beats": null,
+     "lines": 10
+    },
+    {
+     "scene": 4,
+     "art": [
+      "oe_mijeong_op2",
+      "cut_mijeong_shop"
+     ],
+     "bg": "cut_mijeong_shop",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 5,
+     "art": [
+      "oe_mijeong_op1",
+      "cut_mijeong_shop"
+     ],
+     "bg": "cut_mijeong_shop",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 6,
+     "art": [
+      "cut_mijeong_shop",
+      "op_mijeong_2"
+     ],
+     "bg": "cut_mijeong_shop",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 7,
+     "art": [
+      "op_mijeong_1",
+      "cut_mijeong_shop"
+     ],
+     "bg": "cut_mijeong_shop",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 8,
+     "art": [
+      "cut_mijeong_shop",
+      "op_mijeong_2"
+     ],
+     "bg": "cut_mijeong_shop",
+     "beats": {
+      "7": [
+       "op_mijeong_2_3"
+      ]
+     },
+     "lines": 10
+    },
+    {
+     "scene": 9,
+     "art": [
+      "oe_mijeong_op3",
+      "op_mijeong_3"
+     ],
+     "bg": "bg_base_yeongdeungpo",
+     "beats": null,
+     "lines": 8
+    }
+   ],
+   "ending": {
+    "core": [
+     {
+      "scene": 1,
+      "art": [
+       "oe_mijeong_op1",
+       "op_mijeong_1",
+       "cut_mijeong_shop"
+      ],
+      "bg": "cut_mijeong_shop",
+      "lines": 7
+     },
+     {
+      "scene": 2,
+      "art": [
+       "cut_mijeong_shop",
+       "op_mijeong_2"
+      ],
+      "bg": "cut_mijeong_shop",
+      "lines": 5
+     },
+     {
+      "scene": 3,
+      "art": [
+       "oe_mijeong_end1",
+       "cut_mijeong_shop"
+      ],
+      "bg": "cut_mijeong_shop",
+      "lines": 8
+     },
+     {
+      "scene": 4,
+      "art": [
+       "op_mijeong_3",
+       "bg_base_yeongdeungpo"
+      ],
+      "bg": "bg_base_yeongdeungpo",
+      "lines": 6
+     }
+    ],
+    "normal": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "cut_mijeong_shop",
+      "lines": 6
+     }
+    ],
+    "good": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "cut_mijeong_shop",
+      "lines": 7
+     }
+    ],
+    "bad": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_shop_closed",
+      "lines": 7
+     }
+    ],
+    "special": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "cut_mijeong_shop",
+      "lines": 6
+     }
+    ]
+   }
+  },
+  "jaehoon": {
+   "name": "박재훈",
+   "data": "src/oe_jaehoon.js",
+   "newSlots": [
+    {
+     "id": "oe_jaehoon_op1",
+     "use": "opening",
+     "title": "박재훈 오프닝 — 일 끝난 저녁, 현장 계단참에 주저앉은 몸",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_jaehoon_1"
+    },
+    {
+     "id": "oe_jaehoon_op2",
+     "use": "opening",
+     "title": "박재훈 오프닝 — 저녁 식탁, 딸의 '월급날' 한마디",
+     "fallback": "없으면 대신 쓰는 기존 그림: bg_base_bulgwang"
+    },
+    {
+     "id": "oe_jaehoon_op3",
+     "use": "opening",
+     "title": "박재훈 오프닝 — 한밤의 식탁, 검지 하나로 치는 첫 검색",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_jaehoon_4"
+    },
+    {
+     "id": "oe_jaehoon_end1",
+     "use": "ending",
+     "title": "박재훈 엔딩 — 거실 달력 앞, 셋이 나눠 맡은 토요일 아침",
+     "fallback": "없으면 대신 쓰는 기존 그림: bg_base_bulgwang"
+    }
+   ],
+   "reusedOpeningArt": [
+    "op_jaehoon_1",
+    "op_jaehoon_1_4",
+    "op_jaehoon_2",
+    "op_jaehoon_3",
+    "op_jaehoon_4"
+   ],
+   "reusedBackgrounds": [
+    "bg_alley",
+    "bg_base_bulgwang",
+    "bg_room_clean",
+    "bg_room_empty",
+    "bg_stairs",
+    "cut_jaehoon_site"
+   ],
+   "endingArt": "CP_END_ART (기존 4장)",
+   "opening": [
+    {
+     "scene": 1,
+     "art": [
+      "op_jaehoon_2"
+     ],
+     "bg": "cut_jaehoon_site",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 2,
+     "art": [
+      "oe_jaehoon_op1",
+      "op_jaehoon_1"
+     ],
+     "bg": "bg_stairs",
+     "beats": {
+      "5": [
+       "op_jaehoon_1_4"
+      ]
+     },
+     "lines": 8
+    },
+    {
+     "scene": 3,
+     "art": [
+      "bg_alley"
+     ],
+     "bg": "bg_alley",
+     "beats": null,
+     "lines": 5
+    },
+    {
+     "scene": 4,
+     "art": [
+      "oe_jaehoon_op2",
+      "bg_base_bulgwang"
+     ],
+     "bg": "bg_base_bulgwang",
+     "beats": null,
+     "lines": 10
+    },
+    {
+     "scene": 5,
+     "art": [
+      "bg_base_bulgwang"
+     ],
+     "bg": "bg_base_bulgwang",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 6,
+     "art": [
+      "bg_base_bulgwang"
+     ],
+     "bg": "bg_base_bulgwang",
+     "beats": null,
+     "lines": 5
+    },
+    {
+     "scene": 7,
+     "art": [
+      "op_jaehoon_3"
+     ],
+     "bg": "bg_alley",
+     "beats": null,
+     "lines": 11
+    },
+    {
+     "scene": 8,
+     "art": [
+      "bg_alley"
+     ],
+     "bg": "bg_alley",
+     "beats": null,
+     "lines": 4
+    },
+    {
+     "scene": 9,
+     "art": [
+      "oe_jaehoon_op3",
+      "op_jaehoon_4"
+     ],
+     "bg": "bg_base_bulgwang",
+     "beats": null,
+     "lines": 9
+    },
+    {
+     "scene": 10,
+     "art": [
+      "op_jaehoon_4"
+     ],
+     "bg": "bg_base_bulgwang",
+     "beats": null,
+     "lines": 5
+    }
+   ],
+   "ending": {
+    "core": [
+     {
+      "scene": 1,
+      "art": [
+       "bg_stairs"
+      ],
+      "bg": "bg_stairs",
+      "lines": 7
+     },
+     {
+      "scene": 2,
+      "art": [
+       "oe_jaehoon_end1",
+       "bg_base_bulgwang"
+      ],
+      "bg": "bg_base_bulgwang",
+      "lines": 7
+     },
+     {
+      "scene": 3,
+      "art": [
+       "bg_base_bulgwang"
+      ],
+      "bg": "bg_base_bulgwang",
+      "lines": 8
+     }
+    ],
+    "normal": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_room_empty",
+      "lines": 5
+     }
+    ],
+    "good": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_room_clean",
+      "lines": 7
+     }
+    ],
+    "bad": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_room_empty",
+      "lines": 6
+     }
+    ],
+    "special": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "cut_jaehoon_site",
+      "lines": 6
+     }
+    ]
+   }
+  },
+  "eunkyung": {
+   "name": "최은경",
+   "data": "src/oe_eunkyung.js",
+   "newSlots": [
+    {
+     "id": "oe_eunkyung_op1",
+     "use": "opening",
+     "title": "최은경 오프닝 — 병원 일정으로 가득 찬 퇴직 후의 수첩",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_eunkyung_1"
+    },
+    {
+     "id": "oe_eunkyung_op2",
+     "use": "opening",
+     "title": "최은경 오프닝 — 병원 대기실, 아버지 곁에서 미룬 내 예약",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_eunkyung_2"
+    },
+    {
+     "id": "oe_eunkyung_op3",
+     "use": "opening",
+     "title": "최은경 오프닝 — 밤의 식탁, 깨어나는 오래된 감각",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_eunkyung_3"
+    },
+    {
+     "id": "oe_eunkyung_end1",
+     "use": "ending",
+     "title": "최은경 엔딩 — 두 가지 색 펜으로 채운 수첩",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_eunkyung_1 (또는 bg_base_mapo)"
+    }
+   ],
+   "reusedOpeningArt": [
+    "op_eunkyung_1",
+    "op_eunkyung_1_4",
+    "op_eunkyung_2",
+    "op_eunkyung_3",
+    "op_eunkyung_3_3"
+   ],
+   "reusedBackgrounds": [
+    "bg_alley",
+    "bg_base_mapo",
+    "bg_office_2",
+    "cut_eunkyung_morning"
+   ],
+   "endingArt": "CP_END_ART (기존 4장)",
+   "opening": [
+    {
+     "scene": 1,
+     "art": [
+      "oe_eunkyung_op1",
+      "op_eunkyung_1"
+     ],
+     "bg": "bg_base_mapo",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 2,
+     "art": [
+      "op_eunkyung_1"
+     ],
+     "bg": "bg_base_mapo",
+     "beats": {
+      "4": [
+       "op_eunkyung_1_4"
+      ]
+     },
+     "lines": 6
+    },
+    {
+     "scene": 3,
+     "art": [
+      "op_eunkyung_2"
+     ],
+     "bg": "bg_base_mapo",
+     "beats": null,
+     "lines": 10
+    },
+    {
+     "scene": 4,
+     "art": [
+      "oe_eunkyung_op2",
+      "op_eunkyung_2"
+     ],
+     "bg": "bg_base_mapo",
+     "beats": null,
+     "lines": 9
+    },
+    {
+     "scene": 5,
+     "art": [],
+     "bg": "bg_alley",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 6,
+     "art": [
+      "cut_eunkyung_morning"
+     ],
+     "bg": "bg_base_mapo",
+     "beats": null,
+     "lines": 5
+    },
+    {
+     "scene": 7,
+     "art": [],
+     "bg": "bg_office_2",
+     "beats": null,
+     "lines": 11
+    },
+    {
+     "scene": 8,
+     "art": [
+      "op_eunkyung_2"
+     ],
+     "bg": "bg_base_mapo",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 9,
+     "art": [
+      "oe_eunkyung_op3",
+      "op_eunkyung_3"
+     ],
+     "bg": "bg_base_mapo",
+     "beats": {
+      "5": [
+       "op_eunkyung_3_3"
+      ]
+     },
+     "lines": 9
+    },
+    {
+     "scene": 10,
+     "art": [
+      "op_eunkyung_3_3",
+      "op_eunkyung_3"
+     ],
+     "bg": "bg_base_mapo",
+     "beats": null,
+     "lines": 6
+    }
+   ],
+   "ending": {
+    "core": [
+     {
+      "scene": 1,
+      "art": [
+       "oe_eunkyung_end1",
+       "bg_base_mapo"
+      ],
+      "bg": "bg_base_mapo",
+      "lines": 6
+     },
+     {
+      "scene": 2,
+      "art": [
+       "op_eunkyung_2"
+      ],
+      "bg": "bg_base_mapo",
+      "lines": 8
+     },
+     {
+      "scene": 3,
+      "art": [],
+      "bg": "bg_base_mapo",
+      "lines": 6
+     },
+     {
+      "scene": 4,
+      "art": [
+       "op_eunkyung_3"
+      ],
+      "bg": "bg_base_mapo",
+      "lines": 6
+     }
+    ],
+    "normal": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_base_mapo",
+      "lines": 6
+     }
+    ],
+    "good": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_base_mapo",
+      "lines": 6
+     }
+    ],
+    "bad": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_base_mapo",
+      "lines": 6
+     }
+    ],
+    "special": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_base_mapo",
+      "lines": 7
+     }
+    ]
+   }
+  },
+  "taesik": {
+   "name": "김태식",
+   "data": "src/oe_taesik.js",
+   "newSlots": [
+    {
+     "id": "oe_taesik_op1",
+     "use": "opening",
+     "title": "김태식 오프닝 — 갈 데 없는 화요일 새벽",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_taesik_1"
+    },
+    {
+     "id": "oe_taesik_op2",
+     "use": "opening",
+     "title": "김태식 오프닝 — 공원 정자의 아저씨들",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_taesik_2"
+    },
+    {
+     "id": "oe_taesik_op3",
+     "use": "opening",
+     "title": "김태식 오프닝 — 손녀가 알려 준 대로 처음 열어 본 화면",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_taesik_3"
+    },
+    {
+     "id": "oe_taesik_end1",
+     "use": "ending",
+     "title": "김태식 엔딩 — 수첩과 태블릿, 지도와 발",
+     "fallback": "없으면 대신 쓰는 기존 그림: op_taesik_4"
+    }
+   ],
+   "reusedOpeningArt": [
+    "op_taesik_1",
+    "op_taesik_2",
+    "op_taesik_3",
+    "op_taesik_4"
+   ],
+   "reusedBackgrounds": [
+    "bg_alley",
+    "bg_base_mokdong",
+    "bg_office_3",
+    "bg_stairs"
+   ],
+   "endingArt": "CP_END_ART (기존 4장)",
+   "opening": [
+    {
+     "scene": 1,
+     "art": [
+      "oe_taesik_op1",
+      "op_taesik_1"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 2,
+     "art": [
+      "op_taesik_1"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 3,
+     "art": [
+      "op_taesik_2",
+      "op_taesik_1"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 4,
+     "art": [
+      "oe_taesik_op2"
+     ],
+     "bg": "bg_alley",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 5,
+     "art": [
+      "oe_taesik_op2"
+     ],
+     "bg": "bg_alley",
+     "beats": null,
+     "lines": 8
+    },
+    {
+     "scene": 6,
+     "art": [
+      "op_taesik_1"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 6
+    },
+    {
+     "scene": 7,
+     "art": [
+      "op_taesik_2"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 8,
+     "art": [
+      "op_taesik_3"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 9,
+     "art": [
+      "oe_taesik_op3",
+      "op_taesik_3"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 7
+    },
+    {
+     "scene": 10,
+     "art": [
+      "op_taesik_4"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 5
+    },
+    {
+     "scene": 11,
+     "art": [
+      "op_taesik_4",
+      "op_taesik_1"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 7
+    }
+   ],
+   "ending": {
+    "core": [
+     {
+      "scene": 1,
+      "art": [
+       "op_taesik_1"
+      ],
+      "bg": "bg_base_mokdong",
+      "lines": 5
+     },
+     {
+      "scene": 2,
+      "art": [
+       "oe_taesik_end1",
+       "op_taesik_4"
+      ],
+      "bg": "bg_base_mokdong",
+      "lines": 6
+     },
+     {
+      "scene": 3,
+      "art": [
+       "op_taesik_2"
+      ],
+      "bg": "bg_base_mokdong",
+      "lines": 5
+     },
+     {
+      "scene": 4,
+      "art": [
+       "bg_office_3"
+      ],
+      "bg": "bg_office_3",
+      "lines": 5
+     },
+     {
+      "scene": 5,
+      "art": [
+       "op_taesik_1"
+      ],
+      "bg": "bg_base_mokdong",
+      "lines": 6
+     }
+    ],
+    "normal": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_base_mokdong",
+      "lines": 6
+     }
+    ],
+    "good": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_base_mokdong",
+      "lines": 7
+     }
+    ],
+    "bad": [
+     {
+      "scene": 1,
+      "art": [
+       "bg_stairs"
+      ],
+      "bg": "bg_stairs",
+      "lines": 2
+     },
+     {
+      "scene": 2,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_stairs",
+      "lines": 5
+     }
+    ],
+    "special": [
+     {
+      "scene": 1,
+      "art": [
+       "@end"
+      ],
+      "bg": "bg_alley",
+      "lines": 6
+     }
+    ]
+   }
+  }
+ }
+}

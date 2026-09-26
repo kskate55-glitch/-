@@ -206,17 +206,21 @@ function gxUiHTML(ui){
   if(ui.type === "phone") return `<div class="gx-ui gx-phone">${ui.rows.map(r => `<div><span>${esc(r[0])}</span><b class="${r[2]}">${esc(r[1])}</b></div>`).join("")}</div>`;
   if(ui.type === "pos") return `<div class="gx-ui gx-pos"><small>POS · 마감 정산</small><b>${esc(ui.t)}</b></div>`;
   if(ui.type === "sheet") return `<div class="gx-ui gx-sheet">${ui.rows.map(r => `<div><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join("")}</div>`;
+  if(ui.type === "chat") return `<div class="gx-ui gx-chat"><small>💬 ${esc(ui.from || "메시지")}</small>${(ui.rows || []).map(r => `<div class="${r[0] === "나" ? "me" : ""}"><span>${esc(r[1])}</span></div>`).join("")}</div>`;
+  if(ui.type === "search") return `<div class="gx-ui gx-search"><div class="q">🔍 ${esc(ui.q || "")}</div>${(ui.rows || []).map(r => `<div class="r">${esc(r)}</div>`).join("")}</div>`;
+  if(ui.type === "note") return `<div class="gx-ui gx-note"><b>${esc(ui.t || "")}</b>${(ui.rows || []).map(r => `<div>${esc(r)}</div>`).join("")}</div>`;
   if(ui.type === "login") return `<div class="gx-ui gx-login"><small>로그인</small><span>●●●●●●</span><em>${esc(ui.t)}</em></div>`;
   return "";
 }
-function gxOpStart(id){
+function gxOpStart(id, opt){
   gxOpEnd(true);
   const C = LF_CHARS.find(x => x.id === id); if(!C) return;
-  const el = document.createElement("div"); el.id = "gxOp"; el.className = "gx-op"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", `${C.name} 오프닝`);
+  opt = opt || {};
+  const el = document.createElement("div"); el.id = "gxOp"; el.className = "gx-op" + (opt.mode === "end" ? " gx-end" : ""); el.setAttribute("role", "dialog"); el.setAttribute("aria-label", `${C.name} ${opt.mode === "end" ? "에필로그" : "오프닝"}`);
   el.innerHTML = `<div class="gx-bg"></div><div class="gx-cine"></div><div class="gx-ui-slot"></div><div class="gx-box" hidden><div class="gx-who"></div><div class="gx-text"></div><span class="gx-next">▼</span></div>
     <button type="button" class="gx-skip" data-gxskip>SKIP ▶▶</button><div class="gx-title" hidden></div>`;
   document.body.appendChild(el);
-  GX_OP = {id, i:-1, j:0, el, seq:[]};
+  GX_OP = {id, i:-1, j:0, el, seq:[], mode:opt.mode || "op", scenes:opt.scenes || null, type:opt.type || null, title:opt.title || "", done:opt.done || null};
   // 전용 음악: 선택 화면 곡을 낮추고 캐릭터 곡으로(크로스페이드)
   if(typeof kaWant === "function"){ KA_UNLOCKED = true; kaCtx(); kaWant("op_" + id); }
   gxPrelude(0);
@@ -224,15 +228,29 @@ function gxOpStart(id){
 function gxPrelude(k){
   const O = GX_OP; if(!O) return;
   const cine = O.el.querySelector(".gx-cine");
+  if(O.mode === "end"){   // 엔딩 에필로그: 짧은 막간만 두고 바로 장면으로
+    if(k === 0){ cine.innerHTML = `<div class="gx-ep"><small>경매왕</small><b>EPILOGUE</b><h2>${esc(LF_CHARS.find(x => x.id === O.id).name)}의 그 후</h2></div>`; O.t = setTimeout(() => gxPrelude(1), gxMs(2400)); return; }
+    cine.innerHTML = ""; gxScene(0); return;
+  }
   if(k === 0){ cine.innerHTML = `<div class="gx-ep"><small>경매왕</small><b>EP.0</b><h2>「${esc(LF_EP0[O.id])}」</h2></div>`; O.t = setTimeout(() => gxPrelude(1), gxMs(2600)); return; }
   if(k <= LF_PRELUDE.length){ cine.innerHTML = `<p class="gx-line">${esc(LF_PRELUDE[k - 1])}</p>`; O.t = setTimeout(() => gxPrelude(k + 1), gxMs(k === LF_PRELUDE.length ? 2600 : 1800)); return; }
   cine.innerHTML = ""; gxScene(0);
 }
+// 장면 목록: 엔딩 에필로그처럼 따로 넘긴 장면(O.scenes)이 있으면 그걸, 아니면 캐릭터 오프닝
+function gxScenes(O){ return (O && O.scenes) || LF_OPENINGS[O.id] || []; }
+// 그림 후보를 앞에서부터 — 있는 첫 그림. "@end" = 이 판정의 기존 엔딩 그림(cpEndArt)
+function gxArtOf(O, keys){
+  for(const k of keys || []){
+    if(k === "@end"){ const u = typeof cpEndArt === "function" && O.type ? cpEndArt(O.id, O.type) : null; if(u) return u; continue; }
+    const u = typeof artUrl === "function" ? artUrl(k) : null; if(u) return u;
+  }
+  return null;
+}
 function gxScene(i){
   const O = GX_OP; if(!O) return;
-  const sc = LF_OPENINGS[O.id][i]; if(!sc) return gxOpFinale();
+  const sc = gxScenes(O)[i]; if(!sc) return gxOpFinale();
   O.i = i; O.j = 0;
-  const bg = O.el.querySelector(".gx-bg"), u = artUrl(`op_${O.id}_${i + 1}`) || artUrl(sc.bg) || artUrl("bg_office_1");   // 장면 전용 그림(op_캐릭터_장면)이 있으면 그걸 먼저
+  const bg = O.el.querySelector(".gx-bg"), u = (sc.art ? gxArtOf(O, sc.art) : (O.scenes ? null : artUrl(`op_${O.id}_${i + 1}`))) || artUrl(sc.bg) || artUrl("bg_office_1");   // 장면 전용 그림(op_캐릭터_장면)이 있으면 그걸 먼저
   const img = document.createElement("div"); img.className = "gx-bgimg"; img.style.backgroundImage = u ? `url("${u}")` : "none";
   bg.appendChild(img); requestAnimationFrame(() => img.classList.add("on"));
   [...bg.children].slice(0, -1).forEach(x => { x.classList.remove("on"); setTimeout(() => x.remove(), 900); });
@@ -243,18 +261,22 @@ function gxScene(i){
   O.t = setTimeout(() => gxLine(), gxMs(700));
 }
 let GX_AMB = null;
-function gxBeat(key){
-  const O = GX_OP, u = typeof artUrl === "function" ? artUrl(key) : null; if(!O || !u) return;
+function gxBeat(key){ const u = typeof artUrl === "function" ? artUrl(key) : null; if(u) gxBeatUrl(u); }
+function gxBeatUrl(u){
+  const O = GX_OP; if(!O || !u) return;
   const bg = O.el.querySelector(".gx-bg"), img = document.createElement("div"); img.className = "gx-bgimg"; img.style.backgroundImage = `url("${u}")`;
   bg.appendChild(img); requestAnimationFrame(() => img.classList.add("on"));
   [...bg.children].slice(0, -1).forEach(x => { x.classList.remove("on"); setTimeout(() => x.remove(), 900); });
 }
 function gxLine(){
   const O = GX_OP; if(!O) return;
-  const sc = LF_OPENINGS[O.id][O.i]; if(!sc) return;
+  const sc = gxScenes(O)[O.i]; if(!sc) return;
   if(O.j >= sc.lines.length) return gxScene(O.i + 1);
   const [who, t] = sc.lines[O.j], box = O.el.querySelector(".gx-box"), tx = box.querySelector(".gx-text");
-  if(O.j > 0) gxBeat(`op_${O.id}_${O.i + 1}_${O.j + 1}`);   // 긴 장면은 대사 중간에 그림이 한 번 더 바뀐다(그 칸에 그림이 있을 때만)
+  if(O.j > 0){
+    if(sc.beats){ const b = sc.beats[O.j + 1]; if(b){ const u = gxArtOf(O, b); if(u) gxBeatUrl(u); } }   // 대본이 정한 중간 그림
+    else if(!sc.art && !O.scenes) gxBeat(`op_${O.id}_${O.i + 1}_${O.j + 1}`);   // 예전 규칙(장면 번호로 찾기)
+  }   // 긴 장면은 대사 중간에 그림이 한 번 더 바뀐다(그 칸에 그림이 있을 때만)
   box.hidden = false; box.classList.toggle("narr", !who); box.querySelector(".gx-who").textContent = who || "";
   box.classList.remove("in"); void box.offsetWidth; box.classList.add("in");
   clearTimeout(tx._t); let n = 0; tx.textContent = ""; O.typing = true;
@@ -264,7 +286,7 @@ function gxLine(){
 }
 function gxAdvance(){
   const O = GX_OP; if(!O) return; clearTimeout(O.t);
-  const tx = O.el.querySelector(".gx-text"), sc = LF_OPENINGS[O.id][O.i];
+  const tx = O.el.querySelector(".gx-text"), sc = gxScenes(O)[O.i];
   if(O.typing && sc){ clearTimeout(tx._t); tx.textContent = sc.lines[O.j][1]; O.typing = false; O.t = setTimeout(gxAdvance, gxMs(1800)); return; }
   if(O.i < 0) { clearTimeout(O.t); O.el.querySelector(".gx-cine").innerHTML = ""; return gxScene(0); }
   O.j++; gxLine();
@@ -273,12 +295,20 @@ function gxOpFinale(){
   const O = GX_OP; if(!O) return;
   const t = O.el.querySelector(".gx-title"), C = LF_CHARS.find(x => x.id === O.id);
   O.el.querySelector(".gx-box").hidden = true; O.el.querySelector(".gx-ui-slot").innerHTML = "";
-  t.hidden = false; t.innerHTML = `<small>경매왕</small><h2>EP.0 「${esc(LF_EP0[O.id])}」</h2><p>${esc(LF_EP0_SUB[O.id])}</p>`;
+  t.hidden = false; t.innerHTML = O.mode === "end"
+    ? `<small>경매왕 · ${esc(C.name)}</small><h2>「${esc(O.title || "그 후")}」</h2><p>${esc({normal:"NORMAL", good:"GOOD", bad:"BAD", special:"SPECIAL"}[O.type] || "")} END</p>`
+    : `<small>경매왕</small><h2>EP.0 「${esc(LF_EP0[O.id])}」</h2><p>${esc(LF_EP0_SUB[O.id])}</p>`;
   if(typeof kcSfx === "function") kcSfx("stamp");
   O.i = 999; O.t = setTimeout(() => gxOpEnd(false), gxMs(3200));
 }
 function gxOpEnd(silent){
   const O = GX_OP; if(!O) return; GX_OP = null; GX_AMB = null; clearTimeout(O.t);
+  if(O.mode === "end"){   // 에필로그가 끝나면 밑에 이미 그려 둔 엔딩 카드가 드러난다
+    if(silent){ O.el.remove(); } else { O.el.classList.add("out"); setTimeout(() => O.el.remove(), 900); }
+    if(typeof kaWant === "function") try{ kaWant(typeof kaScene === "function" ? kaScene() : null); }catch(e){}
+    if(typeof O.done === "function") try{ O.done(!!silent); }catch(e){}
+    return;
+  }
   lfOpsSeen()[O.id] = Date.now();
   const L = lfRec(); if(L && L.char === O.id && L.intro){ L.intro = false; lfLog(`🌱 ${lfChar().name}의 경매 인생 시작 — ${lfBaseInfo().t}`); if(typeof save === "function") save(); }
   if(silent){ O.el.remove(); return; }

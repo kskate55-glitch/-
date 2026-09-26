@@ -966,3 +966,18 @@ body.nx-quiet .stg-file{animation:none!important}
 #kfsRoot .k-stage>.vn-box.vn-npcbub::before{content:"";position:absolute;left:-12px;top:22px;width:18px;height:18px;background:#fffdf7;border-left:3px solid #e25d8a;border-bottom:3px solid #e25d8a;transform:rotate(45deg)}
 #kfsRoot .k-stage>.vn-box.vn-npcbub.npb-over::before{left:40px;top:-11px;border-left:3px solid #e25d8a;border-bottom:none;border-top:3px solid #e25d8a;transform:rotate(45deg)}
 @media (max-width:600px){ #kfsRoot .k-stage>.vn-box.vn-npcbub .vn-text{font-size:14.5px} #kfsRoot .k-stage>.vn-box.vn-npcbub{padding:22px 12px 10px!important} }
+/* 🎬 오프닝·에필로그 화면 소품 — 메신저 · 검색창 · 메모(일정표·수첩) */
+.gx-chat{min-width:min(300px,78vw);max-width:340px;display:flex;flex-direction:column;gap:6px}
+.gx-chat small{color:#5b6475;font-weight:700}
+.gx-chat div{display:flex}
+.gx-chat div span{background:#eef1f6;border-radius:14px 14px 14px 4px;padding:7px 11px;max-width:86%;line-height:1.45}
+.gx-chat div.me{justify-content:flex-end}
+.gx-chat div.me span{background:#ffe38a;border-radius:14px 14px 4px 14px}
+.gx-search{min-width:min(320px,80vw);max-width:380px}
+.gx-search .q{border:2px solid #03c75a;border-radius:999px;padding:7px 12px;font-weight:700;margin-bottom:8px;background:#fff}
+.gx-search .r{padding:6px 2px;border-bottom:1px solid #eee;color:#1a3d8f}
+.gx-note{min-width:min(280px,76vw);max-width:340px;background:#fffbe6!important;border-left:6px solid #f2b33d}
+.gx-note b{display:block;margin-bottom:6px;font-size:15px}
+.gx-note div{padding:4px 0;border-bottom:1px dashed #e2d49a}
+.gx-op.gx-end .gx-ep b{letter-spacing:.2em}
+.gx-op.gx-end{z-index:9600}

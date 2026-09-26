@@ -80,3 +80,7 @@ Object.assign(AS_OP_ART, {
   op_mijeong_2:  "bd2d30b27fc1e8a680d213884981d6a2",
 });
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 5차(v144): 미정 — 유리창 너머 불 꺼진 상가
+AS_OP_ART.op_mijeong_2_3 = "c55461f714f4a7aee259fd8914c675f4";
+Object.assign(ART_DEFAULT, AS_OP_ART);

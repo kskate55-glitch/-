@@ -274,3 +274,6 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 21차(v180): f61 인계동 — 리모델링이 끝난 빈 2층 상가(비닐 덮인 새 문·자재·공구함)
 Object.assign(AS_BG_ART, { bg_case_f61_in: "e228e88a9ed21324060daf43c887a48f" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 22차(v181): f62 간석동 — 공단 옆 4층 다가구(옥상 빨래·작업화 신발장)·네 명이 함께 사는 방
+Object.assign(AS_BG_ART, { bg_case_f62_ext: "4b2cbb531eab9fb89ea0d3dd4d839a29", bg_case_f62_in: "654fccfd4ab8c411844b4d566e03d630" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

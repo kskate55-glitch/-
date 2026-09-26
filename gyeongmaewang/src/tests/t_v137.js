@@ -15,10 +15,10 @@ for(const id of ['f11','f21','f22','f23','f31','f32','f41','f42','f51','f54','f6
 const r=await p.evaluate(()=>{ K=null; return [artNpc('p_madam','normal'), artNpc('p_greedy','normal')].map(u=>Object.values(AS_OCC_ART).some(id=>u&&u.includes(id))); });
 ok(!r[0] && !r[1], '물건 밖(자유 플레이)은 원래 그림 그대로');
 // 서윤 오프닝 전용 그림 3장
-const o=await p.evaluate(async()=>{ const ks=['op_seoyun_1','op_seoyun_1_2','op_seoyun_2_3']; const us=ks.map(k=>artUrl(k));
+const o=await p.evaluate(async()=>{ const ks=['op_seoyun_1','op_seoyun_1_2','op_seoyun_2_3','op_seoyun_3','op_dohyun_1','op_dohyun_1_2']; const us=ks.map(k=>artUrl(k));
   const loads=await Promise.all(us.map(s=>new Promise(r=>{ if(!s) return r(false); const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=s; })));
-  return {all:loads.every(Boolean), distinct:new Set(us).size, other:!!artRec()['op_dohyun_1'] || (ART_DEFAULT['op_dohyun_1']||null)}; });
-ok(o.all && o.distinct===3, '서윤 오프닝 3장(방·창밖·생각구름)이 로드됨');
+  return {all:loads.every(Boolean), distinct:new Set(us).size, other:!!artRec()['op_mijeong_1'] || (ART_DEFAULT['op_mijeong_1']||null)}; });
+ok(o.all && o.distinct===6, '오프닝 6장(서윤 4·도현 2)이 로드됨');
 ok(!o.other, '다른 주인공 오프닝 칸은 비어 있어 원래 배경 그대로');
 ok(!errs.some(e=>e.startsWith('pageerror')), 'JS 오류 없음');
 console.log(errs.length?'FAIL':'ALL OK'); await b.close(); })();

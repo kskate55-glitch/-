@@ -55,3 +55,11 @@ Object.assign(AS_OCC_ART, {
 });
 AS_OP_ART.op_seoyun_2_3 = "cd14a57881176ee586c6cb138fcb4cfc";   // 창밖 비까지 보이는 새 판으로 교체
 Object.assign(ART_DEFAULT, AS_OCC_ART, AS_OP_ART);
+
+// 받은 오프닝 2차(v141): 서윤 발견 장면 + 도현 승강장·골목(편의점 간판 줄무늬는 특정 브랜드처럼 보이지 않게 무채색으로)
+Object.assign(AS_OP_ART, {
+  op_seoyun_3:   "16c01c32741dffb9beaaaeca962ec5cc",
+  op_dohyun_1:   "a810dee8b1ae0db9c5b941f46b4f9d1e",
+  op_dohyun_1_2: "b731ddefed2edadf29932375749b9052",
+});
+Object.assign(ART_DEFAULT, AS_OP_ART);

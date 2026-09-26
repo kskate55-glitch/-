@@ -752,3 +752,8 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .ca-card p{margin:0 0 6px}.ca-weak{color:#b4531a!important}.ca-card .btn{width:100%}
 .ca-hint{display:block;margin-top:4px;font-size:12.5px;font-weight:800;color:#f2b33d}
 .ca-panel{border-left:4px solid #6c5ce7}.ca-tbl{width:100%;border-collapse:collapse;margin:6px 0;font-size:13.5px}.ca-tbl td,.ca-tbl th{padding:4px 6px;border-bottom:1px solid rgba(127,127,127,.2);text-align:right}.ca-tbl td:first-child,.ca-tbl th:first-child{text-align:left}
+/* v131 — 증거 카드 성격 */
+.ev{display:inline-block;margin-top:4px;padding:1px 7px;border-radius:999px;font-style:normal;font-size:11.5px;font-weight:800}
+.ev-doc{background:#e3f1ea;color:#1f6b45}.ev-est{background:#fff1d6;color:#8a5a00}.ev-claim{background:#ece6fb;color:#5b3fa8}
+.ev-meta{display:block;margin-top:3px;font-size:11px;line-height:1.45;opacity:.85}
+.ev-legend{font-size:11.5px;line-height:1.9;margin:4px 0 8px;opacity:.9}

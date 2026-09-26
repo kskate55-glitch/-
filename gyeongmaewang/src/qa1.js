@@ -24,11 +24,13 @@ function qaBidModel(){
   const acts = KP.actions || KP.research || [], done = K.done || {};
   const unk = Math.min(4, acts.filter(a => !done[a.id]).length);
   const repair = (KP.estRepair || 250) + unk * 90;                   // 모르는 위험이 남을수록 비용 쪽 불확실성이 커진다
-  const cost = m => m * 0.06 + 350 + repair;                         // 명도·이자·중개·세금 대략(매도가에 비례하는 몫 + 고정)
+  // 중개수수료·등기·잡비 대략 3%(취득세는 입찰가 쪽에서 따로 나눈다) + 석 달 보유 이자·관리비 + 이사비 예비 + 수리 — 큰 물건일수록 보유비가 커진다
+  const cost = m => m * 0.03 + (+KP.dailyHold || 1.5) * 90 + 150 * (KP.needMul || 1) + repair;
   const net = (sale, bid) => sale - cost(sale) - bid * (1 + kAcqRate(bid));
   const zone = (sale, margin) => { const v = sale - cost(sale) - margin; return Math.round(v / (1 + kAcqRate(v)) / 10) * 10; };
   const mid = (band.lo + band.hi) / 2;
-  return {band, unk, net, z:{safe:zone(band.lo, 800), bal:zone(mid, 700), agg:zone(band.hi, 300)}};
+  // 남길 여유는 고정 금액이 아니라 '매도가의 %' — 예전엔 800/700/300만원 고정이라 17억 건물에선 0.4% 여유로 사실상 본전이었다(밸런스 봇으로 확인)
+  return {band, unk, net, z:{safe:zone(band.lo, band.lo * 0.09), bal:zone(mid, mid * 0.05), agg:zone(band.hi, band.hi * 0.02)}};
 }
 function qaBidLine(amt){
   if(!K || !KP || !(amt > 0)) return "";

@@ -33,7 +33,6 @@
    ],
    "reusedOpeningArt": [
     "op_seoyun_1",
-    "op_seoyun_1_2",
     "op_seoyun_2",
     "op_seoyun_2_3",
     "op_seoyun_2_4",
@@ -59,7 +58,7 @@
      ],
      "bg": "bg_base_sillim",
      "beats": null,
-     "lines": 8
+     "lines": 5
     },
     {
      "scene": 2,
@@ -69,28 +68,19 @@
      ],
      "bg": "bg_base_sillim",
      "beats": null,
-     "lines": 10
+     "lines": 6
     },
     {
      "scene": 3,
-     "art": [
-      "op_seoyun_2"
-     ],
-     "bg": "bg_base_sillim",
-     "beats": null,
-     "lines": 7
-    },
-    {
-     "scene": 4,
      "art": [
       "bg_alley"
      ],
      "bg": "bg_alley",
      "beats": null,
-     "lines": 7
+     "lines": 4
     },
     {
-     "scene": 5,
+     "scene": 4,
      "art": [
       "op_seoyun_2"
      ],
@@ -103,68 +93,46 @@
        "op_seoyun_2_4"
       ]
      },
-     "lines": 6
+     "lines": 5
     },
     {
-     "scene": 6,
-     "art": [
-      "op_seoyun_1"
-     ],
-     "bg": "bg_base_sillim",
-     "beats": {
-      "3": [
-       "op_seoyun_1_2"
-      ]
-     },
-     "lines": 7
-    },
-    {
-     "scene": 7,
+     "scene": 5,
      "art": [
       "oe_seoyun_op3",
       "op_seoyun_1"
      ],
      "bg": "bg_base_sillim",
      "beats": null,
-     "lines": 7
+     "lines": 6
     },
     {
-     "scene": 8,
+     "scene": 6,
      "art": [
       "op_seoyun_2"
      ],
      "bg": "bg_base_sillim",
      "beats": null,
-     "lines": 6
+     "lines": 4
     },
     {
-     "scene": 9,
-     "art": [
-      "bg_alley"
-     ],
-     "bg": "bg_alley",
-     "beats": null,
-     "lines": 6
-    },
-    {
-     "scene": 10,
+     "scene": 7,
      "art": [
       "oe_seoyun_op2",
       "op_seoyun_1"
      ],
      "bg": "bg_base_sillim",
      "beats": null,
-     "lines": 5
+     "lines": 3
     },
     {
-     "scene": 11,
+     "scene": 8,
      "art": [
       "op_seoyun_3",
       "cut_seoyun_found"
      ],
      "bg": "cut_seoyun_found",
      "beats": null,
-     "lines": 7
+     "lines": 6
     }
    ],
    "ending": {
@@ -286,22 +254,17 @@
    ],
    "reusedOpeningArt": [
     "op_dohyun_1",
-    "op_dohyun_1_2",
-    "op_dohyun_2",
     "op_dohyun_3",
     "op_dohyun_3_2",
     "op_dohyun_4",
-    "op_dohyun_5",
-    "op_dohyun_5_2"
+    "op_dohyun_5"
    ],
    "reusedBackgrounds": [
-    "bg_alley",
     "bg_base_hwagok",
     "bg_office_1",
     "bg_office_2",
     "bg_office_3",
     "bg_villa_day",
-    "bg_villa_night",
     "cut_dohyun_commute"
    ],
    "endingArt": "CP_END_ART (기존 4장)",
@@ -313,99 +276,67 @@
      ],
      "bg": "cut_dohyun_commute",
      "beats": null,
-     "lines": 6
+     "lines": 4
     },
     {
      "scene": 2,
-     "art": [
-      "op_dohyun_1_2"
-     ],
-     "bg": "bg_alley",
-     "beats": null,
-     "lines": 5
-    },
-    {
-     "scene": 3,
-     "art": [
-      "op_dohyun_2",
-      "op_dohyun_3"
-     ],
-     "bg": "bg_base_hwagok",
-     "beats": {
-      "4": [
-       "op_dohyun_3"
-      ]
-     },
-     "lines": 6
-    },
-    {
-     "scene": 4,
      "art": [
       "oe_dohyun_op1",
       "op_dohyun_3_2"
      ],
      "bg": "bg_base_hwagok",
      "beats": null,
-     "lines": 8
+     "lines": 6
     },
     {
-     "scene": 5,
+     "scene": 3,
      "art": [
       "bg_office_2"
      ],
      "bg": "bg_office_1",
      "beats": null,
-     "lines": 7
+     "lines": 4
     },
     {
-     "scene": 6,
+     "scene": 4,
      "art": [
       "oe_dohyun_op2",
       "op_dohyun_3"
      ],
      "bg": "bg_base_hwagok",
      "beats": null,
-     "lines": 8
+     "lines": 6
     },
     {
-     "scene": 7,
+     "scene": 5,
      "art": [
       "bg_base_hwagok"
      ],
      "bg": "bg_base_hwagok",
      "beats": null,
-     "lines": 6
+     "lines": 3
     },
     {
-     "scene": 8,
+     "scene": 6,
      "art": [
       "op_dohyun_4"
      ],
      "bg": "bg_office_2",
      "beats": null,
-     "lines": 8
+     "lines": 6
     },
     {
-     "scene": 9,
+     "scene": 7,
      "art": [
       "oe_dohyun_op3",
       "op_dohyun_5"
      ],
      "bg": "bg_base_hwagok",
      "beats": null,
-     "lines": 8
-    },
-    {
-     "scene": 10,
-     "art": [
-      "op_dohyun_5_2"
-     ],
-     "bg": "bg_villa_night",
-     "beats": null,
      "lines": 5
     },
     {
-     "scene": 11,
+     "scene": 8,
      "art": [
       "op_dohyun_5",
       "op_dohyun_3"
@@ -555,92 +486,61 @@
      ],
      "bg": "cut_mijeong_shop",
      "beats": null,
-     "lines": 6
+     "lines": 5
     },
     {
      "scene": 2,
-     "art": [
-      "oe_mijeong_op1",
-      "op_mijeong_1",
-      "cut_mijeong_shop"
-     ],
-     "bg": "cut_mijeong_shop",
-     "beats": null,
-     "lines": 6
-    },
-    {
-     "scene": 3,
      "art": [
       "cut_mijeong_shop",
       "op_mijeong_2"
      ],
      "bg": "cut_mijeong_shop",
      "beats": null,
-     "lines": 10
+     "lines": 5
     },
     {
-     "scene": 4,
+     "scene": 3,
      "art": [
       "oe_mijeong_op2",
       "cut_mijeong_shop"
      ],
      "bg": "cut_mijeong_shop",
      "beats": null,
-     "lines": 7
+     "lines": 5
     },
     {
-     "scene": 5,
-     "art": [
-      "oe_mijeong_op1",
-      "cut_mijeong_shop"
-     ],
-     "bg": "cut_mijeong_shop",
-     "beats": null,
-     "lines": 7
-    },
-    {
-     "scene": 6,
-     "art": [
-      "cut_mijeong_shop",
-      "op_mijeong_2"
-     ],
-     "bg": "cut_mijeong_shop",
-     "beats": null,
-     "lines": 7
-    },
-    {
-     "scene": 7,
+     "scene": 4,
      "art": [
       "op_mijeong_1",
       "cut_mijeong_shop"
      ],
      "bg": "cut_mijeong_shop",
      "beats": null,
-     "lines": 7
+     "lines": 6
     },
     {
-     "scene": 8,
+     "scene": 5,
      "art": [
       "cut_mijeong_shop",
       "op_mijeong_2"
      ],
      "bg": "cut_mijeong_shop",
      "beats": {
-      "7": [
+      "4": [
        "op_mijeong_2_3"
       ]
      },
-     "lines": 10
+     "lines": 6
     },
     {
-     "scene": 9,
+     "scene": 6,
      "art": [
       "oe_mijeong_op3",
       "op_mijeong_3"
      ],
      "bg": "bg_base_yeongdeungpo",
      "beats": null,
-     "lines": 8
+     "lines": 5
     }
    ],
    "ending": {
@@ -778,7 +678,7 @@
      ],
      "bg": "cut_jaehoon_site",
      "beats": null,
-     "lines": 6
+     "lines": 4
     },
     {
      "scene": 2,
@@ -788,85 +688,49 @@
      ],
      "bg": "bg_stairs",
      "beats": {
-      "5": [
+      "2": [
        "op_jaehoon_1_4"
       ]
      },
-     "lines": 8
+     "lines": 6
     },
     {
      "scene": 3,
-     "art": [
-      "bg_alley"
-     ],
-     "bg": "bg_alley",
-     "beats": null,
-     "lines": 5
-    },
-    {
-     "scene": 4,
      "art": [
       "oe_jaehoon_op2",
       "bg_base_bulgwang"
      ],
      "bg": "bg_base_bulgwang",
      "beats": null,
-     "lines": 10
+     "lines": 8
     },
     {
-     "scene": 5,
-     "art": [
-      "bg_base_bulgwang"
-     ],
-     "bg": "bg_base_bulgwang",
-     "beats": null,
-     "lines": 7
-    },
-    {
-     "scene": 6,
-     "art": [
-      "bg_base_bulgwang"
-     ],
-     "bg": "bg_base_bulgwang",
-     "beats": null,
-     "lines": 5
-    },
-    {
-     "scene": 7,
+     "scene": 4,
      "art": [
       "op_jaehoon_3"
      ],
      "bg": "bg_alley",
      "beats": null,
-     "lines": 11
+     "lines": 8
     },
     {
-     "scene": 8,
-     "art": [
-      "bg_alley"
-     ],
-     "bg": "bg_alley",
-     "beats": null,
-     "lines": 4
-    },
-    {
-     "scene": 9,
+     "scene": 5,
      "art": [
       "oe_jaehoon_op3",
       "op_jaehoon_4"
      ],
      "bg": "bg_base_bulgwang",
      "beats": null,
-     "lines": 9
+     "lines": 5
     },
     {
-     "scene": 10,
+     "scene": 6,
      "art": [
       "op_jaehoon_4"
      ],
      "bg": "bg_base_bulgwang",
      "beats": null,
-     "lines": 5
+     "lines": 4
     }
    ],
    "ending": {
@@ -976,10 +840,7 @@
     "op_eunkyung_3_3"
    ],
    "reusedBackgrounds": [
-    "bg_alley",
-    "bg_base_mapo",
-    "bg_office_2",
-    "cut_eunkyung_morning"
+    "bg_base_mapo"
    ],
    "endingArt": "CP_END_ART (기존 4장)",
    "opening": [
@@ -991,7 +852,7 @@
      ],
      "bg": "bg_base_mapo",
      "beats": null,
-     "lines": 6
+     "lines": 4
     },
     {
      "scene": 2,
@@ -1009,77 +870,45 @@
     {
      "scene": 3,
      "art": [
-      "op_eunkyung_2"
-     ],
-     "bg": "bg_base_mapo",
-     "beats": null,
-     "lines": 10
-    },
-    {
-     "scene": 4,
-     "art": [
       "oe_eunkyung_op2",
       "op_eunkyung_2"
      ],
      "bg": "bg_base_mapo",
      "beats": null,
-     "lines": 9
-    },
-    {
-     "scene": 5,
-     "art": [],
-     "bg": "bg_alley",
-     "beats": null,
      "lines": 6
     },
     {
-     "scene": 6,
+     "scene": 4,
      "art": [
-      "cut_eunkyung_morning"
+      "op_eunkyung_2"
      ],
      "bg": "bg_base_mapo",
      "beats": null,
      "lines": 5
     },
     {
-     "scene": 7,
-     "art": [],
-     "bg": "bg_office_2",
-     "beats": null,
-     "lines": 11
-    },
-    {
-     "scene": 8,
-     "art": [
-      "op_eunkyung_2"
-     ],
-     "bg": "bg_base_mapo",
-     "beats": null,
-     "lines": 6
-    },
-    {
-     "scene": 9,
+     "scene": 5,
      "art": [
       "oe_eunkyung_op3",
       "op_eunkyung_3"
      ],
      "bg": "bg_base_mapo",
      "beats": {
-      "5": [
+      "3": [
        "op_eunkyung_3_3"
       ]
      },
-     "lines": 9
+     "lines": 6
     },
     {
-     "scene": 10,
+     "scene": 6,
      "art": [
       "op_eunkyung_3_3",
       "op_eunkyung_3"
      ],
      "bg": "bg_base_mapo",
      "beats": null,
-     "lines": 6
+     "lines": 4
     }
    ],
    "ending": {
@@ -1209,7 +1038,7 @@
      ],
      "bg": "bg_base_mokdong",
      "beats": null,
-     "lines": 6
+     "lines": 4
     },
     {
      "scene": 2,
@@ -1218,91 +1047,63 @@
      ],
      "bg": "bg_base_mokdong",
      "beats": null,
-     "lines": 7
+     "lines": 4
     },
     {
      "scene": 3,
      "art": [
-      "op_taesik_2",
-      "op_taesik_1"
+      "oe_taesik_op2"
      ],
-     "bg": "bg_base_mokdong",
+     "bg": "bg_alley",
      "beats": null,
-     "lines": 6
+     "lines": 7
     },
     {
      "scene": 4,
      "art": [
-      "oe_taesik_op2"
-     ],
-     "bg": "bg_alley",
-     "beats": null,
-     "lines": 7
-    },
-    {
-     "scene": 5,
-     "art": [
-      "oe_taesik_op2"
-     ],
-     "bg": "bg_alley",
-     "beats": null,
-     "lines": 8
-    },
-    {
-     "scene": 6,
-     "art": [
       "op_taesik_1"
      ],
      "bg": "bg_base_mokdong",
      "beats": null,
-     "lines": 6
+     "lines": 3
     },
     {
-     "scene": 7,
+     "scene": 5,
      "art": [
       "op_taesik_2"
-     ],
-     "bg": "bg_base_mokdong",
-     "beats": null,
-     "lines": 7
-    },
-    {
-     "scene": 8,
-     "art": [
-      "op_taesik_3"
-     ],
-     "bg": "bg_base_mokdong",
-     "beats": null,
-     "lines": 7
-    },
-    {
-     "scene": 9,
-     "art": [
-      "oe_taesik_op3",
-      "op_taesik_3"
-     ],
-     "bg": "bg_base_mokdong",
-     "beats": null,
-     "lines": 7
-    },
-    {
-     "scene": 10,
-     "art": [
-      "op_taesik_4"
      ],
      "bg": "bg_base_mokdong",
      "beats": null,
      "lines": 5
     },
     {
-     "scene": 11,
+     "scene": 6,
+     "art": [
+      "op_taesik_3"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 3
+    },
+    {
+     "scene": 7,
+     "art": [
+      "oe_taesik_op3",
+      "op_taesik_3"
+     ],
+     "bg": "bg_base_mokdong",
+     "beats": null,
+     "lines": 4
+    },
+    {
+     "scene": 8,
      "art": [
       "op_taesik_4",
       "op_taesik_1"
      ],
      "bg": "bg_base_mokdong",
      "beats": null,
-     "lines": 7
+     "lines": 6
     }
    ],
    "ending": {

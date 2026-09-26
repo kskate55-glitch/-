@@ -35,15 +35,19 @@
 
 | 캐릭터 | 재활용하는 기존 오프닝 그림(op_*) | 재활용하는 배경·컷 | 엔딩 마지막 장면 |
 |---|---|---|---|
-| 한서윤 | `op_seoyun_1` `op_seoyun_1_2` `op_seoyun_2` `op_seoyun_2_3` `op_seoyun_2_4` `op_seoyun_3` | `bg_alley` `bg_base_sillim` `bg_office_2` `bg_office_3` `bg_room_empty` `bg_shop_closed` `cut_keys` `cut_seoyun_found` | 기존 엔딩 그림 4장(normal·good·bad·special) 그대로 |
-| 이도현 | `op_dohyun_1` `op_dohyun_1_2` `op_dohyun_2` `op_dohyun_3` `op_dohyun_3_2` `op_dohyun_4` `op_dohyun_5` `op_dohyun_5_2` | `bg_alley` `bg_base_hwagok` `bg_office_1` `bg_office_2` `bg_office_3` `bg_villa_day` `bg_villa_night` `cut_dohyun_commute` | 기존 엔딩 그림 4장(normal·good·bad·special) 그대로 |
+| 한서윤 | `op_seoyun_1` `op_seoyun_2` `op_seoyun_2_3` `op_seoyun_2_4` `op_seoyun_3` | `bg_alley` `bg_base_sillim` `bg_office_2` `bg_office_3` `bg_room_empty` `bg_shop_closed` `cut_keys` `cut_seoyun_found` | 기존 엔딩 그림 4장(normal·good·bad·special) 그대로 |
+| 이도현 | `op_dohyun_1` `op_dohyun_3` `op_dohyun_3_2` `op_dohyun_4` `op_dohyun_5` | `bg_base_hwagok` `bg_office_1` `bg_office_2` `bg_office_3` `bg_villa_day` `cut_dohyun_commute` | 기존 엔딩 그림 4장(normal·good·bad·special) 그대로 |
 | 윤미정 | `op_mijeong_1` `op_mijeong_2` `op_mijeong_2_3` `op_mijeong_3` | `bg_base_yeongdeungpo` `bg_shop_closed` `cut_mijeong_shop` | 기존 엔딩 그림 4장(normal·good·bad·special) 그대로 |
 | 박재훈 | `op_jaehoon_1` `op_jaehoon_1_4` `op_jaehoon_2` `op_jaehoon_3` `op_jaehoon_4` | `bg_alley` `bg_base_bulgwang` `bg_room_clean` `bg_room_empty` `bg_stairs` `cut_jaehoon_site` | 기존 엔딩 그림 4장(normal·good·bad·special) 그대로 |
-| 최은경 | `op_eunkyung_1` `op_eunkyung_1_4` `op_eunkyung_2` `op_eunkyung_3` `op_eunkyung_3_3` | `bg_alley` `bg_base_mapo` `bg_office_2` `cut_eunkyung_morning` | 기존 엔딩 그림 4장(normal·good·bad·special) 그대로 |
+| 최은경 | `op_eunkyung_1` `op_eunkyung_1_4` `op_eunkyung_2` `op_eunkyung_3` `op_eunkyung_3_3` | `bg_base_mapo` | 기존 엔딩 그림 4장(normal·good·bad·special) 그대로 |
 | 김태식 | `op_taesik_1` `op_taesik_2` `op_taesik_3` `op_taesik_4` | `bg_alley` `bg_base_mokdong` `bg_office_3` `bg_stairs` | 기존 엔딩 그림 4장(normal·good·bad·special) 그대로 |
 
 ## 기존 오프닝 그림 중 이번 대본에서 쓰지 않게 된 것
 
+- `op_seoyun_1_2` — 한서윤 오프닝 — 장면 1 · '창문 밖으로 자동차 바퀴가…' 줄
+- `op_dohyun_1_2` — 이도현 오프닝 — 장면 1 · '골목을 두 번 꺾으면…' 줄
+- `op_dohyun_2` — 이도현 오프닝 — 장면 2 시작
+- `op_dohyun_5_2` — 이도현 오프닝 — 장면 5 · '새벽 2시까지 이어졌다' 줄
 - `op_mijeong_4` — 윤미정 오프닝 — 장면 4 시작
 
 그림 자체는 지우지 않았다(그림 목록에 그대로 있고 되살릴 수 있다).

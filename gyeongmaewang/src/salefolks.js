@@ -207,3 +207,8 @@ document.addEventListener("click", e => {
   }
   if(typeof save === "function") save(); renderArena();
 }, true);
+// v216 그림 도착 — 새 매수인 3명(네일숍 사장님·미루는 사람·소심한 첫 집) 얼굴. 나머지 둘(현금 부자·갭투자자)은 아직 글로만.
+if(typeof BY_ART !== "undefined") Object.assign(BY_ART, {
+  "까다로운 네일숍 사장님":{art:{normal:"387b40ea240845918ca4d46a9c2dcfe8", angry:"f6f91f2a0c4dd4f1d2921b74b4f3e92e", worried:"70227dd6d91b26c89f0063abc8cb0636"}, ex:"normal"},
+  [SF_FLAKE]:{art:{normal:"e1d4655f0c522f3e5a111a7a985d111a", angry:"1cd3f9924e5730f1a0bb390b0ba2bf7d", worried:"4230448fd1cd7c882b39545b74986e2f"}, ex:"normal"},
+  "소심한 첫 집 매수자":{art:{normal:"cb36e38662d8ce64cd1c9f82e9ea6686", angry:"92dc2f1ce9d14ca3299d577b23268010", worried:"fede1d938c3d430741fa3630c3279f31"}, ex:"normal"}});

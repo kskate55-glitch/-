@@ -9,7 +9,7 @@ const IDS=['seoyun','dohyun','mijeong','jaehoon','eunkyung','taesik'];
 if(w===1280){
   const d=await p.evaluate(IDS=>IDS.map(id=>{ const O=OE_DATA[id]; const n=a=>a.reduce((s,x)=>s+x.lines.length,0);
     return {id, same:LF_OPENINGS[id]===O.opening, op:n(O.opening), core:n(O.ending.core), slots:O.art.filter(a=>ART_SLOTS.some(s=>s.id===a.id)).length}; }),IDS);
-  d.forEach(x=>ok(x.same && x.op>=60 && x.core>=20 && x.slots===4, `${x.id}: 새 오프닝 연결 · ${x.op}줄 · 에필로그 공통 ${x.core}줄 · 새 그림 슬롯 ${x.slots}/4 등록`));
+  d.forEach(x=>ok(x.same && x.op>=28 && x.op<=42 && x.core>=20 && x.slots===4, `${x.id}: 새 오프닝 연결 · ${x.op}줄 · 에필로그 공통 ${x.core}줄 · 새 그림 슬롯 ${x.slots}/4 등록`));
 }
 // 1) 오프닝을 처음부터 끝까지 — 장면마다 그림이 비지 않고, 화면 소품(ui)이 뜨고, 끝나면 거점으로 넘어간다
 for(const id of (w===1280?IDS:['mijeong'])){

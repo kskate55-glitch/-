@@ -748,3 +748,7 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 /* v129 — 읽은 대사 */
 .mt-rdskip{background:#f2b33d!important;color:#1b1406!important;font-weight:800;margin-right:6px}
 .rd-tag{display:inline-block;margin-left:4px;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.18);font-size:11px}
+/* v130 — 캐릭터의 한 수 */
+.ca-card p{margin:0 0 6px}.ca-weak{color:#b4531a!important}.ca-card .btn{width:100%}
+.ca-hint{display:block;margin-top:4px;font-size:12.5px;font-weight:800;color:#f2b33d}
+.ca-panel{border-left:4px solid #6c5ce7}.ca-tbl{width:100%;border-collapse:collapse;margin:6px 0;font-size:13.5px}.ca-tbl td,.ca-tbl th{padding:4px 6px;border-bottom:1px solid rgba(127,127,127,.2);text-align:right}.ca-tbl td:first-child,.ca-tbl th:first-child{text-align:left}

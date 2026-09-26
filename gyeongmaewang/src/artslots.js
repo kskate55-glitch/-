@@ -112,3 +112,8 @@ Object.assign(ART_DEFAULT, AS_OP_ART);
 // 받은 오프닝 12차(v151): 미정 — 투룸 식탁에서 검색(미정 5칸 완료)
 AS_OP_ART.op_mijeong_3 = "1fe217f2a8d0df9bc203a7d91f9c7f8e";
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 13차(v152): 재훈 — 집주인이 놀라는 장면 + 벽 두드리기 새 판(방이 더 보이는 쪽으로 교체, 이전 판 3f4387c1…)
+AS_OP_ART.op_jaehoon_2   = "c7807fa0ddacdb3e2ab6e096df3baa54";
+AS_OP_ART.op_jaehoon_1_4 = "b59d857ea63382edca565becd2e0d150";
+Object.assign(ART_DEFAULT, AS_OP_ART);

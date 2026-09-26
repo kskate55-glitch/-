@@ -33,7 +33,7 @@ ok(r.occ0 && !r.occ0.includes(FAKE), '올리기 전엔 기존 그림');
 r=await p.evaluate((F)=>{ artRec()['npc_occ_f31_normal']=F; const saveK=K; K=null; const u=artNpc('p_madam','normal'); K=saveK; delete artRec()['npc_occ_f31_normal']; return u && u.includes(F); },FAKE);
 ok(!r, '물건 밖(자유 플레이)의 구혜란 씨는 원래 그림 그대로');
 // 6) 오프닝 장면 전용 그림
-r=await p.evaluate(async(F)=>{ const si=LF_OPENINGS.dohyun.findIndex(s=>s.beats); const [ln,[key]]=Object.entries(LF_OPENINGS.dohyun[si].beats)[0]; artRec()[key]=F; window.GX_SPEED_TEST=1; gxOpStart('dohyun'); gxPrelude(99); await new Promise(r=>setTimeout(r,300)); clearTimeout(GX_OP.t); gxScene(si); await new Promise(r=>setTimeout(r,200)); clearTimeout(GX_OP.t); const before=[...document.querySelectorAll('#gxOp .gx-bgimg')].pop().style.backgroundImage;
+r=await p.evaluate(async(F)=>{ const CH=Object.keys(LF_OPENINGS).find(c=>LF_OPENINGS[c].some(s=>s.beats)); const si=LF_OPENINGS[CH].findIndex(s=>s.beats); const [ln,[key]]=Object.entries(LF_OPENINGS[CH][si].beats)[0]; artRec()[key]=F; window.GX_SPEED_TEST=1; gxOpStart(CH); gxPrelude(99); await new Promise(r=>setTimeout(r,300)); clearTimeout(GX_OP.t); gxScene(si); await new Promise(r=>setTimeout(r,200)); clearTimeout(GX_OP.t); const before=[...document.querySelectorAll('#gxOp .gx-bgimg')].pop().style.backgroundImage;
   GX_OP.j=+ln-1; gxLine(); await new Promise(r=>setTimeout(r,100)); const after=[...document.querySelectorAll('#gxOp .gx-bgimg')].pop().style.backgroundImage; gxOpEnd(true); delete artRec()[key]; return {u1:before, n:(after!==before && after.includes(F.slice(-30)))?2:1}; },FAKE);
 ok(r.n>=2, '대본에 적은 중간 컷(beats)으로 그림이 한 번 더 바뀜');
 ok(!errs.some(e=>e.startsWith('pageerror')), 'JS 오류 없음 '+errs.filter(e=>e.startsWith('pageerror')).join(';'));

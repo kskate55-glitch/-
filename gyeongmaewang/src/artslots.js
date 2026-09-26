@@ -345,3 +345,6 @@ Object.assign(ART_DEFAULT, { cg_il_j01_c:"5b96c950ca549b4376d82e0fb4036217", cg_
 
 // 외전 장면 그림(v201): J03 재훈 가족 — b 꽃병 든 현주·줄자 든 다은·배치도 그리는 재훈(s5, 대표) · c 방 사진 찍는 현주와 조명 드는 재훈(s6, 줄자 표시 흐림)
 Object.assign(ART_DEFAULT, { cg_il_j03:"828e2d849e98db8da727af766a5fa600", cg_il_j03_b:"828e2d849e98db8da727af766a5fa600", cg_il_j03_c:"9f091b843d2a9a08377911ddf1227904" });
+
+// 외전 장면 그림(v202): E01 은경 — a 찻집에서 민혜경이 사진 밀어 주는 장면(s2, 대표) · b 막대 짧은 표 두 장 비교(s5) · c 밤 버스 창가(s6) / E03 — a 폴더 두 개 앞의 세 사람(s3, 대표) · c 세 사람 서명하는 손(s8)
+Object.assign(ART_DEFAULT, { cg_il_e01:"5e5a262652300234f5641f26e6acfef0", cg_il_e01_a:"5e5a262652300234f5641f26e6acfef0", cg_il_e01_b:"a19c03b379b24a4f9f0324573d5cca7e", cg_il_e01_c:"d8d9e3caf779e200fe916af96f72824f", cg_il_e03:"9145e20f1c38d1d9a404c9b70b755c1f", cg_il_e03_a:"9145e20f1c38d1d9a404c9b70b755c1f", cg_il_e03_c:"c0cd62911aecc7ad1ec978686497bdb6" });

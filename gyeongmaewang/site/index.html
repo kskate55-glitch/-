@@ -46250,6 +46250,18 @@ Object.assign(ART_DEFAULT, AS_OCC_ART);
 Object.assign(AS_OCC_ART, {"npc_occ_f51_normal": "9ce6f69124a16aa8cadb9f6c34abdb65", "npc_occ_f51_angry": "c506c8310335012eeace64e51cabc2db", "npc_occ_f51_worried": "ebb1bd31285c2fa57cd7b0002a856546", "npc_occ_f42_normal": "c4caaae9d1f2a29a76e566097a48d0cd", "npc_occ_f42_angry": "e7549087f47070613aab59af57068e6e", "npc_occ_f42_worried": "5f113e5f4f8a7b9a85fb3bdcd9583e80", "npc_occ_f41_normal": "271fdac6a9465b87ae03fedd946f1da2", "npc_occ_f41_angry": "9cd32ce44455a8405cab57f827e426ad", "npc_occ_f41_worried": "ff8a60502663328446a1a2db6b1ad268", "npc_occ_f32_normal": "94db1eb719e9ef73e9588918cc208939", "npc_occ_f32_angry": "de1601301e41bd263be99ad1b6d382eb", "npc_occ_f32_worried": "28150b1a1c6cc8b76c97776600c9ba5b", "npc_occ_f54_normal": "360695f324afbb4102798ae268531355", "npc_occ_f54_angry": "f97b47abd1cb8927db22356cdfb905f4", "npc_occ_f54_worried": "7e8d9d39f17903184888aef896d82adf"});
 Object.assign(ART_DEFAULT, AS_OCC_ART);
 
+// 받은 그림 3차(v139: f61 새솔인테리어 현장소장 · f63 탁만수 사장) + 서윤 오프닝 3장
+Object.assign(AS_OCC_ART, {
+  npc_occ_f63_normal: "648c80e6378e2c135076880c097cf08b", npc_occ_f63_angry: "7505ccde92045a7c46e5e3e94fcea006", npc_occ_f63_worried: "ecfc5186fe6ac0ad29488906b99ebc02",
+  npc_occ_f61_normal: "c5752cb0d670daaa019c278f886482cc", npc_occ_f61_angry: "adda3d27123edbc33523f34748bba164", npc_occ_f61_worried: "20e15ee0876330f74485bfefea30b5ca",
+});
+const AS_OP_ART = {
+  op_seoyun_1:   "6673b097946d789c82896ee89ed332e3",   // 비 오는 밤 반지하 방
+  op_seoyun_1_2: "5fd07f7bbf1bbb905456eee5e64feaa5",   // 창밖 물 튀기는 바퀴
+  op_seoyun_2_3: "4e0c4c235a8a9f4c6c030d310b9a7f31",   // 생각 구름
+};
+Object.assign(ART_DEFAULT, AS_OCC_ART, AS_OP_ART);
+
 window.GMW_STANDALONE = true;
 var _gmwArt0 = artUrl; artUrl = function(id){ var u = _gmwArt0(id); return u ? u.replace(/^\/_blob\/([0-9a-f]{32})$/, "assets/$1.webp") : null; };
 

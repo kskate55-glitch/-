@@ -324,3 +324,6 @@ Object.assign(ART_DEFAULT, { cg_il_d01:"343f773cc5e2161e281e8d898a2cb462", cg_il
 
 // 외전 장면 그림(v194): D01 c 회의실 발표 / 법원 대리인 반반 구도(s9) · D03 a 금요일 밤 폴더 셋·식은 컵라면(s1, 노트북 글자 흐림)
 Object.assign(ART_DEFAULT, { cg_il_d01_c:"4d024ea938f2307583e5ad2eff16a398", cg_il_d03_a:"74b6412ac7137aa36a52f43a6f6c83b9" });
+
+// 외전 장면 그림(v195): S03 서윤 — a 법무사무소에서 오정은 실장과 견적서 읽기(s1) · b 서류 네 묶음 체크(s4, 대표)
+Object.assign(ART_DEFAULT, { cg_il_s03:"79d5d8acddfd855f8966fb14be69c877", cg_il_s03_a:"90d30cfd1b4aa25fff9060d931199d3a", cg_il_s03_b:"79d5d8acddfd855f8966fb14be69c877" });

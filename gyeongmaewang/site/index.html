@@ -46670,6 +46670,9 @@ Object.assign(ART_DEFAULT, { cg_il_d01:"343f773cc5e2161e281e8d898a2cb462", cg_il
 // 외전 장면 그림(v194): D01 c 회의실 발표 / 법원 대리인 반반 구도(s9) · D03 a 금요일 밤 폴더 셋·식은 컵라면(s1, 노트북 글자 흐림)
 Object.assign(ART_DEFAULT, { cg_il_d01_c:"4d024ea938f2307583e5ad2eff16a398", cg_il_d03_a:"74b6412ac7137aa36a52f43a6f6c83b9" });
 
+// 외전 장면 그림(v195): S03 서윤 — a 법무사무소에서 오정은 실장과 견적서 읽기(s1) · b 서류 네 묶음 체크(s4, 대표)
+Object.assign(ART_DEFAULT, { cg_il_s03:"79d5d8acddfd855f8966fb14be69c877", cg_il_s03_a:"90d30cfd1b4aa25fff9060d931199d3a", cg_il_s03_b:"79d5d8acddfd855f8966fb14be69c877" });
+
 /* ================= 📖 외전 — 사건과 사건 사이의 긴 이야기(비주얼노벨형 실무 학습) =================
    캐릭터마다 첫 번째·세 번째 스토리 사건이 끝나면 방에 '새 이야기' 알림이 뜬다(강제 재생 없음).
    · 대본은 il_<ID>.js의 script(작은 문법)로 쓰고, 여기서 한 줄짜리 명령 목록(pc)으로 바꿔 돌린다.
@@ -50091,7 +50094,7 @@ IL_DEF({
       foot:["연습 화면의 번호는 실제 사건과 무관한 가상 값이에요.","틀려도 불이익은 없어요."], note:"after"}
   },
   script:`
-# s1 | bg=bg_office_2 | music=main | title=견적서 한 장, 질문 여섯 개
+# s1 | bg=bg_office_2 | music=main | title=견적서 한 장, 질문 여섯 개 | cg=cg_il_s03_a
 [나레이션] 토요일 오후, 스터디룸을 빌린 경매 모임. 탁자 위에 믹스커피 봉지와 누군가 가져온 귤이 흩어져 있었다.
 [태오] 서윤 씨, 세 번째 건은 어떻게 됐어요? 원룸이었죠?
 @if profit

@@ -71,7 +71,7 @@ IL_DEF({
       foot:["연습 화면의 번호는 실제 사건과 무관한 가상 값이에요.","틀려도 불이익은 없어요."], note:"after"}
   },
   script:`
-# s1 | bg=bg_office_2 | music=main | title=견적서 한 장, 질문 여섯 개
+# s1 | bg=bg_office_2 | music=main | title=견적서 한 장, 질문 여섯 개 | cg=cg_il_s03_a
 [나레이션] 토요일 오후, 스터디룸을 빌린 경매 모임. 탁자 위에 믹스커피 봉지와 누군가 가져온 귤이 흩어져 있었다.
 [태오] 서윤 씨, 세 번째 건은 어떻게 됐어요? 원룸이었죠?
 @if profit

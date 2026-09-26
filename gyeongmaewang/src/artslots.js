@@ -169,3 +169,11 @@ Object.assign(AS_BG_ART, {
   bg_case_f13_door: "8d764ff86127f258db0a3da718941d7c",
 });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 5차(v162): f13 커튼 친 게이밍 방(f13 완료) + f21 부천 심곡동 — 먹자골목 외관·골프백 놓인 3층 현관
+Object.assign(AS_BG_ART, {
+  bg_case_f13_in:   "8ac485bfddfb401d4169383e5a73195b",
+  bg_case_f21_ext:  "7948d919ad241c6138191a59a3ae1117",
+  bg_case_f21_door: "0c11cb383f78a3adbffbb075a5b21b2b",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

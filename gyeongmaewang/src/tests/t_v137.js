@@ -23,13 +23,15 @@ ok(o.n===33 && o.ok===33 && o.distinct===33, '오프닝 33칸 전부 전용 그�
 const g=await p.evaluate(async()=>{ localStorage.clear(); const c=kcRec(); delete c.life; c.fr={full:true}; page='arena'; arenaTab='king'; KC_MODE='career'; K_PROP_NEXT='f11'; KC_INTRO=false; kStart(5); K.intro=false;
   const pick=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s));
   const loads=await Promise.all(pick.map(k=>new Promise(r=>{ const u=artUrl(k); if(!u) return r(false); const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=u; })));
-  K_PROP_NEXT='f21'; kStart(5); K.intro=false; const other=vnBgPick('bg_front_door');
+  K_PROP_NEXT='f22'; kStart(5); K.intro=false; const other=vnBgPick('bg_front_door');
   return {pick, loads, other}; });
 ok(g.pick.join()==='bg_case_f11_ext,bg_case_f11_door,bg_case_f11_in' && g.loads.every(Boolean), 'f11 조사·명도·빈집 장면이 전용 배경 3장으로 바뀜');
-ok(g.other==='bg_front_door', '배경이 아직 없는 물건(f21)은 원래 공용 배경 그대로');
+ok(g.other==='bg_front_door', '배경이 아직 없는 물건(f22)은 원래 공용 배경 그대로');
 const g2=await p.evaluate(()=>{ K_PROP_NEXT='f12'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
 ok(g2.join()==='bg_case_f12_ext,bg_case_f12_door,bg_case_f12_in', 'f12 외관·복도·빈 원룸 전용 배경 3장');
 const g3=await p.evaluate(()=>{ K_PROP_NEXT='f13'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
-ok(g3.join()==='bg_case_f13_ext,bg_case_f13_door,bg_room_empty', 'f13 외관·현관 전용, 빈방 칸은 아직 공용 배경');
+ok(g3.join()==='bg_case_f13_ext,bg_case_f13_door,bg_case_f13_in', 'f13 전용 배경 3장');
+const g4=await p.evaluate(()=>{ K_PROP_NEXT='f21'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
+ok(g4.join()==='bg_case_f21_ext,bg_case_f21_door,bg_room_empty', 'f21 외관·현관 전용, 거실 칸은 아직 공용 배경');
 ok(!errs.some(e=>e.startsWith('pageerror')), 'JS 오류 없음');
 console.log(errs.length?'FAIL':'ALL OK'); await b.close(); })();

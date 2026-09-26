@@ -307,3 +307,7 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 30차(v189): f64 화성 공장 내부 — CNC 기계 줄·천장 크레인(크레인 라벨·기계 명판 흐림)
 Object.assign(AS_BG_ART, { bg_case_f64_in: "95ba53be159f7d5a2b61298e88f39b6e" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 31차(v190): f64 화성 셔터 앞 — 체인·자물쇠 셋, 접이식 의자·보온병(의자 로고·지게차 글자 흐림)
+Object.assign(AS_BG_ART, { bg_case_f64_door: "83df3e6ef2c1b35b116ca996c901dbc0" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

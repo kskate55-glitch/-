@@ -72,6 +72,7 @@ const OE_ART = {
   oe_taesik_end1:"bc10047dc19f4b912949ce410017572f",  // 수첩과 태블릿, 지도와 발
   oe_dohyun_op1:"50b459fde65f315d0bb7a42df2aade9d",   // 퇴근 후 원룸에서 가계 엑셀을 여는 밤
   oe_dohyun_op2:"f3684437d1281c4b2c38534823abee5b",   // 주거비 기사를 보다 한숨 쉬는 비 오는 밤
+  oe_jaehoon_op1:"e2d3a1d3127c8a5732b0ac166f484834",  // 일 끝난 저녁, 현장 계단참에 주저앉은 몸
   oe_jaehoon_op2:"4a934f029d3b7ee8f7abd2ed93522b10",  // 저녁 식탁, 딸의 '월급날' 한마디
   oe_jaehoon_op3:"76ea7236b0cd8aade2284dd20ca9f0e2",  // 한밤의 식탁, 검지 하나로 치는 첫 검색
   oe_jaehoon_end1:"8061b122d5500f781415133b46945f1b"  // 거실 달력 앞, 셋이 나눠 맡은 토요일 아침

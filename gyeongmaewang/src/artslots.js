@@ -233,3 +233,12 @@ Object.assign(AS_BG_ART, {
   bg_case_f42_door: "13582ca7efc497bfb970da4f3745c4f1",
 });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 14차(v173): f42 상자 탑 사이 창가 자리 / f43 가락동 — 필로티 원룸 건물 밤·링라이트 복도 / f44 불광동 — 철대문과 고추 말리는 평상
+//   ⚠️ f43 실내(방송 스튜디오 방)는 받았지만 넣지 않았다 — 포스터·피규어가 실존 캐릭터라 다시 그려 달라고 요청
+Object.assign(AS_BG_ART, {
+  bg_case_f42_in:   "8b10d0fb8b2b3c39e9e01cae3653b5e4",
+  bg_case_f43_ext:  "20d659ec3f9ec5f3ddb88d2ef7a3c5e9",
+  bg_case_f43_door: "5e3abc475b3f0f81ede83122a8d94446",
+  bg_case_f44_ext:  "a97668d550ded620ae65218004f10f8e",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

@@ -7,6 +7,8 @@ const AS_BG_MAP = {bg_villa_day:"ext", bg_villa_night:"ext", bg_front_door:"door
 const _as_bgPick = vnBgPick;
 vnBgPick = function(slot){
   const k = AS_BG_MAP[slot];
+  // 명도가 끝나 수리에 들어간 뒤의 빈집은 점유자 살림이 그려진 전용 실내 그림으로 덮지 않는다
+  if(k === "in" && typeof K !== "undefined" && K && K.repair) return _as_bgPick(slot);
   if(k && typeof K !== "undefined" && K && typeof KP !== "undefined" && KP && KP.gen && KP.id){ const id = `bg_case_${KP.id}_${k}`; if(artUrl(id)) return id; }
   return _as_bgPick(slot);
 };

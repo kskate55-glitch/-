@@ -280,3 +280,6 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 23차(v182): f63 평택 — 네온이 반쯤 꺼진 모텔 외관·주차장 가림막(작은 네온 간판 글자 흐림)
 Object.assign(AS_BG_ART, { bg_case_f63_ext: "1169257f30345a5695e5b351571a3bf4" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 24차(v183): f63 평택 — 1층 카운터(열쇠 걸이·탁상시계)·붉은 카펫 복도와 열린 객실
+Object.assign(AS_BG_ART, { bg_case_f63_door: "76ec863d3ff55953f4d3904392dfac4b", bg_case_f63_in: "aca71ad0314f29fee6c7ead17857b412" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

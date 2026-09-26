@@ -32,6 +32,7 @@ for(let e=1;e<4;e++){
   if(e<3){ await p.click('[data-ep="nextep"]'); await p.waitForTimeout(700); }
 }
 await p.click('[data-ep="end"]'); await p.waitForTimeout(700);
+ok(await p.evaluate(()=>!!document.querySelector('.gx-op.gx-end')), w+' 엔딩 카드 위에 에필로그(v211)'); await p.evaluate(()=>{ if(GX_OP) gxOpEnd(true); }); await p.waitForTimeout(300);
 ok(await p.evaluate(()=>CP_SHOW && CP_SHOW.ep && cpUnlocked('dohyun')), w+' 엔딩 → 도현 해금');
 await p.click('#cpEnd [data-cp="go"]'); await p.waitForTimeout(400); await p.click('#cpEnd [data-cp="new"]'); await p.waitForTimeout(1500);
 for(let k=0;k<4;k++){ await p.evaluate(()=>{const s=document.querySelector('[data-gxskip]'); if(s) s.click();}); await p.waitForTimeout(500); }

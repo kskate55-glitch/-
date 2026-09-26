@@ -242,3 +242,11 @@ Object.assign(AS_BG_ART, {
   bg_case_f44_ext:  "a97668d550ded620ae65218004f10f8e",
 });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 15차(v174): f44 불광동 — 평상·장독대 마당·자개장 안방 / f51 천호동 — 시장 천막 골목과 빌라 입구·구두와 슬리퍼 복도
+Object.assign(AS_BG_ART, {
+  bg_case_f44_door: "451a49a4a02e290f4ed351e2a1b1041b",
+  bg_case_f44_in:   "771abfddfb1296cf012cad8f68305325",
+  bg_case_f51_ext:  "9aa6a3cae58b8c7078457e9f4be49cac",
+  bg_case_f51_door: "bab73e23686c63a2bf78843e35bfc439",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

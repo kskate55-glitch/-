@@ -23,10 +23,10 @@ ok(o.n===33 && o.ok===33 && o.distinct===33, '오프닝 33칸 전부 전용 그�
 const g=await p.evaluate(async()=>{ localStorage.clear(); const c=kcRec(); delete c.life; c.fr={full:true}; page='arena'; arenaTab='king'; KC_MODE='career'; K_PROP_NEXT='f11'; KC_INTRO=false; kStart(5); K.intro=false;
   const pick=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s));
   const loads=await Promise.all(pick.map(k=>new Promise(r=>{ const u=artUrl(k); if(!u) return r(false); const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=u; })));
-  K_PROP_NEXT='f51'; kStart(5); K.intro=false; const other=vnBgPick('bg_front_door');
+  K_PROP_NEXT='f52'; kStart(5); K.intro=false; const other=vnBgPick('bg_front_door');
   return {pick, loads, other}; });
 ok(g.pick.join()==='bg_case_f11_ext,bg_case_f11_door,bg_case_f11_in' && g.loads.every(Boolean), 'f11 조사·명도·빈집 장면이 전용 배경 3장으로 바뀜');
-ok(g.other==='bg_front_door', '배경이 아직 없는 물건(f51)은 원래 공용 배경 그대로');
+ok(g.other==='bg_front_door', '배경이 아직 없는 물건(f52)은 원래 공용 배경 그대로');
 const g2=await p.evaluate(()=>{ K_PROP_NEXT='f12'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
 ok(g2.join()==='bg_case_f12_ext,bg_case_f12_door,bg_case_f12_in', 'f12 외관·복도·빈 원룸 전용 배경 3장');
 const g3=await p.evaluate(()=>{ K_PROP_NEXT='f13'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
@@ -52,8 +52,12 @@ ok(g10.f41==='bg_case_f41_ext,bg_case_f41_door,bg_room_empty' && g10.f42==='bg_c
 const l10=await p.evaluate(async()=>Promise.all(['f34_in','f41_ext','f41_door','f42_ext','f42_door'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_'+k); }))));
 ok(l10.every(Boolean), 'f34·f41·f42 배경 5장 로드');
 const g11=await p.evaluate(()=>{ const out={}; for(const id of ['f43','f44']){ K_PROP_NEXT=id; kStart(5); K.intro=false; out[id]=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)).join(); } return out; });
-ok(g11.f43==='bg_case_f43_ext,bg_case_f43_door,bg_room_empty' && g11.f44.startsWith('bg_case_f44_ext,') && !g11.f44.includes('f44_door'), 'f43 외관·현관 · f44 외관 전용(나머지는 공용)');
+ok(g11.f43==='bg_case_f43_ext,bg_case_f43_door,bg_room_empty' && g11.f44==='bg_case_f44_ext,bg_case_f44_door,bg_case_f44_in', 'f43 외관·현관 · f44 3장 전용');
 const l11=await p.evaluate(async()=>Promise.all(['f42_in','f43_ext','f43_door','f44_ext'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_'+k); }))));
 ok(l11.every(Boolean), 'f42·f43·f44 배경 4장 로드');
+const g12=await p.evaluate(()=>{ K_PROP_NEXT='f51'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)).join(); });
+ok(g12==='bg_case_f51_ext,bg_case_f51_door,bg_room_empty', 'f51 외관·현관 전용(실내는 공용)');
+const l12=await p.evaluate(async()=>Promise.all(['f44_door','f44_in','f51_ext','f51_door'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_'+k); }))));
+ok(l12.every(Boolean), 'f44·f51 배경 4장 로드');
 ok(!errs.some(e=>e.startsWith('pageerror')), 'JS 오류 없음');
 console.log(errs.length?'FAIL':'ALL OK'); await b.close(); })();

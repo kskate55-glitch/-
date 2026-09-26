@@ -100,3 +100,7 @@ Object.assign(ART_DEFAULT, AS_OP_ART);
 // 받은 오프닝 9차(v148): 재훈 — 벽 두드리는 손 클로즈업
 AS_OP_ART.op_jaehoon_1_4 = "3f4387c162e1ba02c44937fa53af6fe0";
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 10차(v149): 서윤 — 반지하 방에서 은행 앱
+AS_OP_ART.op_seoyun_2 = "b6dca34b68f22486df37de13ed89eab8";
+Object.assign(ART_DEFAULT, AS_OP_ART);

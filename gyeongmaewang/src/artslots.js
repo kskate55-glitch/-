@@ -327,3 +327,6 @@ Object.assign(ART_DEFAULT, { cg_il_d01_c:"4d024ea938f2307583e5ad2eff16a398", cg_
 
 // 외전 장면 그림(v195): S03 서윤 — a 법무사무소에서 오정은 실장과 견적서 읽기(s1) · b 서류 네 묶음 체크(s4, 대표)
 Object.assign(ART_DEFAULT, { cg_il_s03:"79d5d8acddfd855f8966fb14be69c877", cg_il_s03_a:"90d30cfd1b4aa25fff9060d931199d3a", cg_il_s03_b:"79d5d8acddfd855f8966fb14be69c877" });
+
+// 외전 장면 그림(v196): M01 미정 — c 브레이크 타임 계산기(s1) · a 골목에서 백 사장의 재개발 소문(s2) · b 지도 위 경계선 담 하나 차이(s4, 대표) / D03 c 노을에 노트북 덮는 도현(s9, 대표)
+Object.assign(ART_DEFAULT, { cg_il_m01:"3f36e33d22ea53c4189bb9d44377adcb", cg_il_m01_a:"e8ac1ebecac98c80007ec92aacd70bc1", cg_il_m01_b:"3f36e33d22ea53c4189bb9d44377adcb", cg_il_m01_c:"36ae70f73174d5a7b132380ddd1f446a", cg_il_d03:"54af0032826996d9dae52ac80e595dcf", cg_il_d03_c:"54af0032826996d9dae52ac80e595dcf" });

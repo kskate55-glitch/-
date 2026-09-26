@@ -188,3 +188,7 @@ Object.assign(AS_BG_ART, {
   bg_case_f22_in:   "1f980f71e6f131d6f379db818ba391b6",
 });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 8차(v165): f23 수원 율전동 — 벚꽃 핀 대학가 원룸촌 외관
+AS_BG_ART.bg_case_f23_ext = "cdef05543c0e09045ac327e43f8ff9c6";
+Object.assign(ART_DEFAULT, AS_BG_ART);

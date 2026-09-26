@@ -19,14 +19,14 @@ const FAKE='5961986acf90e000dd87644d50e24d72';
 r=await p.evaluate((F)=>{ localStorage.clear(); const c=kcRec(); delete c.life; c.fr={full:true}; arenaTab='king'; KC_MODE='career'; K_PROP_NEXT='f64'; kStart(4); K.intro=false;
   const before=vnBgPick('bg_front_door'), occ0=artNpc(KP.occ.pid,'normal');
   artRec()['bg_case_f64_door']=F; artRec()['npc_occ_f64_normal']=F;
-  const after=vnBgPick('bg_front_door'), occ1=artNpc(KP.occ.pid,'angry'), stage=kStage('bg_front_door','occ','angry','테스트');
+  const after=vnBgPick('bg_front_door'), occ1=artNpc(KP.occ.pid,'normal'), stage=kStage('bg_front_door','occ','normal','테스트');
   // 다른 물건은 영향 없음
   K_PROP_NEXT='f21'; kStart(4); K.intro=false; const other=vnBgPick('bg_front_door');
   delete artRec()['bg_case_f64_door']; delete artRec()['npc_occ_f64_normal'];
   return {before, after, other, occ0, occ1, has:stage.includes(F)}; },FAKE);
 ok(r.before!=='bg_case_f64_door' && r.after==='bg_case_f64_door', '물건 전용 현관 그림을 올리면 f64 명도 장면 배경이 바뀜');
 ok(r.other!=='bg_case_f64_door', '다른 물건(f21)은 그대로');
-ok(r.occ1 && r.occ1.includes(FAKE) && r.has, 'f64 점유자 그림(보통만 올려도 화난 표정 자리에 대신) 무대에 뜸');
+ok(r.occ1 && r.occ1.includes(FAKE) && r.has, 'f64 점유자 그림(직접 올린 그림이 기본 그림보다 먼저) 무대에 뜸');
 ok(r.occ0 && !r.occ0.includes(FAKE), '올리기 전엔 기존 그림');
 // 5) 자유 플레이에서 같은 인물(pid)은 물건 칸을 안 씀
 r=await p.evaluate((F)=>{ artRec()['npc_occ_f31_normal']=F; const saveK=K; K=null; const u=artNpc('p_madam','normal'); K=saveK; delete artRec()['npc_occ_f31_normal']; return u && u.includes(F); },FAKE);

@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 (async()=>{const b=await chromium.launch(); const errs=[]; const ok=(c,m)=>{ console.log((c?'✅ ':'❌ ')+m); if(!c) errs.push(m); };
 const p=await b.newPage({viewport:{width:1280,height:900}}); p.on('pageerror',e=>errs.push('pageerror '+e.message)); p.on('dialog',d=>d.accept());
 await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(800);
-for(const id of ['f11','f21','f22','f23','f31','f32','f41','f42','f51','f54','f61','f63']){
+for(const id of ['f11','f21','f22','f23','f31','f32','f41','f42','f51','f54','f61','f63','f53','f64']){
   const r=await p.evaluate(async(id)=>{ localStorage.clear(); const c=kcRec(); delete c.life; c.fr={full:true}; c.cash=900000; page='arena'; arenaTab='king'; KC_MODE='career'; K_PROP_NEXT=id; KC_INTRO=false; kStart(5); K.intro=false;
     const u={}; for(const e of ['normal','angry','worried']) u[e]=artNpc(KP.occ.pid,e);
     const own=['normal','angry','worried'].every(e=>u[e]===artUrl('npc_occ_'+id+'_'+e));

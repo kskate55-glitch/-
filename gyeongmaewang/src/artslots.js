@@ -47,3 +47,11 @@ const AS_OP_ART = {
   op_seoyun_2_3: "4e0c4c235a8a9f4c6c030d310b9a7f31",   // 생각 구름
 };
 Object.assign(ART_DEFAULT, AS_OCC_ART, AS_OP_ART);
+
+// 받은 그림 4차(v140: f53 엥흐 씨 · f64 변재섭 씨 — 점유자 22명 전원 전용 그림 완료) + 서윤 생각 구름 새 판
+Object.assign(AS_OCC_ART, {
+  npc_occ_f64_normal: "bbc4b0ea8054db568fa47c1fd627c2af", npc_occ_f64_angry: "a527fc4d3121af26f66d3852f875893f", npc_occ_f64_worried: "f052e812072150f7ff3d08fd5326f73d",
+  npc_occ_f53_normal: "b3194611f50c7c0d59eece8a6b32b686", npc_occ_f53_angry: "b421111ead0e86775d95a964c562e872", npc_occ_f53_worried: "d5ac02615dfa87b7db9549b34e544542",
+});
+AS_OP_ART.op_seoyun_2_3 = "cd14a57881176ee586c6cb138fcb4cfc";   // 창밖 비까지 보이는 새 판으로 교체
+Object.assign(ART_DEFAULT, AS_OCC_ART, AS_OP_ART);

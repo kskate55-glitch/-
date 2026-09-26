@@ -108,3 +108,7 @@ Object.assign(ART_DEFAULT, AS_OP_ART);
 // 받은 오프닝 11차(v150): 서윤 — 생각 구름이 톡 터지고 천장 곰팡이(서윤 6칸 완료)
 AS_OP_ART.op_seoyun_2_4 = "c330c35a5f9547d42271e028b0fd2f22";
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 12차(v151): 미정 — 투룸 식탁에서 검색(미정 5칸 완료)
+AS_OP_ART.op_mijeong_3 = "1fe217f2a8d0df9bc203a7d91f9c7f8e";
+Object.assign(ART_DEFAULT, AS_OP_ART);

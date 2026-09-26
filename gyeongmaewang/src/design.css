@@ -1154,3 +1154,14 @@ body.nx-quiet .stg-file{animation:none!important}
 .panel.hx-steel{background:rgba(40,120,200,.12)!important;border-left:4px solid #3b82c4}
 .hx-odd.hx-onstage{position:absolute;left:10px;top:58px;width:auto;max-width:min(78%,420px);z-index:4;background:rgba(20,20,26,.72);color:#f3eee0;border-color:rgba(255,255,255,.35);backdrop-filter:blur(2px)}
 .hx-vend.inpanel{position:relative;right:auto;bottom:auto;margin:14px 8px 8px auto}
+/* ===== v220 초보 모드 ===== */
+.ez-goal{position:fixed;left:50%;transform:translateX(-50%);z-index:2147480000;width:min(760px,calc(100vw - 20px));background:rgba(16,40,28,.93);color:#eafff1;border:1px solid #3ecf7a;border-radius:12px;padding:8px 12px;font-size:14px;line-height:1.45;box-shadow:0 6px 20px rgba(0,0,0,.35);display:flex;gap:8px;align-items:flex-start;pointer-events:none}
+.ez-goal b{white-space:nowrap;color:#8ff0b4}
+.ez-rec{outline:3px solid #ffcc33!important;outline-offset:2px;box-shadow:0 0 0 6px rgba(255,204,51,.18)!important;animation:ezPulse 1.6s ease-in-out infinite}
+@keyframes ezPulse{50%{box-shadow:0 0 0 10px rgba(255,204,51,.06)}}
+.ez-star{display:inline-block;white-space:nowrap;flex:none;font-style:normal;font-size:11.5px;font-weight:800;background:#ffcc33;color:#3b2a00;border-radius:999px;padding:1px 7px;margin-right:6px;vertical-align:middle}
+.ez-grp-star{font-style:normal;margin-right:4px}
+.ez-term{border-bottom:2px dotted #4fb5ff;cursor:help}
+.ez-tip{position:fixed;z-index:2147483200;background:#fff;color:#222;border:1px solid #4fb5ff;border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.55;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.ez-tip b{display:block;margin-bottom:3px;color:#0b6bb3}
+.ez-ask{align-items:center}

@@ -768,3 +768,6 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .bw-ok input{width:18px;height:18px}
 .bw-shake{animation:bwShake .35s}
 @keyframes bwShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.bw-cash{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;margin:8px 0;padding:10px 12px;border-radius:10px;background:#f4f7fb;border:1px solid #d6dee8;color:#1f1f1f;font-size:13.5px;line-height:1.55}
+.bw-cash>b{flex-basis:100%;font-size:14px}.bw-cash p{flex-basis:100%;margin:4px 0 0}
+.bw-cash-warn{border-color:#e0a13a;background:#fffaf0}.bw-cash-danger{border-color:#e05252;background:#fff1f0}

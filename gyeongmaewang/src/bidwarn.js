@@ -54,3 +54,33 @@ document.addEventListener("click", e => {
   e.preventDefault(); e.stopImmediatePropagation();
   const box = document.querySelector('.bw[data-bw="seal"]'); if(box){ box.classList.remove("bw-shake"); void box.offsetWidth; box.classList.add("bw-shake"); box.scrollIntoView({block:"center", behavior:"smooth"}); }
 }, true);
+
+/* ---------- 💼 자금 계획 한 줄 — 입찰표 금액을 바꿀 때마다 같이 바뀐다 ----------
+   자금 흐름 봇(t_leverage.js)에서 '한도 끝까지 당기는' 쪽이 13판 만에 현금이 바닥났다.
+   입찰할 때 잔금·대출·이자가 한 번도 숫자로 안 보였던 게 문제 — 입찰가 옆에 바로 붙인다.
+   ⚠️ 실제 경매는 입찰보증금(보통 최저가의 10%)을 입찰 때 내야 해서, 그 돈이 없으면 입찰 자체를 못 한다. */
+const BW_RATE = 5.0;   // 이자 가정 — loan.js 상호금융 표본(4.7~6.2%)의 가운데쯤. 실제 금리는 낙찰 뒤 상담에서 정해진다
+function bwCash(amt){
+  if(!K || !KP || !(amt > 0)) return null;
+  const c = typeof kcRec === "function" ? kcRec() : {}, cash = +c.cash || 0, dep = Math.round(KP.minBid * 0.1 / 10) * 10;
+  const acq = Math.round(amt * (typeof kAcqRate === "function" ? kAcqRate(amt) : 0.011) / 10) * 10;
+  const bal = amt + acq;                                   // 보증금 포함 총액(보증금은 잔금에서 빠진다)
+  const loan = Math.max(0, bal - cash), month = Math.round(loan * BW_RATE / 100 / 12 / 10) * 10;
+  return {cash, dep, acq, bal, loan, month, noDep:cash < dep, share:bal ? loan / bal : 0};
+}
+function bwCashHTML(amt){
+  const C = bwCash(amt); if(!C) return "";
+  const lv = C.noDep ? "danger" : C.share > 0.8 ? "warn" : "ok";
+  return `<div class="bw-cash bw-cash-${lv}"><b>💼 자금 계획</b>
+    <span>입찰보증금 <b>${kMan(C.dep)}</b></span><span>낙찰되면 필요한 돈 <b>${kMan(C.bal)}</b> <small>(입찰가+취득세 등)</small></span><span>지금 현금 <b>${C.cash < 0 ? "대출 " + kMan(-C.cash) : kMan(C.cash)}</b></span>
+    ${C.loan ? `<span>→ 대출 약 <b>${kMan(C.loan)}</b> 필요 · 연 ${BW_RATE}%면 한 달 이자 약 <b>${kMan(C.month)}</b></span>` : `<span class="up">→ 대출 없이 살 수 있어요</span>`}
+    ${C.noDep ? `<p class="down">⚠️ 입찰보증금(${kMan(C.dep)})도 현금에 없어요. 실제 경매에선 입찰 때 보증금을 내야 해서 <b>입찰 자체를 못 해요</b> — 게임에선 빚으로 처리해 줄 뿐이에요.</p>` : C.share > 0.8 ? `<p class="note">필요한 돈의 ${Math.round(C.share * 100)}%를 빌리게 돼요 — 매도가 늦어질수록 이자가 수익을 깎아요.</p>` : ""}</div>`;
+}
+if(typeof qaBidLine === "function"){
+  const _bw_line = qaBidLine;
+  qaBidLine = function(amt){ return _bw_line(amt) + bwCashHTML(amt); };
+}
+if(typeof keSealedHTML === "function"){
+  const _bw_sealed2 = keSealedHTML;
+  keSealedHTML = function(){ const h = _bw_sealed2(), c = bwCashHTML(K && K.sealed && K.sealed.amt); return c ? h.replace('<p class="note">제출 후에는 변경할 수 없습니다.</p>', c + '<p class="note">제출 후에는 변경할 수 없습니다.</p>') : h; };
+}

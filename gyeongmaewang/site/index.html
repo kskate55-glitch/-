@@ -2139,6 +2139,9 @@ body:has(#kfsRoot .nx-dock.inbot) #hubToasts{top:auto!important;bottom:96px!impo
 .bw-ok input{width:18px;height:18px}
 .bw-shake{animation:bwShake .35s}
 @keyframes bwShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.bw-cash{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;margin:8px 0;padding:10px 12px;border-radius:10px;background:#f4f7fb;border:1px solid #d6dee8;color:#1f1f1f;font-size:13.5px;line-height:1.55}
+.bw-cash>b{flex-basis:100%;font-size:14px}.bw-cash p{flex-basis:100%;margin:4px 0 0}
+.bw-cash-warn{border-color:#e0a13a;background:#fffaf0}.bw-cash-danger{border-color:#e05252;background:#fff1f0}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -38153,7 +38156,7 @@ function kcJudge(){
   const F = K.final, parts = [];
   const found = F.found / F.hid; parts.push([found, 40, `숨은 위험 ${F.found}/${F.hid} 발견`]);
   const rep = {good:1, part:1, min:0.55, full:0}[K.repair.id] ?? 0.5; parts.push([rep, 15, rep >= 1 ? "수리 범위 적절" : rep > 0 ? "수리를 아꼈다(매도가 손해)" : "수리 과투자"]);
-  const over = K.bid / (KP.trueMid * 0.78); const bidS = over <= 1 ? 1 : Math.max(0, 1 - (over - 1) * 5); parts.push([bidS, 15, bidS >= 1 ? "입찰가 절제" : "입찰가가 높았다"]);
+  const over = (K.bid + (KP.hidden || []).filter(h => h.k === "assume" || h.k === "fee").reduce((s, h) => s + (+h.cost || 0), 0)) / (KP.trueMid * 0.78);   // 떠안는 돈까지 낙찰가로 본다 const bidS = over <= 1 ? 1 : Math.max(0, 1 - (over - 1) * 5); parts.push([bidS, 15, bidS >= 1 ? "입찰가 절제" : "입찰가가 높았다"]);
   const rows = kcPredCompare();
   if(rows){ const e = rows.reduce((s, r) => s + (r.k === "sale" ? Math.max(0, 1 - Math.abs(r.err)/10) : r.k === "repair" ? Math.max(0, 1 - Math.abs(r.err)/80) : Math.max(0, 1 - Math.abs(r.err)/25)), 0) / rows.length; parts.push([e, 30, `판단 기록 정확도 ${Math.round(e*100)}점`]); }
   const tot = parts.reduce((s,p)=>s+p[1],0), sc = parts.reduce((s,p)=>s+p[0]*p[1],0) / tot * 100;
@@ -42950,7 +42953,11 @@ document.addEventListener("click", e => {
    ① 패찰했을 때도 판단을 평가한다 — 상한을 지킨 패찰은 '잘한 판단'이다.
    ② 낙찰 결과를 "당시 알 수 있던 것 → 내 판단 → 실제로 벌어진 일 → 다음에 볼 것" 순서로 한 장에.
    ③ 입찰 전엔 알 방법이 없던 일(무작위 사건·계약 파기)은 '운'으로 따로 표시하고 실수로 치지 않는다. */
-function frCeil(){ return Math.round((+KP.trueMid || 0) * 0.78 / 10) * 10; }   // career.js kcJudge의 '입찰가 절제' 기준과 같은 선
+// career.js kcJudge의 '입찰가 절제' 기준과 같은 선 — ⚠️ 떠안는 돈(인수·관리비)은 낙찰가 옆에 따로 붙는 가격표라 빼야 한다.
+//    예전엔 빼지 않아서, 6,000만원 인수가 있는 물건을 최저가에 쓰고 진 사람에게 "조금 더 써도 남았다"고 했다(밸런스 점검 중 발견).
+//    판정은 끝난 뒤라 숨은 값을 써도 된다(frPassVerdict와 같다).
+function frTakeOver(){ return (KP.hidden || []).filter(h => h.k === "assume" || h.k === "fee").reduce((s, h) => s + (+h.cost || 0), 0); }
+function frCeil(){ return Math.round(((+KP.trueMid || 0) * 0.78 - frTakeOver()) / 10) * 10; }
 function frLuck(){
   const out = [];
   (K.defects || []).forEach(d => { if(!d.known && +d.cost > 0 && !/누전|누수|관리비/.test(d.t)) out.push(d.t.replace(/^\S+\s/, "") + (d.cost ? ` (${kMan(d.cost)})` : "")); });
@@ -42962,7 +42969,8 @@ function frLostJudgeHTML(){
   const r = K.result, ceil = frCeil(), me = +K.bid || (r.bids.find(b => b.me) || {}).amt || 0, top = r.other ? r.other.amt : 0;
   const rate = typeof keRate === "function" ? keRate() : null;
   let good, line;
-  if(me > ceil){ good = false; line = "내 가격도 이미 높았어요 — 이겼어도 남기기 어려웠을 수 있어요. 다음엔 상한을 먼저 정하고 쓰세요."; }
+  if(ceil < KP.minBid && frTakeOver() > 0){ good = false; line = `이 물건은 떠안을 돈(${kMan(frTakeOver())}) 때문에 최저가에 써도 남기 어려웠어요 — 이번엔 입찰하지 않는 게 정답이었어요. 진 게 오히려 다행이에요.`; }
+  else if(me > ceil){ good = false; line = "내 가격도 이미 높았어요 — 이겼어도 남기기 어려웠을 수 있어요. 다음엔 상한을 먼저 정하고 쓰세요."; }
   else if(me >= ceil * 0.9){ good = true; line = top > ceil ? "원칙을 지킨 패찰이에요. 1등은 남기기 어려운 가격까지 올라갔어요 — 따라가지 않은 게 판단이에요." : "남는 선 안에서 제대로 썼어요. 이번엔 경쟁자가 조금 더 절박했을 뿐이에요."; }
   else { good = null; line = "조금 더 써도 남는 가격이었어요 — 너무 아낀 것도 다음엔 고칠 점이에요."; }
   if(good === true && rate != null && rate < 50){ good = null; line = `가격 선은 지켰지만, 정보 파악률 ${rate}%로는 그 선 자체를 믿기 어려워요 — 다음엔 서류·현장을 더 보고 상한을 정하세요.`; }
@@ -43006,7 +43014,7 @@ function frPassVerdict(){
   const hid = KP.hidden || [], cost = h => +h.cost || 0;
   const big = hid.filter(h => cost(h) >= Math.max(300, KP.trueMid * 0.03));
   const riskAll = hid.reduce((s, h) => s + cost(h), 0);
-  const ceil = frCeil(), room = ceil - riskAll - KP.minBid;          // 최저가에 써도 남는가
+  const ceil = frCeil(), room = ceil - (riskAll - frTakeOver()) - KP.minBid;   // frCeil이 인수·관리비를 이미 뺐다 — 두 번 빼지 않는다          // 최저가에 써도 남는가
   const acts = KP.actions || KP.research || [], done = acts.filter(a => K.done && K.done[a.id]).length, half = done >= Math.ceil(acts.length / 2);
   const foundBig = big.filter(h => K.found && K.found[h.id]), missBig = big.filter(h => !(K.found && K.found[h.id]));
   const how = h => ((KP.actions || []).find(a => a.id === "h_" + h.id) || {}).t || (h.act && h.act.t) || ((KP.research || (typeof K_RESEARCH !== "undefined" ? K_RESEARCH : [])).find(a => a.reveal === h.id) || {}).t || "추가 조사";
@@ -43181,10 +43189,13 @@ function lwSummaryHTML(){
   let M = null; try{ M = typeof qaBidModel === "function" ? qaBidModel() : null; }catch(e){ M = null; }
   const s = v => (v >= 0 ? "+" : "−") + kMan(Math.abs(Math.round(v / 10) * 10));
   const rng = amt => M ? `${s(M.net(M.band.lo, amt))} ~ ${s(M.net(M.band.hi, amt))}` : "—";
-  const line = M ? (win > M.z.agg ? `1등 가격은 내 정보로 본 <b>남기기 어려운 선(${kMan(M.z.agg)})</b>을 넘었어요.` : `1등 가격도 내 정보로 본 남는 선(${kMan(M.z.agg)}) 안이었어요 — 따라가도 남았을 수 있어요.`) : "";
+  // 세 칸으로 나눠 말한다 — 예전엔 '공격 구간'(제일 잘 팔려야 남는 값)까지 "따라가도 남았을 수 있다"고 해서, 조심한 사람을 괜히 아쉽게 만들었다
+  const line = !M ? "" : win > M.z.agg ? `1등 가격은 내 정보로 본 <b>남기기 어려운 선(${kMan(M.z.agg)})</b>을 넘었어요 — 따라가지 않은 게 판단이에요.`
+    : win > M.z.bal ? `1등 가격은 <b>제일 잘 팔려야 남는 공격 구간</b>(${kMan(M.z.bal)}~${kMan(M.z.agg)})이었어요 — 따라갔다면 운에 기대는 거래였어요.`
+    : `1등 가격도 균형 구간(${kMan(M.z.bal)}) 안이었어요 — 따라가도 남았을 가능성이 커요. 다음엔 상한을 조금 더 믿어 봐도 돼요.`;
   const later = typeof dpRec === "function" && dpRec().after.some(x => x.kind === "lost" && !x.seen && x.my === me && x.win === win);
   return `<div class="lw-sum">
-    <div class="lw-grid"><span>내 입찰가</span><b>${kMan(me)}</b><span>낙찰가(1등)</span><b>${kMan(win)}</b><span>차이</span><b class="down">+${kMan(gap)}</b>${M ? `<span>내 정보로 본 남는 선</span><b>${kMan(M.z.agg)}</b>` : ""}</div>
+    <div class="lw-grid"><span>내 입찰가</span><b>${kMan(me)}</b><span>낙찰가(1등)</span><b>${kMan(win)}</b><span>차이</span><b class="down">+${kMan(gap)}</b>${M ? `<span>내 정보로 본 균형 / 한계</span><b>${kMan(M.z.bal)} / ${kMan(M.z.agg)}</b>` : ""}</div>
     ${M ? `<div class="lw-if"><div><small>내 가격(${kMan(me)})에 샀다면</small><b>${rng(me)}</b></div><div><small>1등 가격(${kMan(win)})에 샀다면</small><b>${rng(win)}</b></div></div>
     <p class="note">${line} <b>${kMan(gap)} 더 썼으면 이겼다</b>가 아니라, <b>그 돈을 더 쓰면 어떤 거래가 됐는지</b>를 보세요. (입찰표와 같은 계산 — 내가 조사한 정보 기준)</p>` : ""}
     ${later ? `<p class="lw-later">🔭 그 가격이 좋은 가격이었을까요? <b>결과는 며칠 뒤 알 수 있어요</b> — 그 집이 어떻게 됐는지 소식이 올 거예요.</p>` : ""}
@@ -46048,6 +46059,36 @@ document.addEventListener("click", e => {
   e.preventDefault(); e.stopImmediatePropagation();
   const box = document.querySelector('.bw[data-bw="seal"]'); if(box){ box.classList.remove("bw-shake"); void box.offsetWidth; box.classList.add("bw-shake"); box.scrollIntoView({block:"center", behavior:"smooth"}); }
 }, true);
+
+/* ---------- 💼 자금 계획 한 줄 — 입찰표 금액을 바꿀 때마다 같이 바뀐다 ----------
+   자금 흐름 봇(t_leverage.js)에서 '한도 끝까지 당기는' 쪽이 13판 만에 현금이 바닥났다.
+   입찰할 때 잔금·대출·이자가 한 번도 숫자로 안 보였던 게 문제 — 입찰가 옆에 바로 붙인다.
+   ⚠️ 실제 경매는 입찰보증금(보통 최저가의 10%)을 입찰 때 내야 해서, 그 돈이 없으면 입찰 자체를 못 한다. */
+const BW_RATE = 5.0;   // 이자 가정 — loan.js 상호금융 표본(4.7~6.2%)의 가운데쯤. 실제 금리는 낙찰 뒤 상담에서 정해진다
+function bwCash(amt){
+  if(!K || !KP || !(amt > 0)) return null;
+  const c = typeof kcRec === "function" ? kcRec() : {}, cash = +c.cash || 0, dep = Math.round(KP.minBid * 0.1 / 10) * 10;
+  const acq = Math.round(amt * (typeof kAcqRate === "function" ? kAcqRate(amt) : 0.011) / 10) * 10;
+  const bal = amt + acq;                                   // 보증금 포함 총액(보증금은 잔금에서 빠진다)
+  const loan = Math.max(0, bal - cash), month = Math.round(loan * BW_RATE / 100 / 12 / 10) * 10;
+  return {cash, dep, acq, bal, loan, month, noDep:cash < dep, share:bal ? loan / bal : 0};
+}
+function bwCashHTML(amt){
+  const C = bwCash(amt); if(!C) return "";
+  const lv = C.noDep ? "danger" : C.share > 0.8 ? "warn" : "ok";
+  return `<div class="bw-cash bw-cash-${lv}"><b>💼 자금 계획</b>
+    <span>입찰보증금 <b>${kMan(C.dep)}</b></span><span>낙찰되면 필요한 돈 <b>${kMan(C.bal)}</b> <small>(입찰가+취득세 등)</small></span><span>지금 현금 <b>${C.cash < 0 ? "대출 " + kMan(-C.cash) : kMan(C.cash)}</b></span>
+    ${C.loan ? `<span>→ 대출 약 <b>${kMan(C.loan)}</b> 필요 · 연 ${BW_RATE}%면 한 달 이자 약 <b>${kMan(C.month)}</b></span>` : `<span class="up">→ 대출 없이 살 수 있어요</span>`}
+    ${C.noDep ? `<p class="down">⚠️ 입찰보증금(${kMan(C.dep)})도 현금에 없어요. 실제 경매에선 입찰 때 보증금을 내야 해서 <b>입찰 자체를 못 해요</b> — 게임에선 빚으로 처리해 줄 뿐이에요.</p>` : C.share > 0.8 ? `<p class="note">필요한 돈의 ${Math.round(C.share * 100)}%를 빌리게 돼요 — 매도가 늦어질수록 이자가 수익을 깎아요.</p>` : ""}</div>`;
+}
+if(typeof qaBidLine === "function"){
+  const _bw_line = qaBidLine;
+  qaBidLine = function(amt){ return _bw_line(amt) + bwCashHTML(amt); };
+}
+if(typeof keSealedHTML === "function"){
+  const _bw_sealed2 = keSealedHTML;
+  keSealedHTML = function(){ const h = _bw_sealed2(), c = bwCashHTML(K && K.sealed && K.sealed.amt); return c ? h.replace('<p class="note">제출 후에는 변경할 수 없습니다.</p>', c + '<p class="note">제출 후에는 변경할 수 없습니다.</p>') : h; };
+}
 
 window.GMW_STANDALONE = true;
 var _gmwArt0 = artUrl; artUrl = function(id){ var u = _gmwArt0(id); return u ? u.replace(/^\/_blob\/([0-9a-f]{32})$/, "assets/$1.webp") : null; };

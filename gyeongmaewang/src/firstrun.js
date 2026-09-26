@@ -120,7 +120,11 @@ document.addEventListener("click", e => {
    ① 패찰했을 때도 판단을 평가한다 — 상한을 지킨 패찰은 '잘한 판단'이다.
    ② 낙찰 결과를 "당시 알 수 있던 것 → 내 판단 → 실제로 벌어진 일 → 다음에 볼 것" 순서로 한 장에.
    ③ 입찰 전엔 알 방법이 없던 일(무작위 사건·계약 파기)은 '운'으로 따로 표시하고 실수로 치지 않는다. */
-function frCeil(){ return Math.round((+KP.trueMid || 0) * 0.78 / 10) * 10; }   // career.js kcJudge의 '입찰가 절제' 기준과 같은 선
+// career.js kcJudge의 '입찰가 절제' 기준과 같은 선 — ⚠️ 떠안는 돈(인수·관리비)은 낙찰가 옆에 따로 붙는 가격표라 빼야 한다.
+//    예전엔 빼지 않아서, 6,000만원 인수가 있는 물건을 최저가에 쓰고 진 사람에게 "조금 더 써도 남았다"고 했다(밸런스 점검 중 발견).
+//    판정은 끝난 뒤라 숨은 값을 써도 된다(frPassVerdict와 같다).
+function frTakeOver(){ return (KP.hidden || []).filter(h => h.k === "assume" || h.k === "fee").reduce((s, h) => s + (+h.cost || 0), 0); }
+function frCeil(){ return Math.round(((+KP.trueMid || 0) * 0.78 - frTakeOver()) / 10) * 10; }
 function frLuck(){
   const out = [];
   (K.defects || []).forEach(d => { if(!d.known && +d.cost > 0 && !/누전|누수|관리비/.test(d.t)) out.push(d.t.replace(/^\S+\s/, "") + (d.cost ? ` (${kMan(d.cost)})` : "")); });
@@ -132,7 +136,8 @@ function frLostJudgeHTML(){
   const r = K.result, ceil = frCeil(), me = +K.bid || (r.bids.find(b => b.me) || {}).amt || 0, top = r.other ? r.other.amt : 0;
   const rate = typeof keRate === "function" ? keRate() : null;
   let good, line;
-  if(me > ceil){ good = false; line = "내 가격도 이미 높았어요 — 이겼어도 남기기 어려웠을 수 있어요. 다음엔 상한을 먼저 정하고 쓰세요."; }
+  if(ceil < KP.minBid && frTakeOver() > 0){ good = false; line = `이 물건은 떠안을 돈(${kMan(frTakeOver())}) 때문에 최저가에 써도 남기 어려웠어요 — 이번엔 입찰하지 않는 게 정답이었어요. 진 게 오히려 다행이에요.`; }
+  else if(me > ceil){ good = false; line = "내 가격도 이미 높았어요 — 이겼어도 남기기 어려웠을 수 있어요. 다음엔 상한을 먼저 정하고 쓰세요."; }
   else if(me >= ceil * 0.9){ good = true; line = top > ceil ? "원칙을 지킨 패찰이에요. 1등은 남기기 어려운 가격까지 올라갔어요 — 따라가지 않은 게 판단이에요." : "남는 선 안에서 제대로 썼어요. 이번엔 경쟁자가 조금 더 절박했을 뿐이에요."; }
   else { good = null; line = "조금 더 써도 남는 가격이었어요 — 너무 아낀 것도 다음엔 고칠 점이에요."; }
   if(good === true && rate != null && rate < 50){ good = null; line = `가격 선은 지켰지만, 정보 파악률 ${rate}%로는 그 선 자체를 믿기 어려워요 — 다음엔 서류·현장을 더 보고 상한을 정하세요.`; }
@@ -176,7 +181,7 @@ function frPassVerdict(){
   const hid = KP.hidden || [], cost = h => +h.cost || 0;
   const big = hid.filter(h => cost(h) >= Math.max(300, KP.trueMid * 0.03));
   const riskAll = hid.reduce((s, h) => s + cost(h), 0);
-  const ceil = frCeil(), room = ceil - riskAll - KP.minBid;          // 최저가에 써도 남는가
+  const ceil = frCeil(), room = ceil - (riskAll - frTakeOver()) - KP.minBid;   // frCeil이 인수·관리비를 이미 뺐다 — 두 번 빼지 않는다          // 최저가에 써도 남는가
   const acts = KP.actions || KP.research || [], done = acts.filter(a => K.done && K.done[a.id]).length, half = done >= Math.ceil(acts.length / 2);
   const foundBig = big.filter(h => K.found && K.found[h.id]), missBig = big.filter(h => !(K.found && K.found[h.id]));
   const how = h => ((KP.actions || []).find(a => a.id === "h_" + h.id) || {}).t || (h.act && h.act.t) || ((KP.research || (typeof K_RESEARCH !== "undefined" ? K_RESEARCH : [])).find(a => a.reveal === h.id) || {}).t || "추가 조사";

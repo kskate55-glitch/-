@@ -94,7 +94,7 @@ function kcJudge(){
   const F = K.final, parts = [];
   const found = F.found / F.hid; parts.push([found, 40, `숨은 위험 ${F.found}/${F.hid} 발견`]);
   const rep = {good:1, part:1, min:0.55, full:0}[K.repair.id] ?? 0.5; parts.push([rep, 15, rep >= 1 ? "수리 범위 적절" : rep > 0 ? "수리를 아꼈다(매도가 손해)" : "수리 과투자"]);
-  const over = K.bid / (KP.trueMid * 0.78); const bidS = over <= 1 ? 1 : Math.max(0, 1 - (over - 1) * 5); parts.push([bidS, 15, bidS >= 1 ? "입찰가 절제" : "입찰가가 높았다"]);
+  const over = (K.bid + (KP.hidden || []).filter(h => h.k === "assume" || h.k === "fee").reduce((s, h) => s + (+h.cost || 0), 0)) / (KP.trueMid * 0.78);   // 떠안는 돈까지 낙찰가로 본다 const bidS = over <= 1 ? 1 : Math.max(0, 1 - (over - 1) * 5); parts.push([bidS, 15, bidS >= 1 ? "입찰가 절제" : "입찰가가 높았다"]);
   const rows = kcPredCompare();
   if(rows){ const e = rows.reduce((s, r) => s + (r.k === "sale" ? Math.max(0, 1 - Math.abs(r.err)/10) : r.k === "repair" ? Math.max(0, 1 - Math.abs(r.err)/80) : Math.max(0, 1 - Math.abs(r.err)/25)), 0) / rows.length; parts.push([e, 30, `판단 기록 정확도 ${Math.round(e*100)}점`]); }
   const tot = parts.reduce((s,p)=>s+p[1],0), sc = parts.reduce((s,p)=>s+p[0]*p[1],0) / tot * 100;

@@ -13,10 +13,13 @@ function lwSummaryHTML(){
   let M = null; try{ M = typeof qaBidModel === "function" ? qaBidModel() : null; }catch(e){ M = null; }
   const s = v => (v >= 0 ? "+" : "−") + kMan(Math.abs(Math.round(v / 10) * 10));
   const rng = amt => M ? `${s(M.net(M.band.lo, amt))} ~ ${s(M.net(M.band.hi, amt))}` : "—";
-  const line = M ? (win > M.z.agg ? `1등 가격은 내 정보로 본 <b>남기기 어려운 선(${kMan(M.z.agg)})</b>을 넘었어요.` : `1등 가격도 내 정보로 본 남는 선(${kMan(M.z.agg)}) 안이었어요 — 따라가도 남았을 수 있어요.`) : "";
+  // 세 칸으로 나눠 말한다 — 예전엔 '공격 구간'(제일 잘 팔려야 남는 값)까지 "따라가도 남았을 수 있다"고 해서, 조심한 사람을 괜히 아쉽게 만들었다
+  const line = !M ? "" : win > M.z.agg ? `1등 가격은 내 정보로 본 <b>남기기 어려운 선(${kMan(M.z.agg)})</b>을 넘었어요 — 따라가지 않은 게 판단이에요.`
+    : win > M.z.bal ? `1등 가격은 <b>제일 잘 팔려야 남는 공격 구간</b>(${kMan(M.z.bal)}~${kMan(M.z.agg)})이었어요 — 따라갔다면 운에 기대는 거래였어요.`
+    : `1등 가격도 균형 구간(${kMan(M.z.bal)}) 안이었어요 — 따라가도 남았을 가능성이 커요. 다음엔 상한을 조금 더 믿어 봐도 돼요.`;
   const later = typeof dpRec === "function" && dpRec().after.some(x => x.kind === "lost" && !x.seen && x.my === me && x.win === win);
   return `<div class="lw-sum">
-    <div class="lw-grid"><span>내 입찰가</span><b>${kMan(me)}</b><span>낙찰가(1등)</span><b>${kMan(win)}</b><span>차이</span><b class="down">+${kMan(gap)}</b>${M ? `<span>내 정보로 본 남는 선</span><b>${kMan(M.z.agg)}</b>` : ""}</div>
+    <div class="lw-grid"><span>내 입찰가</span><b>${kMan(me)}</b><span>낙찰가(1등)</span><b>${kMan(win)}</b><span>차이</span><b class="down">+${kMan(gap)}</b>${M ? `<span>내 정보로 본 균형 / 한계</span><b>${kMan(M.z.bal)} / ${kMan(M.z.agg)}</b>` : ""}</div>
     ${M ? `<div class="lw-if"><div><small>내 가격(${kMan(me)})에 샀다면</small><b>${rng(me)}</b></div><div><small>1등 가격(${kMan(win)})에 샀다면</small><b>${rng(win)}</b></div></div>
     <p class="note">${line} <b>${kMan(gap)} 더 썼으면 이겼다</b>가 아니라, <b>그 돈을 더 쓰면 어떤 거래가 됐는지</b>를 보세요. (입찰표와 같은 계산 — 내가 조사한 정보 기준)</p>` : ""}
     ${later ? `<p class="lw-later">🔭 그 가격이 좋은 가격이었을까요? <b>결과는 며칠 뒤 알 수 있어요</b> — 그 집이 어떻게 됐는지 소식이 올 거예요.</p>` : ""}

@@ -336,3 +336,6 @@ Object.assign(ART_DEFAULT, { cg_il_d03_b:"c1327a4d5c43a24cc43f4ddaab921ac7", cg_
 
 // 외전 장면 그림(v198): J01 재훈 가족 — a 저녁 식탁에서 들쭉날쭉한 달력을 올려다보는 세 식구(s1, 대표·머그 기호 흐림)
 Object.assign(ART_DEFAULT, { cg_il_j01:"7ee4ad100a40a69360d84bcd69942df4", cg_il_j01_a:"7ee4ad100a40a69360d84bcd69942df4" });
+
+// 외전 장면 그림(v199): J01 b 민 사장이 건물 아래 땅 칸을 짚는 장면(s3)
+Object.assign(ART_DEFAULT, { cg_il_j01_b:"78d6e89e664df5342fe98960f0afdfc4" });

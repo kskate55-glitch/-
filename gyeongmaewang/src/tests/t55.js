@@ -33,12 +33,12 @@ for(const [w,h] of [[1280,800],[390,844]]){
  // 인생 조건: 도현 월급·연차, 서윤 조사 3일
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; lfNew('dohyun'); lfRec().intro=false; arenaTab='life'; renderArena(); });
  const m = await p.evaluate(()=>{ const M=lfMonthly(0.5); return [M.income, M.rent, lfRec().leave]; }); console.log(w,'dohyun month',m);
- ok(m[0]===390 && m[2]===15, w+' 도현 월급 390·연차 15');
+ ok(m[0]===390 && m[2]===3, w+' 도현 월급 390·연차 3(v215)');
  await p.evaluate(()=>{ kcRec().cash+=3000; LF_SPOT='board'; renderArena(); }); await p.waitForTimeout(200);
  await p.click('[data-bdplay]:not([disabled])'); await p.waitForTimeout(600);
  await p.evaluate(()=>{ if(K.intro){K.intro=false;renderArena();} }); await p.waitForTimeout(1600);
  const dd = await p.evaluate(()=>[K.lf.days.map(d=>d.dow), lfCanLeave(), !!document.querySelector('[data-lfleave]')]); console.log(w,'days',dd);
- if(dd[1]){ await p.evaluate(()=>{ if(document.querySelector('.sf-slim') && !document.querySelector('.sf-open')) document.querySelector('[data-sfside]').click(); }); await p.waitForTimeout(150); await p.click('[data-lfleave]'); await p.waitForTimeout(300); ok(await p.evaluate(()=>lfRec().leave===14 && K.timeLeft>150), w+' 연차 쓰면 시간이 늘어난다'); }
+ if(dd[1]){ await p.evaluate(()=>{ if(document.querySelector('.sf-slim') && !document.querySelector('.sf-open')) document.querySelector('[data-sfside]').click(); }); await p.waitForTimeout(150); await p.click('[data-lfleave]'); await p.waitForTimeout(300); ok(await p.evaluate(()=>lfRec().leave===2 && K.timeLeft>150), w+' 연차 쓰면 시간이 늘어난다'); }
  await bad('research');
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; lfNew('seoyun'); lfRec().intro=false; K=null; kcRec().cash+=500; arenaTab='life'; LF_SPOT='board'; renderArena(); }); await p.waitForTimeout(200);
  await p.click('[data-bdplay]:not([disabled])'); await p.waitForTimeout(500);
@@ -48,7 +48,7 @@ for(const [w,h] of [[1280,800],[390,844]]){
  ok(!!(await p.$('[data-lfpath]')), w+' 인생 갈림길 뜸'); await bad('path');
  await p.click('[data-lfpath="job"]'); await p.waitForTimeout(1600);
  ok(await p.evaluate(()=>lfRec().path==='job' && lfMonthly().income===300 && lfWindow(2)[0]===1170), w+' 서윤 취업 → 월급 300·평일 저녁만');
- ok(!(await p.$('#cpEnd')), w+' 갈림길만으로는 엔딩 없음'); await p.evaluate(()=>{ LF_SPOT='wall'; renderArena(); }); await p.waitForTimeout(200); await p.click('[data-cpsettle]'); await p.click('[data-cpsettle]'); await p.waitForTimeout(500); ok(!!(await p.$('#cpEnd')), w+' 지금 결산하기 → 엔딩 화면'); await p.click('[data-cp="go"]'); await p.waitForTimeout(400); await p.click('[data-cp="career"]'); await p.waitForTimeout(500);
+ ok(!(await p.$('#cpEnd')), w+' 갈림길만으로는 엔딩 없음'); await p.evaluate(()=>{ LF_SPOT='wall'; renderArena(); }); await p.waitForTimeout(200); await p.click('[data-cpsettle]'); await p.waitForTimeout(400); await p.click('[data-cpsettle]'); await p.waitForTimeout(500); ok(!!(await p.$('#cpEnd')), w+' 지금 결산하기 → 엔딩 화면'); await p.click('[data-cp="go"]'); await p.waitForTimeout(400); await p.click('[data-cp="career"]'); await p.waitForTimeout(500);
  ok(!!(await p.$('[data-gxreplay="seoyun"]')), w+' 벽: 오프닝 다시 보기');
  await p.screenshot({path:`gx_wall_${w}.png`});
  // 전환 배너: 자고 일어나기

@@ -34,9 +34,9 @@ for(const [w,h] of [[1280,800],[390,844]]){ await p.setViewportSize({width:w,hei
 }
 // 4) 경쟁자 현실 보정: 평균 응찰자 · 단독 비율 · 서울 빌라 낙찰가율
 const st=await p.evaluate(()=>{ localStorage.clear(); kcRec().fr={full:true}; kcRec().bids=5; cpUnlockAll(); const _r=renderArena; renderArena=function(){}; let n=0,sum=0,solo=0,rat=[]; for(let s=1;s<=300;s++){ K_PROP_NEXT='k1'; KC_MODE='career'; KC_INTRO=false; kStart(s*7919); K.intro=false; const k=K.rivals.length; sum+=k+1; if(!k) solo++; const r=kRng(s+3); let mx=KP.minBid; K.rivals.forEach(v=>{ const a=KP.minBid*(v.lo+(v.hi-v.lo)*r()); if(a>mx) mx=a; }); rat.push(mx/KP.appraisal); n++; } renderArena=_r; rat.sort((a,b)=>a-b); return {avg:sum/n, solo:solo/n, med:rat[Math.floor(n/2)]}; });
-ok(st.avg>=3.6 && st.avg<=4.9, `평균 응찰자(나 포함) ${st.avg.toFixed(2)}명 — 실제 수도권 빌라 4.2~4.4명 근처`);
+ok(st.avg>=1.8 && st.avg<=3.3, `평균 응찰자(나 포함) ${st.avg.toFixed(2)}명 — v215: 빌라는 보통 1~3명(현장 경험 기준)`);
 ok(st.solo>=0.1 && st.solo<=0.3, `단독 입찰 ${(st.solo*100).toFixed(0)}% — 가끔은 나 혼자`);
-ok(st.med>=0.70 && st.med<=0.79, `서울 빌라 낙찰가율 중간값 ${(st.med*100).toFixed(1)}% — 실제 약 73~75%`);
+ok(st.med>=0.64 && st.med<=0.72, `서울 빌라 경쟁자 최고가 중간값 ${(st.med*100).toFixed(1)}% — v215: 2회 유찰 뒤 67% 안팎`);
 const first=await p.evaluate(()=>{ localStorage.clear(); delete arenaRec().career; kcRec().fr={full:true}; const _r=renderArena; renderArena=function(){}; let bad=0; for(let s=1;s<=60;s++){ K_PROP_NEXT='k1'; KC_MODE='career'; KC_INTRO=false; kStart(s*31); if(K.rivals.length<1||K.rivals.length>3) bad++; } renderArena=_r; return bad; });
 ok(first===0, '생애 첫 입찰은 경쟁자 1~3명(보통 판)');
 await b.close(); console.log(errs.length?'FAIL '+errs.join(' | '):'ALL OK');})();

@@ -50122,7 +50122,8 @@ function rbApply(){
   if(m < 0.6) return;
   const heat = 1 + ((KP.rivalMul || 1) - 1) * 0.5;
   const rate = Math.min(0.97, (reg.rate + kind.rateAdd) * heat);
-  K.rivals = K.rivals.map(v => { const [a, b] = rbStyle(v.t || ""); const lo = Math.max(1, rate * a / m), hi = Math.max(lo + 0.004, rate * b / m); return Object.assign({}, v, {lo, hi, rb:1}); });
+  // 최저가에 딱 맞춰 쓰는 사람은 드물다 — 몇십만~몇백만 원은 얹는다(1.005~1.06배)
+  K.rivals = K.rivals.map(v => { const [a, b] = rbStyle(v.t || ""); const lo = Math.max(1.005, rate * a / m), hi = Math.max(lo + 0.05, rate * b / m); return Object.assign({}, v, {lo, hi, rb:1}); });
 }
 function rbStat(){ const reg = rbRegion(), k = rbKind(); const R = RB_REGION[reg], D = RB_KIND[k]; return {reg, kind:k, rate:Math.min(0.97, R.rate + D.rateAdd), bidders:+(R.bidders * D.bidMul).toFixed(1)}; }
 if(typeof kStart === "function"){ const _rb_kStart = kStart; kStart = function(seed){ const out = _rb_kStart.apply(this, arguments); try{ rbApply(); }catch(e){} return out; }; }

@@ -96,3 +96,7 @@ Object.assign(ART_DEFAULT, AS_OP_ART);
 // 받은 오프닝 8차(v147): 재훈 — 수리 현장 계단참
 AS_OP_ART.op_jaehoon_1 = "3255a0b5d3c1b0ba1da770840281fde6";
 Object.assign(ART_DEFAULT, AS_OP_ART);
+
+// 받은 오프닝 9차(v148): 재훈 — 벽 두드리는 손 클로즈업
+AS_OP_ART.op_jaehoon_1_4 = "3f4387c162e1ba02c44937fa53af6fe0";
+Object.assign(ART_DEFAULT, AS_OP_ART);

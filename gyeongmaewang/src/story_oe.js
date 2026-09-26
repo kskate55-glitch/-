@@ -67,6 +67,9 @@ const OE_ART = {
   oe_eunkyung_op3:"769a616d8d34c67fb4b9b7fab9e83344", // 밤의 식탁, 깨어나는 오래된 감각
   oe_eunkyung_end1:"2c2fe7c376ab6ddf6fee63abc385d010",// 두 가지 색 펜으로 채운 수첩
   oe_taesik_op1:"79078bf2177a97f9205f02c84e256ecb",   // 갈 데 없는 화요일 새벽
-  oe_taesik_op2:"497fe031f046fe91045b850bf31bcb71"    // 공원 정자의 아저씨들
+  oe_taesik_op2:"497fe031f046fe91045b850bf31bcb71",   // 공원 정자의 아저씨들
+  oe_taesik_op3:"8fb27c9ede1c77f3858535935714bb8f",   // 손녀가 알려 준 대로 처음 열어 본 화면
+  oe_dohyun_op1:"50b459fde65f315d0bb7a42df2aade9d",   // 퇴근 후 원룸에서 가계 엑셀을 여는 밤
+  oe_dohyun_op2:"f3684437d1281c4b2c38534823abee5b"    // 주거비 기사를 보다 한숨 쉬는 비 오는 밤
 };
 if(typeof ART_DEFAULT !== "undefined") Object.assign(ART_DEFAULT, OE_ART);

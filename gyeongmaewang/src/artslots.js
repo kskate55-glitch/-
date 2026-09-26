@@ -330,3 +330,6 @@ Object.assign(ART_DEFAULT, { cg_il_s03:"79d5d8acddfd855f8966fb14be69c877", cg_il
 
 // 외전 장면 그림(v196): M01 미정 — c 브레이크 타임 계산기(s1) · a 골목에서 백 사장의 재개발 소문(s2) · b 지도 위 경계선 담 하나 차이(s4, 대표) / D03 c 노을에 노트북 덮는 도현(s9, 대표)
 Object.assign(ART_DEFAULT, { cg_il_m01:"3f36e33d22ea53c4189bb9d44377adcb", cg_il_m01_a:"e8ac1ebecac98c80007ec92aacd70bc1", cg_il_m01_b:"3f36e33d22ea53c4189bb9d44377adcb", cg_il_m01_c:"36ae70f73174d5a7b132380ddd1f446a", cg_il_d03:"54af0032826996d9dae52ac80e595dcf", cg_il_d03_c:"54af0032826996d9dae52ac80e595dcf" });
+
+// 외전 장면 그림(v197): D03 b 권 세무사 상담(s4) / M03 미정 — a 카운터에서 장부·통장(s1, 통장 글자 흐림) · b 셔터 올린 빈 가게와 조 대표(s3, 대표·운동화 표시 흐림) · c 셔터 앞 달력 동그라미(s8)
+Object.assign(ART_DEFAULT, { cg_il_d03_b:"c1327a4d5c43a24cc43f4ddaab921ac7", cg_il_m03:"c757d02d5db29f5a1319c775a44f2fe2", cg_il_m03_a:"2286f1b3537a0506ced4a3823bb6c362", cg_il_m03_b:"c757d02d5db29f5a1319c775a44f2fe2", cg_il_m03_c:"26eb89cff7c6cdd5124fe3acc0e0ba2a" });

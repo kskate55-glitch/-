@@ -23,10 +23,10 @@ ok(o.n===33 && o.ok===33 && o.distinct===33, '오프닝 33칸 전부 전용 그�
 const g=await p.evaluate(async()=>{ localStorage.clear(); const c=kcRec(); delete c.life; c.fr={full:true}; page='arena'; arenaTab='king'; KC_MODE='career'; K_PROP_NEXT='f11'; KC_INTRO=false; kStart(5); K.intro=false;
   const pick=['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s));
   const loads=await Promise.all(pick.map(k=>new Promise(r=>{ const u=artUrl(k); if(!u) return r(false); const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=u; })));
-  K_PROP_NEXT='f31'; kStart(5); K.intro=false; const other=vnBgPick('bg_room_empty');
-  return {pick, loads, other}; });
+  const other=Object.keys(K_PROPS||{}).filter(id=>/^f\d\d$/.test(id)).filter(id=>['ext','door','in'].some(k=>!AS_BG_ART['bg_case_'+id+'_'+k]));
+  return {pick, loads, other, n:Object.keys(K_PROPS).filter(id=>/^f\d\d$/.test(id)).length}; });
 ok(g.pick.join()==='bg_case_f11_ext,bg_case_f11_door,bg_case_f11_in' && g.loads.every(Boolean), 'f11 조사·명도·빈집 장면이 전용 배경 3장으로 바뀜');
-ok(g.other==='bg_room_empty', '배경이 아직 없는 칸(f31 실내)은 원래 공용 배경 그대로');
+ok(Array.isArray(g.other)&&g.other.length===0&&g.n>=22, '모든 본편 사건이 외관·문 앞·실내 전용 배경을 다 갖춤 '+(g.other||[]).join(','));
 const g2=await p.evaluate(()=>{ K_PROP_NEXT='f12'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
 ok(g2.join()==='bg_case_f12_ext,bg_case_f12_door,bg_case_f12_in', 'f12 외관·복도·빈 원룸 전용 배경 3장');
 const g3=await p.evaluate(()=>{ K_PROP_NEXT='f13'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
@@ -38,7 +38,7 @@ ok(g5.join()==='bg_case_f22_ext,bg_case_f22_door,bg_case_f22_in', 'f22 전용 �
 const g6=await p.evaluate(()=>{ K_PROP_NEXT='f23'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
 ok(g6.join()==='bg_case_f23_ext,bg_case_f23_door,bg_case_f23_in', 'f23 전용 배경 3장');
 const g7=await p.evaluate(()=>{ K_PROP_NEXT='f31'; kStart(5); K.intro=false; return ['bg_villa_day','bg_front_door','bg_room_empty'].map(s=>vnBgPick(s)); });
-ok(g7.join()==='bg_case_f31_ext,bg_case_f31_door,bg_room_empty', 'f31 외관·미용실 입구 전용, 빈 가게 칸은 공용 배경');
+ok(g7.join()==='bg_case_f31_ext,bg_case_f31_door,bg_case_f31_in', 'f31 3장 전용');
 const g8=await p.evaluate(()=>{ K_PROP_NEXT='f32'; kStart(5); K.intro=false; const a=['bg_villa_day','bg_villa_night','bg_front_door','bg_stairs','bg_room_messy','bg_room_empty'].map(s=>vnBgPick(s)); K.repair={id:'min'}; a.push(vnBgPick('bg_room_empty')); K.repair=null; return a; });
 ok(g8.slice(0,6).join()==='bg_case_f32_ext,bg_case_f32_ext,bg_case_f32_door,bg_case_f32_door,bg_case_f32_in,bg_case_f32_in' && g8[6]!=='bg_case_f32_in', 'f32 중식당 외관·홀·주방 전용(수리 단계 빈집은 공용)');
 const l8=await p.evaluate(async()=>Promise.all(['ext','door','in'].map(k=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth>1000); i.onerror=()=>r(false); i.src=artUrl('bg_case_f32_'+k); }))));

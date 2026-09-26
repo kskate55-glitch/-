@@ -357,3 +357,7 @@ Object.assign(ART_DEFAULT, { cg_il_t03_c:"345b11b347f9bcc046fbed2843ca743a" });
 
 // 외전 장면 그림(v205): E03 b 화이트보드 앞 '어려운 질문 다섯 개' — 손 든 서지원·팔짱 낀 강문호·정리하는 은경(s5)
 Object.assign(ART_DEFAULT, { cg_il_e03_b:"5f52f9758bedae4de12bb29df379d3d2" });
+
+// 받은 배경 33차(v206): f31 영등포 미용실 — 거울 뗀 자국·샴푸대 배관, 위에서 내려다본 구도(병 라벨 흐림) — 본편 배경 전부 완성
+Object.assign(AS_BG_ART, { bg_case_f31_in: "0acd61737a78b6394e783283aebe4086" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

@@ -265,3 +265,6 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 18차(v177): f53 원곡동 — 암막 커튼 방과 아이 장난감 거실
 Object.assign(AS_BG_ART, { bg_case_f53_in: "7dd47b7c131b37d310ddf99f6a8dff26" });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 19차(v178): f54 면목동 — 초등학교 앞 등굣길(노란 안전 깃발·횡단보도)
+Object.assign(AS_BG_ART, { bg_case_f54_ext: "857fcdb95ce34e7eb19281ce48b3aa32" });
+Object.assign(ART_DEFAULT, AS_BG_ART);

@@ -215,3 +215,12 @@ Object.assign(AS_BG_ART, {
   bg_case_f32_in:   "e48b6ec33c1a6fd8cdd5ab3500afbf25",
 });
 Object.assign(ART_DEFAULT, AS_BG_ART);
+// 받은 배경 12차(v171): f33 신림동 — 사다리차 대기 골목(트럭 앞 엠블럼 지움)·짐 싸다 만 현관·거실 / f34 망원동 — 빵집·꽃집 골목·아이 신발 현관
+Object.assign(AS_BG_ART, {
+  bg_case_f33_ext:  "a99c5577004e89bbdcdce7404906677a",
+  bg_case_f33_door: "90ac51d8fbc037fbdc4cb5c5b3c33185",
+  bg_case_f33_in:   "8a329490a6745ac5d7026a080ab22dca",
+  bg_case_f34_ext:  "192fbbad1109c1a5525ab7685829b3bf",
+  bg_case_f34_door: "d56c8f19929fa8eea4c4797b8d9b987b",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

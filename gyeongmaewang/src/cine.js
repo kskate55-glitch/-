@@ -232,7 +232,7 @@ function gxScene(i){
   const O = GX_OP; if(!O) return;
   const sc = LF_OPENINGS[O.id][i]; if(!sc) return gxOpFinale();
   O.i = i; O.j = 0;
-  const bg = O.el.querySelector(".gx-bg"), u = artUrl(sc.bg) || artUrl("bg_office_1");
+  const bg = O.el.querySelector(".gx-bg"), u = artUrl(`op_${O.id}_${i + 1}`) || artUrl(sc.bg) || artUrl("bg_office_1");   // 장면 전용 그림(op_캐릭터_장면)이 있으면 그걸 먼저
   const img = document.createElement("div"); img.className = "gx-bgimg"; img.style.backgroundImage = u ? `url("${u}")` : "none";
   bg.appendChild(img); requestAnimationFrame(() => img.classList.add("on"));
   [...bg.children].slice(0, -1).forEach(x => { x.classList.remove("on"); setTimeout(() => x.remove(), 900); });
@@ -243,11 +243,18 @@ function gxScene(i){
   O.t = setTimeout(() => gxLine(), gxMs(700));
 }
 let GX_AMB = null;
+function gxBeat(key){
+  const O = GX_OP, u = typeof artUrl === "function" ? artUrl(key) : null; if(!O || !u) return;
+  const bg = O.el.querySelector(".gx-bg"), img = document.createElement("div"); img.className = "gx-bgimg"; img.style.backgroundImage = `url("${u}")`;
+  bg.appendChild(img); requestAnimationFrame(() => img.classList.add("on"));
+  [...bg.children].slice(0, -1).forEach(x => { x.classList.remove("on"); setTimeout(() => x.remove(), 900); });
+}
 function gxLine(){
   const O = GX_OP; if(!O) return;
   const sc = LF_OPENINGS[O.id][O.i]; if(!sc) return;
   if(O.j >= sc.lines.length) return gxScene(O.i + 1);
   const [who, t] = sc.lines[O.j], box = O.el.querySelector(".gx-box"), tx = box.querySelector(".gx-text");
+  if(O.j > 0) gxBeat(`op_${O.id}_${O.i + 1}_${O.j + 1}`);   // 긴 장면은 대사 중간에 그림이 한 번 더 바뀐다(그 칸에 그림이 있을 때만)
   box.hidden = false; box.classList.toggle("narr", !who); box.querySelector(".gx-who").textContent = who || "";
   box.classList.remove("in"); void box.offsetWidth; box.classList.add("in");
   clearTimeout(tx._t); let n = 0; tx.textContent = ""; O.typing = true;

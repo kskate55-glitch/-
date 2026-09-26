@@ -162,3 +162,10 @@ Object.assign(ART_DEFAULT, AS_BG_ART);
 // 받은 배경 3차(v160): f12 빈 원룸(창밖 서울 타워는 의정부에서 안 보여서 지움) — f12 3장 완료
 AS_BG_ART.bg_case_f12_in = "f0925c0f238138101f9b9c2ce8a3d41b";
 Object.assign(ART_DEFAULT, AS_BG_ART);
+
+// 받은 배경 4차(v161): f13 고양 화정동 복도식 아파트 — 단지 외관(서울 타워 지움)·체인 걸린 7층 현관
+Object.assign(AS_BG_ART, {
+  bg_case_f13_ext:  "5300732b59c0561a684931fd43b490af",
+  bg_case_f13_door: "8d764ff86127f258db0a3da718941d7c",
+});
+Object.assign(ART_DEFAULT, AS_BG_ART);

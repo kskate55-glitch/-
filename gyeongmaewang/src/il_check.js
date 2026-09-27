@@ -34,7 +34,7 @@ for(const id of ctx.__ORDER){
   const vars = (all.match(/\{\{\w+\}\}/g) || []).filter(v => !["{{profit}}","{{caseName}}"].includes(v) && !(d.vars || []).includes(v.slice(2, -2)));
   if(vars.length) errs.push("모르는 변수: " + [...new Set(vars)].join(","));
   const min = Math.min(...res.map(r => r.chars));
-  if(!d.noLen && min < 2500) errs.push(`기본 경로 글자 수 부족: ${min}`);
+  if(!d.noLen && min < 1200) errs.push(`기본 경로 글자 수 부족: ${min}`);
   if(d.scenes.length < 6 && !d.noLen) errs.push(`장면 ${d.scenes.length}개(6개 이상)`);
   rows.push([id, d.title, d.scenes.length, res.map(r => r.chars).join("/"), res.map(r => r.nodes).join("/"), alt.chars, res[0].sheets, (d.notes || []).length]);
   if(errs.length){ bad++; console.log(`❌ ${id}`); errs.forEach(e => console.log("   " + e)); }

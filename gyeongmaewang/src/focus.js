@@ -33,6 +33,10 @@ function fxTidy(){
   if(panel) panel.querySelectorAll(":scope > .hub-me").forEach(x => x.remove());
   const visible = panel ? [...panel.children].filter(el => el.getClientRects().length && (el.textContent || "").trim().length) : [];
   root.classList.toggle("fx-nopanel", !!panel && visible.length === 0);
+  // v230: 사건 소개처럼 무대(stage)가 텅 빈 화면 — 위쪽 빈 검은 띠를 없앤다
+  const stage = root.querySelector(".kfs-stage");
+  const stageEmpty = !!stage && !stage.querySelector("img,svg,canvas,video,button") && !(stage.textContent || "").trim();
+  root.classList.toggle("fx-nostage", stageEmpty && !root.classList.contains("fx-nopanel"));
   const tools = root.querySelector(".kfs-head .kfs-tools");
   if(tools && typeof hubBar === "function" && !tools.querySelector("[data-fxlv]")){
     let lv = ""; try{ lv = "LV." + hubLevel(hubRec().xp).lv; }catch(e){}
@@ -66,6 +70,10 @@ if(typeof renderArena === "function"){
   css.textContent = `
     #kfsRoot.fx-nopanel .kfs-panel{display:none!important}
     #kfsRoot.fx-nopanel .kfs-body{grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr)!important}
+    #kfsRoot.fx-nostage .kfs-stage{display:none!important}
+    #kfsRoot.fx-nostage .kfs-body{grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr)!important}
+    /* v230: 사건 소개의 '사건번호 열기' 버튼 — 늦게 떠서 없는 줄 알았다. 바로 보이게 */
+    .kc-intro .kc-open{animation-delay:.5s!important;font-size:18px;padding:14px 28px;min-height:54px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
     #kfsRoot .kfs-head .fx-lv{font-weight:800;white-space:nowrap;width:auto!important;min-width:0;padding:0 12px!important;margin-right:6px;flex:0 0 auto;border-radius:999px}
     .fx-lv-pop{position:fixed;z-index:2147481000;width:min(420px,calc(100vw - 16px));box-shadow:0 12px 32px rgba(0,0,0,.45);border-radius:14px}
     .fx-lv-pop .hub-me{margin:0}`;

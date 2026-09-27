@@ -376,3 +376,6 @@ if(typeof kStage === "function"){
     return _as_kStage(bg, who, ex, text, name);
   };
 }
+
+/* v230: 외전 새 그림 4장 (재훈 j01_c·j03_c, 서윤 s03_b, 태식 t03_b) */
+Object.assign(ART_DEFAULT, { cg_il_j01_c:"27ac7555fff03d7c063ca652bbd5c6f4", cg_il_j03_c:"afb3015866966395bb1c8dc62771d5eb", cg_il_s03_b:"196572106f3644a3bde991652ed732b5", cg_il_t03_b:"1b9c954df1996a1721fcaebeed91e9ce" });

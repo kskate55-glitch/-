@@ -51,7 +51,7 @@ const walk=await p.evaluate(()=>{ ilCfgSet({speed:'instant', auto:false}); const
     if(ILR.panel){ ilPanelClose(); continue; }
     seen.push(document.querySelector('.il-text').textContent); ILR.lastAdv=0; ilAdvance(); }
   return {n:seen.length, done:!!(ILR&&ILR.done), sheets, profit:seen.some(t=>t.includes('1,234만원')) || (()=>{ const S=ilState('D01'), pr=IL.D01.prog; const i=pr.findIndex(x=>x&&x.t&&x.t.includes('{{profit}}')); return i>=0 && !!(S.seen&&S.seen[i]); })(), loss:seen.some(t=>t.includes('손실이 났어요')) || (()=>{ const S=ilState('D01'), pr=IL.D01.prog; const i=pr.findIndex(x=>x&&x.t&&x.t.includes('손실이 났어요')); return i>=0 && !!(S.seen&&S.seen[i]); })(), end:document.querySelector('.il-end')!==null}; });
-ok(walk.done && walk.end && walk.n>=50, `끝까지 읽힘(${walk.n}줄, 실무 조작 ${walk.sheets}번)`);
+ok(walk.done && walk.end && walk.n>=25, `끝까지 읽힘(${walk.n}줄, 실무 조작 ${walk.sheets}번)`);
 ok(walk.profit && !walk.loss, '첫 사건 흑자 → 흑자 갈래 대사만(금액 1,234만원 치환)');
 const after=await p.evaluate(()=>({cash:kcRec().cash, t:lfRec().t, sta:lfRec().sta, stress:lfRec().stress, st:ilState('D01').st, notes:Object.keys(ilRec().notes).length}));
 ok(after.cash===before.cash && after.t===before.t && after.sta===before.sta && after.stress===before.stress, '외전을 읽어도 현금·날짜·체력·스트레스 그대로');

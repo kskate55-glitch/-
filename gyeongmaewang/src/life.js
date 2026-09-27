@@ -473,7 +473,7 @@ function lfPanel(id){
     const moves = Object.entries(LF_BASES).filter(([k, b]) => b.need && k !== L.base);
     return `<h3>📒 통장</h3><div class="panel kc-cstats"><span>현금 <b class="${c.cash>=0?"up":"down"}">${c.cash >= 0 ? kMan(c.cash) : "대출 " + kMan(-c.cash)}</b></span><span>시작 자본 <b>${kMan(C.cash)}</b></span><span>누적 세후 <b class="${c.total>=0?"up":"down"}">${kcSigned(c.total)}</b></span><span>매달 <b class="${M.net>=0?"up":"down"}">${kcSigned(M.net)}</b></span></div>
       ${c.cash < 0 ? `<p class="note down">🏦 대출 이자 연 5.5% — 이번 달 ${kMan(M.interest)}. 대출이 길어질수록 수익이 깎여요.</p>` : ""}
-      <div class="panel"><b>🏠 거점 옮기기</b> <small class="note">지금: ${esc(B.t)} (월 ${kMan(B.rent)})</small><div class="lf-acts">${moves.map(([k, b]) => `<button type="button" class="ag-act" data-lfmove="${k}" ${c.cash >= b.need ? "" : "disabled"}><span class="ag-ai">${b.tier >= 3 ? "🏢" : "🏬"}</span><span><b>${esc(b.t)} — 월 ${kMan(b.rent)}</b><span class="note" style="display:block">자산 ${kMan(b.need)} 이상 · 집중 ×${b.focus} · 회복 ×${b.rest} · 이사비 ${kMan(Math.round(b.rent * 2))}</span></span></button>`).join("")}</div></div>
+      <!-- v230: 이사 기능 삭제 -->
       <details class="panel"><summary>📜 최근 기록</summary><ul class="note">${L.log.map(x => `<li>${esc(lfClock(x.at))} — ${esc(x.t)}</li>`).join("")}</ul></details>`;
   }
   if(id === "file") return (typeof ofPanel === "function" ? `${running ? `<div class="panel">▶ 진행 중 — <button type="button" class="btn pri" data-atab="king">CASE 이어하기</button></div>` : ""}` + ofPanel("cabinet") : "");

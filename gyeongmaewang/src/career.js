@@ -175,7 +175,7 @@ function kcIntroHTML(){
   const lines = [wk ? `이번 주 경매 · ${K.week}` : "서울○○지방법원", "오전 10:17", "오늘 입찰할 물건은 하나.", `감정가 ${kMan(KP.appraisal)}`, `최저가 ${kMan(KP.minBid)}.`,
     wk ? "이번 주엔 모두가 같은 물건, 같은 경쟁자, 같은 사건을 만난다." : `그리고 당신 통장에는\n${kMan(c.cash)}이 있다.`];
   return `<div class="kc-intro" data-vnkey="intro-${K.seed}">${vnBgHTML(artUrl("bg_bid_room") ? "bg_bid_room" : "bg_court")}<div class="kc-intro-in">${lines.map((l,i)=>`<p style="animation-delay:${0.35 + i*0.55}s">${esc(l).replace(/\n/g,"<br>")}</p>`).join("")}
-    <button type="button" class="btn pri kc-open" data-kintro style="animation-delay:${0.35 + lines.length*0.55}s">📂 사건번호 열기</button><button type="button" class="kc-skip" data-kintro>건너뛰기 ›</button></div></div>`;
+    <button type="button" class="btn pri kc-open" data-kintro style="animation-delay:${0.35 + lines.length*0.55}s">📂 사건 열고 조사하러 가기 ›</button><button type="button" class="kc-skip" data-kintro>건너뛰기 ›</button></div></div>`;
 }
 function kcRevealHTML(){
   return `<div class="kc-reveal" aria-live="polite">${vnBgHTML(artUrl("cut_bid_open") ? "cut_bid_open" : "bg_court")}<div class="kc-reveal-in"><p>입찰표를 제출했습니다.</p><p class="d1">…</p><p class="d2">개찰 중</p><p class="d3">…</p>

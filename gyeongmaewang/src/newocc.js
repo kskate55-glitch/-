@@ -1,13 +1,13 @@
 /* ================= 🆕 새 점유자 5명 (O 발주) — 자유 플레이·문자 협상에 들어가는 인물 =================
    불쾌한 인상은 태도·꾸밈새로만 냈다(인종·체형은 이유가 아니다). 법적 위치는 일반적인 설명이다. */
 const NEWOCC_ART = {
-  p_hawaii:{normal:"5beca7cb921dfcb0df268bcdf43aa2a6", angry:"33c31dbadc4ee75463ac20ce42b53c3c", worried:"a5f0fa4f5b7ec4dfce08d4561663019c"},
-  p_live:{normal:"f1be5803f5e9b4abad9df547f6c34b83", angry:"8a64d1a5f692116841a34f9c45ab97c3", worried:"b219e8e9103b2f28fcf665edd8327104"},
-  p_tojuk:{normal:"c32fe330761442377213207da102d39f", angry:"4d7007bc8b2d62bb6fe9ebd54979357e", worried:"aa07c26bd2f2796e96620689dac3ceb8"},
-  p_chain:{normal:"06bf194c42b8a73ce110fea306d65420", angry:"2b33f1e29451d8593fc7cdced3617d96", worried:"353b9b673a1b434e8174a246b9254e6c"},
-  p_gamer:{normal:"0d5bf008f63fd022cde9869003a4eef6", angry:"1683f9a474eebeb62cd5dd82ae58f198", worried:"e500b8cfc7bba3ad9a5a23898e315859"},
-  p_law:{normal:"c2ced8b9dbfee66825bdd8e1451c8075", angry:"c136e7e406e2f082f02e023e975a62ec", worried:"6904b6e20e2014c8b3deaeaa0dcb2d83"},
-  p_madam:{normal:"63d01dd80c3daf951b21d4ceb4869065", angry:"096b76cebc1522637fa64d087ef4a0ab", worried:"5a610d3b59cc2236db943bb667ffccd9"}};
+  p_hawaii:{normal:"e7738e893f47cac40e10049a4035d2c5", angry:"f66011db1e956b34b7ae97d791755acc", worried:"02b464fa0cf8986fa4582ac75875194b"},
+  p_live:{normal:"8a841324805fe4b54a8688125d495467", angry:"f667628fb9bff55a7f5377741d4543ab", worried:"ade6c19a74fc800d65669c84defb09ef"},
+  p_tojuk:{normal:"fc2c2c6a8849b572acca1d7b027293f8", angry:"463849bcd43531e0836459c7902fbd3c", worried:"054a2430b915ec4aadc4a77b99703c2e"},
+  p_chain:{normal:"1648e5fc863df37802f7a449d8f09493", angry:"6f4c279cea5636edc5c09609dc4ceb82", worried:"691ef6ba251ca1097b4f3841ba622fa1"},
+  p_gamer:{normal:"d17f4c724c2674a0002cfa22d00c765e", angry:"eb38f2802efc9be53357035de38cfd36", worried:"943282a42e0725f965056a19f635b2cc"},
+  p_law:{normal:"7f58dfed83da3d339620d1836055d7eb", angry:"1dddbf8dd16a948a64b4bf30fbc32414", worried:"abf937ef8b5024c3ee5592a418dea004"},
+  p_madam:{normal:"08dc22a4d3729d1921d2c828f0cb1e12", angry:"8b76858e7829417a638d1ec95a4b82b8", worried:"f87e1693f2f34bb180a5f98e424cb24b"}};
 Object.keys(NEWOCC_ART).forEach(pid => Object.keys(NEWOCC_ART[pid]).forEach(ex => { ART_DEFAULT[`npc_${pid}_${ex}`] = NEWOCC_ART[pid][ex]; }));
 const NEW_PERSONAS = [
  {id:"p_hawaii", type:"bully", emoji:"🌴", name:"황금철 씨 (63)", who:"전 소유자(채무자)",
@@ -77,15 +77,15 @@ NEW_PERSONAS.forEach(P => { if(!PERSONAS.some(x => x.id === P.id)) PERSONAS.push
 
 /* 새 매수자 3명 (B 발주) — 매도 단계에 제안하는 사람으로 등장. 목록 끝에 붙이므로 기존 유형은 그대로다. */
 const NEW_BUYERS = [
-  {t:"은퇴한 선생님", flex:0.008, cancel:0.05, art:{normal:"52d5859a580e4290969e6666e7a95c08", angry:"0fcb5349c61df64e821eb267ba6f6a9c", worried:"af135039dd996d6216e3026ce0ae7d0a"}, ex:"normal",
+  {t:"은퇴한 선생님", flex:0.008, cancel:0.05, art:{normal:"1c1a28e5300c584660e38b83f44f166d", angry:"331ae4f81cf3dbf6449cad6f8724aead", worried:"d1f330003e1a40d2fd20de7946b637a7"}, ex:"normal",
    say:["\"천천히 봐유. 집은 오래 사는 거니께.\"", "뒷짐을 지고 베란다에 한참 서 있었다."]},
-  {t:"꼼꼼한 외국인 연구원", flex:0.005, cancel:0.12, art:{normal:"20668f4d1df78ce919d32100ec2d6617", angry:"8a2f156e03a1892fdb97972f9a1bae85", worried:"544a9ac18e074b240692d14c21d12c96"}, ex:"normal",
+  {t:"꼼꼼한 외국인 연구원", flex:0.005, cancel:0.12, art:{normal:"662bdb2ddc3774af4822ff4851e9f9f0", angry:"544629a96e436b4f1826abb15ccba185", worried:"f0c2b4cdf9c46e816306f25a8fbae284"}, ex:"normal",
    say:["\"등기부 을구, 한 번 더 보여 주실 수 있을까요?\"", "서류에 형광펜으로 줄을 그으며 하나씩 물었다."]},
-  {t:"휠체어를 쓰는 실수요자", flex:0.01, cancel:0.1, seated:true, art:{normal:"61ac665facbbe8343f47d0f642838bf3", angry:"ec79ac58b68663f4ed4b4f62a9547b74", worried:"98f3a6dd97032d23c43b40dca799a4c7"}, ex:"angry",
+  {t:"휠체어를 쓰는 실수요자", flex:0.01, cancel:0.1, seated:true, art:{normal:"f48cdb113d776be53d0d490ef2fb4161", angry:"901668c75956be38fbbece2bc7a1c64e", worried:"9484552c1b5e99ab4cc470ebbcbc15b3"}, ex:"angry",
    say:["\"현관 턱이 몇 센티예요? 욕실 문 폭도 재 봐도 될까요?\"", "줄자로 현관과 욕실 문을 꼼꼼히 쟀다."]},
-  {t:"야간 근무 마친 간호사", flex:0.007, cancel:0.08, art:{normal:"e76c73378d13591cf1643b2b28c84ebf", angry:"14266d0588e647e6e7236cb74c411bd6", worried:"44bb066002bcb203aed9f71e6f252c8d"}, ex:"angry",
+  {t:"야간 근무 마친 간호사", flex:0.007, cancel:0.08, art:{normal:"fe3e53c68353ac5600ed9399afd8847e", angry:"cccc263a02693939de436d38f00d3aeb", worried:"aab4a9d2f1bd724f0a36f8eb5614a441"}, ex:"angry",
    say:["\"병원까지 20분이면 돼요. 이 가격이면 오늘 바로 할게요.\"", "퇴근길 수술복 차림으로 계산기를 두드리며 들어왔다."]},
-  {t:"아이 학교 가까운 집 찾는 식당 사장님", flex:0.009, cancel:0.06, art:{normal:"d2264c7a29e5b7fff8dc3ecdb2cf5ad3", angry:"63f33b20b6e90a96050fe984c1b7df52", worried:"a566d2a5b384dc0e4ae2498aa3d49b07"}, ex:"angry",
+  {t:"아이 학교 가까운 집 찾는 식당 사장님", flex:0.009, cancel:0.06, art:{normal:"7ddd3cd26ae848f637b719466c604d6a", angry:"170a96b1beb70674381a44e71edc3cbe", worried:"ef4a520955ffc1ab146c1c6b09a14c42"}, ex:"angry",
    say:["\"학교까지 걸어서 몇 분이에요? 아이 혼자 다녀야 해서요.\"", "휴대폰 지도로 학교 가는 길을 두 번이나 확인했다."]}];
 NEW_BUYERS.forEach(b => {
   if(!K_BUYERS.some(x => x.t === b.t)) K_BUYERS.push({t:b.t, flex:b.flex, cancel:b.cancel});

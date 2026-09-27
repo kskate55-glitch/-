@@ -10,11 +10,11 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
  await p.click('[data-gxskip]'); await p.waitForTimeout(300); await p.click('[data-gxskip]'); await p.waitForTimeout(1300);
  ok(await p.evaluate(()=>!!document.querySelector('.lf-me') && /6c5608542f/.test(document.body.innerHTML)), w+' 거점: 방 배경 + 서 있는 서윤');
  await p.screenshot({path:`ca_base_${w}.png`});
- ok(await p.evaluate(()=>artUrl('npc_playerf_soft')==='/_blob/6fd30bc8295c83a97fba61c22e67dc0d' && artUrl('npc_player_neutral')==='/_blob/745e6d11267dd21a40e3204041188bf9'), w+' 얼굴·뒷모습 슬롯이 서윤으로');
+ ok(await p.evaluate(()=>artUrl('npc_playerf_soft')==='/_blob/d04f05e1e2f8a4a45fead8ae4215dbdf' && artUrl('npc_player_neutral')==='/_blob/7ba3f8b513d089c37c9cb7fdb2d2a9b4'), w+' 얼굴·뒷모습 슬롯이 서윤으로');
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; lfNew('dohyun'); lfRec().intro=false; renderArena(); });
- ok(await p.evaluate(()=>artUrl('npc_player_neutral')==='/_blob/2a1d7d91d759fb0ad1a580c1083c623a' && /4e6edd4052/.test(document.body.innerHTML) && document.querySelector('.lf-me').src.includes('4e6c8504')), w+' 도현: 뒷모습·원룸·앞모습(서윤 그림 안 섞임)');
+ ok(await p.evaluate(()=>artUrl('npc_player_neutral')==='/_blob/552875b1013bb3a79b616152823cf4e0' && /4e6edd4052/.test(document.body.innerHTML) && document.querySelector('.lf-me').src.includes('85c098f4')), w+' 도현: 뒷모습·원룸·앞모습(서윤 그림 안 섞임)');
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; lfNew('mijeong'); lfRec().intro=false; renderArena(); });
- ok(await p.evaluate(()=>artUrl('npc_player_neutral')==='/_blob/f22e08926e3bda4d14e8b58626dd6d69' && document.querySelector('.lf-me').src.includes('de23e0f0') && /3d69a046/.test(document.body.innerHTML)), w+' 미정: 뒷모습·거실·앞모습');
+ ok(await p.evaluate(()=>artUrl('npc_player_neutral')==='/_blob/f8f67a82adee0fc8f4e89c7c34e41418' && document.querySelector('.lf-me').src.includes('2b9707d0') && /3d69a046/.test(document.body.innerHTML)), w+' 미정: 뒷모습·거실·앞모습');
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; lfNew('taesik'); lfRec().intro=false; renderArena(); });
  ok(await p.evaluate(()=>document.querySelector('.lf-me') && document.querySelector('.lf-me').src.includes(LF_CHAR_ART.taesik.front)), w+' 태식: 태식 전신');
  await p.evaluate(()=>{ const c=kcRec(); delete c.life; K=null; LF_PICK='dohyun'; renderArena(); }); await p.waitForTimeout(500);

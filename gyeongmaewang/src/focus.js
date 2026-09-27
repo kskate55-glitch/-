@@ -24,3 +24,50 @@ const FOCUS_MENU_HIDE = FOCUS_HIDE_TABS.concat(["dexall", "ach"]);
     renderArena = function(){ if(typeof arenaTab !== "undefined" && FOCUS_HIDE_TABS.includes(arenaTab)) arenaTab = "home"; return _r.apply(this, arguments); };
   }
 })();
+/* ---------- v229 레벨·명성 카드는 구석 버튼으로, 빈 오른쪽 칸은 없앤다 ----------
+   홈 화면 오른쪽 칸에 '경매인 LV·명성' 카드 하나만 남고 아래가 통째로 까맣게 비어 있었다.
+   → 카드를 머리줄의 작은 🏅 버튼(누르면 뜸)으로 옮기고, 오른쪽 칸에 볼 게 없으면 칸 자체를 접어 그림이 꽉 차게 한다. */
+function fxTidy(){
+  const root = document.getElementById("kfsRoot"); if(!root) return;
+  const panel = root.querySelector(".kfs-panel");
+  if(panel) panel.querySelectorAll(":scope > .hub-me").forEach(x => x.remove());
+  const visible = panel ? [...panel.children].filter(el => el.getClientRects().length && (el.textContent || "").trim().length) : [];
+  root.classList.toggle("fx-nopanel", !!panel && visible.length === 0);
+  const tools = root.querySelector(".kfs-head .kfs-tools");
+  if(tools && typeof hubBar === "function" && !tools.querySelector("[data-fxlv]")){
+    let lv = ""; try{ lv = "LV." + hubLevel(hubRec().xp).lv; }catch(e){}
+    const b = document.createElement("button"); b.type = "button"; b.className = "kfs-btn fx-lv"; b.dataset.fxlv = "1"; b.title = "경매인 레벨·명성"; b.textContent = "🏅 " + lv;
+    tools.insertBefore(b, tools.firstChild);
+  }
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("[data-fxlv]");
+  const pop = document.getElementById("fxLvPop");
+  if(b){ e.preventDefault(); e.stopPropagation();
+    if(pop){ pop.remove(); return; }
+    const p = document.createElement("div"); p.id = "fxLvPop"; p.className = "fx-lv-pop"; p.innerHTML = hubBar();
+    document.body.appendChild(p);
+    const r = b.getBoundingClientRect(), w = p.offsetWidth;
+    p.style.top = (r.bottom + 8) + "px"; p.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + "px";
+    return; }
+}, true);
+// 바깥을 누르면 닫는다 — 다른 버튼이 클릭 전파를 막아도 닫히도록 pointerdown 단계에서
+window.addEventListener("pointerdown", e => {
+  const pop = document.getElementById("fxLvPop"); if(!pop) return;
+  if(e.target.closest && (e.target.closest("#fxLvPop") || e.target.closest("[data-fxlv]"))) return;
+  pop.remove();
+}, true);
+if(typeof renderArena === "function"){
+  const _r2 = renderArena;
+  renderArena = function(){ const out = _r2.apply(this, arguments); try{ fxTidy(); setTimeout(fxTidy, 0); }catch(e){} const pop = document.getElementById("fxLvPop"); if(pop) pop.remove(); return out; };
+}
+(function(){
+  const css = document.createElement("style");
+  css.textContent = `
+    #kfsRoot.fx-nopanel .kfs-panel{display:none!important}
+    #kfsRoot.fx-nopanel .kfs-body{grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr)!important}
+    #kfsRoot .kfs-head .fx-lv{font-weight:800;white-space:nowrap;width:auto!important;min-width:0;padding:0 12px!important;margin-right:6px;flex:0 0 auto;border-radius:999px}
+    .fx-lv-pop{position:fixed;z-index:2147481000;width:min(420px,calc(100vw - 16px));box-shadow:0 12px 32px rgba(0,0,0,.45);border-radius:14px}
+    .fx-lv-pop .hub-me{margin:0}`;
+  (document.head || document.documentElement).appendChild(css);
+})();

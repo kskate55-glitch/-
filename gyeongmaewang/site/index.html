@@ -36391,18 +36391,18 @@ const ART_ALIAS = {bg_villa_ext_day:"bg_villa_day", bg_villa_ext_night:"bg_villa
 
 function artRec(){ if(!S.art) S.art = {}; return S.art; }
 // 기본 그림(캐릭터 시트에서 잘라 미리 올려 둔 것) — 사용자가 같은 칸에 올리면 그걸 먼저 쓴다
-const ART_DEFAULT = (()=>{ const B = {elder:"6f26b3c0c61d4e77cb54a467f8736af1", ajumma:"ded574924ac128388814a2aa829acdf5", tough:"f818b3ef444f7e28ad1616f64fcc9ce3", youth:"0d072881d0b9c02fd68ad70ded4129f0", woman:"034fcc8bf140be4d4f5258922a594fce", broker:"7e5144bdcb2003a3aec2b554783d9526", mover:"af8789cc00e3c1313260e1d3b148b9a9", player:"a3e075a0d8123a722353f898cb1b1a8a"};
-  return {npc_oldman_neutral:B.elder, npc_ajumma_neutral:B.ajumma, npc_youngman_neutral:B.youth, npc_broker_neutral:B.broker, npc_mover_neutral:B.mover, npc_player_neutral:B.player, bg_room_clean:"36ead17906e050e290f7aff4f10b740e", npc_youngman_troubled:"b147d027aeffa09c5e56c9abc014761c", npc_youngman_angry:"0fb1ee681bfb4d3e3629de8f01fb533f", npc_roughman_neutral:"55a17b490d0793e4999f6900f5dbb3e1", npc_roughman_angry:"0e61920ef7a9f93ea79c78a144799462", npc_ajumma_troubled:"77c254a4524e4b6751ff008feeb5c91b", npc_youngwoman_neutral:"65e6565d2553321f06dc7e00407517ce", cut_moving:"bea6c141bcca5f6a1158c7372da62b34", bg_court:"8c21fbf1109b26531ca7fe7de1675f55", bg_stairs:"30b546af613470a372ac1304083eb83a", bg_villa_night:"b45b1eab23dc77ec7d3af22879b6c56e", npc_husband_neutral:"a109e81520c71193dc0b3f747d80b9a7", npc_husband_angry:"1c2741c4b9e3a8111ad5edcd1620da2d", npc_husband_troubled:"182830f402e8ecb5761b2bc233bfb626", bg_alley:"b3d7065bf16221f0b6c904c38b404f9b", bg_villa_day:"1bca75fe1bb28d36d8d23e19744cbc6f", npc_bailiff_neutral:"bd2755598ca6723f7e3d7988bda3343c", npc_couple_hw_angry:"290851cbbab42ab5a85d54990e4a5d28", npc_couple_hw_neutral:"4e336e88dcb234995ba0507dc5ec1b40", npc_couple_hw_troubled:"a4e92ad5753516c3d52487a7d409efc7", npc_foreman_angry:"59dff507382c361f63575baefc3d4133", npc_foreman_neutral:"46da65e92385f0c620bcdb5c27ab3c42", npc_foreman_troubled:"0c795d5acb7c95c44199e5b658186d8e", npc_grandma_neutral:"d696c7df88e29835d29aeed9d59e7293", npc_greedy_angry:"38645512586832a86db056dc678ef74d", npc_greedy_neutral:"0349f26beb2ff0e6c5541db6d194b3e7", npc_greedy_troubled:"b5a953bccad73402f98568b04001d606", npc_kid_neutral:"38d70aaa3e3033bbedf2891646bfecf5", npc_locksmith_neutral:"87885c501d40f9eda28d5a657a7cb0c2", npc_manager_neutral:"5b387eccea7318f846fff629e8a38661", npc_mind_angry:"20eadfba7b3e9e7706c9e3784bb0b51c", npc_mind_neutral:"4ade755def179340d64907f48430df08", npc_mind_troubled:"06aee723d8806190d246b8f4ac6b3dc7", npc_owner_angry:"80a97c5cf6c0c497cb69c8bbae1931c6", npc_owner_neutral:"4c65fb904bd938f14c775c4249d5780b", npc_owner_troubled:"9390f08b0a06dc44bd98131efa2dbab9", npc_student_cn_angry:"3be0a5f31ba767103254543978645899", npc_student_cn_neutral:"59b7112103105e118fc37bad9803e956", npc_student_cn_troubled:"6a6e7f6b715c770fff57bf76c42061e7", npc_worker_angry:"a53b21b2602742818bd8ddbffd3d2462", npc_worker_mn_angry:"878afee06dd527888e15a3a9e2855c37", npc_worker_mn_neutral:"a019b04ae8f301ffdf373e60e945e417", npc_worker_mn_troubled:"b3cbd63cd4308d420707dbd2e5cfc764", npc_worker_neutral:"d5b936583d9918b5741ebbc544c0e24a", npc_worker_troubled:"ffc4b043edefb2994baf69ded11e1431", npc_workers_pk_angry:"d934d843a6ee1ccdc0e4aad748263bae", npc_workers_pk_neutral:"66fcffef1b56a7bd4110523b5109a8e8", npc_workers_pk_troubled:"bf31796584ca616f8c533687ce4270be", prop_cat:"079a1b94e32f580cf1309e4a77e93e6a", prop_dog:"2d0c2bd1334c518c1b990816a8798b06", bg_banjiha:"05dfb34b4ffcb121418e53aa1860a452", bg_factory_dorm:"37a5c6228867f55b545cc4a202c6bc18", bg_oneroom:"e093651fe8fd664bc86de833b456d1df", bg_realtor:"dc0a503db23faa89f473bec514cc4f6f", bg_rooftop:"3c2d861f913d226b1ca63ae7e3e90698", bg_room_messy:"102b655804e4b860a9fdaaf5e493e409", bg_shop_closed:"061b1be2fe03dbb1bed3f3036b86437e", bg_warehouse:"122726d17c8c251b82f55a0a8ce4940b", cut_aftermath:"4c9ee4eb006496f82f6f81b65d6c4b6d", cut_court_order:"1a4a1e8316b2b1ac31c853c6a5491b0d", cut_keys:"69afcd628fb43d03f3552cf6dc247ebd", cut_notice:"1b79fc7e06a1d15d762ba1d2cba24d1e", cut_signing:"5647330c5a82bf256b6449825847c4ec"}; })();
+const ART_DEFAULT = (()=>{ const B = {elder:"6f26b3c0c61d4e77cb54a467f8736af1", ajumma:"ded574924ac128388814a2aa829acdf5", tough:"a344adad162d95e3c0f5073b5e841609", youth:"47b7a363ebbb15e6c73587565c09feab", woman:"7ed006148dabc57355000a264abfcfc4", broker:"34e43deeadb98733074366183813e079", mover:"bbecef94959f4f0f0e6655237c887953", player:"a3e075a0d8123a722353f898cb1b1a8a"};
+  return {npc_oldman_neutral:B.elder, npc_ajumma_neutral:B.ajumma, npc_youngman_neutral:B.youth, npc_broker_neutral:B.broker, npc_mover_neutral:B.mover, npc_player_neutral:B.player, bg_room_clean:"36ead17906e050e290f7aff4f10b740e", npc_youngman_troubled:"515e409e4ee52f0626d126d4e042a26e", npc_youngman_angry:"6508deda532abe1395545aba6a1b12aa", npc_roughman_neutral:"1bbf812a89d29816b090f682fdeab604", npc_roughman_angry:"e031f340366ec3c66e9e66b27df7b6ec", npc_ajumma_troubled:"e7c68a7d3d511b7b959edad5b8d3cb77", npc_youngwoman_neutral:"65e6565d2553321f06dc7e00407517ce", cut_moving:"bea6c141bcca5f6a1158c7372da62b34", bg_court:"8c21fbf1109b26531ca7fe7de1675f55", bg_stairs:"30b546af613470a372ac1304083eb83a", bg_villa_night:"b45b1eab23dc77ec7d3af22879b6c56e", npc_husband_neutral:"a109e81520c71193dc0b3f747d80b9a7", npc_husband_angry:"1c2741c4b9e3a8111ad5edcd1620da2d", npc_husband_troubled:"182830f402e8ecb5761b2bc233bfb626", bg_alley:"b3d7065bf16221f0b6c904c38b404f9b", bg_villa_day:"1bca75fe1bb28d36d8d23e19744cbc6f", npc_bailiff_neutral:"fd56cb22f8c97862a563cf1631f811f2", npc_couple_hw_angry:"79f43904a79676fae57d2433c89a4fb6", npc_couple_hw_neutral:"251b22a7c0094f6ecb0d9e4f30afd53c", npc_couple_hw_troubled:"5ca926d86d743b68e7d0baaa20932c02", npc_foreman_angry:"ed6ac7b63c6de1db45e8141143212786", npc_foreman_neutral:"92eb11a43fca3b1ce46031a155cf8196", npc_foreman_troubled:"780cda291c5a102e0e32ff0b43ddd985", npc_grandma_neutral:"bc155c093ffa3049a5f99dcdb5d34ba0", npc_greedy_angry:"f487378da3ae19c6f6e00c69abfe68e1", npc_greedy_neutral:"2348d20e44c374c8cabca32cf0a8d48c", npc_greedy_troubled:"07a829d1f890de4ee2618d332e6475fc", npc_kid_neutral:"0f0cc1358a4a50940edb733987e5e88a", npc_locksmith_neutral:"66035bf68cb95d583dbbd6f4b382e12e", npc_manager_neutral:"80649f2cd461677a8a9cb3b61454ea44", npc_mind_angry:"54d792f17788e28d21894f44c7327024", npc_mind_neutral:"0ca4887ec007b4b45c9e646482fa82fa", npc_mind_troubled:"082230152d226b75b01a97b38fb70000", npc_owner_angry:"c9a3b4eaefc058b2421539123adee2e0", npc_owner_neutral:"142314ae9a8010d4fb9e2b8d7d68f859", npc_owner_troubled:"92e15be7f462931eb1348c9767818a6c", npc_student_cn_angry:"4d239c5d773fa51beeec0d759a3a551e", npc_student_cn_neutral:"b867682d833f9c2e340b8e325c53c5d8", npc_student_cn_troubled:"131ec126d6bf33119a8c73f3887ebdf5", npc_worker_angry:"74c9890ef0b1c76b3122bfb9202016a8", npc_worker_mn_angry:"01f25469e3f18f6a985ac62677ffd6e2", npc_worker_mn_neutral:"e4e33e6a775f920030e7095b546aef90", npc_worker_mn_troubled:"79effc462cffd24ef30ad6b4ecef9ecb", npc_worker_neutral:"cb2578fc82c9d38be23ec9daa6e0eac5", npc_worker_troubled:"175e98d8c92982c425bc6b49b0446d65", npc_workers_pk_angry:"93aa294afbc35bb417aa8117e6b3ce27", npc_workers_pk_neutral:"76c2d1abc9550fe7d9a662f2024ba3c6", npc_workers_pk_troubled:"de2262144d03e3fd7a73cda59b98ef52", prop_cat:"079a1b94e32f580cf1309e4a77e93e6a", prop_dog:"2d0c2bd1334c518c1b990816a8798b06", bg_banjiha:"05dfb34b4ffcb121418e53aa1860a452", bg_factory_dorm:"37a5c6228867f55b545cc4a202c6bc18", bg_oneroom:"e093651fe8fd664bc86de833b456d1df", bg_realtor:"dc0a503db23faa89f473bec514cc4f6f", bg_rooftop:"3c2d861f913d226b1ca63ae7e3e90698", bg_room_messy:"102b655804e4b860a9fdaaf5e493e409", bg_shop_closed:"061b1be2fe03dbb1bed3f3036b86437e", bg_warehouse:"122726d17c8c251b82f55a0a8ce4940b", cut_aftermath:"4c9ee4eb006496f82f6f81b65d6c4b6d", cut_court_order:"1a4a1e8316b2b1ac31c853c6a5491b0d", cut_keys:"69afcd628fb43d03f3552cf6dc247ebd", cut_notice:"1b79fc7e06a1d15d762ba1d2cba24d1e", cut_signing:"5647330c5a82bf256b6449825847c4ec"}; })();
 // v31: 새 인물 그림 — 여동생(장미숙), 정은주 씨, 최만식 할아버지
 Object.assign(ART_DEFAULT, {
   bg_front_door:"f75514818f6ae785eef4793554996298",
   npc_sister_troubled:"e6aa2e5d4d99802e995d76fdcdda756c", npc_sister_neutral:"9384319772679151841e9f2a9c4437bd", npc_sister_angry:"29e1c9be8f620565969a251d545b2a12",
   npc_p_coop_worried:"b0dc2828f6446810b271a8fbab9bd0d2", npc_p_coop_normal:"9bb185db6f0c8c1cbef765aa8291b6ca", npc_p_coop_angry:"1d49de1bb6c421695f95c6cc23a87ea0",
   npc_p_grandpa_worried:"2dd83febb8dfac33231d661d2dc37612", npc_p_grandpa_normal:"f3755e1682096d38c61b44f6a163d642", npc_p_grandpa_angry:"ffa7e66285fd67cbca4bd047de4982b1",
-  npc_p_grandpa_furious:"f1dcad0ce8e025684f065684a7313940", npc_p_phishing_normal:"238903faf79c01cd2a0898637a0e55af", npc_p_phishing_angry:"9a1712cce54480cb268ced850c84596f", npc_p_phishing_worried:"9b4084e977eb13688b64e1442d37a8a6", npc_p_5000_normal:"a8107a6e965b50d0aaf76709c4629345", npc_p_5000_angry:"ad47e028dddb7b3155b6bdce94c72f28", npc_p_5000_worried:"7db343764606a8c68e28fa0058d2fa8c", npc_p_delay_normal:"56e01d472021eb6191e845c679d19e3d", npc_p_delay_angry:"786732594917b6ba1a71a00ca2ea7f20", npc_p_delay_worried:"249bb94a04326df822e3aba08e390a3f", npc_p_youth_normal:"79346bfa66df74814ddb84121458b62d", npc_p_youth_angry:"7f09c05755c7bed1d74aa5431dbe5376", npc_p_youth_worried:"a673dc746bd23ac5033401484c5fbbb4", npc_p_fake_normal:"c2265f7623d34ad530a8dd0be9b5183a", npc_p_fake_angry:"5d9a64f610fa4a1616791df28cf5caf2", npc_p_fake_worried:"4b6b26c09d66a6dab0b9b58f4f73f25b", npc_p_ghost_normal:"09b8d946e4652fc304468b22ddce4539", npc_p_ghost_angry:"ede5c0eb694d1af0f40f9547b4bcec92", npc_p_ghost_worried:"c959686fec7186768af89bd8c878bf9f", npc_kim_normal:"5b47845fa7ad3f6a0f75261bee75c23b", npc_kim_angry:"c7050de88e7ed5eb0d638d2cb912b512", npc_kim_worried:"38deb4f24f1eb0210bd12eb48d2e4881", npc_parkbk_normal:"b4fa0b8d860797c2f5c327410b945d0c", npc_parkbk_angry:"38e0dca5970164dd5eb4d21a51d25079", npc_parkbk_worried:"d8267c84089eecd8bd642e8cd2e3c19f", npc_downstairs_normal:"9266877178f9efb5c2557af5aedfd94d", npc_downstairs_angry:"d9d3c7bdd66f4add613a8527972a7d69", npc_downstairs_worried:"aeb457d0c75989e62b37971cd7c63500", npc_banker_normal:"c79874caf63ec05d84473be1768bb2c4", npc_banker_angry:"40e204d93e5dd51a20f8b55e34448985", npc_banker_worried:"b5bc054474891d50905b81bc975258f3",npc_elec_normal:"052c20961506150d1ae25657ec25ac57",npc_elec_angry:"32476867e28b878bedcb092d8c7d61e5",npc_elec_worried:"7e323db14e83145621b9cd89ee6aebdd",npc_interior_normal:"25f70a23f22a477eabd91b7e8086556c",npc_interior_angry:"027c05b7e22fb393bfdac516dce0e4be",npc_interior_worried:"836919a6327f47d67b4aa0fc8786fb3e",npc_keeper_normal:"6d26a0031d19c251d5bda8677a0ee929",npc_keeper_angry:"96fcb83e229e47d7c3f0434a81d64e0e",npc_keeper_worried:"c5a8f253b681cbf2483a7a2a077d9a64",npc_office_normal:"5588846b5b6928e285b9df2014fa1fa5",npc_office_angry:"c5be2d69e8243540d3ea3b27d55b468a",npc_office_worried:"0685e66b3191f47066c5edec4436a498",npc_brokerA_normal:"781fc9c04ce7826e1b9b78647c9f4b64",npc_brokerA_angry:"72637d3e8f4c8f898d862a12d257a553",npc_brokerA_worried:"72dc3b45f62e1bdb5c0656d438ac0f7b",npc_brokerB_normal:"a969d18683c51baeb77dc46e21f850cc",npc_brokerB_angry:"f73a94a0bc348a2012d2d303f06be308",npc_brokerB_worried:"a5424bd7de225c4f3e4816463f73b00c",npc_brokerC_normal:"13a3c699dcffcbc6b1a9290b2c94779f",npc_brokerC_angry:"aebddcf285af8ef17cb826840192c12f",npc_brokerC_worried:"a4681e83010ba4de6163a11d04c973f6",npc_neighbor_normal:"489aa8c6eb241b68e84aeb4c542572d1",npc_neighbor_angry:"9954849cc103e62de94cf81279db278d",npc_neighbor_worried:"238c305a0eacc9350b19f0f3e54488b0", prop_envelope:"4f145e8a8822f7645578f77a6ee95106",
+  npc_p_grandpa_furious:"f1dcad0ce8e025684f065684a7313940", npc_p_phishing_normal:"632c7b6100130dc12a6eb98886add3b3", npc_p_phishing_angry:"a578b335cfa9b48e6b895ac17c8f93ab", npc_p_phishing_worried:"5cecbc8058ef56b58791e99e6241e5fa", npc_p_5000_normal:"addcfe619b6b757f397ed53dfdcf1397", npc_p_5000_angry:"2016fe0c37d5e676621c9e9c18467a61", npc_p_5000_worried:"5acbc29d084d873bc7d007d05ddd1dcb", npc_p_delay_normal:"2731cc0e10488ee5959f2ee35ce526ae", npc_p_delay_angry:"4cd4b98d249dcf7059c217e39abed09a", npc_p_delay_worried:"d2056bffcddeed8725db028d7f88f6c9", npc_p_youth_normal:"1fef97cfa37a4c919c3ec7ef5d91f906", npc_p_youth_angry:"805995e7cd3cee181125d39befe9d2e9", npc_p_youth_worried:"d4192f456daeba00ac3ce9e59c799270", npc_p_fake_normal:"944a775b4d4eaf4af4ea1f5ff841a309", npc_p_fake_angry:"0e4cac439837fc794b8bb4838048e292", npc_p_fake_worried:"f9ff22f321f35a5e7406729fb0741bc9", npc_p_ghost_normal:"0b96c3bf8bb48f5c57087b5ec36d612e", npc_p_ghost_angry:"8fba7bf712e435db819cdc99ff2dee2e", npc_p_ghost_worried:"fec5185432a752d5a1ed799e36b4efb5", npc_kim_normal:"e44b8f963dcc9eec0a56dc53c68338b2", npc_kim_angry:"209b628ef33a8f46a9b757cf109c36bd", npc_kim_worried:"ad9b0eb477ce04af94c87c010294afbb", npc_parkbk_normal:"d633596e8e6edf78d7f845692c614262", npc_parkbk_angry:"7add11cdaf7b8dc3756f6ad6640b6d1b", npc_parkbk_worried:"12956677f874357230c2065c5a09e388", npc_downstairs_normal:"ad9248ee1fe16fafa04e77d2f852aaa8", npc_downstairs_angry:"2def515e5b2afec3b2af28c6b4c24747", npc_downstairs_worried:"aeb457d0c75989e62b37971cd7c63500", npc_banker_normal:"54455f16b7d54ec62a45aed619bd28f5", npc_banker_angry:"1004c013a8979968cdda32e56ba7b942", npc_banker_worried:"8a319ca33e51912688db001b363f8707",npc_elec_normal:"1a7d18cc6e3db11455700e13a1f094ad",npc_elec_angry:"72d61a4e59923d1e8b7ab0f9cf8deb5a",npc_elec_worried:"4b0f5069920dce396b65e62e9e5a022d",npc_interior_normal:"25f70a23f22a477eabd91b7e8086556c",npc_interior_angry:"766e218a6ab5fe56b6668468fdf94002",npc_interior_worried:"836919a6327f47d67b4aa0fc8786fb3e",npc_keeper_normal:"6aba7fd9107a6ee905a0cdf2ad12f64a",npc_keeper_angry:"4f7b07cccfa110f29ab536c1d85d1731",npc_keeper_worried:"c5a8f253b681cbf2483a7a2a077d9a64",npc_office_normal:"9c108dea0b127279cb4b2627f7bca9cb",npc_office_angry:"74fec28a3a4ceff239383b888d6cc739",npc_office_worried:"b050d12be4d668ae0a02b36555cb17ea",npc_brokerA_normal:"0e4d78cb0ecc8bbce438b769409d12e7",npc_brokerA_angry:"50208e69c37d48d53b445c55d8e5ff54",npc_brokerA_worried:"6171a0f60e5c89a1520387144deaef47",npc_brokerB_normal:"16cdc291c98f2b924f1001093a878405",npc_brokerB_angry:"1d36d67d423a59b1023f28616859c8f3",npc_brokerB_worried:"3fdff8fea082b2b541d60452831bbfd7",npc_brokerC_normal:"33e77805ff75bf55901492e94b0f65ca",npc_brokerC_angry:"2efc47818f4e57480458698a3b0ad710",npc_brokerC_worried:"127177675d5f7bceb6e2c12a16995ea1",npc_neighbor_normal:"837689f53c655b7d132b29557e34b6c1",npc_neighbor_angry:"68e0395f546441e7db5e5df6739bead7",npc_neighbor_worried:"3a5b63b9f68fa997b1452bf1534c624e", prop_envelope:"4f145e8a8822f7645578f77a6ee95106",
   bg_office_2:"a0bd8a4f4b41ee8c599f33430f928206", bg_office_3:"20ca2f3daec72e213c1b685582800944",
-  npc_playerf_normal:"993621f197179fbff0baa67278819d44", npc_playerf_happy:"dc29a3193b90683a0eb73acacacc85b8", npc_playerf_angry:"6b4bcd48cc1f432970e7e3206e52f991",
-  npc_playerf_worried:"013f6de1a66cf6f86f98a001fa77da34", npc_playerf_shocked:"bbbf55d07c7f096908cfe313284ea736", npc_playerf_soft:"409ad8e4560565e50ad91081f3291922",
+  npc_playerf_normal:"0e5e0cf8e1eebce4614a7eb2b580eb3a", npc_playerf_happy:"21edbf20d7400a64cb512843f0f49e6c", npc_playerf_angry:"fc342f6c5ea6b5a52aef3845b9c31760",
+  npc_playerf_worried:"e300bae619a62ec11a5a68cccb741529", npc_playerf_shocked:"a732cb9189a84c45a3ad4fdcf70fe55b", npc_playerf_soft:"29d4b8c7fc4acece5292aa00af42901f",
   cut_bid_open:"4f38b2ef9b76d0db9e96b67bd21736bd", bg_bid_room:"07b55a4385794f3235b2ff7e1f594bda", bg_room_after:"89311a983e8f64a7c6c9a9471afb3342", bg_office_1:"9de4f638fa8ff6a4f3f1e3a0f5adadde"});
 ["normal","happy","angry","worried","shocked","soft"].forEach(e=>A_("npc_playerf_"+e,"npc","주인공 앞모습 — "+e,"주인공 앞모습","경매왕 반응"));
 [["bg_bid_room","입찰 법정"],["bg_room_after","수리 후 거실"]].forEach(([id,t])=>A_(id,"bg",t,t,"경매왕"));
@@ -41055,7 +41055,7 @@ function lfActBtns(spot){ const L = lfRec(); return `<div class="lf-acts">${Obje
 function lfPanel(id){
   const L = lfRec(), C = lfChar(), c = kcRec(), running = bdRunning();
   if(id === "laptop") return `<h3>💻 노트북</h3>${running ? `<div class="panel">▶ 진행 중인 CASE — <button type="button" class="btn pri" data-atab="king">이어하기</button></div>` : ""}
-    <div class="panel"><b>🔎 경매 검색</b> — 이번 주 법원에 나온 물건들<br><button type="button" class="btn pri" data-lfspot="board">📋 경매 게시판 열기</button> <button type="button" class="btn" data-kcnew="weekly">📅 이번 주 경매(모두 같은 물건)</button></div>
+    <!-- v229: 경매 게시판·이번 주 경매 버튼은 뺐다 — 캐릭터마다 정해진 물건 4개만 스토리로 한다 -->
     ${lfActBtns("laptop")}
     <div class="panel"><b>🛒 장비</b> <small class="note">장식이 아니라 시간을 줄여 준다</small><div class="lf-acts">${LF_EQUIP.map(e => `<button type="button" class="ag-act" data-lfbuy="${e.id}" ${L.equip[e.id] || c.cash < e.cost ? "disabled" : ""}><span class="ag-ai">${e.ic}</span><span><b>${e.t} — ${L.equip[e.id] ? "✅ 있음" : kMan(e.cost)}</b><span class="note" style="display:block">${esc(e.d)}</span></span></button>`).join("")}</div></div>`;
   if(id === "board") return (typeof boardHTML === "function" ? boardHTML() : "");
@@ -41679,32 +41679,32 @@ const _gx_sfxBtn = kcSfxBtn; kcSfxBtn = function(){ return _gx_sfxBtn().replace(
 /* ================= 🖼️ 캐릭터별 그림 — 고른 인생의 얼굴·뒷모습·방이 게임 전체에 들어간다 =================
    그림이 아직 없는 캐릭터는 예전 그림(공용 주인공)과 이모지를 그대로 쓴다. 한 명씩 채워 가면 된다. */
 const LF_CHAR_ART = {
-  seoyun:{face:{normal:"1c566d13d8960c9915dad1cbb8b3feb8", happy:"6fd30bc8295c83a97fba61c22e67dc0d", shocked:"e0891f9ee8d6ed107b3751fc34348477",
-                worried:"4dbe6d8a4b9d28b69eee59b6ae1fd549", angry:"1713778c5f75972a617d6706b2224e72", tired:"34da9dccb585a20029ee6b6add14173c"},
-          front:"93bf76af31b7e325498402ba9df7db05", back:"745e6d11267dd21a40e3204041188bf9", select:"0f505ffb62f59a667fcb89e54ee1d3d9",
+  seoyun:{face:{normal:"78733444597a62cf103ec27fd803b6de", happy:"d04f05e1e2f8a4a45fead8ae4215dbdf", shocked:"29c5797dfa925e7d482e4015b9abc315",
+                worried:"73fc84e1b42b53db3a711888224fae1b", angry:"94dfb0296c74da9c2cdf98d4563ce90f", tired:"b5fcbc1f1b42803197dccf103c516772"},
+          front:"2dccd41f5da5f23d5b514899e37e178e", back:"7ba3f8b513d089c37c9cb7fdb2d2a9b4", select:"0f505ffb62f59a667fcb89e54ee1d3d9",
           found:"a6aa2aefe97342b2e6f47aeff0af5ec5", room:"6c5608542f69436fa41610b5486fb480"},
-  dohyun:{face:{normal:"2c6dcfc46662cb715ae6a15bbcb25796", happy:"62041faa17176f8a731222ebf46b6050", shocked:"20537e78fcf156713f9a98c031ee3b05",
-                worried:"f92e0be6395575bc5e67e70b6884e9aa", angry:"97343c701731a1677db55b0a34d4cc2b", tired:"d5e227dbe4e6c139a123621d0833a616"},
-          front:"4e6c8504ae07eded7732125103624cc5", back:"2a1d7d91d759fb0ad1a580c1083c623a", select:"b9c749443dc4065d593447850e605cbc",
+  dohyun:{face:{normal:"8bff04cc92463bd999186ce88f40e014", happy:"1efab84ae4cb4ad8c4154dfec74bb027", shocked:"29648529c6d0390f75cb4a61d823c926",
+                worried:"21da674a078aaeedda8aea68de7d9245", angry:"bc456db36ce5b330a434796bc5522ab7", tired:"3f3393979e3254e0e9a3199201849e8d"},
+          front:"85c098f4eb5fc471642861fe3a1a4fb7", back:"552875b1013bb3a79b616152823cf4e0", select:"b9c749443dc4065d593447850e605cbc",
           commute:"3ff68bb122421084c31b3ab96ebbc1ea", room:"4e6edd4052a125094a0b506b7c91866e"},
-  mijeong:{face:{normal:"de2db819371c268760cde0f43bd2ab59", happy:"07b53544fd6eb5e854a37666ebd60b07", shocked:"3437e73c74f7f96d0a6fe5b063d7e891",
-                worried:"b74e4bdb5c03ed904e4fbf3a9e1fa291", angry:"fefc77dcc2e67e527bf141e68fbd2401", tired:"5f8364d8be29ac0e3706ce935180ebc3"},
-          front:"de23e0f0d5a92e041efbd9c81d7324a1", back:"f22e08926e3bda4d14e8b58626dd6d69", select:"07908fc86a73109107d59cf8e4479263",
+  mijeong:{face:{normal:"0558cb08697c64f6d90edfe9c11421fe", happy:"1edebb1341dae810b7891b92f51c7720", shocked:"69da716269af6a4d9e59c8f19e62edba",
+                worried:"186a40dc3fed2534bb2d11f54644cfe2", angry:"dd9818813ef57770316a4eabb66dab5f", tired:"3720969a458fb910c658bf8098a6df10"},
+          front:"2b9707d0696eb87ad780b03eb2f735d4", back:"f8f67a82adee0fc8f4e89c7c34e41418", select:"07908fc86a73109107d59cf8e4479263",
           shop:"80fa4024531bc6844278f4a1bec404ec", room:"3d69a0468b0060ad25ce8910b4093d4b"},
   // 박재훈 — 표정: 기본 · 멋쩍게 웃음(happy) · 놀람 · 턱 만지며 의심(worried) · 팔짱 결심(angry) · 수건으로 땀(tired)
-  jaehoon:{face:{normal:"57f8a7399c2b314071d8ed618a05652b", happy:"32edd6959f579b5be13566eb3e81cf5a", shocked:"e115ea1cd8e1acb71d25020554f8457f",
-                worried:"29c601659301d95b1bf8c502e7a52838", angry:"c19ad3f85599464a1c93fb7d358e8387", tired:"b216b6ade96c0a156e308e81d6c09d4d"},
-          front:"e876caa0b76a4f1bb174c47844da7c76", back:"c40ffb12739126df025442eab3e6a5b6", select:"0fb410d2a57eed863e40f7ea7f1ac3dc",
+  jaehoon:{face:{normal:"aac17185ff66d0ba558654631b48ea61", happy:"0508934dd1538bacd9da12ddd1901761", shocked:"6c4f898ae5dc9811ed2eb3a18358828e",
+                worried:"3b42144bea6f2bcb41cfedaeb908ef9b", angry:"2a3b31c9ebc51276fc97982dbbb01088", tired:"d97883a728b786c9900329c3af30ab8b"},
+          front:"ff2d0d70ff680c71ab459f66d74342cb", back:"94dc9c6dca99a47210f27a27d1470b03", select:"0fb410d2a57eed863e40f7ea7f1ac3dc",
           site:"38752f63e0013680ff416faa69ffc6da", room:"28a1cf1a44efbf9ef7e0e889e481f058"},
   // 최은경 — 표정: 기본 · 옅은 미소(happy) · 놀람 · 계산기 보며 걱정(worried) · 안경 올리며 결심(angry) · 관자놀이 누름(tired)
-  eunkyung:{face:{normal:"8336de9700e8867cef7780f9eb5100b8", happy:"2819d5a85a308b4aef80f6f992df8e4d", shocked:"6ac2ed5732b7577e826f0faa7fde89a0",
-                worried:"9bc30ab83c619c296a59bb886e2cdccc", angry:"051cf9287aa3edef659dd6bcfd3ba3a9", tired:"37800e7039244c49f1057cb020a82930"},
-          front:"0215373c26b5ef5c462d918cff0e805d", back:"a3c6638aa8d29d618dee4cfd84e0a233", select:"21337f6463a3fe6b47f7499ff4954b39",
+  eunkyung:{face:{normal:"e519571359d4a8fc899c8b785579b7af", happy:"04259f9be4e59791e3bbf3ca53942daf", shocked:"5c4c76e093f1a4b201b51749b5b224d0",
+                worried:"209d56970c868166389174693ed17244", angry:"1ccf3e3db1f6f6eb924a7d063c1ac3c0", tired:"b9654a9b3e5fb7eb0d95adc726df8fc7"},
+          front:"3c47174fb79a9c114e588457e8c3cdea", back:"0218b495efd05ee9e1a619ec56e1e369", select:"21337f6463a3fe6b47f7499ff4954b39",
           morning:"e484c60840c93b1948e7870ab73d4d19", room:"75d039a099fc0a99a7efba48f6d09783"},
   // 김태식 — 표정: 기본 · 허허 웃음(happy) · 놀람 · 서류 보며 걱정(worried) · 안경 벗어 들고 단호(angry) · 뒷목 주무름(tired)
-  taesik:{face:{normal:"15c1b2126eed366fc28b475d5a53cf4d", happy:"5a9a05d1f40badfdc2451dc2c3ede869", shocked:"a2658ef567cb0ac710ef90a84aad80e1",
-                worried:"668e464467eaa67e93bed94c1fad6adf", angry:"63e410a90be5f63f37ba67a7a325e30c", tired:"1bc95fd990dfd6e6cd98d2d1531181d5"},
-          front:"ea53ae0c31f4d6dd906f927db721b12a", back:"77d6b61c414cfe5836348388ec794cde", select:"2452f4871394a4843ed2e61f2a74d9cc",
+  taesik:{face:{normal:"7243d39dc2b907ba5b2a5b9a12b23768", happy:"0bd478c9736454722af6a80c45b3fa11", shocked:"29448460c5754d211a4941f8393704c6",
+                worried:"ccbbd30a01d205cc92c5c92ba0bfa7b7", angry:"27d0d0bdc31410469e1430b76bdf769e", tired:"628cc3f41aa2e3dc60e65924d5b4edf1"},
+          front:"d65a6efdada09189e9b21e111526c199", back:"45af6a95e25e248647beb35e1dd6e873", select:"2452f4871394a4843ed2e61f2a74d9cc",
           morning:"3b86d1750b7daf85991c90dbccd52b74", room:"5590c2eb1aedda87ae1ffffc4c65752d"}};
 const LF_FACE_ALIAS = {soft:"happy", neutral:"normal", troubled:"worried", furious:"angry"};
 // 배경·컷 칸으로도 등록해 둔다(그림 관리 화면·오프닝이 같은 이름으로 찾게)
@@ -41765,12 +41765,12 @@ const _ca_sel = lfSelectHTML; lfSelectHTML = function(){
 
 // 표정 추가분(유형별 공용 인물) — 사용자가 받아온 그림을 잘라 넣은 것
 Object.assign(ART_DEFAULT, {
-  npc_oldman_angry:"144a322fd80e32681f70641e7e4fc024", npc_oldman_troubled:"893687515138e76c019a8959f48b3f01",
-  npc_ajumma_angry:"418917e1fceea53717bf4ca48c5df592", npc_roughman_troubled:"cac08fac2fe3e58b2cda0c2e289ef935",
-  npc_youngwoman_angry:"30f950b5283848dbd88bd2b269e4fc6d", npc_youngwoman_troubled:"19f5132d18ff5aea237feb4e72ed1415",
-  npc_broker_angry:"f9c6bd97ecd060a5df237e134416877f", npc_broker_troubled:"00c79ef78a4e38cad84bab1118e7d037",
-  npc_mover_angry:"7ef41728723c4636f4a2fbd25b858aa7", npc_mover_troubled:"da13db86052f7ab60f38f360eeb1431b",
-  npc_bailiff_normal:"753d467e63d8e35d6e4242e88b9de720"});
+  npc_oldman_angry:"0a0b4be4110093c7a2aab1c49c841475", npc_oldman_troubled:"731bc530757280f674f77303e06e9c6e",
+  npc_ajumma_angry:"c7ba8d7c1246aef920d1243a7b2e591c", npc_roughman_troubled:"34aca9df4431899385b3db53640b27a8",
+  npc_youngwoman_angry:"c86e874cb298b8f96542d9342c5501c4", npc_youngwoman_troubled:"afc65fcbc0bc9701580227cf571868d9",
+  npc_broker_angry:"459fc4b946699b978a06088ddbca9c42", npc_broker_troubled:"848e8bb8d604da42d3e170789b1e20c5",
+  npc_mover_angry:"8f4333dcd0678ba37463628586b8424c", npc_mover_troubled:"935c8742eac2086a41cee4e3526e1f84",
+  npc_bailiff_normal:"580e0bc82278c3c11afb57963fc8257a"});
 
 // 소품 시트 1
 Object.assign(ART_DEFAULT, { prop_keys:"1dec16bd8a6acfaba2533fddde5dbb44", prop_doorlock:"c4f92d364746346833a4b55d6aaead6c", prop_letter:"b2281c57aad6ac86a87859dc861c6ed0", prop_order:"b6750cac30b5bfe735eef0128ae16daf", prop_confirm:"9d65195ebfe4fcec0669fbe5ce53a56f", prop_boxes:"beb210bc4a5617530e69617a41923a78", prop_cash:"dba6864c843485b6c3622aed56e13bb2", prop_notice:"4dd36113a80ac4e08ade22dcc148b1ec", prop_truck:"8258758d43538665526fc4a54876fa6b"});
@@ -43971,12 +43971,12 @@ const _lfv_kStage = kStage; kStage = function(bg, who, ex, text, name){
 };
 // 낙찰·패찰 포즈 그림 (P 발주 — 받은 사람부터)
 const LFV_POSE = {
-  seoyun:{won:"0733e69c746133cb7276f548a8421865", lost:"face136833a2a021dd0834094c5263a8"},
-  dohyun:{won:"ea8be2fe9f3bb3e70e32db4e7590e97c", lost:"7978a248203e17d169bf0588754d51ac"},
-  mijeong:{won:"6e341c20709cd3f5d3c8acba06f5dbd9", lost:"3cb6444be7fe70b23679900741845e3a"},
-  jaehoon:{won:"8d9afdae806377e99c823f9b4efeaacf", lost:"43e866f2b9345ffcf93484b68426a02e"},
-  taesik:{won:"6d8ea7ee6928ea783c1658ad78d9c537", lost:"e163cb61a8a9df43189049e937295259"},
-  eunkyung:{won:"e25efc5d4fea6ac44af8e7b546c13781", lost:"ab9c881cdd065be3cac046cf7300f4a3"}};
+  seoyun:{won:"abbe5c6e3bf078095629fa0aab14adb7", lost:"2cb27079c4c5b9cc1af071a6a0fccb29"},
+  dohyun:{won:"bb15010bac1d14a252776e3c8eb9474f", lost:"a3ecdf70fa35e90992ebcb87da664866"},
+  mijeong:{won:"c4aaec310a51fde6a07b99cf973f3e72", lost:"b212bff8c365456c12aa8727a9d3f721"},
+  jaehoon:{won:"8d9afdae806377e99c823f9b4efeaacf", lost:"a9d51761e5d5a25ce01c1a5ac7c43c31"},
+  taesik:{won:"8a7f7e569093d4457c19915786b458bb", lost:"1c86872dabd95e357c89bb5b951b8453"},
+  eunkyung:{won:"2fa91fc502733d998b423761a5972604", lost:"2f401f148e1b6a43532e26bf9f3d2fe1"}};
 // ③ 그 사람만 하는 행동 (능력치 성장·관계에 조금씩)
 Object.assign(LF_ACTS, {
   sig_seoyun:{spot:"sig_seoyun", ic:"📱", t:"경매 커뮤니티 눈팅", min:60, sta:2, stress:-3, grow:["info", 2], note:"정보 경험치 · 서윤 전용"},
@@ -44094,14 +44094,14 @@ Object.entries(LFV_MORE).forEach(([ch, M]) => { const V = LF_VOICE[ch]; if(!V) r
    입찰 결과표의 "초보 과입찰러 1억 2,390만원"이 글자뿐이었다 → 이름 옆에 얼굴.
    패찰이면 나를 이긴 1등이, 낙찰이면 아깝게 진 2등이 무대 오른쪽에 선다. 그림 없는 라이벌은 예전처럼 글자만. */
 const RV_ART = {
-  "초보 과입찰러":{normal:"2554c349faec4a4334d4642044ce56bb", angry:"a97de7c2b8d37096da1ae6b177fa8f67", worried:"d7b15bb5b920c3502da821f91c181a9f"},
-  "지역 실수요자":{normal:"365f291c360b35630af92287ea3a7e9e", angry:"0e94711136a8069145a516e2cabd179f", worried:"8d15d6fbf11f46c28205619bb87bffdc"},
-  "전문 투자자":{normal:"2671bce1d07bb9d2975116b968ae654f", angry:"f1ce94238f0e06a04eedf25b503c901d", worried:"9c72eb7a5f89deb39440d94ef20df66a"},
-  "무조건 저가형":{normal:"9b70fb5980a2a4ee5cbfa3b5a332d039", angry:"1ea6af88728f02da511ebce94cad9cf6", worried:"3cb6a49b0a6eca64bbb45d9859e78053"},
-  "인테리어 업자":{normal:"1b0bc65ebdc7f60b3709ce4ebb98e081", angry:"e9d15c8e3a41e8e5b8ed6a7f9100adf2", worried:"977ed007cef8be8c24618133bfd26db4"},
-  "겉 마진 보고 온 투자자":{normal:"9078ffbb0cbaafd33416d918160e0a8d", angry:"ed47edb2b24e833d732dfdb1efa5d21b", worried:"9401d833d68e92d034c99819e95d6ac8"},
-  "감정가 맹신러":{normal:"81c4b1409731ba5e69e42dfedc53c05d", angry:"9e359773a6e9ef9589e31edc1afc0e9b", worried:"a6b0fc29e11f795ba82bc4c43aded4f0"},
-  "이사철 실수요자":{normal:"bf6ba1f104722f50cb938c08ea650c2f", angry:"b45169a22a9e7116dc8f70e58c6dede6", worried:"4351e5b9cc1ca8c27196bdc74ce81467", pair:true}};   // pair = 두 사람 그림(얼굴 동그라미를 덜 확대)
+  "초보 과입찰러":{normal:"5ec5b83242e4db171a25cef0ec85b806", angry:"3fdc36647041a013b01668ce1bf77588", worried:"8e7138a43f40f31a7a960e6576476717"},
+  "지역 실수요자":{normal:"102d4e6dffa46039f517293677339b63", angry:"1813f4f1421a38b897f5e3696b3ea6ac", worried:"03bcdc3e0c34c9e5a9cd3be3b82984a4"},
+  "전문 투자자":{normal:"b930f11739d799119d9a1279c208f79f", angry:"973a06271dd98009620fa90220b6a96b", worried:"700cbc89d75966a3fe29b0ae4f7a3d91"},
+  "무조건 저가형":{normal:"b054f1cee39de51833b36a21c7938fae", angry:"7eeee4e30d9461c9f9d563e65002e2f0", worried:"e810cf31f307913f3ccd0d5057fd8dec"},
+  "인테리어 업자":{normal:"31747cccee17105bf486ca6c633fd9ff", angry:"08a033f65f484278193445efce0f5ddb", worried:"062dc7253b28cd108ca85d0c035c7a2c"},
+  "겉 마진 보고 온 투자자":{normal:"2f69b88847332a3319ec58b7cd92aef5", angry:"a811267c167ca184483c6c241b653462", worried:"a0dda3318d25caf052120fc0d1bcbd8b"},
+  "감정가 맹신러":{normal:"ff92d972adb5d1163b3e43cb9279cbeb", angry:"9e359773a6e9ef9589e31edc1afc0e9b", worried:"7a1ef8158bbd32c8abdc0e398e39e865"},
+  "이사철 실수요자":{normal:"e1e0f328bbae23196af5ce2635a1c152", angry:"372b50d15fcd4f2700a2aecfe4cb7f6b", worried:"afe46432b92ab1ba0e476ffacd580637", pair:true}};   // pair = 두 사람 그림(얼굴 동그라미를 덜 확대)
 function rvUrl(who, ex){ const A = RV_ART[who]; if(!A) return null; const id = A[ex] || A.normal; return window.GMW_STANDALONE ? "assets/" + id + ".webp" : "/_blob/" + id; }
 const _rv_table = kBidTable; kBidTable = function(){
   let h = _rv_table();
@@ -44123,12 +44123,12 @@ const _rv_kStage = kStage; kStage = function(bg, who, ex, text, name){
    매도 단계 "○○ 손님이요, ○○만원이면 계약한대요" — 글로만 오던 매수자가 무대에 선다(유형마다 표정 하나).
    입찰표 제출 뒤 '개찰 중' 화면에는 법원 경매계 직원이 서류판을 들고 선다. 그림 없는 유형은 예전처럼 글만. */
 const BY_ART = {
-  "신혼부부":{art:{normal:"e4a8946e4957bcb20dad860f8d60ca52", angry:"217a51ac1a722f8fbe5a6faf9154e9b1", worried:"2efa2b1fcb2a84248589c3acbfa64126"}, ex:"normal"},
-  "대출 최대한도형":{art:{normal:"93e7017c81a2397cf745230bc2982135", angry:"69f4bc2bf604303ec5d4646a0b3c3833", worried:"dada1e64977b64d0083595612b42fca8"}, ex:"worried"},
-  "가격 깎기형":{art:{normal:"9b7bf3f830ca53a1ca25f1f2f161cd41", angry:"b782f1d94910eeff54407a461ab688ca", worried:"9f3b984dfecd79b2948999dfe1075f67"}, ex:"angry"},
-  "부모 지원형":{art:{normal:"9b16a6329341cb77d525c96dbeaaa6a7", angry:"1d852e168af9aa99f2daf357cd7b7b91", worried:"15b31970bb75d823e750a55164242026"}, ex:"normal"},
-  "급하게 이사해야 하는 사람":{art:{normal:"887ffd7fa5a4257a3484dc54c2f1da20", angry:"36a8cb065e6fa65f16348c1f1abf1937", worried:"c0fac525d097068808cd46169838d481"}, ex:"angry"}};
-const BY_CLERK = {normal:"e6795efccc22c19f86aa2aadcf8df4e9", angry:"ac13568abaff106913b04260642111bb", worried:"de875545fddd60d45996a6188e8cd81f"};
+  "신혼부부":{art:{normal:"d9177f3923b999d5f2ae35d5f1f68bbe", angry:"ee4227132272447d43e59871fce32bab", worried:"ac502ab43fe50d5749a7df7d9e013c76"}, ex:"normal"},
+  "대출 최대한도형":{art:{normal:"4700c1d0bd1dd4ba83837e21f0d99078", angry:"ab38b0ee5d280c240cf95d69e16221f9", worried:"33d51b8cc87df77c5eabee829b46a516"}, ex:"worried"},
+  "가격 깎기형":{art:{normal:"f91524a5d4035821436c77184eb174d7", angry:"3a143882ac50a16621afb475e786aa86", worried:"b6a3ba914bef3b33172227a5c21d99a2"}, ex:"angry"},
+  "부모 지원형":{art:{normal:"da3ef3ec7c68fab3654590505c1e8b2c", angry:"9c773d9df8ad39d9ae5f0b07854c2940", worried:"ae1194d483c047703170831047707212"}, ex:"normal"},
+  "급하게 이사해야 하는 사람":{art:{normal:"82f36da0e934d8fc223a06a99091948e", angry:"22990b894d7206d9c39c43c2a2d253f8", worried:"97c71ea71285a65debcf1e3ab568834e"}, ex:"angry"}};
+const BY_CLERK = {normal:"834785dd37bfee545c3f562d7b1683a4", angry:"f7bdd800cb49a927c2de920c64688572", worried:"af6c2ef392e222839c656c179ed40566"};
 function byUrl(id){ return window.GMW_STANDALONE ? "assets/" + id + ".webp" : "/_blob/" + id; }
 const _by_kStage = kStage; kStage = function(bg, who, ex, text, name){
   const h = _by_kStage(bg, who, ex, text, name);
@@ -44144,13 +44144,13 @@ const _by_reveal = keRevealHTML; keRevealHTML = function(){
 /* ================= 🆕 새 점유자 5명 (O 발주) — 자유 플레이·문자 협상에 들어가는 인물 =================
    불쾌한 인상은 태도·꾸밈새로만 냈다(인종·체형은 이유가 아니다). 법적 위치는 일반적인 설명이다. */
 const NEWOCC_ART = {
-  p_hawaii:{normal:"5beca7cb921dfcb0df268bcdf43aa2a6", angry:"33c31dbadc4ee75463ac20ce42b53c3c", worried:"a5f0fa4f5b7ec4dfce08d4561663019c"},
-  p_live:{normal:"f1be5803f5e9b4abad9df547f6c34b83", angry:"8a64d1a5f692116841a34f9c45ab97c3", worried:"b219e8e9103b2f28fcf665edd8327104"},
-  p_tojuk:{normal:"c32fe330761442377213207da102d39f", angry:"4d7007bc8b2d62bb6fe9ebd54979357e", worried:"aa07c26bd2f2796e96620689dac3ceb8"},
-  p_chain:{normal:"06bf194c42b8a73ce110fea306d65420", angry:"2b33f1e29451d8593fc7cdced3617d96", worried:"353b9b673a1b434e8174a246b9254e6c"},
-  p_gamer:{normal:"0d5bf008f63fd022cde9869003a4eef6", angry:"1683f9a474eebeb62cd5dd82ae58f198", worried:"e500b8cfc7bba3ad9a5a23898e315859"},
-  p_law:{normal:"c2ced8b9dbfee66825bdd8e1451c8075", angry:"c136e7e406e2f082f02e023e975a62ec", worried:"6904b6e20e2014c8b3deaeaa0dcb2d83"},
-  p_madam:{normal:"63d01dd80c3daf951b21d4ceb4869065", angry:"096b76cebc1522637fa64d087ef4a0ab", worried:"5a610d3b59cc2236db943bb667ffccd9"}};
+  p_hawaii:{normal:"e7738e893f47cac40e10049a4035d2c5", angry:"f66011db1e956b34b7ae97d791755acc", worried:"02b464fa0cf8986fa4582ac75875194b"},
+  p_live:{normal:"8a841324805fe4b54a8688125d495467", angry:"f667628fb9bff55a7f5377741d4543ab", worried:"ade6c19a74fc800d65669c84defb09ef"},
+  p_tojuk:{normal:"fc2c2c6a8849b572acca1d7b027293f8", angry:"463849bcd43531e0836459c7902fbd3c", worried:"054a2430b915ec4aadc4a77b99703c2e"},
+  p_chain:{normal:"1648e5fc863df37802f7a449d8f09493", angry:"6f4c279cea5636edc5c09609dc4ceb82", worried:"691ef6ba251ca1097b4f3841ba622fa1"},
+  p_gamer:{normal:"d17f4c724c2674a0002cfa22d00c765e", angry:"eb38f2802efc9be53357035de38cfd36", worried:"943282a42e0725f965056a19f635b2cc"},
+  p_law:{normal:"7f58dfed83da3d339620d1836055d7eb", angry:"1dddbf8dd16a948a64b4bf30fbc32414", worried:"abf937ef8b5024c3ee5592a418dea004"},
+  p_madam:{normal:"08dc22a4d3729d1921d2c828f0cb1e12", angry:"8b76858e7829417a638d1ec95a4b82b8", worried:"f87e1693f2f34bb180a5f98e424cb24b"}};
 Object.keys(NEWOCC_ART).forEach(pid => Object.keys(NEWOCC_ART[pid]).forEach(ex => { ART_DEFAULT[`npc_${pid}_${ex}`] = NEWOCC_ART[pid][ex]; }));
 const NEW_PERSONAS = [
  {id:"p_hawaii", type:"bully", emoji:"🌴", name:"황금철 씨 (63)", who:"전 소유자(채무자)",
@@ -44220,15 +44220,15 @@ NEW_PERSONAS.forEach(P => { if(!PERSONAS.some(x => x.id === P.id)) PERSONAS.push
 
 /* 새 매수자 3명 (B 발주) — 매도 단계에 제안하는 사람으로 등장. 목록 끝에 붙이므로 기존 유형은 그대로다. */
 const NEW_BUYERS = [
-  {t:"은퇴한 선생님", flex:0.008, cancel:0.05, art:{normal:"52d5859a580e4290969e6666e7a95c08", angry:"0fcb5349c61df64e821eb267ba6f6a9c", worried:"af135039dd996d6216e3026ce0ae7d0a"}, ex:"normal",
+  {t:"은퇴한 선생님", flex:0.008, cancel:0.05, art:{normal:"1c1a28e5300c584660e38b83f44f166d", angry:"331ae4f81cf3dbf6449cad6f8724aead", worried:"d1f330003e1a40d2fd20de7946b637a7"}, ex:"normal",
    say:["\"천천히 봐유. 집은 오래 사는 거니께.\"", "뒷짐을 지고 베란다에 한참 서 있었다."]},
-  {t:"꼼꼼한 외국인 연구원", flex:0.005, cancel:0.12, art:{normal:"20668f4d1df78ce919d32100ec2d6617", angry:"8a2f156e03a1892fdb97972f9a1bae85", worried:"544a9ac18e074b240692d14c21d12c96"}, ex:"normal",
+  {t:"꼼꼼한 외국인 연구원", flex:0.005, cancel:0.12, art:{normal:"662bdb2ddc3774af4822ff4851e9f9f0", angry:"544629a96e436b4f1826abb15ccba185", worried:"f0c2b4cdf9c46e816306f25a8fbae284"}, ex:"normal",
    say:["\"등기부 을구, 한 번 더 보여 주실 수 있을까요?\"", "서류에 형광펜으로 줄을 그으며 하나씩 물었다."]},
-  {t:"휠체어를 쓰는 실수요자", flex:0.01, cancel:0.1, seated:true, art:{normal:"61ac665facbbe8343f47d0f642838bf3", angry:"ec79ac58b68663f4ed4b4f62a9547b74", worried:"98f3a6dd97032d23c43b40dca799a4c7"}, ex:"angry",
+  {t:"휠체어를 쓰는 실수요자", flex:0.01, cancel:0.1, seated:true, art:{normal:"f48cdb113d776be53d0d490ef2fb4161", angry:"901668c75956be38fbbece2bc7a1c64e", worried:"9484552c1b5e99ab4cc470ebbcbc15b3"}, ex:"angry",
    say:["\"현관 턱이 몇 센티예요? 욕실 문 폭도 재 봐도 될까요?\"", "줄자로 현관과 욕실 문을 꼼꼼히 쟀다."]},
-  {t:"야간 근무 마친 간호사", flex:0.007, cancel:0.08, art:{normal:"e76c73378d13591cf1643b2b28c84ebf", angry:"14266d0588e647e6e7236cb74c411bd6", worried:"44bb066002bcb203aed9f71e6f252c8d"}, ex:"angry",
+  {t:"야간 근무 마친 간호사", flex:0.007, cancel:0.08, art:{normal:"fe3e53c68353ac5600ed9399afd8847e", angry:"cccc263a02693939de436d38f00d3aeb", worried:"aab4a9d2f1bd724f0a36f8eb5614a441"}, ex:"angry",
    say:["\"병원까지 20분이면 돼요. 이 가격이면 오늘 바로 할게요.\"", "퇴근길 수술복 차림으로 계산기를 두드리며 들어왔다."]},
-  {t:"아이 학교 가까운 집 찾는 식당 사장님", flex:0.009, cancel:0.06, art:{normal:"d2264c7a29e5b7fff8dc3ecdb2cf5ad3", angry:"63f33b20b6e90a96050fe984c1b7df52", worried:"a566d2a5b384dc0e4ae2498aa3d49b07"}, ex:"angry",
+  {t:"아이 학교 가까운 집 찾는 식당 사장님", flex:0.009, cancel:0.06, art:{normal:"7ddd3cd26ae848f637b719466c604d6a", angry:"170a96b1beb70674381a44e71edc3cbe", worried:"ef4a520955ffc1ab146c1c6b09a14c42"}, ex:"angry",
    say:["\"학교까지 걸어서 몇 분이에요? 아이 혼자 다녀야 해서요.\"", "휴대폰 지도로 학교 가는 길을 두 번이나 확인했다."]}];
 NEW_BUYERS.forEach(b => {
   if(!K_BUYERS.some(x => x.t === b.t)) K_BUYERS.push({t:b.t, flex:b.flex, cancel:b.cancel});
@@ -46813,17 +46813,17 @@ function asOtherPerson(pid){
 if(typeof hubMeet === "function"){ const _as_hubMeet = hubMeet; hubMeet = function(pid){ if(asOtherPerson(pid)) return; return _as_hubMeet(pid); }; }
 
 // 받은 그림 — 물건 전용 점유자(v137: f11 윤서연 · f21 강성필 · f22 마동철 · f23 왕신이 · f31 배정숙)
-const AS_OCC_ART = {"npc_occ_f11_normal": "f9e6e9393de49940073eafae3ce5d1c7", "npc_occ_f11_angry": "50a33883e5b35f53c9bcfb8a6396487b", "npc_occ_f11_worried": "1addcef7f1b473f5f9ea726ce0e00590", "npc_occ_f21_normal": "4dbb25d3cd7caf30809e18752c3db3c4", "npc_occ_f21_angry": "f3d5b233687a79b6d596e3b20714bb35", "npc_occ_f21_worried": "5ab000834b1d79ab7d04ee93e3c67a9b", "npc_occ_f22_normal": "90abeacdcd5e726bc37a97b03df9629a", "npc_occ_f22_angry": "bf0b2feb78c5b236fd333f1b1669170c", "npc_occ_f22_worried": "4604160d424ddaa1c5b0d18001df5a62", "npc_occ_f23_normal": "f0a1c684493d6fb2c7099b7877f1fddd", "npc_occ_f23_angry": "100279b3b3bcea4fe635ba29b237578f", "npc_occ_f23_worried": "5903f8ddf7de5380136928c0bd591017", "npc_occ_f31_normal": "9c88e370386c0beae8c8d6980c1cc6a3", "npc_occ_f31_angry": "c0424fb90df720bd42e77500b6e2d705", "npc_occ_f31_worried": "5556d43c0307c5eebf98ad47e9de6a09"};
+const AS_OCC_ART = {"npc_occ_f11_normal": "58218d5445e603b82f91085a3621d320", "npc_occ_f11_angry": "558059a7358e43889ea80ff0662efe8d", "npc_occ_f11_worried": "91a63ee9098a68ce48e565e31be435fc", "npc_occ_f21_normal": "0fac8a3780a9db74197f30f9e752ef86", "npc_occ_f21_angry": "51cdf26a79d89f5dc074843bb6058147", "npc_occ_f21_worried": "36b64375c56b1cb8cae4e781bd1ed9de", "npc_occ_f22_normal": "f0b59ce41fcc4ca2ad7b9bc48a94d13e", "npc_occ_f22_angry": "27c10007fbfd2bf29c3b1f3eb10f4139", "npc_occ_f22_worried": "3250db3a76fd681b4b9f62fe151793e7", "npc_occ_f23_normal": "8e0ea78057350cc67d2882f1c8120bd2", "npc_occ_f23_angry": "9890d6361a6a67fb9edd95de2898524d", "npc_occ_f23_worried": "dda920b694941b1600abe294829053f8", "npc_occ_f31_normal": "ab43a83653b692d83292e8cabf3f69b7", "npc_occ_f31_angry": "48663c66afa73c6fd10880530d620d7a", "npc_occ_f31_worried": "cb1db44d4d10d0c9483200e31d5c642c"};
 Object.assign(ART_DEFAULT, AS_OCC_ART);
 
 // 받은 그림 2차(v138: f32 곽씨 부부 · f41 구판석 · f42 장미자 · f51 오승민 · f54 정민재·윤소라)
-Object.assign(AS_OCC_ART, {"npc_occ_f51_normal": "9ce6f69124a16aa8cadb9f6c34abdb65", "npc_occ_f51_angry": "c506c8310335012eeace64e51cabc2db", "npc_occ_f51_worried": "ebb1bd31285c2fa57cd7b0002a856546", "npc_occ_f42_normal": "c4caaae9d1f2a29a76e566097a48d0cd", "npc_occ_f42_angry": "e7549087f47070613aab59af57068e6e", "npc_occ_f42_worried": "5f113e5f4f8a7b9a85fb3bdcd9583e80", "npc_occ_f41_normal": "271fdac6a9465b87ae03fedd946f1da2", "npc_occ_f41_angry": "9cd32ce44455a8405cab57f827e426ad", "npc_occ_f41_worried": "ff8a60502663328446a1a2db6b1ad268", "npc_occ_f32_normal": "94db1eb719e9ef73e9588918cc208939", "npc_occ_f32_angry": "de1601301e41bd263be99ad1b6d382eb", "npc_occ_f32_worried": "28150b1a1c6cc8b76c97776600c9ba5b", "npc_occ_f54_normal": "360695f324afbb4102798ae268531355", "npc_occ_f54_angry": "f97b47abd1cb8927db22356cdfb905f4", "npc_occ_f54_worried": "7e8d9d39f17903184888aef896d82adf"});
+Object.assign(AS_OCC_ART, {"npc_occ_f51_normal": "cdb30aef26140b7cb18bf902d74db3e1", "npc_occ_f51_angry": "8a954c09c169b6e2b351d31565a76331", "npc_occ_f51_worried": "4e9f7602fd389ec2232c39fec1dc0a36", "npc_occ_f42_normal": "155b27ca70ed98094f79e7334c6e301e", "npc_occ_f42_angry": "fb215221504555e21f895d32903981db", "npc_occ_f42_worried": "e2a70451f3920a6b742ad320d55e2e39", "npc_occ_f41_normal": "b6909e007163cad2932e7c1a44d727a6", "npc_occ_f41_angry": "e8feb3878979c286b9dffed668df5b07", "npc_occ_f41_worried": "533d8319da42dd4407131c0022dbcc65", "npc_occ_f32_normal": "d2db7b51fccb6d042f9467fcb0d6373c", "npc_occ_f32_angry": "0a32a7e0390b64ca1e9daa109b610ef4", "npc_occ_f32_worried": "379ce46e2730bdf920a6eacaac15e2ec", "npc_occ_f54_normal": "9cae92aff7acb0cbe3bcbc9f50bf0696", "npc_occ_f54_angry": "81b5b0e80d877da705fed063818fb411", "npc_occ_f54_worried": "758b78ff3c804ca114c9ba1404262021"});
 Object.assign(ART_DEFAULT, AS_OCC_ART);
 
 // 받은 그림 3차(v139: f61 새솔인테리어 현장소장 · f63 탁만수 사장) + 서윤 오프닝 3장
 Object.assign(AS_OCC_ART, {
-  npc_occ_f63_normal: "648c80e6378e2c135076880c097cf08b", npc_occ_f63_angry: "7505ccde92045a7c46e5e3e94fcea006", npc_occ_f63_worried: "ecfc5186fe6ac0ad29488906b99ebc02",
-  npc_occ_f61_normal: "c5752cb0d670daaa019c278f886482cc", npc_occ_f61_angry: "adda3d27123edbc33523f34748bba164", npc_occ_f61_worried: "20e15ee0876330f74485bfefea30b5ca",
+  npc_occ_f63_normal: "c81fcbc0927eca8dc5f3c9e60553ae87", npc_occ_f63_angry: "075afc1e6adb978081bf90b8fe32f069", npc_occ_f63_worried: "e3a3bc5096b1319cf5cd491255d1ca0a",
+  npc_occ_f61_normal: "70b595b14a03acfdf83cb4984678575a", npc_occ_f61_angry: "908ace044be4443c69e659487309b152", npc_occ_f61_worried: "8f0d01cb94e1f8d0b492745bf96920b2",
 });
 const AS_OP_ART = {
   op_seoyun_1:   "6673b097946d789c82896ee89ed332e3",   // 비 오는 밤 반지하 방
@@ -46834,8 +46834,8 @@ Object.assign(ART_DEFAULT, AS_OCC_ART, AS_OP_ART);
 
 // 받은 그림 4차(v140: f53 엥흐 씨 · f64 변재섭 씨 — 점유자 22명 전원 전용 그림 완료) + 서윤 생각 구름 새 판
 Object.assign(AS_OCC_ART, {
-  npc_occ_f64_normal: "bbc4b0ea8054db568fa47c1fd627c2af", npc_occ_f64_angry: "a527fc4d3121af26f66d3852f875893f", npc_occ_f64_worried: "f052e812072150f7ff3d08fd5326f73d",
-  npc_occ_f53_normal: "b3194611f50c7c0d59eece8a6b32b686", npc_occ_f53_angry: "b421111ead0e86775d95a964c562e872", npc_occ_f53_worried: "d5ac02615dfa87b7db9549b34e544542",
+  npc_occ_f64_normal: "8556a2460b76b2a0ffcab64be4cd2072", npc_occ_f64_angry: "6ef0f2b211a9305e691fb276022b4455", npc_occ_f64_worried: "9f5ccdb2a36fc78d9f98e6bae23c0a96",
+  npc_occ_f53_normal: "fd8e617c98fa488a0d66eb023aef0b29", npc_occ_f53_angry: "dd7ae1f3a2ebdc73b680f1995a5df23f", npc_occ_f53_worried: "f0b9357f045aef4f04a4ded9d2baeb1f",
 });
 AS_OP_ART.op_seoyun_2_3 = "cd14a57881176ee586c6cb138fcb4cfc";   // 창밖 비까지 보이는 새 판으로 교체
 Object.assign(ART_DEFAULT, AS_OCC_ART, AS_OP_ART);
@@ -50688,17 +50688,17 @@ document.addEventListener("click", e => {
 }, true);
 // v216 그림 도착 — 새 매수인 3명(네일숍 사장님·미루는 사람·소심한 첫 집) 얼굴. 나머지 둘(현금 부자·갭투자자)은 아직 글로만.
 if(typeof BY_ART !== "undefined") Object.assign(BY_ART, {
-  "까다로운 네일숍 사장님":{art:{normal:"387b40ea240845918ca4d46a9c2dcfe8", angry:"f6f91f2a0c4dd4f1d2921b74b4f3e92e", worried:"70227dd6d91b26c89f0063abc8cb0636"}, ex:"normal"},
-  [SF_FLAKE]:{art:{normal:"e1d4655f0c522f3e5a111a7a985d111a", angry:"1cd3f9924e5730f1a0bb390b0ba2bf7d", worried:"4230448fd1cd7c882b39545b74986e2f"}, ex:"normal"},
-  "소심한 첫 집 매수자":{art:{normal:"cb36e38662d8ce64cd1c9f82e9ea6686", angry:"92dc2f1ce9d14ca3299d577b23268010", worried:"fede1d938c3d430741fa3630c3279f31"}, ex:"normal"}});
+  "까다로운 네일숍 사장님":{art:{normal:"72d7a8683941e4c191dc682b8ee3dc73", angry:"70d3cd6bf7ad2dc8d2cbe79d8b8250f5", worried:"4579118fecf3e9d05018ba3a50d23976"}, ex:"normal"},
+  [SF_FLAKE]:{art:{normal:"19bb49719e0fbd99cf79896b15f7f6fb", angry:"62c88a38be98b749c5303cad1e02be1b", worried:"101e9987ac32acb958b01b29e62c76f4"}, ex:"normal"},
+  "소심한 첫 집 매수자":{art:{normal:"3400478545051d46418278b8307c74da", angry:"805b6ee1606b4b6559a04d0ff5c88d63", worried:"20922f3c2901428602d83452fb7cc632"}, ex:"normal"}});
 // v223 그림 도착 — 오사장·허실장·윤여사 얼굴(이제 다른 중개사 얼굴을 빌려 쓰지 않는다) + 갭투자자 매수인
 if(typeof ART_DEFAULT !== "undefined") Object.assign(ART_DEFAULT, {
-  npc_oh_normal:"2860acadedf5192bc38ac87d962057e3", npc_oh_angry:"4bc0901ffabd536aa2cdf81292e3fca3", npc_oh_worried:"e8dd9f544a731c4623ec52699ca3ae87",
-  npc_heo_normal:"b34543d399a4d5802f586a7091bf87bf", npc_heo_angry:"4fa7072fefc9abd9854caa08699b0fdb", npc_heo_worried:"bb8c97f27d10b6e0fb5dd99277b1e28b",
-  npc_yoon_normal:"02f44347e2c0306cc440136ef1b456f7", npc_yoon_angry:"140b28d4b82e9e66b20bb59146a28b6e", npc_yoon_worried:"16c7029b45fcc214a19a7865c0fb7b57"});
+  npc_oh_normal:"31bfab6d6c5af8250b2cad9ab755be5f", npc_oh_angry:"5404318876af7379919418c83f0743a9", npc_oh_worried:"8f37fd5108572fc579b5262f191ab8f1",
+  npc_heo_normal:"c9d21ccef75b75fad1a3e3be1d435b95", npc_heo_angry:"0ec1110510a9833912606cbd3ca65d1e", npc_heo_worried:"715b38aafa69eec0bfe259b25b427a35",
+  npc_yoon_normal:"7bac394fce7add4ac7a4e3248a5f4b44", npc_yoon_angry:"950c9fa5c49b41d8050ec6b56cc5e3e0", npc_yoon_worried:"26cc738bbcec1b454061280349602de1"});
 [["blunt","npc_oh"],["excl","npc_heo"],["chat","npc_yoon"]].forEach(([id, f]) => { const b = SF_BROKERS.find(x => x.id === id); if(b) b.face = f; });
 { const x = SF_BROKERS.find(b => b.id === "excl"); if(x) x.ex = "normal"; }
-if(typeof BY_ART !== "undefined") BY_ART["갭투자자"] = {art:{normal:"a76c1cc053cb136fab82ad47bff54d38", angry:"c9513aa7c0f1a1f41204f8c3d15c07f6", worried:"ba5da88f16ae7493c6465e136a2476dc"}, ex:"normal"};
+if(typeof BY_ART !== "undefined") BY_ART["갭투자자"] = {art:{normal:"85a8664a244ea51373e15599f7edbc90", angry:"6fcb1b2256da47f524a00f70f75e4f62", worried:"f005340192704525fcbf8639f2135bba"}, ex:"normal"};
 
 /* ================= 🏢 이도현 — 연차 3일 · 대리입찰은 최소 한두 번 (v215) =================
    스토리 사건은 4건인데 연차가 15일이라 대리입찰(외전 D01)을 쓸 일이 없었다.
@@ -51918,6 +51918,53 @@ const FOCUS_MENU_HIDE = FOCUS_HIDE_TABS.concat(["dexall", "ach"]);
     const _r = renderArena;
     renderArena = function(){ if(typeof arenaTab !== "undefined" && FOCUS_HIDE_TABS.includes(arenaTab)) arenaTab = "home"; return _r.apply(this, arguments); };
   }
+})();
+/* ---------- v229 레벨·명성 카드는 구석 버튼으로, 빈 오른쪽 칸은 없앤다 ----------
+   홈 화면 오른쪽 칸에 '경매인 LV·명성' 카드 하나만 남고 아래가 통째로 까맣게 비어 있었다.
+   → 카드를 머리줄의 작은 🏅 버튼(누르면 뜸)으로 옮기고, 오른쪽 칸에 볼 게 없으면 칸 자체를 접어 그림이 꽉 차게 한다. */
+function fxTidy(){
+  const root = document.getElementById("kfsRoot"); if(!root) return;
+  const panel = root.querySelector(".kfs-panel");
+  if(panel) panel.querySelectorAll(":scope > .hub-me").forEach(x => x.remove());
+  const visible = panel ? [...panel.children].filter(el => el.getClientRects().length && (el.textContent || "").trim().length) : [];
+  root.classList.toggle("fx-nopanel", !!panel && visible.length === 0);
+  const tools = root.querySelector(".kfs-head .kfs-tools");
+  if(tools && typeof hubBar === "function" && !tools.querySelector("[data-fxlv]")){
+    let lv = ""; try{ lv = "LV." + hubLevel(hubRec().xp).lv; }catch(e){}
+    const b = document.createElement("button"); b.type = "button"; b.className = "kfs-btn fx-lv"; b.dataset.fxlv = "1"; b.title = "경매인 레벨·명성"; b.textContent = "🏅 " + lv;
+    tools.insertBefore(b, tools.firstChild);
+  }
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("[data-fxlv]");
+  const pop = document.getElementById("fxLvPop");
+  if(b){ e.preventDefault(); e.stopPropagation();
+    if(pop){ pop.remove(); return; }
+    const p = document.createElement("div"); p.id = "fxLvPop"; p.className = "fx-lv-pop"; p.innerHTML = hubBar();
+    document.body.appendChild(p);
+    const r = b.getBoundingClientRect(), w = p.offsetWidth;
+    p.style.top = (r.bottom + 8) + "px"; p.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + "px";
+    return; }
+}, true);
+// 바깥을 누르면 닫는다 — 다른 버튼이 클릭 전파를 막아도 닫히도록 pointerdown 단계에서
+window.addEventListener("pointerdown", e => {
+  const pop = document.getElementById("fxLvPop"); if(!pop) return;
+  if(e.target.closest && (e.target.closest("#fxLvPop") || e.target.closest("[data-fxlv]"))) return;
+  pop.remove();
+}, true);
+if(typeof renderArena === "function"){
+  const _r2 = renderArena;
+  renderArena = function(){ const out = _r2.apply(this, arguments); try{ fxTidy(); setTimeout(fxTidy, 0); }catch(e){} const pop = document.getElementById("fxLvPop"); if(pop) pop.remove(); return out; };
+}
+(function(){
+  const css = document.createElement("style");
+  css.textContent = `
+    #kfsRoot.fx-nopanel .kfs-panel{display:none!important}
+    #kfsRoot.fx-nopanel .kfs-body{grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr)!important}
+    #kfsRoot .kfs-head .fx-lv{font-weight:800;white-space:nowrap;width:auto!important;min-width:0;padding:0 12px!important;margin-right:6px;flex:0 0 auto;border-radius:999px}
+    .fx-lv-pop{position:fixed;z-index:2147481000;width:min(420px,calc(100vw - 16px));box-shadow:0 12px 32px rgba(0,0,0,.45);border-radius:14px}
+    .fx-lv-pop .hub-me{margin:0}`;
+  (document.head || document.documentElement).appendChild(css);
 })();
 
 /* 🎬 캐릭터 오프닝·엔딩 에필로그 데이터 — oe_<캐릭터>.js 가 여기에 채운다(story_oe.js 가 게임에 연결) */

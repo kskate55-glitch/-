@@ -1,32 +1,32 @@
 /* ================= 🖼️ 캐릭터별 그림 — 고른 인생의 얼굴·뒷모습·방이 게임 전체에 들어간다 =================
    그림이 아직 없는 캐릭터는 예전 그림(공용 주인공)과 이모지를 그대로 쓴다. 한 명씩 채워 가면 된다. */
 const LF_CHAR_ART = {
-  seoyun:{face:{normal:"1c566d13d8960c9915dad1cbb8b3feb8", happy:"6fd30bc8295c83a97fba61c22e67dc0d", shocked:"e0891f9ee8d6ed107b3751fc34348477",
-                worried:"4dbe6d8a4b9d28b69eee59b6ae1fd549", angry:"1713778c5f75972a617d6706b2224e72", tired:"34da9dccb585a20029ee6b6add14173c"},
-          front:"93bf76af31b7e325498402ba9df7db05", back:"745e6d11267dd21a40e3204041188bf9", select:"0f505ffb62f59a667fcb89e54ee1d3d9",
+  seoyun:{face:{normal:"78733444597a62cf103ec27fd803b6de", happy:"d04f05e1e2f8a4a45fead8ae4215dbdf", shocked:"29c5797dfa925e7d482e4015b9abc315",
+                worried:"73fc84e1b42b53db3a711888224fae1b", angry:"94dfb0296c74da9c2cdf98d4563ce90f", tired:"b5fcbc1f1b42803197dccf103c516772"},
+          front:"2dccd41f5da5f23d5b514899e37e178e", back:"7ba3f8b513d089c37c9cb7fdb2d2a9b4", select:"0f505ffb62f59a667fcb89e54ee1d3d9",
           found:"a6aa2aefe97342b2e6f47aeff0af5ec5", room:"6c5608542f69436fa41610b5486fb480"},
-  dohyun:{face:{normal:"2c6dcfc46662cb715ae6a15bbcb25796", happy:"62041faa17176f8a731222ebf46b6050", shocked:"20537e78fcf156713f9a98c031ee3b05",
-                worried:"f92e0be6395575bc5e67e70b6884e9aa", angry:"97343c701731a1677db55b0a34d4cc2b", tired:"d5e227dbe4e6c139a123621d0833a616"},
-          front:"4e6c8504ae07eded7732125103624cc5", back:"2a1d7d91d759fb0ad1a580c1083c623a", select:"b9c749443dc4065d593447850e605cbc",
+  dohyun:{face:{normal:"8bff04cc92463bd999186ce88f40e014", happy:"1efab84ae4cb4ad8c4154dfec74bb027", shocked:"29648529c6d0390f75cb4a61d823c926",
+                worried:"21da674a078aaeedda8aea68de7d9245", angry:"bc456db36ce5b330a434796bc5522ab7", tired:"3f3393979e3254e0e9a3199201849e8d"},
+          front:"85c098f4eb5fc471642861fe3a1a4fb7", back:"552875b1013bb3a79b616152823cf4e0", select:"b9c749443dc4065d593447850e605cbc",
           commute:"3ff68bb122421084c31b3ab96ebbc1ea", room:"4e6edd4052a125094a0b506b7c91866e"},
-  mijeong:{face:{normal:"de2db819371c268760cde0f43bd2ab59", happy:"07b53544fd6eb5e854a37666ebd60b07", shocked:"3437e73c74f7f96d0a6fe5b063d7e891",
-                worried:"b74e4bdb5c03ed904e4fbf3a9e1fa291", angry:"fefc77dcc2e67e527bf141e68fbd2401", tired:"5f8364d8be29ac0e3706ce935180ebc3"},
-          front:"de23e0f0d5a92e041efbd9c81d7324a1", back:"f22e08926e3bda4d14e8b58626dd6d69", select:"07908fc86a73109107d59cf8e4479263",
+  mijeong:{face:{normal:"0558cb08697c64f6d90edfe9c11421fe", happy:"1edebb1341dae810b7891b92f51c7720", shocked:"69da716269af6a4d9e59c8f19e62edba",
+                worried:"186a40dc3fed2534bb2d11f54644cfe2", angry:"dd9818813ef57770316a4eabb66dab5f", tired:"3720969a458fb910c658bf8098a6df10"},
+          front:"2b9707d0696eb87ad780b03eb2f735d4", back:"f8f67a82adee0fc8f4e89c7c34e41418", select:"07908fc86a73109107d59cf8e4479263",
           shop:"80fa4024531bc6844278f4a1bec404ec", room:"3d69a0468b0060ad25ce8910b4093d4b"},
   // 박재훈 — 표정: 기본 · 멋쩍게 웃음(happy) · 놀람 · 턱 만지며 의심(worried) · 팔짱 결심(angry) · 수건으로 땀(tired)
-  jaehoon:{face:{normal:"57f8a7399c2b314071d8ed618a05652b", happy:"32edd6959f579b5be13566eb3e81cf5a", shocked:"e115ea1cd8e1acb71d25020554f8457f",
-                worried:"29c601659301d95b1bf8c502e7a52838", angry:"c19ad3f85599464a1c93fb7d358e8387", tired:"b216b6ade96c0a156e308e81d6c09d4d"},
-          front:"e876caa0b76a4f1bb174c47844da7c76", back:"c40ffb12739126df025442eab3e6a5b6", select:"0fb410d2a57eed863e40f7ea7f1ac3dc",
+  jaehoon:{face:{normal:"aac17185ff66d0ba558654631b48ea61", happy:"0508934dd1538bacd9da12ddd1901761", shocked:"6c4f898ae5dc9811ed2eb3a18358828e",
+                worried:"3b42144bea6f2bcb41cfedaeb908ef9b", angry:"2a3b31c9ebc51276fc97982dbbb01088", tired:"d97883a728b786c9900329c3af30ab8b"},
+          front:"ff2d0d70ff680c71ab459f66d74342cb", back:"94dc9c6dca99a47210f27a27d1470b03", select:"0fb410d2a57eed863e40f7ea7f1ac3dc",
           site:"38752f63e0013680ff416faa69ffc6da", room:"28a1cf1a44efbf9ef7e0e889e481f058"},
   // 최은경 — 표정: 기본 · 옅은 미소(happy) · 놀람 · 계산기 보며 걱정(worried) · 안경 올리며 결심(angry) · 관자놀이 누름(tired)
-  eunkyung:{face:{normal:"8336de9700e8867cef7780f9eb5100b8", happy:"2819d5a85a308b4aef80f6f992df8e4d", shocked:"6ac2ed5732b7577e826f0faa7fde89a0",
-                worried:"9bc30ab83c619c296a59bb886e2cdccc", angry:"051cf9287aa3edef659dd6bcfd3ba3a9", tired:"37800e7039244c49f1057cb020a82930"},
-          front:"0215373c26b5ef5c462d918cff0e805d", back:"a3c6638aa8d29d618dee4cfd84e0a233", select:"21337f6463a3fe6b47f7499ff4954b39",
+  eunkyung:{face:{normal:"e519571359d4a8fc899c8b785579b7af", happy:"04259f9be4e59791e3bbf3ca53942daf", shocked:"5c4c76e093f1a4b201b51749b5b224d0",
+                worried:"209d56970c868166389174693ed17244", angry:"1ccf3e3db1f6f6eb924a7d063c1ac3c0", tired:"b9654a9b3e5fb7eb0d95adc726df8fc7"},
+          front:"3c47174fb79a9c114e588457e8c3cdea", back:"0218b495efd05ee9e1a619ec56e1e369", select:"21337f6463a3fe6b47f7499ff4954b39",
           morning:"e484c60840c93b1948e7870ab73d4d19", room:"75d039a099fc0a99a7efba48f6d09783"},
   // 김태식 — 표정: 기본 · 허허 웃음(happy) · 놀람 · 서류 보며 걱정(worried) · 안경 벗어 들고 단호(angry) · 뒷목 주무름(tired)
-  taesik:{face:{normal:"15c1b2126eed366fc28b475d5a53cf4d", happy:"5a9a05d1f40badfdc2451dc2c3ede869", shocked:"a2658ef567cb0ac710ef90a84aad80e1",
-                worried:"668e464467eaa67e93bed94c1fad6adf", angry:"63e410a90be5f63f37ba67a7a325e30c", tired:"1bc95fd990dfd6e6cd98d2d1531181d5"},
-          front:"ea53ae0c31f4d6dd906f927db721b12a", back:"77d6b61c414cfe5836348388ec794cde", select:"2452f4871394a4843ed2e61f2a74d9cc",
+  taesik:{face:{normal:"7243d39dc2b907ba5b2a5b9a12b23768", happy:"0bd478c9736454722af6a80c45b3fa11", shocked:"29448460c5754d211a4941f8393704c6",
+                worried:"ccbbd30a01d205cc92c5c92ba0bfa7b7", angry:"27d0d0bdc31410469e1430b76bdf769e", tired:"628cc3f41aa2e3dc60e65924d5b4edf1"},
+          front:"d65a6efdada09189e9b21e111526c199", back:"45af6a95e25e248647beb35e1dd6e873", select:"2452f4871394a4843ed2e61f2a74d9cc",
           morning:"3b86d1750b7daf85991c90dbccd52b74", room:"5590c2eb1aedda87ae1ffffc4c65752d"}};
 const LF_FACE_ALIAS = {soft:"happy", neutral:"normal", troubled:"worried", furious:"angry"};
 // 배경·컷 칸으로도 등록해 둔다(그림 관리 화면·오프닝이 같은 이름으로 찾게)
@@ -87,12 +87,12 @@ const _ca_sel = lfSelectHTML; lfSelectHTML = function(){
 
 // 표정 추가분(유형별 공용 인물) — 사용자가 받아온 그림을 잘라 넣은 것
 Object.assign(ART_DEFAULT, {
-  npc_oldman_angry:"144a322fd80e32681f70641e7e4fc024", npc_oldman_troubled:"893687515138e76c019a8959f48b3f01",
-  npc_ajumma_angry:"418917e1fceea53717bf4ca48c5df592", npc_roughman_troubled:"cac08fac2fe3e58b2cda0c2e289ef935",
-  npc_youngwoman_angry:"30f950b5283848dbd88bd2b269e4fc6d", npc_youngwoman_troubled:"19f5132d18ff5aea237feb4e72ed1415",
-  npc_broker_angry:"f9c6bd97ecd060a5df237e134416877f", npc_broker_troubled:"00c79ef78a4e38cad84bab1118e7d037",
-  npc_mover_angry:"7ef41728723c4636f4a2fbd25b858aa7", npc_mover_troubled:"da13db86052f7ab60f38f360eeb1431b",
-  npc_bailiff_normal:"753d467e63d8e35d6e4242e88b9de720"});
+  npc_oldman_angry:"0a0b4be4110093c7a2aab1c49c841475", npc_oldman_troubled:"731bc530757280f674f77303e06e9c6e",
+  npc_ajumma_angry:"c7ba8d7c1246aef920d1243a7b2e591c", npc_roughman_troubled:"34aca9df4431899385b3db53640b27a8",
+  npc_youngwoman_angry:"c86e874cb298b8f96542d9342c5501c4", npc_youngwoman_troubled:"afc65fcbc0bc9701580227cf571868d9",
+  npc_broker_angry:"459fc4b946699b978a06088ddbca9c42", npc_broker_troubled:"848e8bb8d604da42d3e170789b1e20c5",
+  npc_mover_angry:"8f4333dcd0678ba37463628586b8424c", npc_mover_troubled:"935c8742eac2086a41cee4e3526e1f84",
+  npc_bailiff_normal:"580e0bc82278c3c11afb57963fc8257a"});
 
 // 소품 시트 1
 Object.assign(ART_DEFAULT, { prop_keys:"1dec16bd8a6acfaba2533fddde5dbb44", prop_doorlock:"c4f92d364746346833a4b55d6aaead6c", prop_letter:"b2281c57aad6ac86a87859dc861c6ed0", prop_order:"b6750cac30b5bfe735eef0128ae16daf", prop_confirm:"9d65195ebfe4fcec0669fbe5ce53a56f", prop_boxes:"beb210bc4a5617530e69617a41923a78", prop_cash:"dba6864c843485b6c3622aed56e13bb2", prop_notice:"4dd36113a80ac4e08ade22dcc148b1ec", prop_truck:"8258758d43538665526fc4a54876fa6b"});

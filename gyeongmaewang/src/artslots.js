@@ -31,17 +31,17 @@ function asOtherPerson(pid){
 if(typeof hubMeet === "function"){ const _as_hubMeet = hubMeet; hubMeet = function(pid){ if(asOtherPerson(pid)) return; return _as_hubMeet(pid); }; }
 
 // 받은 그림 — 물건 전용 점유자(v137: f11 윤서연 · f21 강성필 · f22 마동철 · f23 왕신이 · f31 배정숙)
-const AS_OCC_ART = {"npc_occ_f11_normal": "f9e6e9393de49940073eafae3ce5d1c7", "npc_occ_f11_angry": "50a33883e5b35f53c9bcfb8a6396487b", "npc_occ_f11_worried": "1addcef7f1b473f5f9ea726ce0e00590", "npc_occ_f21_normal": "4dbb25d3cd7caf30809e18752c3db3c4", "npc_occ_f21_angry": "f3d5b233687a79b6d596e3b20714bb35", "npc_occ_f21_worried": "5ab000834b1d79ab7d04ee93e3c67a9b", "npc_occ_f22_normal": "90abeacdcd5e726bc37a97b03df9629a", "npc_occ_f22_angry": "bf0b2feb78c5b236fd333f1b1669170c", "npc_occ_f22_worried": "4604160d424ddaa1c5b0d18001df5a62", "npc_occ_f23_normal": "f0a1c684493d6fb2c7099b7877f1fddd", "npc_occ_f23_angry": "100279b3b3bcea4fe635ba29b237578f", "npc_occ_f23_worried": "5903f8ddf7de5380136928c0bd591017", "npc_occ_f31_normal": "9c88e370386c0beae8c8d6980c1cc6a3", "npc_occ_f31_angry": "c0424fb90df720bd42e77500b6e2d705", "npc_occ_f31_worried": "5556d43c0307c5eebf98ad47e9de6a09"};
+const AS_OCC_ART = {"npc_occ_f11_normal": "58218d5445e603b82f91085a3621d320", "npc_occ_f11_angry": "558059a7358e43889ea80ff0662efe8d", "npc_occ_f11_worried": "91a63ee9098a68ce48e565e31be435fc", "npc_occ_f21_normal": "0fac8a3780a9db74197f30f9e752ef86", "npc_occ_f21_angry": "51cdf26a79d89f5dc074843bb6058147", "npc_occ_f21_worried": "36b64375c56b1cb8cae4e781bd1ed9de", "npc_occ_f22_normal": "f0b59ce41fcc4ca2ad7b9bc48a94d13e", "npc_occ_f22_angry": "27c10007fbfd2bf29c3b1f3eb10f4139", "npc_occ_f22_worried": "3250db3a76fd681b4b9f62fe151793e7", "npc_occ_f23_normal": "8e0ea78057350cc67d2882f1c8120bd2", "npc_occ_f23_angry": "9890d6361a6a67fb9edd95de2898524d", "npc_occ_f23_worried": "dda920b694941b1600abe294829053f8", "npc_occ_f31_normal": "ab43a83653b692d83292e8cabf3f69b7", "npc_occ_f31_angry": "48663c66afa73c6fd10880530d620d7a", "npc_occ_f31_worried": "cb1db44d4d10d0c9483200e31d5c642c"};
 Object.assign(ART_DEFAULT, AS_OCC_ART);
 
 // 받은 그림 2차(v138: f32 곽씨 부부 · f41 구판석 · f42 장미자 · f51 오승민 · f54 정민재·윤소라)
-Object.assign(AS_OCC_ART, {"npc_occ_f51_normal": "9ce6f69124a16aa8cadb9f6c34abdb65", "npc_occ_f51_angry": "c506c8310335012eeace64e51cabc2db", "npc_occ_f51_worried": "ebb1bd31285c2fa57cd7b0002a856546", "npc_occ_f42_normal": "c4caaae9d1f2a29a76e566097a48d0cd", "npc_occ_f42_angry": "e7549087f47070613aab59af57068e6e", "npc_occ_f42_worried": "5f113e5f4f8a7b9a85fb3bdcd9583e80", "npc_occ_f41_normal": "271fdac6a9465b87ae03fedd946f1da2", "npc_occ_f41_angry": "9cd32ce44455a8405cab57f827e426ad", "npc_occ_f41_worried": "ff8a60502663328446a1a2db6b1ad268", "npc_occ_f32_normal": "94db1eb719e9ef73e9588918cc208939", "npc_occ_f32_angry": "de1601301e41bd263be99ad1b6d382eb", "npc_occ_f32_worried": "28150b1a1c6cc8b76c97776600c9ba5b", "npc_occ_f54_normal": "360695f324afbb4102798ae268531355", "npc_occ_f54_angry": "f97b47abd1cb8927db22356cdfb905f4", "npc_occ_f54_worried": "7e8d9d39f17903184888aef896d82adf"});
+Object.assign(AS_OCC_ART, {"npc_occ_f51_normal": "cdb30aef26140b7cb18bf902d74db3e1", "npc_occ_f51_angry": "8a954c09c169b6e2b351d31565a76331", "npc_occ_f51_worried": "4e9f7602fd389ec2232c39fec1dc0a36", "npc_occ_f42_normal": "155b27ca70ed98094f79e7334c6e301e", "npc_occ_f42_angry": "fb215221504555e21f895d32903981db", "npc_occ_f42_worried": "e2a70451f3920a6b742ad320d55e2e39", "npc_occ_f41_normal": "b6909e007163cad2932e7c1a44d727a6", "npc_occ_f41_angry": "e8feb3878979c286b9dffed668df5b07", "npc_occ_f41_worried": "533d8319da42dd4407131c0022dbcc65", "npc_occ_f32_normal": "d2db7b51fccb6d042f9467fcb0d6373c", "npc_occ_f32_angry": "0a32a7e0390b64ca1e9daa109b610ef4", "npc_occ_f32_worried": "379ce46e2730bdf920a6eacaac15e2ec", "npc_occ_f54_normal": "9cae92aff7acb0cbe3bcbc9f50bf0696", "npc_occ_f54_angry": "81b5b0e80d877da705fed063818fb411", "npc_occ_f54_worried": "758b78ff3c804ca114c9ba1404262021"});
 Object.assign(ART_DEFAULT, AS_OCC_ART);
 
 // 받은 그림 3차(v139: f61 새솔인테리어 현장소장 · f63 탁만수 사장) + 서윤 오프닝 3장
 Object.assign(AS_OCC_ART, {
-  npc_occ_f63_normal: "648c80e6378e2c135076880c097cf08b", npc_occ_f63_angry: "7505ccde92045a7c46e5e3e94fcea006", npc_occ_f63_worried: "ecfc5186fe6ac0ad29488906b99ebc02",
-  npc_occ_f61_normal: "c5752cb0d670daaa019c278f886482cc", npc_occ_f61_angry: "adda3d27123edbc33523f34748bba164", npc_occ_f61_worried: "20e15ee0876330f74485bfefea30b5ca",
+  npc_occ_f63_normal: "c81fcbc0927eca8dc5f3c9e60553ae87", npc_occ_f63_angry: "075afc1e6adb978081bf90b8fe32f069", npc_occ_f63_worried: "e3a3bc5096b1319cf5cd491255d1ca0a",
+  npc_occ_f61_normal: "70b595b14a03acfdf83cb4984678575a", npc_occ_f61_angry: "908ace044be4443c69e659487309b152", npc_occ_f61_worried: "8f0d01cb94e1f8d0b492745bf96920b2",
 });
 const AS_OP_ART = {
   op_seoyun_1:   "6673b097946d789c82896ee89ed332e3",   // 비 오는 밤 반지하 방
@@ -52,8 +52,8 @@ Object.assign(ART_DEFAULT, AS_OCC_ART, AS_OP_ART);
 
 // 받은 그림 4차(v140: f53 엥흐 씨 · f64 변재섭 씨 — 점유자 22명 전원 전용 그림 완료) + 서윤 생각 구름 새 판
 Object.assign(AS_OCC_ART, {
-  npc_occ_f64_normal: "bbc4b0ea8054db568fa47c1fd627c2af", npc_occ_f64_angry: "a527fc4d3121af26f66d3852f875893f", npc_occ_f64_worried: "f052e812072150f7ff3d08fd5326f73d",
-  npc_occ_f53_normal: "b3194611f50c7c0d59eece8a6b32b686", npc_occ_f53_angry: "b421111ead0e86775d95a964c562e872", npc_occ_f53_worried: "d5ac02615dfa87b7db9549b34e544542",
+  npc_occ_f64_normal: "8556a2460b76b2a0ffcab64be4cd2072", npc_occ_f64_angry: "6ef0f2b211a9305e691fb276022b4455", npc_occ_f64_worried: "9f5ccdb2a36fc78d9f98e6bae23c0a96",
+  npc_occ_f53_normal: "fd8e617c98fa488a0d66eb023aef0b29", npc_occ_f53_angry: "dd7ae1f3a2ebdc73b680f1995a5df23f", npc_occ_f53_worried: "f0b9357f045aef4f04a4ded9d2baeb1f",
 });
 AS_OP_ART.op_seoyun_2_3 = "cd14a57881176ee586c6cb138fcb4cfc";   // 창밖 비까지 보이는 새 판으로 교체
 Object.assign(ART_DEFAULT, AS_OCC_ART, AS_OP_ART);

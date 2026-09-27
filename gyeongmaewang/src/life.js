@@ -447,7 +447,7 @@ function lfActBtns(spot){ const L = lfRec(); return `<div class="lf-acts">${Obje
 function lfPanel(id){
   const L = lfRec(), C = lfChar(), c = kcRec(), running = bdRunning();
   if(id === "laptop") return `<h3>💻 노트북</h3>${running ? `<div class="panel">▶ 진행 중인 CASE — <button type="button" class="btn pri" data-atab="king">이어하기</button></div>` : ""}
-    <div class="panel"><b>🔎 경매 검색</b> — 이번 주 법원에 나온 물건들<br><button type="button" class="btn pri" data-lfspot="board">📋 경매 게시판 열기</button> <button type="button" class="btn" data-kcnew="weekly">📅 이번 주 경매(모두 같은 물건)</button></div>
+    <!-- v229: 경매 게시판·이번 주 경매 버튼은 뺐다 — 캐릭터마다 정해진 물건 4개만 스토리로 한다 -->
     ${lfActBtns("laptop")}
     <div class="panel"><b>🛒 장비</b> <small class="note">장식이 아니라 시간을 줄여 준다</small><div class="lf-acts">${LF_EQUIP.map(e => `<button type="button" class="ag-act" data-lfbuy="${e.id}" ${L.equip[e.id] || c.cash < e.cost ? "disabled" : ""}><span class="ag-ai">${e.ic}</span><span><b>${e.t} — ${L.equip[e.id] ? "✅ 있음" : kMan(e.cost)}</b><span class="note" style="display:block">${esc(e.d)}</span></span></button>`).join("")}</div></div>`;
   if(id === "board") return (typeof boardHTML === "function" ? boardHTML() : "");

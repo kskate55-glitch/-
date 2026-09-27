@@ -209,14 +209,14 @@ document.addEventListener("click", e => {
 }, true);
 // v216 그림 도착 — 새 매수인 3명(네일숍 사장님·미루는 사람·소심한 첫 집) 얼굴. 나머지 둘(현금 부자·갭투자자)은 아직 글로만.
 if(typeof BY_ART !== "undefined") Object.assign(BY_ART, {
-  "까다로운 네일숍 사장님":{art:{normal:"387b40ea240845918ca4d46a9c2dcfe8", angry:"f6f91f2a0c4dd4f1d2921b74b4f3e92e", worried:"70227dd6d91b26c89f0063abc8cb0636"}, ex:"normal"},
-  [SF_FLAKE]:{art:{normal:"e1d4655f0c522f3e5a111a7a985d111a", angry:"1cd3f9924e5730f1a0bb390b0ba2bf7d", worried:"4230448fd1cd7c882b39545b74986e2f"}, ex:"normal"},
-  "소심한 첫 집 매수자":{art:{normal:"cb36e38662d8ce64cd1c9f82e9ea6686", angry:"92dc2f1ce9d14ca3299d577b23268010", worried:"fede1d938c3d430741fa3630c3279f31"}, ex:"normal"}});
+  "까다로운 네일숍 사장님":{art:{normal:"72d7a8683941e4c191dc682b8ee3dc73", angry:"70d3cd6bf7ad2dc8d2cbe79d8b8250f5", worried:"4579118fecf3e9d05018ba3a50d23976"}, ex:"normal"},
+  [SF_FLAKE]:{art:{normal:"19bb49719e0fbd99cf79896b15f7f6fb", angry:"62c88a38be98b749c5303cad1e02be1b", worried:"101e9987ac32acb958b01b29e62c76f4"}, ex:"normal"},
+  "소심한 첫 집 매수자":{art:{normal:"3400478545051d46418278b8307c74da", angry:"805b6ee1606b4b6559a04d0ff5c88d63", worried:"20922f3c2901428602d83452fb7cc632"}, ex:"normal"}});
 // v223 그림 도착 — 오사장·허실장·윤여사 얼굴(이제 다른 중개사 얼굴을 빌려 쓰지 않는다) + 갭투자자 매수인
 if(typeof ART_DEFAULT !== "undefined") Object.assign(ART_DEFAULT, {
-  npc_oh_normal:"2860acadedf5192bc38ac87d962057e3", npc_oh_angry:"4bc0901ffabd536aa2cdf81292e3fca3", npc_oh_worried:"e8dd9f544a731c4623ec52699ca3ae87",
-  npc_heo_normal:"b34543d399a4d5802f586a7091bf87bf", npc_heo_angry:"4fa7072fefc9abd9854caa08699b0fdb", npc_heo_worried:"bb8c97f27d10b6e0fb5dd99277b1e28b",
-  npc_yoon_normal:"02f44347e2c0306cc440136ef1b456f7", npc_yoon_angry:"140b28d4b82e9e66b20bb59146a28b6e", npc_yoon_worried:"16c7029b45fcc214a19a7865c0fb7b57"});
+  npc_oh_normal:"31bfab6d6c5af8250b2cad9ab755be5f", npc_oh_angry:"5404318876af7379919418c83f0743a9", npc_oh_worried:"8f37fd5108572fc579b5262f191ab8f1",
+  npc_heo_normal:"c9d21ccef75b75fad1a3e3be1d435b95", npc_heo_angry:"0ec1110510a9833912606cbd3ca65d1e", npc_heo_worried:"715b38aafa69eec0bfe259b25b427a35",
+  npc_yoon_normal:"7bac394fce7add4ac7a4e3248a5f4b44", npc_yoon_angry:"950c9fa5c49b41d8050ec6b56cc5e3e0", npc_yoon_worried:"26cc738bbcec1b454061280349602de1"});
 [["blunt","npc_oh"],["excl","npc_heo"],["chat","npc_yoon"]].forEach(([id, f]) => { const b = SF_BROKERS.find(x => x.id === id); if(b) b.face = f; });
 { const x = SF_BROKERS.find(b => b.id === "excl"); if(x) x.ex = "normal"; }
-if(typeof BY_ART !== "undefined") BY_ART["갭투자자"] = {art:{normal:"a76c1cc053cb136fab82ad47bff54d38", angry:"c9513aa7c0f1a1f41204f8c3d15c07f6", worried:"ba5da88f16ae7493c6465e136a2476dc"}, ex:"normal"};
+if(typeof BY_ART !== "undefined") BY_ART["갭투자자"] = {art:{normal:"85a8664a244ea51373e15599f7edbc90", angry:"6fcb1b2256da47f524a00f70f75e4f62", worried:"f005340192704525fcbf8639f2135bba"}, ex:"normal"};

@@ -51499,7 +51499,8 @@ function fxTidy(){
   const root = document.getElementById("kfsRoot"); if(!root) return;
   const panel = root.querySelector(".kfs-panel");
   if(panel) panel.querySelectorAll(":scope > .hub-me").forEach(x => x.remove());
-  const visible = panel ? [...panel.children].filter(el => el.getClientRects().length && (el.textContent || "").trim().length) : [];
+  // v230: 자기 자신이 숨겨진 칸만 뺀다 — 부모(접힌 sf-slim 칸) 때문에 안 보이는 상황판을 빈 칸으로 오해해 통째로 숨기던 버그
+  const visible = panel ? [...panel.children].filter(el => !el.classList.contains("hub-me") && getComputedStyle(el).display !== "none" && ((el.textContent || "").trim().length || el.querySelector("img,button,svg,canvas"))) : [];
   root.classList.toggle("fx-nopanel", !!panel && visible.length === 0);
   // v230: 사건 소개처럼 무대(stage)가 텅 빈 화면 — 위쪽 빈 검은 띠를 없앤다
   const stage = root.querySelector(".kfs-stage");

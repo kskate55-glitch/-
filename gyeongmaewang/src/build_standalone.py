@@ -7,11 +7,41 @@ s = open(SRC, encoding='utf-8').read()
 # 따옴표 안 id뿐 아니라 경로에 바로 박힌 id("/_blob/<id>", "assets/<id>.webp")도 — 실제 그림 파일이 있는 것만 복사한다
 ids = sorted(i for i in set(re.findall(r'(?<![0-9a-f])([0-9a-f]{32})(?![0-9a-f])', s)) if os.path.exists(os.path.join(BLOB, i)))
 os.makedirs(os.path.join(OUT, 'assets'), exist_ok=True)
-copied = 0
+# v230: 배포용 그림 다이어트 — 원본(_blob)은 그대로 두고, 배포 폴더에만 줄인 사본을 넣는다.
+#   배경·장면(불투명): 가로 1440px 이하 · WebP 품질 78   /   캐릭터(투명 배경): 세로 1200px 이하 · 품질 82
+#   한 번 줄인 결과는 _opt/ 에 캐시해서 다음 빌드는 바로 끝난다. 줄여서 오히려 커지면 원본을 쓴다.
+OPT = '_opt'; OPT_VER = 'v1-1440q78-1200q82'
+os.makedirs(OPT, exist_ok=True)
+def optimized(i):
+    src = os.path.join(BLOB, i); dst = os.path.join(OPT, i + '.' + OPT_VER + '.webp')
+    if os.path.exists(dst) and os.path.getmtime(dst) >= os.path.getmtime(src): return dst
+    try:
+        from PIL import Image
+        im = Image.open(src); alpha = 'A' in im.getbands()
+        w, h = im.size
+        if alpha:
+            im = im.convert('RGBA')
+            if h > 1200: im = im.resize((round(w * 1200 / h), 1200), Image.LANCZOS)
+            im.save(dst, 'WEBP', quality=82, alpha_quality=90, method=6)
+        else:
+            im = im.convert('RGB')
+            if w > 1440: im = im.resize((1440, round(h * 1440 / w)), Image.LANCZOS)
+            im.save(dst, 'WEBP', quality=78, method=6)
+        if os.path.getsize(dst) >= os.path.getsize(src): shutil.copyfile(src, dst)
+        return dst
+    except Exception as e:
+        print('opt skip', i, e); return src
+copied = 0; before = after = 0
 for i in ids:
     p = os.path.join(BLOB, i)
     if os.path.exists(p):
-        shutil.copyfile(p, os.path.join(OUT, 'assets', i + '.webp')); copied += 1
+        o = optimized(i); before += os.path.getsize(p); after += os.path.getsize(o)
+        shutil.copyfile(o, os.path.join(OUT, 'assets', i + '.webp')); copied += 1
+# 이제 안 쓰는 옛 그림은 배포 폴더에서 치운다(올릴 용량만 늘린다)
+keep = set(i + '.webp' for i in ids); removed = 0
+for f in os.listdir(os.path.join(OUT, 'assets')):
+    if f not in keep: os.remove(os.path.join(OUT, 'assets', f)); removed += 1
+print('images %.1fMB -> %.1fMB, removed %d unused' % (before / 1e6, after / 1e6, removed))
 boot = r'''
 <style>
 /* 독립 버전: 연습장 사이트 껍데기를 숨기고 게임만 */

@@ -3,7 +3,7 @@ const { chromium } = require('playwright');
 for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{width:w,height:h}}); p.on('pageerror',e=>errs.push('pageerror '+e.message));
 await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(1000);
 // 첫 실행 안내가 이미 끝난 사람처럼: 오른쪽 칸 비우기
-await p.evaluate(()=>{ document.querySelectorAll('.fr-guide').forEach(x=>x.remove()); renderArena(); }); await p.waitForTimeout(300);
+await p.evaluate(()=>{ kcRec().fr={full:true}; document.querySelectorAll('.fr-guide').forEach(x=>x.remove()); renderArena(); }); await p.waitForTimeout(300);
 const st=await p.evaluate(()=>({hubme:!!document.querySelector('#kfsRoot .kfs-panel .hub-me'), lv:!!document.querySelector('[data-fxlv]'), txt:(document.querySelector('[data-fxlv]')||{}).textContent}));
 ok(!st.hubme && st.lv, w+' LV·명성 카드는 오른쪽 칸에서 빠지고 머리줄 버튼으로 ('+st.txt+')');
 await p.click('[data-fxlv]'); await p.waitForTimeout(150);

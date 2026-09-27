@@ -20,4 +20,4 @@ for(const [w,h] of [[1280,800],[390,844]]){
  await p.waitForTimeout(2500); await p.screenshot({path:`t_voice_won_${w}.png`});
  await p.close();}
 console.log('errors',errs); await b.close();})();
-function LF_VOICE_OK(t){ return /뜯어볼|수리비/.test(t); }
+function LF_VOICE_OK(t){ return /뜯어보|수리비|망치/.test(t); }

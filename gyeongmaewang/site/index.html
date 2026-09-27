@@ -2539,6 +2539,19 @@ body.nx-quiet .stg-file{animation:none!important}
 .ez-coach{align-items:center}
 .ez-coach-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}.ez-coach-h b{color:#0b6bb3;font-size:16px}.ez-coach-h small{color:#888}
 .ez-coach-big{font-size:18px!important;font-weight:800;line-height:1.5}
+/* ===== v223 알림 구석 🔔 ===== */
+#hubToasts{display:none!important}
+.nt-bell{position:fixed;left:12px;bottom:14px;z-index:2147470000;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(20,24,36,.82);color:#fff;font-size:20px;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);padding:0}
+.nt-bell[hidden]{display:none}
+.nt-bell .nt-n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ff4d4f;color:#fff;font-size:11px;line-height:18px;font-weight:800}
+.nt-bell.ring{animation:ntRing .9s ease}
+@keyframes ntRing{15%{transform:rotate(-16deg)}30%{transform:rotate(14deg)}45%{transform:rotate(-10deg)}60%{transform:rotate(6deg)}75%{transform:rotate(-3deg)}}
+.nt-pop{position:fixed;left:12px;bottom:64px;z-index:2147470001;width:min(320px,calc(100vw - 24px));max-height:min(60vh,420px);overflow:auto;background:#fffdf5;color:#222;border-radius:14px;padding:10px 12px;box-shadow:0 12px 36px rgba(0,0,0,.4)}
+.nt-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.nt-x{border:0;background:transparent;font-size:16px;cursor:pointer;color:#666}
+.nt-pop ul{list-style:none;margin:0;padding:0}.nt-pop li{padding:7px 4px;border-bottom:1px solid #eee;font-size:13.5px;line-height:1.45;color:#555}
+.nt-pop li.new{color:#111;font-weight:700}.nt-pop li.big{color:#8a5a00}
+.nt-acts{display:flex;gap:6px;margin-top:8px}.nt-acts .btn{flex:1}
+body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-bell{display:none}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -51865,6 +51878,42 @@ if(typeof kWeek === "function"){
     return r;
   };
 }
+
+/* ================= 🔔 알림은 구석 이모티콘 하나로 (v223) =================
+   피드백: 왼쪽 아래에 쌓이던 "📖 점유자 도감 등록 — ○○ 씨", "📌 그 밖에 N건 기록됨 — 도감·업적에서 확인" 카드들이
+   화면을 가린다 → 구석에 🔔 하나만 두고, 새 소식은 개수 뱃지로. 누르면 최근 소식 목록이 펼쳐진다.
+   hubToastShow()만 갈아 끼운다 — 소식을 만드는 쪽(HUB_TOAST에 넣는 코드)은 그대로다. */
+let NT_LOG = [], NT_UNREAD = 0;
+function ntBell(){
+  let b = document.getElementById("ntBell");
+  if(!b){ b = document.createElement("button"); b.type = "button"; b.id = "ntBell"; b.className = "nt-bell"; b.setAttribute("aria-label", "새 소식"); document.body.appendChild(b); }
+  b.innerHTML = `🔔${NT_UNREAD ? `<b class="nt-n">${NT_UNREAD > 99 ? "99+" : NT_UNREAD}</b>` : ""}`;
+  b.hidden = !NT_LOG.length;
+  return b;
+}
+hubToastShow = function(){
+  if(typeof HUB_TOAST === "undefined" || !HUB_TOAST.length) return;
+  const list = HUB_TOAST.filter(t => t.big).concat(HUB_TOAST.filter(t => !t.big));
+  HUB_TOAST = [];
+  list.forEach(t => NT_LOG.unshift({t:t.t, big:!!t.big, at:Date.now()}));
+  NT_LOG = NT_LOG.slice(0, 30); NT_UNREAD += list.length;
+  const b = ntBell(); b.classList.remove("ring"); void b.offsetWidth; b.classList.add("ring");
+  const p = document.getElementById("ntPop"); if(p) ntOpen();
+};
+function ntOpen(){
+  let p = document.getElementById("ntPop");
+  if(!p){ p = document.createElement("div"); p.id = "ntPop"; p.className = "nt-pop"; document.body.appendChild(p); }
+  p.innerHTML = `<div class="nt-h"><b>🔔 새 소식</b><button type="button" class="nt-x" data-ntclose aria-label="닫기">✕</button></div>
+    <ul>${NT_LOG.map((x, i) => `<li class="${i < NT_UNREAD ? "new" : ""}${x.big ? " big" : ""}">${esc(x.t)}</li>`).join("") || `<li>아직 없어요</li>`}</ul>
+    <div class="nt-acts"><button type="button" class="btn" data-atab="dexall" data-ntclose>📖 도감</button><button type="button" class="btn" data-atab="ach" data-ntclose>🏅 업적</button></div>`;
+  NT_UNREAD = 0; ntBell();
+}
+document.addEventListener("click", e => {
+  if(!e.target.closest) return;
+  if(e.target.closest("#ntBell")){ e.preventDefault(); const p = document.getElementById("ntPop"); if(p) p.remove(); else ntOpen(); return; }
+  if(e.target.closest("[data-ntclose]")){ const p = document.getElementById("ntPop"); if(p) setTimeout(() => p.remove(), 0); return; }
+  if(!e.target.closest("#ntPop")){ const p = document.getElementById("ntPop"); if(p) p.remove(); }
+}, true);
 
 /* 🎬 캐릭터 오프닝·엔딩 에필로그 데이터 — oe_<캐릭터>.js 가 여기에 채운다(story_oe.js 가 게임에 연결) */
 const OE_DATA = {};

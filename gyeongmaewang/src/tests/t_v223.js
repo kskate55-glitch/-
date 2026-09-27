@@ -1,0 +1,22 @@
+const { chromium } = require('playwright');
+(async()=>{const b=await chromium.launch(); const errs=[]; const ok=(c,m)=>{console.log((c?'✅':'❌')+' '+m); if(!c) errs.push(m);};
+for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{width:w,height:h}}); p.on('pageerror',e=>errs.push(e.message));
+await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(700);
+await p.evaluate(()=>{ localStorage.clear(); kcRec().fr={full:true}; page='arena'; arenaTab='king'; KC_MODE='career'; KC_INTRO=false; K_PROP_NEXT='f22'; kStart(9); K.intro=false; renderArena(); });
+await p.waitForTimeout(500);
+await p.evaluate(()=>{ ['📖 점유자 도감 등록 — 마동철 씨 (54)','📖 점유자 도감 등록 — 최만식 할아버지 (68)','📖 점유자 도감 등록 — 정은주 씨 (52)','🏅 업적 — 첫 조사'].forEach(t=>HUB_TOAST.push({t})); renderArena(); });
+await p.waitForTimeout(700);
+ok(await p.evaluate(()=>![...document.querySelectorAll('.hub-toast')].some(x=>x.getClientRects().length)), w+' 알림 카드가 화면에 안 쌓임');
+const bell=await p.evaluate(()=>{ const b=document.getElementById('ntBell'); if(!b||b.hidden) return null; const r=b.getBoundingClientRect(); return {n:(b.querySelector('.nt-n')||{}).textContent, x:r.left, y:r.top, w:r.width}; });
+ok(bell && +bell.n>=4 && bell.w<=48 && bell.x<30, w+` 구석에 🔔 하나 + 뱃지 ${bell&&bell.n}`);
+if(w===1280) await p.screenshot({path:'v223_bell.png'});
+await p.click('#ntBell'); await p.waitForTimeout(200);
+const pop=await p.evaluate(()=>document.getElementById('ntPop')&&document.getElementById('ntPop').innerText);
+ok(/마동철/.test(pop||'') && /첫 조사/.test(pop||''), w+' 🔔 누르면 소식 목록');
+ok(await p.evaluate(()=>!document.querySelector('#ntBell .nt-n')), w+' 열어 보면 뱃지 사라짐');
+if(w===390) await p.screenshot({path:'v223_pop.png'});
+await p.click('#ntPop [data-atab="dexall"]'); await p.waitForTimeout(400);
+ok(await p.evaluate(()=>arenaTab==='dexall' && !document.getElementById('ntPop')), w+' 목록에서 📖 도감으로 이동');
+ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), w+' 가로 스크롤 없음');
+await p.close(); }
+console.log(errs.length?'FAIL\n'+errs.join('\n'):'ALL OK'); await b.close(); })();

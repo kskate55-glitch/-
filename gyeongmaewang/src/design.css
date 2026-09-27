@@ -1168,3 +1168,16 @@ body.nx-quiet .stg-file{animation:none!important}
 .ez-coach{align-items:center}
 .ez-coach-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}.ez-coach-h b{color:#0b6bb3;font-size:16px}.ez-coach-h small{color:#888}
 .ez-coach-big{font-size:18px!important;font-weight:800;line-height:1.5}
+/* ===== v223 알림 구석 🔔 ===== */
+#hubToasts{display:none!important}
+.nt-bell{position:fixed;left:12px;bottom:14px;z-index:2147470000;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(20,24,36,.82);color:#fff;font-size:20px;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);padding:0}
+.nt-bell[hidden]{display:none}
+.nt-bell .nt-n{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ff4d4f;color:#fff;font-size:11px;line-height:18px;font-weight:800}
+.nt-bell.ring{animation:ntRing .9s ease}
+@keyframes ntRing{15%{transform:rotate(-16deg)}30%{transform:rotate(14deg)}45%{transform:rotate(-10deg)}60%{transform:rotate(6deg)}75%{transform:rotate(-3deg)}}
+.nt-pop{position:fixed;left:12px;bottom:64px;z-index:2147470001;width:min(320px,calc(100vw - 24px));max-height:min(60vh,420px);overflow:auto;background:#fffdf5;color:#222;border-radius:14px;padding:10px 12px;box-shadow:0 12px 36px rgba(0,0,0,.4)}
+.nt-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.nt-x{border:0;background:transparent;font-size:16px;cursor:pointer;color:#666}
+.nt-pop ul{list-style:none;margin:0;padding:0}.nt-pop li{padding:7px 4px;border-bottom:1px solid #eee;font-size:13.5px;line-height:1.45;color:#555}
+.nt-pop li.new{color:#111;font-weight:700}.nt-pop li.big{color:#8a5a00}
+.nt-acts{display:flex;gap:6px;margin-top:8px}.nt-acts .btn{flex:1}
+body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-bell{display:none}

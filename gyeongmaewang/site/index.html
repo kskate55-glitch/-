@@ -2565,6 +2565,51 @@ body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-be
 .ez-goal:hover{border-color:#8ff0b4}
 .tt-opt{color:#000!important;font-weight:700!important;font-size:16px!important}
 .tt-opt small{font-size:13px!important;color:#10243d!important}
+/* v226 — ✏️ 외전 고르기 체험: 빨간 색연필 동그라미 · 쉬운 퀴즈 · 말소 목록 옮기기 */
+.il-mk{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:10px 0}
+.il-mk-quiz{grid-template-columns:1fr}
+.il-mk-it{position:relative;display:flex;align-items:center;gap:10px;text-align:left;padding:14px 14px;border-radius:12px;border:1.5px solid #d7d0bd;background:#fffdf6 repeating-linear-gradient(0deg,transparent 0 23px,rgba(120,140,190,.10) 23px 24px);color:#111;cursor:pointer;font:inherit;min-height:64px;box-shadow:0 2px 0 rgba(0,0,0,.06)}
+.il-mk-it:hover{border-color:#b6452f}
+.il-mk-it .ic{font-size:26px;line-height:1}
+.il-mk-it .no{display:inline-grid;place-items:center;flex:0 0 28px;height:28px;border-radius:50%;background:#23476b;color:#fff;font-weight:800}
+.il-mk-it .tx b{display:block;font-size:16px;color:#000}
+.il-mk-it .tx small{display:block;font-size:13px;color:#333;font-weight:600;margin-top:2px}
+.il-pencil{position:absolute;inset:-6px -4px;width:calc(100% + 8px);height:calc(100% + 12px);pointer-events:none;overflow:visible}
+.il-pencil path{fill:none;stroke:#d8262b;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;opacity:.9;stroke-dasharray:100;stroke-dashoffset:100;animation:ilPencil .38s ease-out forwards;filter:url(#ilPencilF)}
+.il-pencil path.p2{stroke-width:1.6;opacity:.55;animation-delay:.22s}
+@keyframes ilPencil{to{stroke-dashoffset:0}}
+.il-mk-it.ok{border-color:#2e9a55;background-color:#f1fbf3}
+.il-mk-it.bad{border-color:#d8262b;background-color:#fff1f0}
+.il-mk-it.miss{border:2px dashed #d8262b}
+.il-mk-why{grid-column:1/-1;margin:-4px 2px 2px}
+.il-mk-why .why,.il-mv-why .why{color:#111;font-weight:600;font-size:13.5px}
+.il-mk-why.bad .why,.il-mk-why.miss .why{color:#b3161b}
+.il-mv{display:grid;grid-template-columns:1.5fr auto 1fr;gap:10px;align-items:start;margin:10px 0}
+.il-mv-doc,.il-mv-list{background:#fffdf6;border:1.5px solid #d7d0bd;border-radius:12px;padding:10px;color:#111}
+.il-mv-doc>b,.il-mv-list>b{display:block;font-size:15px;color:#000}
+.il-mv-doc>small{display:block;color:#444;font-size:12.5px;margin:2px 0 6px}
+.il-mv-doc table{width:100%;border-collapse:collapse;font-size:13.5px}
+.il-mv-doc th{background:#efe8d4;color:#222;padding:5px;text-align:left;font-size:12.5px}
+.il-mv-doc td{padding:7px 5px;border-top:1px solid #e6dfcb;vertical-align:top}
+.il-mv-doc td.t b{color:#000}.il-mv-doc td.t small{display:block;color:#444;font-size:12px}
+.il-mv-doc td.g,.il-mv-doc td.n{white-space:nowrap;color:#333;font-weight:700}
+.il-mv-doc tr[data-ilmark]{cursor:pointer}.il-mv-doc tr[data-ilmark]:hover td{background:#fff3d6}
+.il-mv-doc tr.moved td{opacity:.35;text-decoration:line-through}
+.il-mv-doc tr.miss td{background:#ffe5e3}
+.il-mv-arrow{align-self:center;font-size:22px;color:#b6452f}
+.il-mv-list ol{margin:8px 0 0;padding-left:22px}
+.il-mv-list li{padding:7px 6px;border-bottom:1px dashed #d7d0bd;cursor:pointer;font-weight:700;font-size:14px;color:#000}
+.il-mv-list li .x{color:#b6452f;margin-left:4px;font-weight:800}
+.il-mv-list li.ok{color:#1d6b3a}.il-mv-list li.bad{color:#b3161b;text-decoration:line-through}
+.il-mv-list .empty{color:#666;font-size:13.5px;margin:10px 0}
+.il-mv-why{list-style:none;padding:0;margin:4px 0}.il-mv-why li{margin:4px 0;font-size:13.5px;color:#111}
+@media (max-width:720px){.il-mv{grid-template-columns:1fr}.il-mv-arrow{transform:rotate(90deg);justify-self:center}.il-mk{grid-template-columns:1fr 1fr}.il-mk-quiz{grid-template-columns:1fr}.il-mk-it .tx b{font-size:15px}}
+.il-mk-why,.il-mv-why li{background:#fffdf6;border-radius:10px;padding:8px 12px;border-left:4px solid #2e9a55}
+.il-mk-why.bad,.il-mk-why.miss,.il-mv-why li.bad,.il-mv-why li.miss{border-left-color:#d8262b;background:#fff1f0}
+.il-mv-why li b{color:#000}
+.il-mk-why{margin:0}
+.il-mk-quiz .tx{position:relative;display:inline-block;padding:4px 14px 4px 6px}
+.il-mk-quiz .il-pencil{inset:-10px -14px -10px -14px;width:calc(100% + 28px);height:calc(100% + 20px)}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -45465,7 +45510,8 @@ if(typeof homeHTML === "function"){
       const box = [];
       h = h.replace(/<button type="button" class="btn[^"]*" data-(?:kcnew="career"[^>]*|ofgo="board"|kcnew="weekly")>[\s\S]*?<\/button>/g, m => { box.push(m.replace(/class="btn pri"/, 'class="btn"')); return ""; });
       h = h.replace(/<button type="button" class="btn pri lf-home-go"[^>]*>[\s\S]*?<\/button>/, "");   // 자유 인생 버튼은 없앤다 — 스토리가 곧 인생
-      const boxHTML = box.length ? `<details class="kc-box"><summary>🗂️ 케이스 상자 <small>CASE ${box.filter(b => /data-kcnew="career"/.test(b)).length}개 · 게시판 · 이번 주 경매</small></summary><div class="kc-box-in">${box.join("")}</div></details>` : "";
+      // v226 — 케이스 상자(CASE·게시판·이번 주 경매)는 아예 없앤다: 캐릭터마다 정해진 물건 4개만 스토리로 한다 — 게시판에서 고르면 이야기가 꼬인다
+      const boxHTML = false ? `<details class="kc-box"><summary>🗂️ 케이스 상자 <small>CASE ${box.filter(b => /data-kcnew="career"/.test(b)).length}개 · 게시판 · 이번 주 경매</small></summary><div class="kc-box-in">${box.join("")}</div></details>` : "";
       if(epHasProgress()) top += `<button type="button" class="btn ep-restart" data-eprestart>↺ 처음부터 새로 하기 <small>STAGE 1 · 한서윤부터</small></button>`;
       h = h.replace(/(<div class="kc-menu">)/, `$1${top}`);
       h = h.replace(/(<div class="kc-menu-row">)/, `${boxHTML}$1`);
@@ -47310,7 +47356,10 @@ function ilRun(){   // 다음 '보여 줄 것'(대사·선택지·시트·끝)�
     R.pc++;
   }
 }
-function ilTest(c){ const f = ilCond[c]; try{ return !!(f && f(ILR.def, ILR)); }catch(e){ return false; } }
+function ilTest(c){
+  const m = /^(right|miss)_([a-z0-9]+)(?:_(\d+))?$/.exec(c);
+  if(m){ const r = (ILR && ILR.sheetRes || {})[m[2]]; if(!r) return false; return m[1] === "right" ? r.right : !!(r.own && m[3] != null && !r.sel[+m[3]]); }
+  const f = ilCond[c]; try{ return !!(f && f(ILR.def, ILR)); }catch(e){ return false; } }
 function ilSpeaker(n){
   const id = IL_NAMES[n.who] || (n.who && Object.keys(IL_NAMES).find(k => n.who.startsWith(k)) ? IL_NAMES[Object.keys(IL_NAMES).find(k => n.who.startsWith(k))] : null);
   return id;
@@ -47476,15 +47525,40 @@ function ilSheetHTML(sh){
     mid = `<div class="il-calc-in">${sh.inputs.map(inp => `<div class="il-cfg"><b>${esc(inp.label)}</b><div>${inp.opts.map(o => `<button type="button" class="btn sm${st.vals[inp.id] === o.v ? " pri" : ""}" data-ilcalc="${esc(inp.id)}:${esc(String(o.v))}">${esc(o.t)}</button>`).join("")}</div></div>`).join("")}</div>
       <div class="${sh.side ? "il-calc-2col" : ""}"><div class="il-tbl-wrap"><table class="il-tbl il-calc">${rows.map(r => `<tr class="${r[2] || ""}"><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join("")}</table></div>${sh.side ? ilSideHTML(sh.side) : ""}</div>`;
     st.checked = true;
-  } else if(sh.type === "doc"){ st.checked = true; }
+  } else if(sh.type === "mark"){ mid = ilMarkHTML(sh, st); }
+  else if(sh.type === "doc"){ st.checked = true; }
   const foot = sh.foot ? `<ul class="il-foot">${sh.foot.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
-  const allAns = sh.type === "sort" ? sh.items.every((_, i) => st.ans[i] != null) : sh.type === "pick" ? sh.fields.every((_, i) => st.ans[i] != null) : true;
-  const right = sh.type === "sort" ? sh.items.every((it, i) => st.ans[i] === it.b) : sh.type === "pick" ? sh.fields.every((f, i) => st.ans[i] === f.ans) : true;
-  const msg = st.checked && (sh.type === "sort" || sh.type === "pick") ? (right ? `<p class="il-ok">✓ ${esc(sh.okText || "맞아요. 그대로 진행해요.")}</p>` : `<p class="il-bad">표시된 줄의 설명을 보고 다시 골라 보세요. '설명 보고 진행'으로 넘어가도 괜찮아요.</p>`) : "";
-  const btns = (sh.type === "sort" || sh.type === "pick")
+  const allAns = sh.type === "sort" ? sh.items.every((_, i) => st.ans[i] != null) : sh.type === "pick" ? sh.fields.every((_, i) => st.ans[i] != null) : sh.type === "mark" ? Object.keys(st.sel || {}).length > 0 : true;
+  const right = sh.type === "sort" ? sh.items.every((it, i) => st.ans[i] === it.b) : sh.type === "pick" ? sh.fields.every((f, i) => st.ans[i] === f.ans) : sh.type === "mark" ? ilMarkRight(sh, st) : true;
+  const msg = st.checked && sh.type === "mark" && !right ? `<p class="il-bad">${esc(sh.badText || "빨간 표시가 붙은 줄의 설명을 보고 다시 골라 보세요. '설명 보고 진행'으로 넘어가도 괜찮아요.")}</p>`
+    : st.checked && (sh.type === "sort" || sh.type === "pick" || sh.type === "mark") ? (right ? `<p class="il-ok">✓ ${esc(sh.okText || "맞아요. 그대로 진행해요.")}</p>` : `<p class="il-bad">표시된 줄의 설명을 보고 다시 골라 보세요. '설명 보고 진행'으로 넘어가도 괜찮아요.</p>`) : "";
+  const btns = (sh.type === "sort" || sh.type === "pick" || sh.type === "mark")
     ? `<button type="button" class="btn" data-ilsheet="show">📖 설명 보고 진행</button>${right && st.checked ? `<button type="button" class="btn pri" data-ilsheet="done">계속 읽기 ▶</button>` : `<button type="button" class="btn pri" data-ilsheet="check"${allAns ? "" : " disabled"}>확인</button>`}`
     : `<button type="button" class="btn pri" data-ilsheet="done">${sh.type === "doc" ? "확인했어요 ▶" : "계속 읽기 ▶"}</button>`;
   return `${head}${docRows}${mid}${msg}${foot}<div class="il-row">${btns}</div>`;
+}
+/* ---------- ✏️ mark — 고르기 체험(v226) ----------
+   layout: "pencil"(카드에 빨간 색연필 동그라미) · "quiz"(보기 중 하나) · "move"(등기부 줄을 오른쪽 목록으로 옮기기)
+   items:[{t, sub, ic, why}] · ans:[정답 번호] · multi(여러 개) */
+function ilMarkRight(sh, st){ const sel = st.sel || {}; return sh.ans.length === Object.keys(sel).length && sh.ans.every(i => sel[i]); }
+const IL_PENCIL = `<svg class="il-pencil" viewBox="0 0 120 60" preserveAspectRatio="none" aria-hidden="true"><path pathLength="100" d="M16,33 C10,16 38,6 62,6 C92,6 114,15 112,31 C110,48 80,55 56,54 C30,53 9,45 12,28 C14,20 26,13 40,10"/><path class="p2" pathLength="100" d="M20,36 C16,20 42,11 64,10 C90,10 108,19 107,32 C105,45 78,51 58,50"/></svg>`;
+const IL_PENCIL_DEFS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="ilPencilF"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter></svg>`;
+function ilMarkHTML(sh, st){ return IL_PENCIL_DEFS + ilMarkBody(sh, st); }
+function ilMarkBody(sh, st){
+  st.sel = st.sel || {};
+  const lay = sh.layout || "pencil", sel = st.sel;
+  const cls = i => { if(!st.checked) return ""; const want = sh.ans.includes(i); return sel[i] ? (want ? "ok" : "bad") : (want ? "miss" : ""); };
+  const why = (it, i) => { const c = cls(i); return st.checked && it.why && (c === "bad" || c === "miss" || st.shown || (c === "ok" && sh.showWhyOk)) ? `<small class="why">${c === "bad" ? "✗ " : c === "miss" ? "빠졌어요 — " : "✓ "}${esc(it.why)}</small>` : ""; };
+  if(lay === "move"){
+    const row = (it, i, side) => `<tr class="${cls(i)}${side === "L" && sel[i] ? " moved" : ""}" data-ilmark="${i}"><td class="g">${esc(it.g || "")}</td><td class="n">${esc(it.no || "")}</td><td class="t"><b>${esc(it.t)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ""}</td><td class="w">${esc(it.who || "")}</td></tr>`;
+    const chosen = sh.items.map((it, i) => sel[i] ? i : -1).filter(i => i >= 0);
+    return `<div class="il-mv"><div class="il-mv-doc"><b>📄 ${esc(sh.docTitle || "등기부등본(가상 요약)")}</b><small>줄을 누르면 오른쪽 목록으로 옮겨져요</small>
+      <table><tr><th>구분</th><th>순위</th><th>등기 내용</th><th>권리자</th></tr>${sh.items.map((it, i) => row(it, i, "L")).join("")}</table></div>
+      <div class="il-mv-arrow">➜</div>
+      <div class="il-mv-list"><b>🗒️ ${esc(sh.listTitle || "말소할 등기 목록")}</b>${chosen.length ? `<ol>${chosen.map(i => `<li class="${cls(i)}" data-ilmark="${i}">${esc(sh.items[i].g || "")} ${esc(sh.items[i].no || "")}번 · ${esc(sh.items[i].t)} <span class="x">✕</span></li>`).join("")}</ol>` : `<p class="empty">아직 비어 있어요</p>`}</div></div>
+      ${st.checked ? `<ul class="il-mv-why">${sh.items.map((it, i) => why(it, i) ? `<li class="${cls(i) || "ok"}"><b>${esc(it.g || "")} ${esc(it.no || "")} ${esc(it.t)}</b> ${why(it, i)}</li>` : "").join("")}</ul>` : ""}`;
+  }
+  return `<div class="il-mk il-mk-${lay}">${sh.items.map((it, i) => `<button type="button" class="il-mk-it ${cls(i)}${sel[i] ? " on" : ""}" data-ilmark="${i}">${lay === "quiz" ? `<span class="no">${i + 1}</span>` : ""}${it.ic ? `<span class="ic">${it.ic}</span>` : ""}<span class="tx"><b>${esc(it.t)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ""}${lay === "quiz" && sel[i] ? IL_PENCIL : ""}</span>${lay !== "quiz" && sel[i] ? IL_PENCIL : ""}</button>${why(it, i) ? `<div class="il-mk-why ${cls(i)}">${why(it, i)}</div>` : ""}`).join("")}</div>`;
 }
 // 계산표 옆에 나란히 붙는 참고 표(예: 재개발·재건축 단계) — 좁은 화면에선 아래로 내려간다
 function ilSideHTML(sd){
@@ -47498,6 +47572,13 @@ function ilSheetDone(){
 }
 function ilSheetAct(a){
   const R = ILR; if(!R || !R.sheetId) return; const sh = R.def.sheets[R.sheetId], st = R.sheetSt;
+  if(sh.type === "mark"){
+    if(a === "check"){ st.checked = true; st.right = ilMarkRight(sh, st); }
+    else if(a === "show"){ st.sel = {}; sh.ans.forEach(i => st.sel[i] = true); st.checked = true; st.shown = true; st.right = true; }
+    else if(a === "done") return ilSheetDone();
+    R.sheetRes = R.sheetRes || {}; R.sheetRes[R.sheetId] = {right:!!st.right && !st.shown, own:!st.shown, sel:Object.assign({}, st.sel)};
+    R.el.querySelector(".il-panel").innerHTML = ilSheetHTML(sh); return;
+  }
   if(a === "check"){ st.checked = true; st.right = sh.type === "sort" ? sh.items.every((it, i) => st.ans[i] === it.b) : sh.fields.every((f, i) => st.ans[i] === f.ans); }
   else if(a === "show" && sh.type !== "sort" && sh.type !== "pick") return ilSheetDone();
   else if(a === "show"){ st.ans = {}; if(sh.type === "sort") sh.items.forEach((it, i) => st.ans[i] = it.b); else sh.fields.forEach((f, i) => st.ans[i] = f.ans); st.checked = true; st.shown = true; st.right = true; }
@@ -47509,12 +47590,15 @@ function ilSheetAct(a){
 document.addEventListener("click", e => {
   if(!ILR) return; const R = ILR;
   if(!e.target.closest || !e.target.closest("#ilRoot")) return;
-  const b = e.target.closest("[data-il],[data-ilpick],[data-ilcfg],[data-ilgo],[data-ilsort],[data-ilpickf],[data-ilcalc],[data-ilsheet]");
+  const b = e.target.closest("[data-il],[data-ilpick],[data-ilcfg],[data-ilgo],[data-ilsort],[data-ilpickf],[data-ilcalc],[data-ilsheet],[data-ilmark]");
   if(b){
     e.preventDefault(); e.stopPropagation();
     if(b.dataset.ilpick) return ilPick(b.dataset.ilpick);
     if(b.dataset.ilgo) return ilGoScene(b.dataset.ilgo);
     if(b.dataset.ilsheet) return ilSheetAct(b.dataset.ilsheet);
+    if(b.dataset.ilmark != null){ const sh = R.def.sheets[R.sheetId], st = R.sheetSt, i = +b.dataset.ilmark; st.sel = st.sel || {};
+      if(st.sel[i]) delete st.sel[i]; else { if(!sh.multi) st.sel = {}; st.sel[i] = true; }
+      st.checked = false; st.shown = false; R.el.querySelector(".il-panel").innerHTML = ilSheetHTML(sh); return; }
     if(b.dataset.ilsort){ const [i, bk] = b.dataset.ilsort.split(":"); R.sheetSt.ans[+i] = bk; R.sheetSt.checked = false; R.el.querySelector(".il-panel").innerHTML = ilSheetHTML(R.def.sheets[R.sheetId]); return; }
     if(b.dataset.ilpickf){ const [i, j] = b.dataset.ilpickf.split(":").map(Number); R.sheetSt.ans[i] = j; R.sheetSt.checked = false; R.el.querySelector(".il-panel").innerHTML = ilSheetHTML(R.def.sheets[R.sheetId]); return; }
     if(b.dataset.ilcalc){ const [k, v] = b.dataset.ilcalc.split(":"); const sh = R.def.sheets[R.sheetId], inp = sh.inputs.find(x => x.id === k), o = inp && inp.opts.find(x => String(x.v) === v); if(o){ R.sheetSt.vals[k] = o.v; R.el.querySelector(".il-panel").innerHTML = ilSheetHTML(sh); } return; }
@@ -47931,23 +48015,14 @@ IL_DEF({
         ["따로 계약하는 일","A: 1년에 한 번 하는 큰 신고 등은 따로, 추가 일이 생기면 미리 알려 줌 / B: '그때 가서' — 확인 안 됨"],
         ["견적","두 곳 모두 '해 주는 일'을 적은 견적서로 받기로 함 — 범위를 맞춘 뒤에 가격 비교"]],
         foot:"교육용 가상 메모 · 실제 사무소·가격 아님 · 실제 범위와 비용은 각 사무소의 계약서로 확인"}},
-    folder:{type:"sort", title:"합계 한 줄을 거래별 폴더로 — 연습 파일 D03", prompt:"도현의 '파란색·빨간색' 합계표에 섞여 있던 기록을 알맞은 폴더로 옮겨 보세요. 애매하면 '검토 필요'도 정답이에요.",
-      buckets:[{id:"buy",t:"📁 매입"},{id:"fix",t:"📁 수리"},{id:"fin",t:"📁 금융"},{id:"hold",t:"📁 보유"},{id:"sell",t:"📁 매도"},{id:"chk",t:"🔎 검토 필요"}],
+    folder:{type:"mark", layout:"quiz", multi:false, title:"퀴즈 — 종합소득세는 언제 신고할까?", prompt:"1년 동안 사고판 걸 모아서 한 번 신고하는 게 종합소득세예요. 언제 할까요? 하나만 고르세요.",
       items:[
-        {t:"낙찰 잔금 낸 영수증(회상 자료)", b:"buy", why:"집을 사는 데 낸 돈이에요. 날짜와 어느 물건인지 같이 적어요."},
-        {t:"등기(내 이름으로 바꾸는 절차) 비용 영수증(회상 자료)", b:"buy", why:"사는 단계의 자료예요. 어떻게 처리되는지는 상담에서 확인해요."},
-        {t:"대출 받은 돈 입금 — 파란색 칸 맨 위", b:"fin", why:"통장에 들어왔지만 빌린 돈이에요. 번 돈 칸에 두면 합계가 통째로 틀어져요."},
-        {t:"대출 원금 갚은 출금", b:"fin", why:"빌린 돈을 돌려준 거예요. 이자와 따로 적어요."},
-        {t:"대출 이자 출금(매달)", b:"fin", why:"원금과 성격이 달라요. 어떻게 반영되는지는 세무사에게 확인해요."},
-        {t:"북쪽 방 곰팡이 제거·도배 견적서와 이체 내역", b:"fix", why:"수리 자료예요. 견적서와 실제 이체 내역을 짝지어 두세요."},
-        {t:"가지고 있는 동안 낸 관리비·공과금", b:"hold", why:"보유 기간에 나간 돈이에요. 어느 달 것인지 적어요."},
-        {t:"매매계약서와 잔금 입금 내역", b:"sell", why:"계약일과 잔금일이 다를 수 있어요. 두 날짜를 다 남겨요."},
-        {t:"팔 때 낸 중개수수료 영수증", b:"sell", why:"팔 때 쓴 돈은 매도 폴더에 두면 그 거래와 바로 이어져요."},
-        {t:"살던 분과 합의한 이사 지원 이체(합의서 있음)", b:"chk", why:"성격을 판단해야 하는 돈이에요. 합의서와 이체 내역을 같이 두고 상담에서 물어요."},
-        {t:"개인 노트북 구입 영수증", b:"chk", why:"개인용과 섞일 수 있어요. 무조건 비용이라고 넣지 말고 사정을 적어 검토에 맡겨요."},
-        {t:"입찰보증금 돌려받은 입금(다른 사건)", b:"chk", why:"내 돈이 돌아온 거라 번 돈이 아니에요. 어느 사건 것인지 적어 두고 확인받아요."}],
-      okText:"합계 한 줄이 거래 열두 개로 풀렸어요. 금융 폴더 안에서도 받은 돈·원금·이자가 따로 서 있어요.",
-      foot:["연습 파일의 항목은 교육용 예시예요. 본편 정산 기록과 연결되지 않아요.","폴더 나누기는 비용 인정 여부를 정하는 게 아니에요 — 판단은 담당 세무사와 확인해요.","틀려도 불이익 없이 설명을 보고 다시 옮길 수 있어요."], note:"pack"}
+        {t:"다음 해 1월", why:"1월은 연말정산 시기예요. 종합소득세가 아니에요."},
+        {t:"다음 해 5월", sub:"5월 1일 ~ 5월 31일", why:"정답! 작년 1년치를 5월에 한 번에 신고해요. (성실신고확인 대상이면 6월 말까지)"},
+        {t:"다음 해 10월", why:"10월에는 종합소득세 신고가 없어요."}],
+      ans:[1], showWhyOk:true,
+      okText:"맞아요, 매년 5월! 집을 팔 때마다 하는 '예정신고'와는 따로예요 — 예정신고는 판 달 말일부터 2달 안.",
+      foot:["일반적인 일정이에요. 사람마다 예외가 있을 수 있으니 세무사·홈택스 안내로 확인하세요.","틀려도 불이익은 없어요."]}
   },
   script:`
 # s1 | bg=room | music=calm | title=금요일 밤, 폴더가 세 개 | cg=cg_il_d03_a
@@ -48035,8 +48110,6 @@ IL_DEF({
 # s6 | bg=room | music=calm | title=토요일 오후, 폴더 이름 짓기
 [나레이션] 토요일 오후. 도현은 세 폴더를 '부평' 하나로 모으고 단계별로 나눴다. 매입, 수리, 금융, 보유, 매도. 그리고 '검토 필요'.
 [도현·속마음] '기타'에 넣으면 아무도 안 본다. 검토 필요는 '내가 모른다'고 표시해 두는 칸이다.
-[시스템 카드] 아래 연습 파일은 교육용 예시예요. 본편 정산 기록과 연결되지 않아요.
-@sheet folder
 [도현] 대출 받은 돈은 금융 폴더로. 원금과 이자는 같은 폴더, 파일은 따로.
 [도현] 곰팡이 견적서는 이체 내역과 짝을 지어 두자. 견적서만 있으면 '하려던 일'이고, 이체까지 있어야 '한 일'이다.
 [도현] 노트북 영수증은 검토 필요. 사정 한 줄: '개인 노트북, 정리에도 씀, 개인용과 섞임'.
@@ -48052,6 +48125,9 @@ IL_DEF({
 [나레이션] 벌써 흐릿했다. 도현은 결국 그 자리에서 메모를 달기 시작했다.
 @end
 [조민석·메시지] 형, 파일 이름 앞에 날짜를 붙이면 정렬이 편해요.
+[도현·속마음] 이렇게 모으는 게 결국 신고하려고 하는 거지. 근데 종합소득세 신고가 언제였더라?
+@sheet folder
+[도현] 5월. 달력에 빨간 동그라미 쳐 두자. 4월에 폴더를 세무사에게 넘기면 여유 있겠다.
 
 # s7 | bg=room | music=focus | title=맡기면 끝인 줄 알았는데
 [나레이션] 월요일 밤, 계약서 초안과 업무 범위가 메일로 왔다. '세무대리 동의는 국세청 홈택스의 정식 절차로 진행해 주세요.'
@@ -48334,18 +48410,14 @@ IL_DEF({
         ["② 우리끼리","수리비가 넘치면 누가 더 내나 · 진행 상황 알리기"],
         ["② 우리끼리","언제 팔지 · 한 명이 반대하거나 빠질 때"]],
         foot:"교육용 가상 화면 · 법원 서류가 우리끼리 약속을 대신하지 않아요"}},
-    memo:{type:"pick", title:"합의 메모 빈칸 채우기 — 연습사례 E03", prompt:"세 사람의 사정을 보고, 나중에 말이 갈리지 않을 문장을 골라 보세요.",
-      doc:{title:"세 사람의 사정(가상)", rows:[
-        ["은경","250,000,000원 · 2년까지 묶어 둘 수 있음 · 정산·일정 담당"],
-        ["강문호(선배)","150,000,000원 · 3년 이상 가능 · 현장에 가기는 어려움"],
-        ["서지원(후배)","100,000,000원 · 최대 1년 · 현장 방문 가능"]]},
-      fields:[
-        {label:"지분 비율", draft:"(말로 '알아서 나누자')", opts:["말로 '알아서 나누자'고 한다","낸 돈 비율대로 50 : 30 : 20 — 메모에 숫자로 적는다"], ans:1, why:"낸 돈이 다른데 비율을 안 적으면 나중에 서로 다르게 기억해요. 숫자로 적어야 해요."},
-        {label:"수리비가 예산을 넘으면", draft:"먼저 본 사람이 알아서 낸다", opts:["먼저 본 사람이 알아서 낸다","셋이 상의해 지분 비율대로 더 낸다 · 언제까지 낼지, 못 내면 어떻게 할지도 적는다"], ans:1, why:"한 사람이 먼저 내면 그게 빌려준 돈인지, 지분을 더 산 건지 헷갈려요. 규칙을 미리 적어요."},
-        {label:"언제 팔까", draft:"오를 때까지 들고 있는다", opts:["오를 때까지 들고 있는다","가장 짧은 1년을 기본 목표로 · 늦어지면 어떻게 할지 적는다"], ans:1, why:"한 명이라도 돈이 필요한 날이 있으면 그날에 맞춰 계획해요."},
-        {label:"한 명이 빠져야 하면", draft:"남은 사람이 알아서 사 준다", opts:["남은 사람이 알아서 사 준다","먼저 알리고, 넘기는 방법과 가격 기준은 전문가 검토 뒤 정한다"], ans:1, why:"'알아서'는 사람마다 다른 금액을 떠올리게 해요. 정하는 절차부터 적어요."}],
-      okText:"메모 초안 완성 — 50:30:20 · 추가 비용 규칙 · 1년 목표 · 빠질 때의 절차.",
-      foot:["이 메모는 완성된 법률 계약서가 아니에요. 실제로는 전문가 검토가 필요해요.","틀려도 불이익은 없어요."], note:"ask"},
+    memo:{type:"mark", layout:"quiz", multi:false, title:"퀴즈 — 공동입찰할 때 꼭 따로 내는 서류는?", prompt:"혼자 입찰할 때 내는 입찰표·보증금 말고, 여럿이 같이 입찰할 때만 더 내는 서류가 있어요. 뭘까요?",
+      items:[
+        {t:"공동입찰 신고서 + 공동입찰자 목록", sub:"누가 같이 입찰하는지, 지분이 얼마인지 적는 서류", why:"정답! 여럿이 같이 산다고 법원에 알리는 서류예요. 지분 비율도 적어요."},
+        {t:"세 사람의 가족관계증명서", why:"가족이 아니어도 공동입찰할 수 있어요. 필요 없어요."},
+        {t:"세 사람의 재직증명서", why:"회사 서류는 입찰과 상관없어요."}],
+      ans:[0], showWhyOk:true,
+      okText:"맞아요! 그리고 못 오는 사람이 있으면 그 사람 인감도장이 찍힌 위임장과 인감증명서도 같이 챙겨요.",
+      foot:["서식과 준비물은 법원마다 조금씩 달라요. 입찰 전에 해당 법원 안내를 꼭 확인하세요.","틀려도 불이익은 없어요."]},
     split:{type:"calc", title:"개인별 정산표 — 전체 성과와 내 몫", prompt:"사업 전체 결과를 바꿔 보세요. 원금 반환과 이익 배분이 따로 나오는지 보세요.",
       inputs:[
         {id:"res", label:"전체 결과(비용 정산 후·세금 전, 가정)", def:"p60", opts:[{v:"p60", t:"이익 60,000,000원"},{v:"p30", t:"이익 30,000,000원"},{v:"l15", t:"손실 15,000,000원"}]},
@@ -48411,7 +48483,9 @@ IL_DEF({
 [은경] 빨간 쪽은 법원에 낼 서류, 파란 쪽은 우리끼리 약속이에요.
 [강문호] 법원 서류에 이름 셋 적으면 그걸로 끝 아니야?
 [은경] 그건 '누가 같이 입찰하는지'를 법원에 알리는 거예요. 우리끼리 돈을 어떻게 나눌지는 정해 주지 않아요.
-[은경] 공동입찰에 필요한 서류가 따로 있는데, 어떤 서류를 어떻게 내는지는 법원 안내와 지금 서식을 받아서 그대로 따라야 해요. 제 기억으로 채우면 안 되고요.
+[은경] 공동입찰은 법원에 내는 서류가 하나 더 있어요. 퀴즈 하나 낼게요.
+@sheet memo
+[은경] 서식은 법원마다 조금씩 달라서, 그날그날 법원 안내를 받아서 그대로 따라야 해요. 제 기억으로 채우면 안 되고요.
 
 # s4 | bg=bg_office_1 | music=focus | title=되는 것, 주의할 것
 [서지원] 돈 낸 만큼 지분 갖는 거죠?
@@ -48442,8 +48516,7 @@ IL_DEF({
 [강문호] 수리비 넘치면 내가 좀 더 내지 뭐.
 [은경] 선배, 그 말이 제일 위험해요. 그 돈이 빌려준 건지, 지분을 더 산 건지, 그냥 준 건지 셋이 다르게 기억할 수 있어요.
 [강문호|shocked] 거 참. 좋은 마음도 적어 놔야 하는구먼.
-@sheet memo
-[은경] 이 메모는 완성된 계약서가 아니에요. 실제로 할 때는 전문가한테 한 번 보여야 해요.
+[은경] 그래서 이런 건 글로 적어 둬요. 이 메모는 완성된 계약서가 아니에요. 실제로 할 때는 전문가한테 한 번 보여야 해요.
 
 # s6 | bg=bg_office_1 | music=main | title=6천을 셋이 나누면
 [은경] 비용을 다 정산하고 전체 이익이 6천이라고 해 봐요. 세금은 각자 따로고요.
@@ -49309,16 +49382,13 @@ IL_DEF({
       table:[["","예시"],["✅ 되는 것","취득세(집 살 때 내는 세금), 법무사 비용, 중개수수료, 도배·장판 같은 수리비, 사업용 대출이자, 임장(집 보러 가는 현장 조사) 교통비 — 모두 증빙이 있을 때"],["❌ 안 되는 것","가족 외식, 내 옷·미용실 같은 생활비, 친구 선물, 영수증 없는 현금 지출"],["❓ 물어볼 것","개인 이동과 섞인 교통카드, 공부용 책처럼 사업과 생활이 겹치는 지출"]]}
   ],
   sheets:{
-    axes:{type:"sort", title:"영수증 나누기 — 비용 되는 것 / 안 되는 것", prompt:"서윤 책상 위의 영수증이에요. '그 집을 사고팔려고 쓴 돈 + 증거가 있는 것'이면 비용 칸, 아니면 안 되는 칸으로 옮겨 보세요.",
-      buckets:[{id:"ok", t:"✅ 비용 되는 것"},{id:"no", t:"❌ 비용 안 되는 것"}],
+    axes:{type:"mark", layout:"pencil", multi:false, title:"퀴즈 — 비용처리가 안 되는 영수증은?", prompt:"서윤 책상 위의 영수증 세 장이에요. 이 중 비용으로 인정받기 어려운 한 장을 빨간 색연필로 동그라미 쳐 보세요.",
       items:[
-        {t:"첫 번째 집 살 때 낸 취득세 영수증", b:"ok", why:"집을 사면서 낸 세금이라 그 집에 들어간 돈이에요."},
-        {t:"첫 번째 집 도배·장판 공사 카드전표", b:"ok", why:"팔려고 집을 고친 돈이에요. 증빙도 있어요."},
-        {t:"집 보러 가면서 탄 택시 영수증", b:"ok", why:"임장(현장 조사)에 쓴 교통비예요. 어디 가느라 탔는지 메모해 두면 더 좋아요."},
-        {t:"엄마 생신 가족 외식", b:"no", why:"사업과 상관없는 생활비예요."},
-        {t:"미용실 커트", b:"no", why:"개인 생활비예요. 사업자 카드로 긁었어도 마찬가지예요."},
-        {t:"철물점에서 현금으로 산 자물쇠 — 영수증 잃어버림", b:"no", why:"사업에 쓴 돈이어도 증거가 없으면 비용으로 인정받기 어려워요. 그래서 영수증을 챙기는 거예요."}],
-      okText:"되는 것 세 장, 안 되는 것 세 장. 기준은 '사업에 썼나 + 증거가 있나' 두 가지예요.",
+        {ic:"🤝", t:"중개수수료 영수증", sub:"집을 팔 때 공인중개사에게 낸 돈", why:"집을 팔려고 쓴 돈이라 비용이 돼요."},
+        {ic:"🔨", t:"도배·장판 공사 영수증", sub:"팔려고 집을 고친 돈", why:"팔 집을 고치는 데 쓴 돈이라 비용이 돼요."},
+        {ic:"🍗", t:"가족 외식 영수증", sub:"엄마 생신 저녁", why:"사업과 상관없는 생활비예요. 그래서 비용이 안 돼요."}],
+      ans:[2], showWhyOk:true,
+      okText:"맞아요! 가족 외식은 생활비라 비용이 안 돼요. 기준은 두 가지 — '사업에 썼나'와 '증거(영수증)가 있나'.",
       foot:["교육용 가상 영수증이에요. 실제 비용 인정 여부는 세무 전문가와 확인하세요.","틀려도 불이익은 없어요."], note:"proof"},
     form:{type:"doc", title:"체험 화면 — 사업자등록 신청(가상) / 실제 제출 아님", prompt:"홈택스(국세청 인터넷 창구) 신청 화면을 흉내 낸 연습 화면이에요. 개인정보를 입력하거나 어디로 보내지 않아요.",
       doc:{title:"사업자등록 신청 — 연습용 초안", rows:[
@@ -49504,29 +49574,34 @@ IL_DEF({
         ["채권","국민주택채권 매입 — 직접 해도 내는 줄"],
         ["수수료","등기 신청 수수료 — 직접 해도 내는 줄"]],
         foot:"교육용 가상 견적서 · 실제 금액·항목은 사건마다 다름"}},
-    attach:{type:"sort", title:"준비물 나누기 — 어디서 챙길까", prompt:"오정은 선배의 연습 사례(가상)에 필요한 준비물이에요. 어디서 챙기는 건지 칸으로 나눠 보세요.",
-      buckets:[{id:"show", t:"떼는 서류"},{id:"fee", t:"내는 돈(세금·채권·수수료)"},{id:"paid", t:"법원에 내는 서류"}],
+    attach:{type:"mark", layout:"pencil", multi:true, title:"셀프 등기 준비물 챙기기 — 필요한 것만 동그라미", prompt:"법원 경매계에 등기를 부탁하러(촉탁 신청) 갈 때 챙기는 것들이에요. 필요한 것만 빨간 색연필로 동그라미 쳐 보세요. 안 필요한 게 세 개 섞여 있어요.",
       items:[
-        {t:"등기사항증명서(등기부)", b:"show", why:"이 집이 누구 이름으로 되어 있고 어떤 기록이 있는지 보여 주는 서류예요."},
-        {t:"건축물대장", b:"show", why:"이 건물이 어떤 건물인지 보여 주는 나라 장부예요."},
-        {t:"취득세 납부 영수증", b:"fee", why:"집을 샀으니 내는 세금이에요. 직접 하든 맡기든 내요."},
-        {t:"국민주택채권 매입 영수증", b:"fee", why:"등기할 때 법으로 사야 하는 채권이에요."},
-        {t:"등기 수수료 납부 영수증", b:"fee", why:"등기소에 내는 수수료예요."},
-        {t:"촉탁신청서(법원에 '등기해 주세요' 부탁하는 서류)", b:"paid", why:"영수증들을 붙여서 법원 경매계에 내는 서류예요."}],
-      okText:"떼는 서류 두 장, 내는 돈 세 장, 법원에 내는 서류 한 장. 돈을 먼저 내야 영수증을 붙일 수 있어요.",
-      foot:["교육용 가상 사례예요. 실제 준비물은 해당 법원 안내로 확인하세요.","틀려도 불이익은 없어요."], note:"flow"},
-    match:{type:"pick", title:"옮겨 적기 대조 — 숫자 하나도 틀리면 안 돼요", prompt:"왼쪽은 등기부(가상)에 적힌 기록이에요. 서윤이 신청서에 옮겨 적은 초안과 비교해서, 등기부와 똑같은 값을 고르세요.",
-      doc:{title:"연습 사례 · 등기부 발췌(가상)", rows:[
-        ["근저당(은행이 돈 빌려주며 걸어 둔 기록)","2023년 4월 12일 접수 제14817호"],
-        ["가압류(빚 받으려고 미리 묶어 둔 기록)","2024년 2월 5일 접수 제3206호"],
-        ["경매 시작 기록","2024년 9월 2일 접수 제29951호"]],
-        foot:"교육용 가상 등기 · 세 줄 모두 낙찰로 지워지는 것으로 확인이 끝났다고 가정"},
-      fields:[
-        {label:"근저당 접수번호", draft:"제14871호", opts:["제14871호","제14817호"], ans:1, why:"끝 두 자리가 뒤바뀌었어요. 날짜가 맞아도 번호가 다르면 다른 기록을 가리켜요."},
-        {label:"가압류 접수일", draft:"2024년 2월 5일", opts:["2024년 2월 5일","2024년 5월 2일"], ans:0, why:"이 줄은 초안이 맞아요. 맞는 줄도 한 번씩 소리 내어 확인해요."},
-        {label:"경매 시작 기록 접수번호", draft:"제29951호", opts:["제29951호","제29915호"], ans:0, why:"등기부와 같아요. 셋 중 틀린 건 근저당 한 줄이었어요."}],
-      okText:"근저당은 제14817호 — 끝 두 자리를 고쳤어요. 나머지 두 줄은 초안 그대로 맞아요.",
-      foot:["연습 화면의 번호는 실제 사건과 무관한 가상 값이에요.","틀려도 불이익은 없어요."], note:"after"}
+        {ic:"📝", t:"등기 촉탁 신청서", sub:"법원에 '등기해 주세요' 부탁하는 서류", why:"이게 본 서류예요. 나머지 영수증을 여기에 붙여 내요."},
+        {ic:"💳", t:"인감증명서", sub:"도장이 내 것이라는 증명", why:"집을 '파는' 사람이 준비하는 서류예요. 경매로 사는 쪽은 안 챙겨도 돼요."},
+        {ic:"✅", t:"매각대금 완납증명서", sub:"잔금을 다 냈다는 증명", why:"돈을 다 냈다는 걸 보여 줘야 법원이 등기를 부탁해 줘요."},
+        {ic:"🧾", t:"취득세 영수증", sub:"집을 사면 내는 세금", why:"집을 샀으니 내는 세금이에요. 먼저 내고 영수증을 붙여요."},
+        {ic:"🏢", t:"재직증명서", sub:"회사에 다닌다는 증명", why:"대출 받을 때나 쓰는 서류예요. 등기에는 필요 없어요."},
+        {ic:"🏦", t:"국민주택채권 매입 영수증", sub:"등기할 때 사야 하는 채권", why:"등기할 때 법으로 정해진 만큼 사야 해요. 사고 바로 팔 수도 있어요."},
+        {ic:"🏛️", t:"등기 수수료 영수증", sub:"등기소에 내는 수수료", why:"등기를 해 주는 값이에요."},
+        {ic:"👪", t:"가족관계증명서", sub:"가족이 누구인지 증명", why:"내 이름으로 등기하는 데는 가족 서류가 필요 없어요."},
+        {ic:"🗒️", t:"말소할 등기 목록", sub:"지워 달라고 적는 목록", why:"낙찰로 없어지는 기록을 적어 내야 지워져요. 다음 체험에서 직접 만들어 봐요."}],
+      ans:[0,2,3,5,6,8],
+      okText:"완벽해요! 신청서, 잔금 완납증명서, 취득세·채권·수수료 영수증, 말소할 등기 목록. 돈부터 내고 영수증을 모아 붙이면 돼요.",
+      foot:["교육용 가상 예시예요. 법원에 따라 주민등록초본·등기부등본·건축물대장 등을 더 달라고 할 수 있어요 — 가기 전에 경매계에 꼭 물어보세요.","틀려도 불이익은 없어요."], note:"flow"},
+    match:{type:"mark", layout:"move", multi:true, title:"말소할 등기 목록 만들기 — 뭘 지워 달라고 할까", prompt:"왼쪽은 선배 연습 사례의 등기부(가상 요약)예요. 낙찰로 지워질 줄을 눌러 오른쪽 '말소할 등기 목록'으로 옮기세요. 다 옮겼으면 '확인'을 눌러 선배에게 보여 주세요.",
+      docTitle:"등기부등본 — 연습 사례(가상 요약)", listTitle:"말소할 등기 목록",
+      items:[
+        {g:"갑구", no:"1", t:"소유권이전", sub:"전 주인 박○○ 이름으로 된 기록", who:"박○○", why:"이건 지우는 줄이 아니에요. 주인이 내 이름으로 '바뀌어' 적히는 거라 말소 목록에는 안 넣어요."},
+        {g:"갑구", no:"2", t:"가압류", sub:"2023년 · 빚 받으려고 미리 묶어 둔 기록", who:"○○카드", why:"기준이 되는 2021년 근저당보다 뒤에 들어온 기록이라 낙찰로 지워져요."},
+        {g:"갑구", no:"3", t:"압류", sub:"2024년 · 밀린 세금 때문에 묶은 기록", who:"○○구청", why:"이것도 기준보다 뒤라서 지워져요."},
+        {g:"갑구", no:"4", t:"가처분", sub:"2024년 · 팔지 말라고 묶어 둔 기록", who:"김○○", why:"기준보다 늦게 들어온 가처분이라 이 사례에선 지워져요. (앞서 들어온 가처분은 남을 수 있어요.)"},
+        {g:"갑구", no:"5", t:"임의경매개시결정", sub:"2025년 · '이 집 경매 시작합니다' 기록", who:"○○은행", why:"꼭 넣어야 해요! 경매가 끝났다고 저절로 지워지지 않아요. 목록에 안 적으면 등기부에 그대로 남아요."},
+        {g:"을구", no:"1", t:"근저당권설정", sub:"2021년 · 은행이 돈 빌려주며 건 기록(가장 먼저 = 기준)", who:"○○은행", why:"가장 먼저 들어온 근저당이라 '기준'이 되는 줄이에요. 기준 줄 자신도 지워져요."},
+        {g:"을구", no:"2", t:"근저당권설정", sub:"2023년 · 캐피탈이 건 기록", who:"○○캐피탈", why:"기준보다 뒤라서 지워져요."}],
+      ans:[1,2,3,4,5,6], showWhyOk:true,
+      badText:"선배가 빨간 표시를 해 줬어요. 설명을 보고 다시 옮겨 보거나 '설명 보고 진행'을 눌러도 돼요.",
+      okText:"여섯 줄 모두 옮겼어요 — 경매개시결정 기록까지! 소유권 줄은 지우는 게 아니라 내 이름으로 바뀌는 거라 빼는 게 맞아요.",
+      foot:["교육용 가상 등기부예요. 이 사례는 모든 기록이 기준(2021년 근저당)보다 뒤라서 지워진다고 가정했어요.","실제로는 매각물건명세서의 '매각으로 없어지지 않는 권리' 칸을 꼭 확인하고, 헷갈리면 전문가에게 물어요.","틀려도 불이익은 없어요."], note:"after"}
   },
   script:`
 # s1 | bg=bg_office_2 | music=main | title=등기가 뭐예요? | cg=cg_il_s03_a
@@ -49568,8 +49643,7 @@ IL_DEF({
 [시스템 카드] 다시 지금 — 모임 스터디룸
 
 # s3 | bg=bg_office_2 | music=focus | title=맡길까, 직접 할까
-[오정은] 여기 법무사 견적서예요. 금액은 지워 왔어요. 줄만 보세요.
-@sheet quote
+[오정은] 법무사한테 맡기면 견적서에 다섯 줄이 나와요. 보수(수고비), 실비, 세금, 채권, 수수료.
 [서윤|shocked] 저는 직접 하면 이 합계가 다 굳는 줄 알았어요.
 [오정은] 그게 제일 흔한 오해예요. 세금, 채권, 수수료는 직접 해도 똑같이 내요. 줄어드는 건 법무사 보수, 그러니까 수고비랑 실비예요.
 [태오] 대신 내가 뛰어다녀야 하고요.
@@ -49597,27 +49671,37 @@ IL_DEF({
 [서윤] 돈을 먼저 내야 영수증을 붙일 수 있네요. 순서가 거꾸로면 안 되겠다.
 [오정은] 금액이나 필요한 부수는 인터넷 옛날 글 보고 외우면 안 돼요. 바뀌거든요. 그때그때 안내를 봐요.
 @sheet attach
-[서윤] 떼는 서류, 내는 돈, 법원에 내는 서류. 세 봉투로 나누니까 한눈에 보인다.
+[서윤] 인감증명서는 파는 사람 거였구나. 사는 쪽은 돈 낸 영수증이 거의 다네요.
 @cg off
 @note flow
 
-# s5 | bg=bg_office_2 | music=focus | title=흔한 실수 — 끝 두 자리
-[오정은] 신청서엔 낙찰로 지워질 등기도 적어요. 은행이 걸어 둔 근저당 같은 기록이요.
-[오정은] 그런데 경매로 샀다고 등기부의 모든 기록이 무조건 다 지워지는 건 아니에요. 그대로 남는 권리도 있을 수 있어요. 그건 헷갈리면 전문가에게 물어요.
-[오정은] 이 사례는 세 줄 모두 지워지는 걸로 확인이 끝났다고 칠게요. 서윤 씨가 신청서에 옮겨 적어 봐요.
-[서윤] 근저당, 2023년 4월 12일 접수. 날짜 맞고.
-[오정은] 번호도 소리 내서 읽어요.
-[서윤|shocked] 어? 끝 두 자리가 바뀌었어요. 등기부는 1-4-8-1-7인데, 제가 쓴 건 1-4-8-7-1이에요.
-[오정은] 같은 날 접수된 기록이 한둘이 아니에요. 번호가 이름표라서, 잘못 적으면 다른 기록을 가리키게 돼요.
+# s5 | bg=bg_office_2 | music=focus | title=흔한 실수 — 말소 목록에서 빠뜨리기
+[오정은] 신청서에는 '말소할 등기 목록'도 붙여요. 낙찰로 없어지는 기록을 지워 달라고 적는 종이예요.
+[서윤] 그냥 등기부에 있는 걸 다 적으면 되는 거 아니에요?
+[오정은] 다 적으면 안 되고, 빼먹어도 안 돼요. 경매로 샀다고 모든 기록이 무조건 지워지는 건 아니거든요. 남는 권리도 있을 수 있어요.
+[오정은] 이 사례는 확인이 끝났다고 칠게요. 가장 먼저 들어온 2021년 근저당이 '기준'이고, 그보다 뒤에 들어온 건 다 지워지는 집이에요.
+[오정은] 서윤 씨가 직접 목록을 만들어 봐요. 다 하면 저한테 보여 주고요.
 @sheet match
-[서윤] 한 자리씩 손가락으로 짚었어요. 뒤에서부터 읽으니까 숫자가 따로따로 보여요.
-[오정은|happy] 좋은 습관이에요.
+@if right_match
+[오정은|happy] 어디 봐요. 가압류, 압류, 가처분, 근저당 두 줄… 경매개시결정까지 넣었네요. 완벽해요.
+[서윤|happy] 경매 시작 기록도 결국 지워야 할 기록이잖아요.
+[오정은] 그걸 초보들이 제일 많이 빼먹어요. '경매가 끝났으니 알아서 없어지겠지' 하고요. 안 적으면 그대로 남아요.
+@elif miss_match_4
+[오정은] 어디 봐요. 음… 하나 빠졌어요. 경매개시결정 기록이요.
+[서윤|shocked] 아, 그건 경매가 끝나면 저절로 없어지는 줄 알았어요.
+[오정은] 다들 그렇게 생각해요. 근데 목록에 안 적으면 등기부에 그대로 남아요. 나중에 팔 때 '이 집 아직 경매 중이야?' 소리 들어요.
+[서윤] 경매개시결정도 꼭 넣기. 빨간 펜으로 적어 둘게요.
+@else
+[오정은] 어디 봐요. 소유권 줄은 지우는 게 아니라 내 이름으로 바뀌는 거라 빼고, 나머지 여섯 줄은 다 넣어요.
+[오정은] 특히 경매개시결정 기록. 이게 제일 많이 빠져요. 안 적으면 등기부에 그대로 남아요.
+[서윤] 경매개시결정도 꼭 넣기. 기억할게요.
+@end
 @note after
 
 # s6 | bg=bg_court | music=main | title=법원 창구 앞에서 | cg=cg_il_s03_c
 [나레이션] 사흘 뒤, 서윤은 선배의 서류 봉투를 들고 법원 경매계 복도를 걸었다. 제출은 선배가, 확인은 서윤이 맡았다.
 [오정은] 잔금 낸 사건의 등기 촉탁 신청 서류입니다.
-[서윤] 저… 지울 등기가 이 세 줄이 맞는지도 봐 주시나요?
+[서윤] 저… 지울 등기가 이 여섯 줄이 맞는지도 봐 주시나요?
 [경매계 직원] 그런 판단을 창구에서 대신 해 드리긴 어려워요. 빠진 서류가 있으면 연락드릴게요.
 [서윤·속마음] 창구는 서류를 받는 곳이지, 내 숙제를 대신 풀어 주는 곳이 아니구나.
 [경매계 직원] 처리되면 등기부를 떼어서 확인해 보세요.
@@ -49626,8 +49710,8 @@ IL_DEF({
 
 # s7 | bg=room | music=calm | title=등기부에 이름이 바뀐 날
 [오정은·메시지] 반영됐어요. 등기부 새로 떼 봤어요. 뭘 확인해야 할까요?
-[서윤·메시지] 주인 칸에 선배 이름이 적혔는지, 지워 달라고 한 세 줄이 지워졌는지요.
-[서윤] 주인 칸, 선배 이름. 근저당, 가압류, 경매 시작 기록도 지워졌다.
+[서윤·메시지] 주인 칸에 선배 이름이 적혔는지, 지워 달라고 한 여섯 줄이 다 지워졌는지요.
+[서윤] 주인 칸, 선배 이름. 근저당 두 줄, 가압류, 압류, 가처분, 경매개시결정도 지워졌다.
 [오정은·메시지] 만약 그 집에 누가 살고 있었다면, 등기가 됐으니 이제 집이 비워질까요?
 [서윤·메시지] 아니요. 사는 분에게 집을 넘겨받는 건 '인도명령'이라는 따로 된 절차죠. 등기랑은 별개예요.
 [오정은·메시지] 정답. 그것도 초보가 자주 헷갈리는 거예요.

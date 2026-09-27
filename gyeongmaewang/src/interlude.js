@@ -227,7 +227,10 @@ function ilRun(){   // 다음 '보여 줄 것'(대사·선택지·시트·끝)�
     R.pc++;
   }
 }
-function ilTest(c){ const f = ilCond[c]; try{ return !!(f && f(ILR.def, ILR)); }catch(e){ return false; } }
+function ilTest(c){
+  const m = /^(right|miss)_([a-z0-9]+)(?:_(\d+))?$/.exec(c);
+  if(m){ const r = (ILR && ILR.sheetRes || {})[m[2]]; if(!r) return false; return m[1] === "right" ? r.right : !!(r.own && m[3] != null && !r.sel[+m[3]]); }
+  const f = ilCond[c]; try{ return !!(f && f(ILR.def, ILR)); }catch(e){ return false; } }
 function ilSpeaker(n){
   const id = IL_NAMES[n.who] || (n.who && Object.keys(IL_NAMES).find(k => n.who.startsWith(k)) ? IL_NAMES[Object.keys(IL_NAMES).find(k => n.who.startsWith(k))] : null);
   return id;
@@ -393,15 +396,40 @@ function ilSheetHTML(sh){
     mid = `<div class="il-calc-in">${sh.inputs.map(inp => `<div class="il-cfg"><b>${esc(inp.label)}</b><div>${inp.opts.map(o => `<button type="button" class="btn sm${st.vals[inp.id] === o.v ? " pri" : ""}" data-ilcalc="${esc(inp.id)}:${esc(String(o.v))}">${esc(o.t)}</button>`).join("")}</div></div>`).join("")}</div>
       <div class="${sh.side ? "il-calc-2col" : ""}"><div class="il-tbl-wrap"><table class="il-tbl il-calc">${rows.map(r => `<tr class="${r[2] || ""}"><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join("")}</table></div>${sh.side ? ilSideHTML(sh.side) : ""}</div>`;
     st.checked = true;
-  } else if(sh.type === "doc"){ st.checked = true; }
+  } else if(sh.type === "mark"){ mid = ilMarkHTML(sh, st); }
+  else if(sh.type === "doc"){ st.checked = true; }
   const foot = sh.foot ? `<ul class="il-foot">${sh.foot.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
-  const allAns = sh.type === "sort" ? sh.items.every((_, i) => st.ans[i] != null) : sh.type === "pick" ? sh.fields.every((_, i) => st.ans[i] != null) : true;
-  const right = sh.type === "sort" ? sh.items.every((it, i) => st.ans[i] === it.b) : sh.type === "pick" ? sh.fields.every((f, i) => st.ans[i] === f.ans) : true;
-  const msg = st.checked && (sh.type === "sort" || sh.type === "pick") ? (right ? `<p class="il-ok">✓ ${esc(sh.okText || "맞아요. 그대로 진행해요.")}</p>` : `<p class="il-bad">표시된 줄의 설명을 보고 다시 골라 보세요. '설명 보고 진행'으로 넘어가도 괜찮아요.</p>`) : "";
-  const btns = (sh.type === "sort" || sh.type === "pick")
+  const allAns = sh.type === "sort" ? sh.items.every((_, i) => st.ans[i] != null) : sh.type === "pick" ? sh.fields.every((_, i) => st.ans[i] != null) : sh.type === "mark" ? Object.keys(st.sel || {}).length > 0 : true;
+  const right = sh.type === "sort" ? sh.items.every((it, i) => st.ans[i] === it.b) : sh.type === "pick" ? sh.fields.every((f, i) => st.ans[i] === f.ans) : sh.type === "mark" ? ilMarkRight(sh, st) : true;
+  const msg = st.checked && sh.type === "mark" && !right ? `<p class="il-bad">${esc(sh.badText || "빨간 표시가 붙은 줄의 설명을 보고 다시 골라 보세요. '설명 보고 진행'으로 넘어가도 괜찮아요.")}</p>`
+    : st.checked && (sh.type === "sort" || sh.type === "pick" || sh.type === "mark") ? (right ? `<p class="il-ok">✓ ${esc(sh.okText || "맞아요. 그대로 진행해요.")}</p>` : `<p class="il-bad">표시된 줄의 설명을 보고 다시 골라 보세요. '설명 보고 진행'으로 넘어가도 괜찮아요.</p>`) : "";
+  const btns = (sh.type === "sort" || sh.type === "pick" || sh.type === "mark")
     ? `<button type="button" class="btn" data-ilsheet="show">📖 설명 보고 진행</button>${right && st.checked ? `<button type="button" class="btn pri" data-ilsheet="done">계속 읽기 ▶</button>` : `<button type="button" class="btn pri" data-ilsheet="check"${allAns ? "" : " disabled"}>확인</button>`}`
     : `<button type="button" class="btn pri" data-ilsheet="done">${sh.type === "doc" ? "확인했어요 ▶" : "계속 읽기 ▶"}</button>`;
   return `${head}${docRows}${mid}${msg}${foot}<div class="il-row">${btns}</div>`;
+}
+/* ---------- ✏️ mark — 고르기 체험(v226) ----------
+   layout: "pencil"(카드에 빨간 색연필 동그라미) · "quiz"(보기 중 하나) · "move"(등기부 줄을 오른쪽 목록으로 옮기기)
+   items:[{t, sub, ic, why}] · ans:[정답 번호] · multi(여러 개) */
+function ilMarkRight(sh, st){ const sel = st.sel || {}; return sh.ans.length === Object.keys(sel).length && sh.ans.every(i => sel[i]); }
+const IL_PENCIL = `<svg class="il-pencil" viewBox="0 0 120 60" preserveAspectRatio="none" aria-hidden="true"><path pathLength="100" d="M16,33 C10,16 38,6 62,6 C92,6 114,15 112,31 C110,48 80,55 56,54 C30,53 9,45 12,28 C14,20 26,13 40,10"/><path class="p2" pathLength="100" d="M20,36 C16,20 42,11 64,10 C90,10 108,19 107,32 C105,45 78,51 58,50"/></svg>`;
+const IL_PENCIL_DEFS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="ilPencilF"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter></svg>`;
+function ilMarkHTML(sh, st){ return IL_PENCIL_DEFS + ilMarkBody(sh, st); }
+function ilMarkBody(sh, st){
+  st.sel = st.sel || {};
+  const lay = sh.layout || "pencil", sel = st.sel;
+  const cls = i => { if(!st.checked) return ""; const want = sh.ans.includes(i); return sel[i] ? (want ? "ok" : "bad") : (want ? "miss" : ""); };
+  const why = (it, i) => { const c = cls(i); return st.checked && it.why && (c === "bad" || c === "miss" || st.shown || (c === "ok" && sh.showWhyOk)) ? `<small class="why">${c === "bad" ? "✗ " : c === "miss" ? "빠졌어요 — " : "✓ "}${esc(it.why)}</small>` : ""; };
+  if(lay === "move"){
+    const row = (it, i, side) => `<tr class="${cls(i)}${side === "L" && sel[i] ? " moved" : ""}" data-ilmark="${i}"><td class="g">${esc(it.g || "")}</td><td class="n">${esc(it.no || "")}</td><td class="t"><b>${esc(it.t)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ""}</td><td class="w">${esc(it.who || "")}</td></tr>`;
+    const chosen = sh.items.map((it, i) => sel[i] ? i : -1).filter(i => i >= 0);
+    return `<div class="il-mv"><div class="il-mv-doc"><b>📄 ${esc(sh.docTitle || "등기부등본(가상 요약)")}</b><small>줄을 누르면 오른쪽 목록으로 옮겨져요</small>
+      <table><tr><th>구분</th><th>순위</th><th>등기 내용</th><th>권리자</th></tr>${sh.items.map((it, i) => row(it, i, "L")).join("")}</table></div>
+      <div class="il-mv-arrow">➜</div>
+      <div class="il-mv-list"><b>🗒️ ${esc(sh.listTitle || "말소할 등기 목록")}</b>${chosen.length ? `<ol>${chosen.map(i => `<li class="${cls(i)}" data-ilmark="${i}">${esc(sh.items[i].g || "")} ${esc(sh.items[i].no || "")}번 · ${esc(sh.items[i].t)} <span class="x">✕</span></li>`).join("")}</ol>` : `<p class="empty">아직 비어 있어요</p>`}</div></div>
+      ${st.checked ? `<ul class="il-mv-why">${sh.items.map((it, i) => why(it, i) ? `<li class="${cls(i) || "ok"}"><b>${esc(it.g || "")} ${esc(it.no || "")} ${esc(it.t)}</b> ${why(it, i)}</li>` : "").join("")}</ul>` : ""}`;
+  }
+  return `<div class="il-mk il-mk-${lay}">${sh.items.map((it, i) => `<button type="button" class="il-mk-it ${cls(i)}${sel[i] ? " on" : ""}" data-ilmark="${i}">${lay === "quiz" ? `<span class="no">${i + 1}</span>` : ""}${it.ic ? `<span class="ic">${it.ic}</span>` : ""}<span class="tx"><b>${esc(it.t)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ""}${lay === "quiz" && sel[i] ? IL_PENCIL : ""}</span>${lay !== "quiz" && sel[i] ? IL_PENCIL : ""}</button>${why(it, i) ? `<div class="il-mk-why ${cls(i)}">${why(it, i)}</div>` : ""}`).join("")}</div>`;
 }
 // 계산표 옆에 나란히 붙는 참고 표(예: 재개발·재건축 단계) — 좁은 화면에선 아래로 내려간다
 function ilSideHTML(sd){
@@ -415,6 +443,13 @@ function ilSheetDone(){
 }
 function ilSheetAct(a){
   const R = ILR; if(!R || !R.sheetId) return; const sh = R.def.sheets[R.sheetId], st = R.sheetSt;
+  if(sh.type === "mark"){
+    if(a === "check"){ st.checked = true; st.right = ilMarkRight(sh, st); }
+    else if(a === "show"){ st.sel = {}; sh.ans.forEach(i => st.sel[i] = true); st.checked = true; st.shown = true; st.right = true; }
+    else if(a === "done") return ilSheetDone();
+    R.sheetRes = R.sheetRes || {}; R.sheetRes[R.sheetId] = {right:!!st.right && !st.shown, own:!st.shown, sel:Object.assign({}, st.sel)};
+    R.el.querySelector(".il-panel").innerHTML = ilSheetHTML(sh); return;
+  }
   if(a === "check"){ st.checked = true; st.right = sh.type === "sort" ? sh.items.every((it, i) => st.ans[i] === it.b) : sh.fields.every((f, i) => st.ans[i] === f.ans); }
   else if(a === "show" && sh.type !== "sort" && sh.type !== "pick") return ilSheetDone();
   else if(a === "show"){ st.ans = {}; if(sh.type === "sort") sh.items.forEach((it, i) => st.ans[i] = it.b); else sh.fields.forEach((f, i) => st.ans[i] = f.ans); st.checked = true; st.shown = true; st.right = true; }
@@ -426,12 +461,15 @@ function ilSheetAct(a){
 document.addEventListener("click", e => {
   if(!ILR) return; const R = ILR;
   if(!e.target.closest || !e.target.closest("#ilRoot")) return;
-  const b = e.target.closest("[data-il],[data-ilpick],[data-ilcfg],[data-ilgo],[data-ilsort],[data-ilpickf],[data-ilcalc],[data-ilsheet]");
+  const b = e.target.closest("[data-il],[data-ilpick],[data-ilcfg],[data-ilgo],[data-ilsort],[data-ilpickf],[data-ilcalc],[data-ilsheet],[data-ilmark]");
   if(b){
     e.preventDefault(); e.stopPropagation();
     if(b.dataset.ilpick) return ilPick(b.dataset.ilpick);
     if(b.dataset.ilgo) return ilGoScene(b.dataset.ilgo);
     if(b.dataset.ilsheet) return ilSheetAct(b.dataset.ilsheet);
+    if(b.dataset.ilmark != null){ const sh = R.def.sheets[R.sheetId], st = R.sheetSt, i = +b.dataset.ilmark; st.sel = st.sel || {};
+      if(st.sel[i]) delete st.sel[i]; else { if(!sh.multi) st.sel = {}; st.sel[i] = true; }
+      st.checked = false; st.shown = false; R.el.querySelector(".il-panel").innerHTML = ilSheetHTML(sh); return; }
     if(b.dataset.ilsort){ const [i, bk] = b.dataset.ilsort.split(":"); R.sheetSt.ans[+i] = bk; R.sheetSt.checked = false; R.el.querySelector(".il-panel").innerHTML = ilSheetHTML(R.def.sheets[R.sheetId]); return; }
     if(b.dataset.ilpickf){ const [i, j] = b.dataset.ilpickf.split(":").map(Number); R.sheetSt.ans[i] = j; R.sheetSt.checked = false; R.el.querySelector(".il-panel").innerHTML = ilSheetHTML(R.def.sheets[R.sheetId]); return; }
     if(b.dataset.ilcalc){ const [k, v] = b.dataset.ilcalc.split(":"); const sh = R.def.sheets[R.sheetId], inp = sh.inputs.find(x => x.id === k), o = inp && inp.opts.find(x => String(x.v) === v); if(o){ R.sheetSt.vals[k] = o.v; R.el.querySelector(".il-panel").innerHTML = ilSheetHTML(sh); } return; }

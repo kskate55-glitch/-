@@ -5,7 +5,7 @@ await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTi
 ok(await p.evaluate(()=>{ localStorage.clear(); const c=kaCfg(); return c.bgm===100&&c.sfx===100&&c.amb===100&&c.voice===100&&c.master===100; }), w+' 소리 기본값 전부 100');
 await p.evaluate(()=>{ kcRec().fr={full:true}; kcRec().cases=1; page='arena'; arenaTab='home'; renderArena(); }); await p.waitForTimeout(600);
 const box=await p.evaluate(()=>{ const d=document.querySelector('.kc-box'); if(d) d.open=true; return [...document.querySelectorAll('.kc-box [data-kcnew="career"]')].map(b=>b.innerText.split('\n')[0]); });
-ok(box.length>=4 && box.some(t=>/서류 한 장과 이삿날/.test(t)), w+' 케이스 상자 1단계 물건 4개: '+box.join(' / '));
+ok(!(await p.$('.kc-box')), w+' 케이스 상자 없음');
 if(w===1280){ await p.screenshot({path:'v120_box.png'}); }
 await p.click('.ep-home'); await p.waitForTimeout(1500);
 for(let k=0;k<4;k++){ await p.evaluate(()=>{const s=document.querySelector('[data-gxskip]'); if(s) s.click();}); await p.waitForTimeout(450); }

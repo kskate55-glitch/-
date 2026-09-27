@@ -4,7 +4,7 @@ for(const [w,h] of [[1280,800],[390,844]]){ const p=await b.newPage({viewport:{w
 await p.goto('http://localhost:8765/rights-study.html#arena'); await p.waitForTimeout(700);
 await p.evaluate(()=>{ localStorage.clear(); kcRec().fr={full:true}; kcRec().cases=1; page='arena'; arenaTab='home'; renderArena(); }); await p.waitForTimeout(500);
 const box=await p.evaluate(()=>{ const d=document.querySelector('.kc-box'); if(d) d.open=true; return [...document.querySelectorAll('.kc-box [data-kcnew="career"]')].map(b=>b.innerText.replace(/\n/g,' '))[1]; });
-ok(/「서류 한 장과 이삿날」/.test(box) && /배당받는 세입자/.test(box), w+' 케이스 상자에 에피소드 이름·부제: '+box.slice(0,70));
+ok(!(await p.$('.kc-box')), w+' 케이스 상자 없음');
 if(w===1280) await p.screenshot({path:'v121_box.png'});
 await p.evaluate(()=>{ arenaTab='king'; KC_MODE='career'; K_PROP_NEXT='f11'; KC_INTRO=false; kStart(11); K.intro=false; K.timeLeft=9999; renderArena(); }); await p.waitForTimeout(1200);
 if(w===1280){

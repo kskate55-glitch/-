@@ -338,7 +338,8 @@ if(typeof homeHTML === "function"){
       const box = [];
       h = h.replace(/<button type="button" class="btn[^"]*" data-(?:kcnew="career"[^>]*|ofgo="board"|kcnew="weekly")>[\s\S]*?<\/button>/g, m => { box.push(m.replace(/class="btn pri"/, 'class="btn"')); return ""; });
       h = h.replace(/<button type="button" class="btn pri lf-home-go"[^>]*>[\s\S]*?<\/button>/, "");   // 자유 인생 버튼은 없앤다 — 스토리가 곧 인생
-      const boxHTML = box.length ? `<details class="kc-box"><summary>🗂️ 케이스 상자 <small>CASE ${box.filter(b => /data-kcnew="career"/.test(b)).length}개 · 게시판 · 이번 주 경매</small></summary><div class="kc-box-in">${box.join("")}</div></details>` : "";
+      // v226 — 케이스 상자(CASE·게시판·이번 주 경매)는 아예 없앤다: 캐릭터마다 정해진 물건 4개만 스토리로 한다 — 게시판에서 고르면 이야기가 꼬인다
+      const boxHTML = false ? `<details class="kc-box"><summary>🗂️ 케이스 상자 <small>CASE ${box.filter(b => /data-kcnew="career"/.test(b)).length}개 · 게시판 · 이번 주 경매</small></summary><div class="kc-box-in">${box.join("")}</div></details>` : "";
       if(epHasProgress()) top += `<button type="button" class="btn ep-restart" data-eprestart>↺ 처음부터 새로 하기 <small>STAGE 1 · 한서윤부터</small></button>`;
       h = h.replace(/(<div class="kc-menu">)/, `$1${top}`);
       h = h.replace(/(<div class="kc-menu-row">)/, `${boxHTML}$1`);

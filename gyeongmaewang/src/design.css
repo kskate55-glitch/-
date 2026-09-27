@@ -1194,3 +1194,48 @@ body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-be
 .ez-goal:hover{border-color:#8ff0b4}
 .tt-opt{color:#000!important;font-weight:700!important;font-size:16px!important}
 .tt-opt small{font-size:13px!important;color:#10243d!important}
+/* v226 — ✏️ 외전 고르기 체험: 빨간 색연필 동그라미 · 쉬운 퀴즈 · 말소 목록 옮기기 */
+.il-mk{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:10px 0}
+.il-mk-quiz{grid-template-columns:1fr}
+.il-mk-it{position:relative;display:flex;align-items:center;gap:10px;text-align:left;padding:14px 14px;border-radius:12px;border:1.5px solid #d7d0bd;background:#fffdf6 repeating-linear-gradient(0deg,transparent 0 23px,rgba(120,140,190,.10) 23px 24px);color:#111;cursor:pointer;font:inherit;min-height:64px;box-shadow:0 2px 0 rgba(0,0,0,.06)}
+.il-mk-it:hover{border-color:#b6452f}
+.il-mk-it .ic{font-size:26px;line-height:1}
+.il-mk-it .no{display:inline-grid;place-items:center;flex:0 0 28px;height:28px;border-radius:50%;background:#23476b;color:#fff;font-weight:800}
+.il-mk-it .tx b{display:block;font-size:16px;color:#000}
+.il-mk-it .tx small{display:block;font-size:13px;color:#333;font-weight:600;margin-top:2px}
+.il-pencil{position:absolute;inset:-6px -4px;width:calc(100% + 8px);height:calc(100% + 12px);pointer-events:none;overflow:visible}
+.il-pencil path{fill:none;stroke:#d8262b;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;opacity:.9;stroke-dasharray:100;stroke-dashoffset:100;animation:ilPencil .38s ease-out forwards;filter:url(#ilPencilF)}
+.il-pencil path.p2{stroke-width:1.6;opacity:.55;animation-delay:.22s}
+@keyframes ilPencil{to{stroke-dashoffset:0}}
+.il-mk-it.ok{border-color:#2e9a55;background-color:#f1fbf3}
+.il-mk-it.bad{border-color:#d8262b;background-color:#fff1f0}
+.il-mk-it.miss{border:2px dashed #d8262b}
+.il-mk-why{grid-column:1/-1;margin:-4px 2px 2px}
+.il-mk-why .why,.il-mv-why .why{color:#111;font-weight:600;font-size:13.5px}
+.il-mk-why.bad .why,.il-mk-why.miss .why{color:#b3161b}
+.il-mv{display:grid;grid-template-columns:1.5fr auto 1fr;gap:10px;align-items:start;margin:10px 0}
+.il-mv-doc,.il-mv-list{background:#fffdf6;border:1.5px solid #d7d0bd;border-radius:12px;padding:10px;color:#111}
+.il-mv-doc>b,.il-mv-list>b{display:block;font-size:15px;color:#000}
+.il-mv-doc>small{display:block;color:#444;font-size:12.5px;margin:2px 0 6px}
+.il-mv-doc table{width:100%;border-collapse:collapse;font-size:13.5px}
+.il-mv-doc th{background:#efe8d4;color:#222;padding:5px;text-align:left;font-size:12.5px}
+.il-mv-doc td{padding:7px 5px;border-top:1px solid #e6dfcb;vertical-align:top}
+.il-mv-doc td.t b{color:#000}.il-mv-doc td.t small{display:block;color:#444;font-size:12px}
+.il-mv-doc td.g,.il-mv-doc td.n{white-space:nowrap;color:#333;font-weight:700}
+.il-mv-doc tr[data-ilmark]{cursor:pointer}.il-mv-doc tr[data-ilmark]:hover td{background:#fff3d6}
+.il-mv-doc tr.moved td{opacity:.35;text-decoration:line-through}
+.il-mv-doc tr.miss td{background:#ffe5e3}
+.il-mv-arrow{align-self:center;font-size:22px;color:#b6452f}
+.il-mv-list ol{margin:8px 0 0;padding-left:22px}
+.il-mv-list li{padding:7px 6px;border-bottom:1px dashed #d7d0bd;cursor:pointer;font-weight:700;font-size:14px;color:#000}
+.il-mv-list li .x{color:#b6452f;margin-left:4px;font-weight:800}
+.il-mv-list li.ok{color:#1d6b3a}.il-mv-list li.bad{color:#b3161b;text-decoration:line-through}
+.il-mv-list .empty{color:#666;font-size:13.5px;margin:10px 0}
+.il-mv-why{list-style:none;padding:0;margin:4px 0}.il-mv-why li{margin:4px 0;font-size:13.5px;color:#111}
+@media (max-width:720px){.il-mv{grid-template-columns:1fr}.il-mv-arrow{transform:rotate(90deg);justify-self:center}.il-mk{grid-template-columns:1fr 1fr}.il-mk-quiz{grid-template-columns:1fr}.il-mk-it .tx b{font-size:15px}}
+.il-mk-why,.il-mv-why li{background:#fffdf6;border-radius:10px;padding:8px 12px;border-left:4px solid #2e9a55}
+.il-mk-why.bad,.il-mk-why.miss,.il-mv-why li.bad,.il-mv-why li.miss{border-left-color:#d8262b;background:#fff1f0}
+.il-mv-why li b{color:#000}
+.il-mk-why{margin:0}
+.il-mk-quiz .tx{position:relative;display:inline-block;padding:4px 14px 4px 6px}
+.il-mk-quiz .il-pencil{inset:-10px -14px -10px -14px;width:calc(100% + 28px);height:calc(100% + 20px)}

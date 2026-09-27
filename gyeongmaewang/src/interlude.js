@@ -380,7 +380,7 @@ function ilShowSheet(sid){
 function ilSheetHTML(sh){
   const R = ILR, st = R.sheetSt;
   const head = `<div class="il-sh-head"><small>🧮 실무 조작 · 교육용 가상 자료</small><h3>${esc(sh.title)}</h3>${sh.prompt ? `<p>${esc(sh.prompt)}</p>` : ""}</div>`;
-  const docRows = sh.doc ? `<div class="il-doc">${sh.doc.title ? `<b>${esc(sh.doc.title)}</b>` : ""}<table>${sh.doc.rows.map(r => `<tr><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join("")}</table>${sh.doc.foot ? `<small>${esc(sh.doc.foot)}</small>` : ""}</div>` : "";
+  const docRows = sh.doc ? `<div class="il-doc">${sh.doc.title ? `<b>${esc(sh.doc.title)}</b>` : ""}<table>${sh.doc.rows.map(r => `<tr class="${r[2] || ""}"><th>${r[2] === "save" ? "★ " : ""}${esc(r[0])}</th><td>${esc(r[1])}${r[3] ? ` <em class="il-save-tag">${esc(r[3])}</em>` : ""}</td></tr>`).join("")}</table>${sh.doc.foot ? `<small>${esc(sh.doc.foot)}</small>` : ""}</div>` : "";
   let mid = "";
   if(sh.type === "sort"){
     st.ans = st.ans || {};
@@ -394,7 +394,7 @@ function ilSheetHTML(sh){
     st.vals = st.vals || {}; sh.inputs.forEach(inp => { if(st.vals[inp.id] == null) st.vals[inp.id] = inp.def; });
     let rows = []; try{ rows = sh.rows(st.vals) || []; }catch(e){ rows = [["계산 오류", String(e.message || e)]]; }
     mid = `<div class="il-calc-in">${sh.inputs.map(inp => `<div class="il-cfg"><b>${esc(inp.label)}</b><div>${inp.opts.map(o => `<button type="button" class="btn sm${st.vals[inp.id] === o.v ? " pri" : ""}" data-ilcalc="${esc(inp.id)}:${esc(String(o.v))}">${esc(o.t)}</button>`).join("")}</div></div>`).join("")}</div>
-      <div class="${sh.side ? "il-calc-2col" : ""}"><div class="il-tbl-wrap"><table class="il-tbl il-calc">${rows.map(r => `<tr class="${r[2] || ""}"><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join("")}</table></div>${sh.side ? ilSideHTML(sh.side) : ""}</div>`;
+      <div class="${sh.side ? "il-calc-2col" : ""}"><div class="il-tbl-wrap"><table class="il-tbl il-calc">${rows.map(r => `<tr class="${r[2] || ""}"><th>${esc(r[0])}</th>${Array.isArray(r[1]) ? r[1].map(c => `<td>${esc(c)}</td>`).join("") : `<td>${esc(r[1])}</td>`}</tr>`).join("")}</table></div>${sh.side ? ilSideHTML(sh.side) : ""}</div>`;
     st.checked = true;
   } else if(sh.type === "mark"){ mid = ilMarkHTML(sh, st); }
   else if(sh.type === "doc"){ st.checked = true; }

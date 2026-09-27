@@ -1239,3 +1239,15 @@ body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-be
 .il-mk-why{margin:0}
 .il-mk-quiz .tx{position:relative;display:inline-block;padding:4px 14px 4px 6px}
 .il-mk-quiz .il-pencil{inset:-10px -14px -10px -14px;width:calc(100% + 28px);height:calc(100% + 20px)}
+/* v227 — 견적서 '직접 하면 아끼는 줄' 형광펜 · 계산표 여러 칸 */
+.il-doc tr.save th,.il-doc tr.save td{background:linear-gradient(transparent 38%,#fff27a 38%,#ffe45c 88%,transparent 88%);font-weight:800;color:#000}
+.il-doc tr.save th{color:#b3161b}
+.il-doc tr.same th,.il-doc tr.same td{color:#666}
+.il-doc tr.total th,.il-doc tr.total td{border-top:2px solid #b3161b;font-weight:800;color:#000;font-size:15.5px}
+.il-save-tag{font-style:normal;font-weight:800;color:#b3161b;white-space:nowrap}
+.il-doc tr.same .il-save-tag{color:#555}
+.il-calc tr.head th,.il-calc tr.head td{background:#23476b;color:#fff;font-weight:800;text-align:center}
+.il-calc td{word-break:keep-all}
+.il-doc tr.save th,.il-doc tr.save td{background:#fff3a3!important}
+.il-doc tr.save th{box-shadow:inset 5px 0 0 #f2c200}
+@media (max-width:720px){.il-calc th{min-width:92px;font-size:13px}.il-calc td{font-size:13.5px;padding-left:6px;padding-right:6px}}

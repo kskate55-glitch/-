@@ -2649,6 +2649,14 @@ body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-be
 /* v230: 초보 모드 강조가 '서서히 나타나기' 효과를 덮어써서 투명한 채로 남던 버튼(사건 소개 등) — 강조된 건 항상 보이게 */
 .ez-rec{opacity:1!important}
 
+/* v230.4: 외전 고르기 — "멈춘 줄 알았다" → 고르라는 안내를 크고 분명하게, 선택지는 노란 테두리로 */
+.il-choice p.il-pick-q{justify-self:center;font-size:15px;font-weight:700;color:#1d1400;background:#ffcc33;border-radius:999px;padding:6px 16px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.il-choice p.il-pick-q b{font-weight:900}
+.il-choice .btn{border:2px solid #ffcc33!important;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.il-choice .btn:hover,.il-choice .btn:focus-visible{background:#33406a!important}
+/* v230.4: 사건 소개 버튼은 '서서히 나타나기' 효과에 기대지 않는다 — 어떤 강조·효과가 덮어써도 항상 보이게 */
+.kc-intro .kc-open{opacity:1!important}
+
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
 .rcap span{font-family:var(--sans);font-weight:500;font-size:12px;color:var(--muted);margin-left:8px}
@@ -47452,7 +47460,7 @@ function ilAdvance(auto){
 function ilShowChoice(n){
   const R = ILR, ch = R.el.querySelector(".il-choice");
   clearTimeout(R.t);
-  ch.hidden = false; ch.innerHTML = `<p>어떻게 할까?</p>` + n.opts.map(o => `<button type="button" class="btn" data-ilpick="${esc(o.id)}">${esc(o.t)}</button>`).join("");
+  ch.hidden = false; ch.innerHTML = `<p class="il-pick-q">👇 어떻게 할까요? <b>하나를 눌러야</b> 다음으로 넘어가요</p>` + n.opts.map(o => `<button type="button" class="btn" data-ilpick="${esc(o.id)}">${esc(o.t)}</button>`).join("");
   R.choosing = n;
   const b = ch.querySelector("button"); if(b) b.focus({preventScroll:true});
 }

@@ -282,7 +282,7 @@ function ilAdvance(auto){
 function ilShowChoice(n){
   const R = ILR, ch = R.el.querySelector(".il-choice");
   clearTimeout(R.t);
-  ch.hidden = false; ch.innerHTML = `<p>어떻게 할까?</p>` + n.opts.map(o => `<button type="button" class="btn" data-ilpick="${esc(o.id)}">${esc(o.t)}</button>`).join("");
+  ch.hidden = false; ch.innerHTML = `<p class="il-pick-q">👇 어떻게 할까요? <b>하나를 눌러야</b> 다음으로 넘어가요</p>` + n.opts.map(o => `<button type="button" class="btn" data-ilpick="${esc(o.id)}">${esc(o.t)}</button>`).join("");
   R.choosing = n;
   const b = ch.querySelector("button"); if(b) b.focus({preventScroll:true});
 }

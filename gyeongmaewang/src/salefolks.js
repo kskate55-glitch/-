@@ -212,3 +212,11 @@ if(typeof BY_ART !== "undefined") Object.assign(BY_ART, {
   "까다로운 네일숍 사장님":{art:{normal:"387b40ea240845918ca4d46a9c2dcfe8", angry:"f6f91f2a0c4dd4f1d2921b74b4f3e92e", worried:"70227dd6d91b26c89f0063abc8cb0636"}, ex:"normal"},
   [SF_FLAKE]:{art:{normal:"e1d4655f0c522f3e5a111a7a985d111a", angry:"1cd3f9924e5730f1a0bb390b0ba2bf7d", worried:"4230448fd1cd7c882b39545b74986e2f"}, ex:"normal"},
   "소심한 첫 집 매수자":{art:{normal:"cb36e38662d8ce64cd1c9f82e9ea6686", angry:"92dc2f1ce9d14ca3299d577b23268010", worried:"fede1d938c3d430741fa3630c3279f31"}, ex:"normal"}});
+// v223 그림 도착 — 오사장·허실장·윤여사 얼굴(이제 다른 중개사 얼굴을 빌려 쓰지 않는다) + 갭투자자 매수인
+if(typeof ART_DEFAULT !== "undefined") Object.assign(ART_DEFAULT, {
+  npc_oh_normal:"2860acadedf5192bc38ac87d962057e3", npc_oh_angry:"4bc0901ffabd536aa2cdf81292e3fca3", npc_oh_worried:"e8dd9f544a731c4623ec52699ca3ae87",
+  npc_heo_normal:"b34543d399a4d5802f586a7091bf87bf", npc_heo_angry:"4fa7072fefc9abd9854caa08699b0fdb", npc_heo_worried:"bb8c97f27d10b6e0fb5dd99277b1e28b",
+  npc_yoon_normal:"02f44347e2c0306cc440136ef1b456f7", npc_yoon_angry:"140b28d4b82e9e66b20bb59146a28b6e", npc_yoon_worried:"16c7029b45fcc214a19a7865c0fb7b57"});
+[["blunt","npc_oh"],["excl","npc_heo"],["chat","npc_yoon"]].forEach(([id, f]) => { const b = SF_BROKERS.find(x => x.id === id); if(b) b.face = f; });
+{ const x = SF_BROKERS.find(b => b.id === "excl"); if(x) x.ex = "normal"; }
+if(typeof BY_ART !== "undefined") BY_ART["갭투자자"] = {art:{normal:"a76c1cc053cb136fab82ad47bff54d38", angry:"c9513aa7c0f1a1f41204f8c3d15c07f6", worried:"ba5da88f16ae7493c6465e136a2476dc"}, ex:"normal"};

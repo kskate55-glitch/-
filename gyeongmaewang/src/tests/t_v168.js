@@ -62,7 +62,7 @@ await p.click('[data-ilshelf]'); await p.click('[data-ilreplay="D01"]'); await p
 await p.evaluate(()=>{ for(let i=0;i<5;i++){ ILR.lastAdv=0; ilAdvance(); } }); await p.click('[data-il="skip"]'); await p.waitForTimeout(100);
 ok(await p.evaluate(()=>ilState('D01').st)==='read', '다시보기·닫기는 상태를 바꾸지 않음');
 // 적자 / 미거래 갈래
-for(const [res,txt,name] of [[{profit:-800,full:true},'손실이 났어요','적자'],[{profit:0,lost:true,full:true},'거래를 진행하지 않았어요','패찰']]){
+for(const [res,txt,name] of [[{profit:-800,full:true},'손실이 났어요','적자'],[{profit:0,lost:true,full:true},'결국 사지 않았어요','패찰']]){
   const r=await p.evaluate(([res,txt])=>{ epOf('dohyun').res=[res]; cpRec().il=undefined; ilSync(); ilStart('D01'); ilCfgSet({speed:'instant'}); const seen=[]; let g=0;
     while(ILR && !ILR.done && g++<4000){ if(ILR.choosing){ ilPick(ILR.choosing.opts[1].id); continue; } if(ILR.panel==='sheet'){ ilSheetAct('show'); ilSheetAct('done'); continue; } if(ILR.panel){ ilPanelClose(); continue; } seen.push(document.querySelector('.il-text').textContent); ILR.lastAdv=0; ilAdvance(); }
     ilClose(true); return {hit:seen.some(t=>t.includes(txt)), money:seen.some(t=>t.includes('남은 걸로'))}; },[res,txt]);
@@ -76,7 +76,7 @@ ok(await p.evaluate(()=>ilState('D01').st)==='skipped' && (await p.$$('.il-modal
 await p.evaluate(()=>ilModalClose());
 // 연습 체험 — 본편 입찰가와 무관
 const pr=await p.evaluate(()=>{ ilStart('D01',{restart:true}); const sc=ILR.def.prog.findIndex(n=>n.k==='sheet'&&n.id==='check'); ILR.pc=sc; ilRun(); const html=document.querySelector('.il-panel').innerText; ilSheetAct('show'); const okTxt=document.querySelector('.il-panel').innerText; ilSheetAct('done'); ilClose(true);
-  return {has:html.includes('연습사건 D01')&&html.includes('281,700,000원')&&html.includes('218,700,000원'), ok:okTxt.includes('일치'), kbid:typeof K!=='undefined'&&K?K.bid:null}; });
+  return {has:html.includes('연습사건 D01')&&html.includes('281,700,000원')&&html.includes('218,700,000원'), ok:okTxt.includes('똑같아요'), kbid:typeof K!=='undefined'&&K?K.bid:null}; });
 ok(pr.has && pr.ok && !pr.kbid, '연습사건 D01 대조(2번·218,700,000원) — 본편 입찰 상태는 없음');
 
 // ---------- 본편 대리입찰 ----------

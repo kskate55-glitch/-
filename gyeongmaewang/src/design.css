@@ -1188,3 +1188,9 @@ body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-be
 #kfsRoot .kfs-head .sf-pill *{color:#1a1200!important}
 #kfsRoot .kfs-head .sf-pill b{font-size:17px}
 #kfsRoot .kfs-head .sf-pill:hover{filter:brightness(1.06)}
+/* v225 — 🧭 지금 할 일: 조금 아래로, 누르면 닫힘 / 대화 선택지 글씨 진하게 */
+.ez-goal{pointer-events:auto!important;cursor:pointer}
+.ez-goal .ez-goal-x{font-style:normal;margin-left:auto;padding-left:8px;color:#8ff0b4;font-weight:800;opacity:.85}
+.ez-goal:hover{border-color:#8ff0b4}
+.tt-opt{color:#000!important;font-weight:700!important;font-size:16px!important}
+.tt-opt small{font-size:13px!important;color:#10243d!important}

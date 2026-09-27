@@ -2559,6 +2559,12 @@ body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-be
 #kfsRoot .kfs-head .sf-pill *{color:#1a1200!important}
 #kfsRoot .kfs-head .sf-pill b{font-size:17px}
 #kfsRoot .kfs-head .sf-pill:hover{filter:brightness(1.06)}
+/* v225 — 🧭 지금 할 일: 조금 아래로, 누르면 닫힘 / 대화 선택지 글씨 진하게 */
+.ez-goal{pointer-events:auto!important;cursor:pointer}
+.ez-goal .ez-goal-x{font-style:normal;margin-left:auto;padding-left:8px;color:#8ff0b4;font-weight:800;opacity:.85}
+.ez-goal:hover{border-color:#8ff0b4}
+.tt-opt{color:#000!important;font-weight:700!important;font-size:16px!important}
+.tt-opt small{font-size:13px!important;color:#10243d!important}
 
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
@@ -51785,11 +51791,17 @@ function ezPaint(){
   document.querySelectorAll(".ez-star, .ez-grp-star").forEach(x => x.remove());
   const root = document.getElementById("kfsRoot"), old = document.getElementById("ezGoal");
   const N = root ? ezNow() : null;
-  if(!N){ if(old) old.remove(); return; }
-  let g = old; if(!g){ g = document.createElement("div"); g.id = "ezGoal"; g.className = "ez-goal"; }
-  g.innerHTML = `<b>🧭 지금 할 일</b><span>${esc(N.goal)}</span>`;
-  if(g.parentNode !== document.body) document.body.appendChild(g);
-  const head = root.querySelector(".kfs-head"), hb = head ? head.getBoundingClientRect().bottom : 0; g.style.top = (hb + 6) + "px";
+  const gkey = N ? String(N.goal).replace(/[0-9]/g, "") : "";          // 숫자(남은 시간·찾음 N/4)만 바뀐 건 같은 안내로 본다
+  if(!N || window.EZ_GOAL_HIDDEN === gkey){ if(old) old.remove(); }
+  else {
+    let g = old; if(!g){ g = document.createElement("div"); g.id = "ezGoal"; g.className = "ez-goal"; g.title = "누르면 닫혀요 — 다음 단계로 넘어가면 다시 떠요";
+      g.addEventListener("click", () => { window.EZ_GOAL_HIDDEN = g.dataset.k; g.remove(); }); }
+    g.dataset.k = gkey;
+    g.innerHTML = `<b>🧭 지금 할 일</b><span>${esc(N.goal)}</span><i class="ez-goal-x" aria-label="닫기">✕</i>`;
+    if(g.parentNode !== document.body) document.body.appendChild(g);
+    const head = root.querySelector(".kfs-head"), hb = head ? head.getBoundingClientRect().bottom : 0; g.style.top = (hb + 46) + "px";
+  }
+  if(!N) return;
   (N.sel || []).forEach(s => document.querySelectorAll("#kfsRoot " + s).forEach(el => {
     if(el.disabled) return;
     el.classList.add("ez-rec");

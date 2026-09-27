@@ -126,11 +126,17 @@ function ezPaint(){
   document.querySelectorAll(".ez-star, .ez-grp-star").forEach(x => x.remove());
   const root = document.getElementById("kfsRoot"), old = document.getElementById("ezGoal");
   const N = root ? ezNow() : null;
-  if(!N){ if(old) old.remove(); return; }
-  let g = old; if(!g){ g = document.createElement("div"); g.id = "ezGoal"; g.className = "ez-goal"; }
-  g.innerHTML = `<b>🧭 지금 할 일</b><span>${esc(N.goal)}</span>`;
-  if(g.parentNode !== document.body) document.body.appendChild(g);
-  const head = root.querySelector(".kfs-head"), hb = head ? head.getBoundingClientRect().bottom : 0; g.style.top = (hb + 6) + "px";
+  const gkey = N ? String(N.goal).replace(/[0-9]/g, "") : "";          // 숫자(남은 시간·찾음 N/4)만 바뀐 건 같은 안내로 본다
+  if(!N || window.EZ_GOAL_HIDDEN === gkey){ if(old) old.remove(); }
+  else {
+    let g = old; if(!g){ g = document.createElement("div"); g.id = "ezGoal"; g.className = "ez-goal"; g.title = "누르면 닫혀요 — 다음 단계로 넘어가면 다시 떠요";
+      g.addEventListener("click", () => { window.EZ_GOAL_HIDDEN = g.dataset.k; g.remove(); }); }
+    g.dataset.k = gkey;
+    g.innerHTML = `<b>🧭 지금 할 일</b><span>${esc(N.goal)}</span><i class="ez-goal-x" aria-label="닫기">✕</i>`;
+    if(g.parentNode !== document.body) document.body.appendChild(g);
+    const head = root.querySelector(".kfs-head"), hb = head ? head.getBoundingClientRect().bottom : 0; g.style.top = (hb + 46) + "px";
+  }
+  if(!N) return;
   (N.sel || []).forEach(s => document.querySelectorAll("#kfsRoot " + s).forEach(el => {
     if(el.disabled) return;
     el.classList.add("ez-rec");

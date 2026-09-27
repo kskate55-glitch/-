@@ -1181,3 +1181,10 @@ body.nx-quiet .stg-file{animation:none!important}
 .nt-pop li.new{color:#111;font-weight:700}.nt-pop li.big{color:#8a5a00}
 .nt-acts{display:flex;gap:6px;margin-top:8px}.nt-acts .btn{flex:1}
 body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-bell{display:none}
+/* ===== v224 가독성: 초보 모드 안내 글씨 검게 · 상황판 버튼 크게 ===== */
+.ez-ask .note, .ez-ask small.note, .ez-coach p{color:#111!important;font-weight:600}
+.ez-ask .hx-talk-box p b{color:#000}
+#kfsRoot .kfs-head .sf-pill{font-size:16px!important;padding:9px 18px!important;min-height:44px;border-radius:999px!important;background:linear-gradient(180deg,#ffd75e,#ffb627)!important;color:#1a1200!important;border:2px solid #fff4c2!important;box-shadow:0 0 0 3px rgba(255,190,40,.35),0 4px 14px rgba(0,0,0,.35)!important;font-weight:800;gap:8px}
+#kfsRoot .kfs-head .sf-pill *{color:#1a1200!important}
+#kfsRoot .kfs-head .sf-pill b{font-size:17px}
+#kfsRoot .kfs-head .sf-pill:hover{filter:brightness(1.06)}

@@ -251,6 +251,7 @@ function hxDetectEnd(grade, n){
   else hxEnd("fail", [`${n}곳밖에 못 찾았다. 원래 조사 결과대로 간다.`]);
 }
 /* ============ 5. 입찰 악마 ============ */
+const HX_DEVIL_HZ = 0.25;   // v228 — 0.85는 너무 빨라 못 맞춘다는 지적. 한 번 왕복에 4초(예전 1.2초), 완벽 칸 통과 시간은 약 5배
 function hxDevil(go){
   hxDiscover("devil");
   hxOpen("devil", "😈 500만원의 유혹", "제출 직전", body => {
@@ -258,11 +259,11 @@ function hxDevil(go){
       <p class="hx-hint">가운데 초록 칸이 <b>처음 정한 내 원칙 가격</b>이다. 바늘이 거기 왔을 때 STOP.</p>
       <div class="hx-gauge"><i class="zone"></i><i class="core"></i><b class="needle"></b></div><button type="button" class="btn primary hx-stop" data-hxstop>✋ STOP</button>`;
     const nd = body.querySelector(".needle"); let t0 = performance.now(), pos = 0, raf = 0, done = false;
-    const tick = t => { pos = 50 + 48 * Math.sin((t - t0) / 1000 * 2 * Math.PI * 0.85); nd.style.left = pos + "%"; raf = requestAnimationFrame(tick); };
+    const tick = t => { pos = 50 + 48 * Math.sin((t - t0) / 1000 * 2 * Math.PI * HX_DEVIL_HZ); nd.style.left = pos + "%"; raf = requestAnimationFrame(tick); };
     raf = requestAnimationFrame(tick); HX.stop = () => cancelAnimationFrame(raf); HX.onSkip = go;
     body.querySelector("[data-hxstop]").addEventListener("click", () => {
       if(done) return; done = true; cancelAnimationFrame(raf); const d = Math.abs(pos - 50);
-      const g = d <= 3 ? "perfect" : d <= 12 ? "good" : "fail";
+      const g = d <= 4.5 ? "perfect" : d <= 13 ? "good" : "fail";
       if(g === "perfect") hxEnd("perfect", ["「강철멘탈」", ["나", "처음 정한 가격 그대로 간다."], "마음이 가벼워졌다. (스트레스 크게 ↓)"], () => { K.hxSteel = true; if(typeof lfOn === "function" && lfOn()) lfStress(-20); hxAch("devil"); go(); });
       else if(g === "good") hxEnd("good", [["나", "……아니, 원래 가격."], "악마가 투덜대며 사라졌다. (스트레스 ↓)"], () => { if(typeof lfOn === "function" && lfOn()) lfStress(-8); go(); });
       else hxEnd("fail", [["😈 악마", "아쉽네."], "입찰가는 봉투에 적어 둔 그대로다. 최종 확인은 내가 한다."], go);

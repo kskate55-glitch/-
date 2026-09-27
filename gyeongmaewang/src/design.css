@@ -1251,3 +1251,23 @@ body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-be
 .il-doc tr.save th,.il-doc tr.save td{background:#fff3a3!important}
 .il-doc tr.save th{box-shadow:inset 5px 0 0 #f2c200}
 @media (max-width:720px){.il-calc th{min-width:92px;font-size:13px}.il-calc td{font-size:13.5px;padding-left:6px;padding-right:6px}}
+/* v228 — 입찰 악마: 느려진 바늘에 맞춰 완벽 칸을 조금 넓힘(±4.5%) · 바늘 굵게 */
+.hx-gauge .core{left:45.5%!important;width:9%!important}
+.hx-gauge .zone{left:37%!important;width:26%!important}
+.hx-gauge{height:44px!important}
+.hx-gauge .needle{width:6px!important;box-shadow:0 0 0 2px #fff}
+/* v228 — 글씨 크게·또렷하게(작고 흐린 글씨 정리) */
+#kfsRoot .note, #lnRoot .note, #ilRoot .note{font-size:max(13.5px,1em)}
+#kfsRoot small, #ilRoot small, .hx-root small, #ntPop small{font-size:max(13px,.88em)}
+#kfsRoot .kr-meta{font-size:13.5px!important}
+#kfsRoot .kr-meta em{opacity:1!important}
+#kfsRoot .kr-state{opacity:.8!important}
+#kfsRoot [disabled] .note, #kfsRoot .kr-lock .note{opacity:1}
+#kfsRoot .stg-tab small{opacity:1!important;font-weight:700}
+#kfsRoot .stg-tab{opacity:.9}
+#kfsRoot .k-hud span{font-size:14px}
+#kfsRoot .hub-me small{font-size:13px!important}
+.vn-name{text-shadow:0 1px 2px rgba(0,0,0,.45)}
+#kfsRoot .ag-act .note, #kfsRoot .vn-acts .note{font-size:14px;opacity:1}
+.il-panel .il-foot li{font-size:13.5px;color:#e6e9f0}
+.il-sh-head p{font-size:16px}

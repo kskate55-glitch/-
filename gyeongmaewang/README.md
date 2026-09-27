@@ -56,7 +56,10 @@ gyeongmaewang/
 
 1. https://pages.cloudflare.com → 가입 → **Create a project → Direct Upload**
 2. `site` 폴더를 통째로 끌어다 놓기 → Deploy
-3. `xxxx.pages.dev` 주소가 바로 생긴다. 한국 사용자도 빠르다(서울 엣지).
+3. `xxxx.pages.dev` 주소가 바로 생긴다.
+   ⚠️ **서버 지역은 고를 수 없다.** Cloudflare 무료 요금제는 한국 방문자를 서울이 아니라 **미국 쪽 서버로 보내는 경우가 많다**
+   (서울 데이터센터는 Business 요금제 이상 — 커뮤니티·공식 블로그 기준, 2026-09 확인). 이 게임은 처음 한 번 파일을 받은 뒤엔
+   전부 브라우저에서 돌아서 **첫 로딩만** 몇 초 느려질 수 있다. 실제 휴대폰으로 재 보고 느리면 다른 호스팅과 비교한다.
 4. (선택) 도메인을 사서 연결 — 예: `gyeongmaewang.kr`
 
 GitHub에 연결해 두면 푸시할 때마다 자동으로 다시 올라간다 — 그때는

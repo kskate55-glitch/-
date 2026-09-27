@@ -2643,6 +2643,12 @@ body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-be
 .il-panel .il-foot li{font-size:13.5px;color:#e6e9f0}
 .il-sh-head p{font-size:16px}
 
+/* v230: ⭐ 추천 — 버튼 줄 안에 끼우지 않고 위쪽 테두리에 이름표처럼 얹는다(내용은 그대로 제자리) */
+.ez-rec>.ez-star{position:absolute;top:-10px;left:10px;z-index:3;margin:0;line-height:1.5;box-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none}
+.ez-rec:has(>.ez-star){margin-top:10px}
+/* v230: 초보 모드 강조가 '서서히 나타나기' 효과를 덮어써서 투명한 채로 남던 버튼(사건 소개 등) — 강조된 건 항상 보이게 */
+.ez-rec{opacity:1!important}
+
 .rlist{display:grid}
 .rcap{font-family:var(--serif);font-weight:900;font-size:15px;padding:10px 12px;border-bottom:1.5px solid var(--ink)}
 .rcap span{font-family:var(--sans);font-weight:500;font-size:12px;color:var(--muted);margin-left:8px}
@@ -51332,7 +51338,7 @@ function ezPaint(){
   (N.sel || []).forEach(s => document.querySelectorAll("#kfsRoot " + s).forEach(el => {
     if(el.disabled) return;
     el.classList.add("ez-rec");
-    if(el.tagName !== "INPUT" && !el.querySelector(".ez-star")){ const st = document.createElement("em"); st.className = "ez-star"; st.textContent = "⭐ 추천"; el.prepend(st); }
+    if(el.tagName !== "INPUT" && !el.querySelector(".ez-star")){ const st = document.createElement("em"); st.className = "ez-star"; st.textContent = "⭐ 추천"; if(getComputedStyle(el).position === "static") el.style.position = "relative"; el.prepend(st); }  // v230: 버튼 위쪽 테두리에 붙는 이름표로 — 줄 안에 끼면 글자가 좁은 세로 칸으로 밀렸다
     const d = el.closest("details"); if(d && !d.open){ const sm = d.querySelector(":scope > summary"); if(sm && !sm.querySelector(".ez-grp-star")){ const st = document.createElement("em"); st.className = "ez-grp-star"; st.textContent = "⭐"; sm.prepend(st); } }
   }));
   ezGloss(root.querySelector(".kfs-panel")); ezGloss(root.querySelector(".kfs-stage"));

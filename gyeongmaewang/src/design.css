@@ -1271,3 +1271,9 @@ body:has(#lnRoot) .nt-bell, body:has(#epRoot) .nt-bell, body:has(#crRoll) .nt-be
 #kfsRoot .ag-act .note, #kfsRoot .vn-acts .note{font-size:14px;opacity:1}
 .il-panel .il-foot li{font-size:13.5px;color:#e6e9f0}
 .il-sh-head p{font-size:16px}
+
+/* v230: ⭐ 추천 — 버튼 줄 안에 끼우지 않고 위쪽 테두리에 이름표처럼 얹는다(내용은 그대로 제자리) */
+.ez-rec>.ez-star{position:absolute;top:-10px;left:10px;z-index:3;margin:0;line-height:1.5;box-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none}
+.ez-rec:has(>.ez-star){margin-top:10px}
+/* v230: 초보 모드 강조가 '서서히 나타나기' 효과를 덮어써서 투명한 채로 남던 버튼(사건 소개 등) — 강조된 건 항상 보이게 */
+.ez-rec{opacity:1!important}

@@ -140,7 +140,7 @@ function ezPaint(){
   (N.sel || []).forEach(s => document.querySelectorAll("#kfsRoot " + s).forEach(el => {
     if(el.disabled) return;
     el.classList.add("ez-rec");
-    if(el.tagName !== "INPUT" && !el.querySelector(".ez-star")){ const st = document.createElement("em"); st.className = "ez-star"; st.textContent = "⭐ 추천"; el.prepend(st); }
+    if(el.tagName !== "INPUT" && !el.querySelector(".ez-star")){ const st = document.createElement("em"); st.className = "ez-star"; st.textContent = "⭐ 추천"; if(getComputedStyle(el).position === "static") el.style.position = "relative"; el.prepend(st); }  // v230: 버튼 위쪽 테두리에 붙는 이름표로 — 줄 안에 끼면 글자가 좁은 세로 칸으로 밀렸다
     const d = el.closest("details"); if(d && !d.open){ const sm = d.querySelector(":scope > summary"); if(sm && !sm.querySelector(".ez-grp-star")){ const st = document.createElement("em"); st.className = "ez-grp-star"; st.textContent = "⭐"; sm.prepend(st); } }
   }));
   ezGloss(root.querySelector(".kfs-panel")); ezGloss(root.querySelector(".kfs-stage"));
